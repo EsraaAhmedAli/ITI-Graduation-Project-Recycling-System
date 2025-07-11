@@ -6,9 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "flowbite-react patch"
   },
   "dependencies": {
+    "flowbite-react": "^0.11.8",
     "next": "15.3.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
