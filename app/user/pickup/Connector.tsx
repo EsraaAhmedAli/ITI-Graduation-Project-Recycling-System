@@ -1,5 +1,19 @@
-export default function Connector() {
+export default function Connector({
+  active,
+  vertical
+}: {
+  active: boolean;
+  vertical: boolean;
+}) {
   return (
-    <div className="hidden md:block w-12 h-1 bg-gray-300 rounded"></div>
+    <div
+      className={`
+        transition-colors duration-300
+        ${vertical 
+          ? 'w-0.5 h-6 md:h-0 md:w-auto' 
+          : 'h-0.5 flex-grow mx-2 md:mx-0'}
+        ${active ? 'bg-green-700' : 'bg-gray-300'}
+      `}
+    />
   );
 }
