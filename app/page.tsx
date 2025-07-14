@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { UploadCloud, Search, Users } from "lucide-react";
 import Button from "@/components/common/Button";
+import CategoryList from "@/components/shared/CategoryList";
 
 export default function Home() {
   return (
@@ -18,7 +19,7 @@ export default function Home() {
           <p className="text-xl mb-6">Simple, community-driven recycling platform</p>
           <div className="flex gap-4">
             <Link
-              href="/app/auth/register"
+              href="/category"
               className="bg-green-500 hover:bg-green-600 text-white font-semibold py-4 px-8 rounded"
             >
               Get Started
@@ -100,7 +101,8 @@ export default function Home() {
           </div>
         </div>
       </section>
-
+      {/* عرض الكاتيجوريز مع زر See more */}
+      {/* <CategoryList basePath="/category" maxToShow={6} /> */}
       <section className="bg-gradient-to-br from-primary/10 to-secondary/10 py-16 px-4 sm:px-6 lg:px-8 rounded-2xl mx-4 sm:mx-8 lg:mx-16 my-12">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl sm:text-4xl font-bold mb-6 text-accent-content">
