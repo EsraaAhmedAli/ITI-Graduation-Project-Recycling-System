@@ -34,7 +34,7 @@ export default function PhoneInput({ value, onChange }: PhoneInputProps) {
             onBlur={() => setTouched(true)}
             maxLength={10}
             required
-            className={`block w-full p-2.5 text-sm text-gray-900 bg-gray-50 border border-s-0 rounded-e-lg focus:outline-none focus:ring-2 ${
+            className={`block rounded-t-lg px-2.5 pb-2.5 pt-5 pr-10 w-full text-sm text-gray-900 bg-gray-50 border-0 border-b-2 appearance-none focus:outline-none focus:ring-0 peer ${
               showError
                 ? "border-red-500 focus:border-red-500 focus:ring-red-500"
                 : isValid

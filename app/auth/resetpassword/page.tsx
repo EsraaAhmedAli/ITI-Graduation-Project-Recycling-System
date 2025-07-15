@@ -13,6 +13,8 @@ import { useUserAuth } from "@/context/AuthFormContext";
 export default function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const { user } = useUserAuth();
+  console.log("user in reset password form", user);
+  console.log(searchParams.get("otp"));
 
   const [form, setForm] = useState({
     email: user?.email || "",

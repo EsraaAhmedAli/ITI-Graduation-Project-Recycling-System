@@ -23,7 +23,7 @@ const errorInitialState = {
   confirmPassword: "",
 };
 export default function AuthForm(): React.JSX.Element {
-  const [mode, setMode] = useState<"signup" | "login">("signup");
+  const [mode, setMode] = useState<"signup" | "login">("login");
   const [form, setForm] = useState(FormInitialState);
   const { setUser } = useUserAuth();
 
@@ -135,7 +135,7 @@ export default function AuthForm(): React.JSX.Element {
       localStorage.setItem("token", res.token);
       console.log("Login successful:", res.user);
       console.log("Token:", res.token);
-      router.push("/user/dashboard");
+      router.push("/cart");
     } catch (err) {
       alert("Login failed. Please check your credentials.");
     }
@@ -331,7 +331,7 @@ export default function AuthForm(): React.JSX.Element {
         <Button
           type="button"
           onClick={handleForgotPassword}
-          className="text-sm text-blue-600 hover:underline"
+          className="text-sm text-center flex ms-auto mt-5 text-blue-600 hover:underline cursor-pointer"
         >
           Forgot your password?
         </Button>

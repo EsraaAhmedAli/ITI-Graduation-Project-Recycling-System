@@ -98,7 +98,7 @@ export default function OTPInput({ length = 6, onSubmit }: OTPInputProps) {
       // Optionally store user in global context
       setUser(res.user); // if using React Context
 
-      router.push("/user/dashboard");
+      router.push("/cart");
     } catch (error) {
       console.error("OTP submission failed:", error);
     }
