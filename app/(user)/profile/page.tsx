@@ -1,80 +1,120 @@
-"use client";
-import { Order } from "@/components/Types/orders.type";
-import api from "@/services/api";
-import { Avatar } from "flowbite-react";
-import { useEffect, useState } from "react";
+'use client';
 
-export default function RecyclingHistory() {
-  const[allOrders,setAllOrders]=useState<Order[]>([])
+import { useContext, useEffect, useState } from 'react';
+import { UserAuthContext } from '@/context/AuthFormContext';
+import { Avatar } from 'flowbite-react';
+import api from '@/services/api';
+import { Order } from '@/components/Types/orders.type';
 
-const getAllOrders = async (): Promise<Order[]> => {
-  try {
-    const res = await api.get<Order[]>('/orders');
-    setAllOrders(res.data);
-    return res.data;
-  } catch (err) {
-    console.error(err);
-    return [];
-  }
-};
-  useEffect(()=>{
-    getAllOrders()
-  },[])
-  const orders = [
-    { date: "June 15, 2024", points: 500, status: "Completed", address: "123 Oak Street, Anytown" },
-    { date: "May 20, 2024", points: 450, status: "Completed", address: "123 Oak Street, Anytown" },
-    { date: "April 25, 2024", points: 400, status: "Completed", address: "123 Oak Street, Anytown" },
-  ];
+export default function ProfilePage() {
+  const { user } = useContext(UserAuthContext);
+  const [allOrders, setAllOrders] = useState<Order[]>([]);
+  // const address = JSON.parse(localStorage.getItem('userAddress'))
+  
+  const getAllOrders = async (): Promise<Order[]> => {
+    try {
+      const res = await api.get<Order[]>('/orders');
+      setAllOrders(res.data);
+      console.log(res);
+      
+      return res.data;
+    } catch (err) {
+      console.error(err);
+      return [];
+    }
+  };
+
+  useEffect(() => {
+    getAllOrders();
+  }, []);
+
+  const stats = {
+    totalRecycles: allOrders?.length,
+    points: 620,
+    categories: 4,
+    tier: 50,
+  };
+
+  const categories = ['Plastic', 'Paper', 'Glass', 'Metal'];
 
   return (
-    <div className="min-h-screen bg-green-50 py-10 px-6">
-      <div className="max-w-6xl mx-auto bg-white rounded-3xl shadow-xl p-6 grid md:grid-cols-4 gap-6">
-        {/* Sidebar */}
-        <aside className="md:col-span-1 flex flex-col items-center text-center">
-          <Avatar img="/user.jpg" rounded size="lg" className="mb-4" />
-          <h2 className="text-xl font-semibold text-green-800">user Name</h2>
-          <p className="text-sm text-gray-500 mb-4">user@email.com</p>
-
-          <div className="bg-green-100 rounded-xl p-4 w-full shadow-sm">
-            <p className="text-xs text-gray-600">E-Wallet Balance</p>
-            <p className="text-xl font-bold text-green-700">$125.50</p>
-            <button className="mt-3 text-sm bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition">
-              Withdraw
-            </button>
+    <div className="min-h-screen bg-green-50 py-10 px-4">
+      <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-xl p-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between flex-wrap">
+          <div className="flex items-center space-x-4">
+            <Avatar img='https://api.dicebear.com/7.x/bottts/svg?seed=user123' rounded size="lg" />
+            <div>
+              <h2 className="text-xl font-semibold text-green-800">{user?.name || 'John Doe'}</h2>
+              <p className="text-sm text-gray-500">{user?.email} — Eco-Warrior</p>
+              <p className="text-xs text-gray-400">Cairo, July 2025</p>
+            </div>
           </div>
-        </aside>
+          <button className="bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700">
+            Edit Profile
+          </button>
+        </div>
 
-        {/* Main Content */}
-        <section className="md:col-span-3">
-          <h2 className="text-2xl font-bold mb-4 text-green-800">Recycling History</h2>
-          <div className="overflow-auto rounded-lg shadow border border-green-100">
-            <table className="min-w-full text-sm">
-              <thead className="bg-green-100 text-green-800">
-                <tr>
-                  <th className="py-3 px-6 text-left">Date</th>
-                  <th className="py-3 px-6 text-left">Status</th>
-                  <th className="py-3 px-6 text-left">Points</th>
-                  <th className="py-3 px-6 text-left">Pickup Address</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orders.map((item, index) => (
-                  <tr key={index} className="border-t">
-                    <td className="py-3 px-6">{item.date}</td>
-                    <td className="py-3 px-6">
-                      <span className="bg-green-200 text-green-800 px-3 py-1 rounded-full text-xs font-medium">
-                        {item.status}
-                      </span>
-                    </td>
-                    <td className="py-3 px-6">{item.points}</td>
-                    <td className="py-3 px-6">{item.address}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+        {/* Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+          <StatBox label="Total Recycles" value={stats.totalRecycles} />
+          <StatBox label="Points Collected" value={stats.points} />
+          <StatBox label="Categories Followed" value={stats.categories} />
+          <StatBox label="Membership Tier" value={stats.tier} />
+        </div>
+
+        {/* Recent Activity */}
+        <div>
+          <h3 className="text-lg font-semibold text-green-800 mb-3">Recent Recycling Activity</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {allOrders.map((order, index) => (
+  <div key={order._id || index} className="border rounded-xl p-4 bg-green-50 shadow-sm mb-4">
+    <p className="text-sm text-gray-500 mb-1">
+      Date: {new Date(order.createdAt).toLocaleDateString()}
+    </p>
+    <p className="text-sm text-green-700 font-semibold mb-2">Status: {order.status}</p>
+
+    {/* Map over items */}
+    {order.items.map((item, i) => (
+      <div key={i} className="text-sm text-gray-700 ml-4 mb-1">
+        • {item.name} — {item.quantity}kg — +{item.totalPoints} pts
       </div>
+    ))}
+
+    {/* Display Address */}
+    <div className="text-xs text-gray-500 mt-2 ml-1">
+      {order.address.street}, Bldg {order.address.building}, Floor {order.address.floor}, {order.address.area}, {order.address.city}
+    </div>
+  </div>
+))}
+
+          </div>
+        </div>
+
+  
+
+        {/* Drop-off & Settings */}
+        <div className="grid md:grid-cols-2 gap-6">
+    
+
+          <div>
+            <h3 className="text-lg font-semibold text-green-800 mb-2">Goals and Badges</h3>
+            <div className="w-full bg-gray-200 rounded-full h-3">
+              <div className="bg-green-600 h-3 rounded-full w-[60%]"></div>
+            </div>
+            <p className="text-sm text-gray-600 mt-1">Recycle 15 kg plastic — 60% completed</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatBox({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="bg-green-100 text-green-800 p-4 rounded-xl shadow-sm">
+      <p className="text-2xl font-bold">{value}</p>
+      <p className="text-sm">{label}</p>
     </div>
   );
 }
