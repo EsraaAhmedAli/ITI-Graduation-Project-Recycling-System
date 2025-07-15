@@ -242,7 +242,7 @@ const goToStep = (step: number) => {
         onClick={() => {
           navigator.clipboard.writeText(createdOrderId);
           setCopied(true);
-          setTimeout(() => setCopied(false), 2000); // reset after 2 seconds
+          setTimeout(() => setCopied(false), 2000); 
         }}
         className={`text-sm border px-2 py-1 rounded
           ${copied
