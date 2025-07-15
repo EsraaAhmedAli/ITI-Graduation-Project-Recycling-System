@@ -4,27 +4,32 @@ import { useEffect, useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { motion } from "framer-motion";
 import { FaArrowLeft } from "react-icons/fa";
-import Image from "next/image";
 
+import Image from "next/image";
 import { categoryIcons } from "@/utils/categoryIcons";
 import CategoryCard from "./CategoryCard";
-import SubcategoryCard from "./SubcategoryCard";
+import ItemCard from "./ItemCard";
 
-interface Subcategory {
+
+interface Item {
   name: string;
   image: string;
   points: number;
-  unit: string;
+  price: number;
+  measurement_unit: 1 | 2;
 }
 
 interface Category {
   _id: string;
   name: string;
   image: string;
-  subcategories: Subcategory[];
+  description?: string; 
+  items: Item[];
 }
 
-export default function CategoryList({ maxToShow }: { basePath: string, maxToShow?: number }) {
+
+export default function CategoryList({ basePath, maxToShow }: { basePath: string, maxToShow?: number }) {
+
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeCategory, setActiveCategory] = useState<Category | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,41 +37,47 @@ export default function CategoryList({ maxToShow }: { basePath: string, maxToSho
 
   const { addToCart } = useCart();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch("http://localhost:5000/api/categories");
-        const data = await response.json();
-        const processedData = data.map((category: Category) => ({
-          ...category,
-          subcategories: Array.isArray(category.subcategories)
-            ? category.subcategories.map(sub => ({ ...sub }))
-            : [],
-        }));
-        setCategories(processedData);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+ useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/categories");
+      const data = await response.json();
+      const processedData = data.map((category: Category) => ({
+        ...category,
+        items: Array.isArray(category.items)
+          ? category.items.map(item => ({ ...item }))
+          : [],
+      }));
+      setCategories(processedData);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    fetchData();
-  }, []);
+  fetchData();
+}, []);
+
+
 
   const toggleCategory = (category: Category) => {
     setActiveCategory(activeCategory?._id === category._id ? null : category);
   };
 
-  const handleAddToCart = (subcategory: Subcategory, categoryId: string) => {
-    addToCart({
-      categoryId,
-      subcategoryName: subcategory.name,
-      points: subcategory.points,
-      unit: subcategory.unit,
-      quantity: 1,
-    });
-  };
+ const handleAddToCart = (item: Item, categoryId: string) => {
+  addToCart({
+    categoryId,
+    itemName: item.name,
+    image: item.image,
+    points: item.points,
+    price: item.price,
+    measurement_unit: item.measurement_unit,
+    quantity: 1,
+  });
+};
+
+
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -157,15 +168,15 @@ export default function CategoryList({ maxToShow }: { basePath: string, maxToSho
                 animate="visible"
                 className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8"
               >
-                {activeCategory.subcategories.map((sub, index) => (
+                {activeCategory.items.map((item, index) => (
                   <motion.div key={index} variants={itemVariants}>
-                    <SubcategoryCard
-                      name={sub.name}
-                      image={sub.image}
-                      points={sub.points}
-                      unit={sub.unit}
+                    <ItemCard
+                      name={item.name}
+                      image={item.image}
+                      points={item.points}
+                      unit={item.measurement_unit}
                       categoryName={activeCategory.name}
-                      onAddToCart={() => handleAddToCart(sub, activeCategory._id)}
+                      onAddToCart={() => handleAddToCart(item, activeCategory._id)}
                     />
                   </motion.div>
                 ))}
