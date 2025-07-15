@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { motion } from "framer-motion";
 import { FaArrowLeft } from "react-icons/fa";
+
+import Image from "next/image";
 import { categoryIcons } from "@/utils/categoryIcons";
 import CategoryCard from "./CategoryCard";
 import ItemCard from "./ItemCard";
@@ -27,6 +29,7 @@ interface Category {
 
 
 export default function CategoryList({ basePath, maxToShow }: { basePath: string, maxToShow?: number }) {
+
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeCategory, setActiveCategory] = useState<Category | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -55,6 +58,7 @@ export default function CategoryList({ basePath, maxToShow }: { basePath: string
 
   fetchData();
 }, []);
+
 
 
   const toggleCategory = (category: Category) => {
