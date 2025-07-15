@@ -10,6 +10,7 @@ import { categoryIcons } from "@/utils/categoryIcons";
 import CategoryCard from "./CategoryCard";
 import ItemCard from "./ItemCard";
 
+//bg-gradient-to-br from-[var(--color-base-100)] to-[var(--color-base-100)]
 
 interface Item {
   name: string;
@@ -97,7 +98,7 @@ export default function CategoryList({ basePath, maxToShow }: { basePath: string
   };
 
   return (
-    <div className="p-6 bg-gradient-to-br from-[var(--color-base-100)] to-[var(--color-base-100)]">
+    <div className="p-6  bg-white/100">
       {!isLoading && (
         <>
           {!activeCategory && (
