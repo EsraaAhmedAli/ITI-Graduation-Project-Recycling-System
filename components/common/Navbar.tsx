@@ -16,8 +16,7 @@ import { UserAuthContext } from "@/context/AuthFormContext";
 
 
 export default function Navbar() {
-  const {user}=useContext(UserAuthContext)
-  console.log(user);
+  const {user,logout}=useContext(UserAuthContext)
   
 
   const { cart } = useCart();
@@ -61,7 +60,7 @@ export default function Navbar() {
                 <UserRoundPen className="w-5 h-5" />
                 <span>Profile</span>
               </Link>
-              <button className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-bold">Logout</button>
+              <button onClick={()=>logout()} className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-bold">Logout</button>
             </>
           ) : (
             <>
@@ -111,7 +110,7 @@ export default function Navbar() {
                 <UserRoundPen className="w-5 h-5" />
                 <span>Profile</span>
               </Link>
-              <button onClick={() => {}} className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 rounded">
+              <button onClick={()=>logout()} className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 rounded">
                 Logout
               </button>
             </>

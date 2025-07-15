@@ -36,6 +36,7 @@ export default function RootLayout({
         <UserAuthProvider>
           <CartProvider>
             <Navbar />
+            <ToastContainer/>
             {children}
             <Footer />
           </CartProvider>
