@@ -11,6 +11,7 @@ interface Props {
   onClick: () => void;
 }
 
+ //bg-white/80
 export default function CategoryCard({ name, image, onClick }: Props) {
   return (
     <motion.div
@@ -24,7 +25,8 @@ export default function CategoryCard({ name, image, onClick }: Props) {
         if (e.key === "Enter" || e.key === " ") onClick();
       }}
     >
-      <div className="h-full rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 bg-white/80 border border-[var(--color-base-300)] flex flex-col items-center justify-center backdrop-blur-md p-8">
+     
+      <div className="h-57 rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 bg-yellow-100  border border-[var(--color-base-300)] flex flex-col items-center justify-center backdrop-blur-md p-8">
         <div className="relative mb-6">
           <span className="block w-28 h-28 rounded-full bg-gradient-to-tr from-[var(--color-base-200)] to-[var(--color-success-content)] p-1 shadow-lg transition-transform duration-300">
             <span className="block w-full h-full rounded-full bg-white overflow-hidden flex items-center justify-center">
