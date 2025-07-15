@@ -1,7 +1,6 @@
 // lib/api.ts
-import axios from "axios";
+import api from "@/services/api";
 
-const API = process.env.NEXT_PUBLIC_API_URL;
 
 interface AuthResponse {
   user: {
@@ -28,8 +27,8 @@ interface VerifyData {
 export const verifyOtpAndRegister = async (
   data: VerifyData
 ): Promise<AuthResponse> => {
-  const res = await axios.post<AuthResponse>(
-    `${API}/auth/verifyRegisterToken`,
+  const res = await api.post<AuthResponse>(
+    `/auth/verifyRegisterToken`,
     data
   );
   return res.data; // ✅ returns just { user, token }
@@ -39,7 +38,8 @@ export const initiateSignup = async (email: string) => {
   console.log(`Initiating signup for email: ${email}`);
   // console.log(`${API}/auth/initiate-signup`, { email });
 
-  return axios.post(`${API}/auth/initiateSignup`, { email });
+//   return axios.post(`${API}/auth/initiateSignup`, { email });
+return api.post('/auth/initiateSignup',{email})
 };
 //npm i axios @types/axios
 // export const verifyOtpAndRegister = async (data: {
@@ -57,12 +57,12 @@ export const loginUser = async (data: {
   email: string;
   password: string;
 }): Promise<AuthResponse> => {
-  const res = await axios.post<AuthResponse>(`${API}/auth/login`, data);
+  const res = await api.post<AuthResponse>('/auth/login', data);
   return res.data; // ✅ returns just { user, token }
 };
 
 export const forgotPassword = async (email: string) => {
-  return axios.post(`${API}/auth/forgotPassword`, { email });
+  return api.post(`/auth/forgotPassword`, { email });
 };
 
 export const resetPassword = async (data: {
@@ -70,5 +70,5 @@ export const resetPassword = async (data: {
   otpCode: string;
   newPassword: string;
 }) => {
-  return axios.post(`${API}/auth/resetPassword`, data);
+  return api.post(`/auth/resetPassword`, data);
 };
