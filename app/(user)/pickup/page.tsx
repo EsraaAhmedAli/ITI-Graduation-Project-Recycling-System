@@ -162,17 +162,16 @@ const goToStep = (step: number) => {
         <div className="space-y-1 text-gray-800 text-sm">
           <h3 className="font-semibold text-green-700 mb-2">Saved Address</h3>
           <p>
-            <span className="font-medium">City:</span> {savedAddress.city}
+            <span className="font-medium">Name:</span> username
           </p>
           <p>
-            <span className="font-medium">Area:</span> {savedAddress.area}
+            {
+              console.log(savedAddress)
+              
+            }
+            <span className="font-medium">Address:</span> {savedAddress.city + " - " + savedAddress.area + " - " +savedAddress.floor}
           </p>
-          <p>
-            <span className="font-medium">Street:</span> {savedAddress.street}
-          </p>
-          <p>
-            <span className="font-medium">Building:</span> {savedAddress.building}
-          </p>
+
         </div>
         <div className="flex items-center gap-4 mt-4 md:mt-0">
           <button
