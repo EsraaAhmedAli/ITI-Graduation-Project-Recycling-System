@@ -10,7 +10,7 @@ export default function Connector({
       className={`
         transition-colors duration-300
         ${vertical 
-          ? 'w-0.5 h-6 md:h-0 md:w-auto' 
+          ? '' 
           : 'h-0.5 flex-grow mx-2 md:mx-0'}
         ${active ? 'bg-green-700' : 'bg-gray-300'}
       `}

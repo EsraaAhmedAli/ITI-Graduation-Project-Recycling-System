@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import {
   ShoppingCart,
   HousePlus,
@@ -12,10 +12,14 @@ import {
   UserRoundPen,
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { UserAuthContext } from "@/context/AuthFormContext";
 
-const isLoggedIn = false;
 
 export default function Navbar() {
+  const {user}=useContext(UserAuthContext)
+  console.log(user);
+  
+
   const { cart } = useCart();
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
   const [isOpen, setIsOpen] = useState(false);
@@ -33,15 +37,15 @@ export default function Navbar() {
 
         {/* Desktop Nav */}
         <div className="hidden md:flex items-center space-x-6">
-          <Link href="/" className="flex items-center text-gray-700 hover:text-primary font-extrabold gap-1">
+          <Link prefetch={true} href="/" className="flex items-center text-gray-700 hover:text-primary font-extrabold gap-1">
             <HousePlus className="w-5 h-5" />
             <span>Home</span>
           </Link>
-          <Link href="/app/user/dashboard" className="flex items-center text-gray-700 hover:text-success font-extrabold gap-1">
+          <Link href="/dashboard" className="flex items-center text-gray-700 hover:text-success font-extrabold gap-1">
             <BadgeInfo className="w-5 h-5" />
             <span>About</span>
           </Link>
-          <Link href="/cart" className="relative flex items-center text-gray-700 hover:text-success font-extrabold gap-1">
+          <Link prefetch={true} href="/cart" className="relative flex items-center text-gray-700 hover:text-success font-extrabold gap-1">
             <ShoppingCart className="w-5 h-5" />
             <span>Cart</span>
             {totalItems > 0 && (
@@ -51,7 +55,7 @@ export default function Navbar() {
             )}
           </Link>
 
-          {isLoggedIn ? (
+          {user!=null ? (
             <>
               <Link href="/profile" className="flex items-center px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-success font-extrabold gap-1">
                 <UserRoundPen className="w-5 h-5" />
@@ -61,7 +65,7 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <Link href="/app/auth/login" className="flex items-center px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-success font-extrabold gap-1">
+              <Link href="/auth" className="flex items-center px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-success font-extrabold gap-1">
                 <KeyRound className="w-5 h-5" />
                 <span>Login</span>
               </Link>
@@ -101,7 +105,7 @@ export default function Navbar() {
             )}
           </Link>
 
-          {isLoggedIn ? (
+          {user!=null ? (
             <>
               <Link href="/profile" onClick={toggleMenu} className="flex items-center gap-2 font-extrabold text-gray-700 hover:bg-gray-100 px-3 py-2 rounded">
                 <UserRoundPen className="w-5 h-5" />
@@ -113,7 +117,7 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <Link href="/app/auth/login" onClick={toggleMenu} className="flex items-center gap-2 font-extrabold text-gray-700 hover:bg-gray-100 px-3 py-2 rounded">
+              <Link href="/auth" onClick={toggleMenu} className="flex items-center gap-2 font-extrabold text-gray-700 hover:bg-gray-100 px-3 py-2 rounded">
                 <KeyRound className="w-5 h-5" />
                 <span>Login</span>
               </Link>
