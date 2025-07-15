@@ -2,16 +2,18 @@
 
 import { createContext, useContext, useState, ReactNode } from "react";
 
-// نوع العنصر داخل السلة
+
 export interface CartItem {
   categoryId: string;
-  subcategoryName: string;
+  itemName: string;
+  image: string;
   points: number;
-  unit: string;
+  price: number;
+  measurement_unit: number;
   quantity: number;
 }
 
-// شكل السياق (context)
+
 interface CartContextType {
   cart: CartItem[];
   addToCart: (item: CartItem) => void;
@@ -21,10 +23,10 @@ interface CartContextType {
   clearCart: () => void;
 }
 
-// إنشاء السياق
+
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-// hook لاستخدام السياق
+
 export const useCart = () => {
   const context = useContext(CartContext);
   if (!context) {
@@ -33,29 +35,32 @@ export const useCart = () => {
   return context;
 };
 
-// مزود السياق
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
 
-  // إضافة للسلة
-  const addToCart = (item: CartItem) => {
-    setCart((prevCart) => {
-      const exists = prevCart.find(
-        (i) =>
-          i.subcategoryName === item.subcategoryName &&
-          i.categoryId === item.categoryId
+ 
+const addToCart = (item: CartItem) => {
+  setCart((prevCart) => {
+    const exists = prevCart.find(
+      (i) =>
+        i.itemName === item.itemName &&
+        i.categoryId === item.categoryId
+    );
+    if (exists) {
+      return prevCart.map((i) =>
+        i.itemName === item.itemName && i.categoryId === item.categoryId
+          ? { ...i, quantity: i.quantity + item.quantity }
+          : i
       );
-      if (exists) {
-        return prevCart.map((i) =>
-          i === exists ? { ...i, quantity: i.quantity + item.quantity } : i
-        );
-      } else {
-        return [...prevCart, item];
-      }
-    });
-  };
+    } else {
+      return [...prevCart, item];
+    }
+  });
+};
 
-  // زيادة الكمية
+
+ 
   const increaseQty = (item: CartItem) => {
     setCart((prev) =>
       prev.map((i) =>
@@ -64,7 +69,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  // تقليل الكمية
+  
   const decreaseQty = (item: CartItem) => {
     setCart((prev) =>
       prev.map((i) =>
@@ -73,12 +78,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  // حذف عنصر من السلة
+ 
   const removeFromCart = (item: CartItem) => {
     setCart((prev) => prev.filter((i) => i !== item));
   };
 
-  // حذف كل السلة
+  
   const clearCart = () => setCart([]);
 
   return (
