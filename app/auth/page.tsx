@@ -113,6 +113,7 @@ export default function AuthForm(): React.JSX.Element {
       console.log("Signing up with:", form);
       setIsValid(true);
       await handleSendOtp();
+      setIsValid(false)
     } else {
       if (!validateEmail(form.email) || !validatePassword(form.password)) {
         alert("Please fill all fields correctly");
@@ -170,6 +171,7 @@ export default function AuthForm(): React.JSX.Element {
       }
     } catch (err: any) {
       alert(err.response?.data?.message || "Something went wrong");
+      
     }
   };
 
