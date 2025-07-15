@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useCart } from "@/context/CartContext";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { FaArrowLeft } from "react-icons/fa";
 import { categoryIcons } from "@/utils/categoryIcons";
@@ -33,8 +32,7 @@ export default function CategoryList({ basePath, maxToShow }: { basePath: string
   const [isLoading, setIsLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
 
-  const router = useRouter();
-  const { cart, addToCart } = useCart();
+  const { addToCart } = useCart();
 
  useEffect(() => {
   const fetchData = async () => {
@@ -95,7 +93,7 @@ export default function CategoryList({ basePath, maxToShow }: { basePath: string
   };
 
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-br from-[var(--color-base-100)] to-[var(--color-base-100)]">
+    <div className="p-6 bg-gradient-to-br from-[var(--color-base-100)] to-[var(--color-base-100)]">
       {!isLoading && (
         <>
           {!activeCategory && (
@@ -105,9 +103,9 @@ export default function CategoryList({ basePath, maxToShow }: { basePath: string
               transition={{ delay: 0.2 }}
               className="mb-16"
             >
-              <h1 className="text-2xl md:text-3xl font-extrabold text-center text-green-500 mb-10 mt-7">
-                Recycle Smart, <span className="text-green-500">Earn Rewards</span>
-              </h1>
+              <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-accent-content">
+                Browse items could be recycled, <span className="text-green-500">Earn Rewards</span>
+              </h2>
 
               <motion.div
                 variants={containerVariants}
@@ -139,6 +137,7 @@ export default function CategoryList({ basePath, maxToShow }: { basePath: string
             </motion.section>
           )}
 
+          {/* Subcategory View */}
           {activeCategory && (
             <motion.section
               initial={{ opacity: 0 }}
