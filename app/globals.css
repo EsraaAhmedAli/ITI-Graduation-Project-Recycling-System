@@ -1,6 +1,6 @@
 @import "tailwindcss";
-@plugin "flowbite-react/plugin/tailwindcss";
-@source "../.flowbite-react/class-list.json";
+
+@import "keen-slider/keen-slider.min.css";
 
 :root {
   --background: #ffffff;
@@ -8,7 +8,7 @@
 }
 
 @theme {
-  --color-primary: #4CAF50;
+  --color-primary: #22c55e;
   --color-primary-content: oklch(93% 0.034 272.788);
   --color-secondary: #8BC34A;
   --color-secondary-content: oklch(94% 0.028 342.258);
