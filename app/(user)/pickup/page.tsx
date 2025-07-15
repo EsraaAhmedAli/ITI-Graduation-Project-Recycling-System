@@ -69,7 +69,7 @@ const goToStep = (step: number) => {
     }).then(res=> {
       setLoadingBtn(false)
       setCreatedOrderId(res.data.order._id)
-      console.log(res.data);
+      console.log(formData);
       setCurrentStep(3)
       
     }
