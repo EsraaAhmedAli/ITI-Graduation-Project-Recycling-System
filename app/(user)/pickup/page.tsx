@@ -158,45 +158,44 @@ const goToStep = (step: number) => {
       />
     ) : (
 <>
-      <div className="border border-gray-300 rounded-lg p-6 shadow-md flex flex-col md:flex-row justify-between items-center bg-green-50">
-        <div className="space-y-1 text-gray-800 text-sm">
-          <h3 className="font-semibold text-green-700 mb-2">Saved Address</h3>
-          <p>
-            <span className="font-medium">Name:</span> username
-          </p>
-          <p>
-            {
-              console.log(savedAddress)
-              
-            }
-            <span className="font-medium">Address:</span> {savedAddress.city + " - " + savedAddress.area + " - " +savedAddress.floor}
-          </p>
+<div className="border border-gray-200 rounded-lg p-6 shadow-sm bg-white flex flex-col gap-4">
+  <div className="flex justify-between items-start">
+    <h3 className="font-semibold text-lg text-gray-800">Home</h3>
+    <div className="flex items-center gap-2">
 
-        </div>
-        <div className="flex items-center gap-4 mt-4 md:mt-0">
-          <button
-            aria-label="Edit Address"
-            onClick={handleEditAddress}
-            className="p-2 rounded-full hover:bg-gray-100 transition text-green-700"
-            title="Edit Address"
-          >
-            edit
-          </button>
-          <button
-            aria-label="Delete Address"
-            onClick={handleDeleteAddress}
-            className="p-2 rounded-full hover:bg-gray-100 transition text-red-600"
-            title="Delete Address"
-          >
-            delete
-          </button>
- 
-        </div>
-        
-      </div>
+      <button
+        onClick={handleEditAddress}
+        className="text-sm text-green-700 hover:underline"
+      >
+        Edit
+      </button>
+            <button
+        onClick={handleDeleteAddress}
+        className="text-sm text-red-600 hover:underline"
+      >
+        Delete
+      </button>
+
+    </div>
+  </div>
+
+
+  <div className="space-y-1 text-gray-800 text-sm">
+    <p>
+      <span className="font-bold">Name:</span> {'userName'}
+    </p>
+<p className="text-sm text-gray-800">
+  <span className="font-bold">Address:</span>{" "}
+  Buld. No.: {savedAddress.building} - Street: {savedAddress.street} - Area: {savedAddress.area} - Floor: {savedAddress.floor} - Apt: {savedAddress.apartment} - Landmark: {savedAddress.landmark}
+</p>
+
+
+  </div>
+</div>
+
                <Button
             onClick={() => goToStep(currentStep+1)}
-            className="bg-green-600 mt-3 ms-auto hover:bg-green-700 text-white px-6 py-2 rounded-lg"
+            className="bg-green-500 mt-3 ms-auto hover:bg-green-700 text-white px-6 py-2 rounded-lg"
           >
             Next
           </Button>
