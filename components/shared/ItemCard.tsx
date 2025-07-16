@@ -1,58 +1,65 @@
 "use client";
-import Image from "next/image";
+
 import { motion } from "framer-motion";
 import { FaCoins, FaShoppingCart } from "react-icons/fa";
-import { categoryColors } from "@/utils/categoryColors";
+import Image from "next/image";
 
-interface Props {
+interface Item {
   name: string;
   image: string;
   points: number;
-  unit: 1 | 2;
-  categoryName: string;
-  onAddToCart: () => void;
+  price: number;
+  measurement_unit: 1 | 2;
 }
+
+interface ItemCardProps {
+  item: Item;
+  index: number;
+  onAddToCart: (item: Item) => void;
+}
+
 const getUnitText = (unit: 1 | 2): string => {
   return unit === 1 ? "KG" : "Pieces";
 };
 
-
-export default function ItemCard({ name, image, points, unit, categoryName, onAddToCart }: Props) {
+export default function ItemCard({ item, index, onAddToCart }: ItemCardProps) {
   return (
     <motion.div
-      className="group relative"
-      whileHover={{ y: -5 }}
-      whileTap={{ scale: 0.98 }}
+      key={index}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: index * 0.05 }}
+      className="group"
     >
-      <div className="h-full rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 bg-white border border-gray-200 flex flex-col">
-        <div className="relative h-40 w-full overflow-hidden">
-          <Image src={image}  alt={name || "Category image"} fill className="object-cover transition-transform duration-500 group-hover:scale-110" />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/40" />
+      <div className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 h-full flex flex-col">
+        {/* Image */}
+        <div className="relative h-48 w-full overflow-hidden">
+          <Image
+            src={item.image}
+            alt={item.name || "image name"}
+            fill
+            className="object-contain group-hover:scale-100 transition-transform duration-300"
+          />
         </div>
-        <div className="p-4 flex-1 flex flex-col">
-          <div className="flex items-center justify-between mb-3">
-            <span className={`text-md font-semibold px-2 py-1 rounded-full ${categoryColors[categoryName]}`}>
-              {name}
-            </span>
-            <div className="flex items-center gap-1 text-amber-500 bg-amber-50 px-2 py-1 rounded-full">
-              <FaCoins className="text-amber-500" />
-              <span className="font-bold">
-                {points} point / {getUnitText(unit)}
-              </span>
 
-            </div>
+        {/* Content */}
+        <div className="p-4 flex flex-col flex-grow">
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">{item.name}</h3>
+
+          <div className="flex items-center gap-2 mb-4">
+            <FaCoins className="text-yellow-500" />
+            <span className="text-gray-700">
+              {item.points} points per {getUnitText(item.measurement_unit)}
+            </span>
           </div>
-          <div className="mt-auto">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={onAddToCart}
-              className="w-full py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white font-semibold text-lg flex items-center justify-center gap-2 shadow-md"
-            >
-              <FaShoppingCart />
-              Add to Cart
-            </motion.button>
-          </div>
+
+          <button
+            onClick={() => onAddToCart(item)}
+            className="mt-auto w-full py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded transition-colors duration-300 flex items-center justify-center gap-2"
+          >
+            <FaShoppingCart />
+            Add to Cart
+          </button>
         </div>
       </div>
     </motion.div>
