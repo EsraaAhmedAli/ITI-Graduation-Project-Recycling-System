@@ -13,9 +13,10 @@ interface ReviewProps {
   onBack: () => void;
   onConfirm: () => void;
   formData?: FormInputs | null;
+  loading: boolean
 }
 
-export default function Review({ onBack,onConfirm }: ReviewProps) {
+export default function Review({ onBack,onConfirm , loading}: ReviewProps) {
   const [internalCart] = useState<CartItem[]>( [
     { id: '1', name: 'Paper', quantity: 5, price: 0 },
     { id: '2', name: 'Cans', quantity: 10, price: 0 },
@@ -41,11 +42,13 @@ export default function Review({ onBack,onConfirm }: ReviewProps) {
       <div className="flex justify-between mt-4">
         <Button
           onClick={onBack}
-          className="border border-green-500 text-green-600 px-6 py-2 rounded-lg"
+          className=" bg-red-600 px-6 py-2 rounded-lg"
         >
           Back
         </Button>
+        
         <Button
+        disabled={loading}
         onClick={onConfirm}
           className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg"
         >
