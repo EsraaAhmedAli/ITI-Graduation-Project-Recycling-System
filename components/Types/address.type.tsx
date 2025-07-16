@@ -1,3 +1,4 @@
+import { SetStateAction } from "react";
 
 export type City = 'Cairo' | 'Giza';
 
@@ -17,6 +18,7 @@ export type Area =
       notes: string,
       city:string,
       area:string
+      _id:SetStateAction<string | null>
     }
   
 

@@ -11,6 +11,7 @@ import {  initiateSignup, loginUser } from "@/lib/auth";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { toast } from "react-toastify";
 import Link from "next/link";
+import axios from "axios";
 
 const FormInitialState = {
   fullName: "",
@@ -123,27 +124,37 @@ export default function AuthForm(): React.JSX.Element {
       }
       // Handle login logic here
       console.log("Logging in with:", form);
+      setIsValid(true)
       await handleLoginUser();
+      setIsValid(false)
     }
   };
 
-  const handleLoginUser = async (): Promise<void> => {
-    try {
-      const res = await loginUser({
-        email: form.email,
-        password: form.password,
-      });
+const handleLoginUser = async (): Promise<void> => {
+  
+  try {
+    const res = await loginUser({
+      email: form.email,
+      password: form.password,
+    });
 
-      setUser(res.user);
-      localStorage.setItem("token", res.token);
-      console.log("Login successful:", res.user);
-      console.log("Token:", res.token);
-      router.push("/cart");
-    } catch (err) {
+    setUser(res.user);
+    console.log('ress', res);
+
+    localStorage.setItem("token", res.accessToken);
+    console.log("Login successful:", res.user);
+    router.push("/");
+  } catch (err: unknown) {
+    if (axios.isAxiosError(err)) {
+      const message = err.response?.data?.message || "Login failed. Please check your credentials.";
+      toast.error(message);
+    } else if (err && typeof err === "object" && "message" in err) {
+      toast.error(String((err as { message: unknown }).message));
+    } else {
       toast.error("Login failed. Please check your credentials.");
     }
-  };
-
+  }
+};
 
   const handleSendOtp = async () => {
     try {
@@ -155,7 +166,8 @@ export default function AuthForm(): React.JSX.Element {
       } else {
         toast.error("Failed to send OTP. Please try again.");
       }
-    } catch (err: any) {
+    } catch (err:unknown) {
+      
       toast.error(err.response?.data?.message || "Something went wrong");
       
     }
@@ -306,6 +318,7 @@ export default function AuthForm(): React.JSX.Element {
         <Button
           type="submit"
           loading={isValid}
+          disabled={isValid}
           className="bg-primary text-base-100 m-auto p-2 w-full rounded-lg hover:bg-secondary cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isValid

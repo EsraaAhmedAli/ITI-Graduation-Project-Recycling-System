@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useForm } from "react-hook-form";
 import { City, FormInputs } from "@/components/Types/address.type";
 import Review from "./ReviewForm";
@@ -9,6 +9,7 @@ import Button from "@/components/common/Button";
 import AddressStep from "./AddressStep";
 import api from "@/services/api";
 import { toast } from "react-toastify";
+import { UserAuthContext } from "@/context/AuthFormContext";
 
 export default function PickupConfirmation() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -19,9 +20,13 @@ const [direction, setDirection] = useState<'forward' | 'backward'>('forward');
 
   const [selectedCity, setSelectedCity] = useState<City | "">("");
   const [formData, setFormData] = useState<FormInputs | null>(null);
-  const [savedAddress, setSavedAddress] = useState<FormInputs | null>(null);
+const [addresses, setAddresses] = useState<FormInputs[]>([]);
+const [selectedAddress, setSelectedAddress] = useState<FormInputs | null>(null);
+const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
+
   const [isEditing, setIsEditing] = useState(false);
 const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
+const{user}=useContext(UserAuthContext) ?? {}
 
   const {
     register,
@@ -33,19 +38,31 @@ const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
     mode: "onChange",
     reValidateMode: "onChange",
   });
+  const handleNextStep=()=>{
+    if(!selectedAddress)
+    {
+      toast.error('please select address')
+    }
+   else {
+    goToStep(2)
+   }
+
+
+  }
+const fetchAddresses = async () => {
+  try {
+    const res = await api.get("/addresses");
+    setAddresses(res.data);
+    console.log(res.data);
+    
+  } catch (err) {
+    console.error("Failed to fetch addresses:", err);
+  }
+};
 
 useEffect(() => {
-  const saved = localStorage.getItem("userAddress");
-  if (saved) {
-    const parsed: FormInputs = JSON.parse(saved);
-    setSavedAddress(parsed);
-    setFormData(parsed);
-    setSelectedCity(parsed.city as City);
-    reset(parsed);
-    setIsEditing(false); // show summary by default
-  } else {
-    setIsEditing(true);
-  }
+  fetchAddresses()
+  setIsEditing(false)
   setLoading(false);
 }, [reset]);
 
@@ -58,61 +75,84 @@ const goToStep = (step: number) => {
   }
   setCurrentStep(step);
 };
-  const handleConfirm = () => {
-    setLoadingBtn(true)
-    api.post('orders',{
-      userId:123,
-      address:formData,
-      items:[{ "name": "Cans", "quantity": 10 ,"totalPoints" :500 },
-],
+const handleConfirm = () => {
+  if (!selectedAddress) {
+    toast.error("Please select an address");
+    return;
+  }
 
-    }).then(res=> {
-      setLoadingBtn(false)
-      setCreatedOrderId(res.data.order._id)
-      console.log(formData);
-      setCurrentStep(3)
-      
-    }
-    ).catch(err=>{
-      toast.error(err?.message)
-      console.log(err);
-            setLoadingBtn(false)
-            
+  setLoadingBtn(true);
+  api.post('orders', {
+    user: { userId: user?._id, phoneNumber: user?.phoneNumber, userName: user?.name },
+    address: selectedAddress,
+    items: [{ "name": "Cans", "quantity": 10, "totalPoints": 500 }],
+  })
+  .then(res => {
+    setLoadingBtn(false);
+    setCreatedOrderId(res.data.order._id);
+    setCurrentStep(3);
+  })
+  .catch(err => {
+    toast.error(err?.message);
+    setLoadingBtn(false);
+  });
+};
 
-      
-    }
-    )
-    if (!formData) return;
 
-    console.log("Sending order to server:", formData);
-  };
-
-  // Save new or edited address to localStorage & state
-  const handleSaveAddress = (data: FormInputs) => {
-    localStorage.setItem("userAddress", JSON.stringify(data));
-    setSavedAddress(data);
-    setFormData(data);
-    setSelectedCity(data.city as City);
+const handleSaveAddress = async (data: FormInputs) => {
+  try {
+    const res = await api.post('/addresses', data);
+    setAddresses(prev => [...prev, res.data]);
     setIsEditing(false);
+    setSelectedAddress(res.data);
     setCurrentStep(1);
-    reset(data);
-  };
+    reset();
+    toast.success("Address saved!");
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to save address");
+  }
+};
 
-  const handleDeleteAddress = () => {
-    localStorage.removeItem("userAddress");
-    setSavedAddress(null);
- 
-    setIsEditing(true);
-   reset({street:'',floor:null,apartment:'',area:'',building:'',city:'',landmark:'',notes:''})
-  };
 
-  const handleEditAddress = () => {
-    if (!savedAddress) return;
-    setIsEditing(true);
-    reset(savedAddress);
-    setSelectedCity(savedAddress.city as City);
-    setFormData(savedAddress);
-  };
+const handleDeleteAddress = async (id: string) => {
+  try {
+    await api.delete(`/addresses/${id}`);
+    setAddresses(prev => prev.filter(addr => addr._id !== id));
+    if (selectedAddress?._id === id) setSelectedAddress(null);
+    toast.success("Address deleted");
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to delete address");
+  }
+};
+const handleSelectAddress = (address: FormInputs) => {
+  setSelectedAddress(address);
+  setFormData(address);
+}
+
+const handleEditAddress = (address: FormInputs) => {
+  setIsEditing(true);
+  setEditingAddressId(address._id);
+  reset(address);
+  setSelectedCity(address.city as City);
+};
+const handleUpdateAddress = async (data: FormInputs) => {
+  try {
+    const res = await api.put(`/addresses/${editingAddressId}`, data);
+    setAddresses(prev => prev.map(addr => addr._id === editingAddressId ? res.data : addr));
+    setIsEditing(false);
+    setEditingAddressId(null);
+    setSelectedAddress(res.data);
+    toast.success("Address updated!");
+    setCurrentStep(1);
+    reset();
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to update address");
+  }
+};
+
 
   if(loading) return null
   return (
@@ -145,63 +185,69 @@ const goToStep = (step: number) => {
 
  
 {currentStep === 1 && (
-  <>
-    {!savedAddress || isEditing ? (
-      <AddressStep
-        register={register}
-        errors={errors}
-        selectedCity={selectedCity}
-        setSelectedCity={setSelectedCity}
-        setValue={setValue}
-        isValid={isValid}
-        onSubmit={handleSubmit(handleSaveAddress)}
-      />
-    ) : (
 <>
-<div className="border border-gray-200 rounded-lg p-6 shadow-sm bg-white flex flex-col gap-4">
-  <div className="flex justify-between items-start">
-    <h3 className="font-semibold text-lg text-gray-800">Home</h3>
-    <div className="flex items-center gap-2">
+{isEditing ? (
+<AddressStep
+  register={register}
+  errors={errors}
+  selectedCity={selectedCity}
+  setSelectedCity={setSelectedCity}
+  setValue={setValue}
+  isValid={isValid}
+  onSubmit={handleSubmit(editingAddressId ? handleUpdateAddress : handleSaveAddress)}
+  onCancel={() => {
+    setIsEditing(false);
+    setEditingAddressId(null);
+  }}
+/>
 
-      <button
-        onClick={handleEditAddress}
-        className="text-sm text-green-700 hover:underline"
-      >
-        Edit
-      </button>
-            <button
-        onClick={handleDeleteAddress}
-        className="text-sm text-red-600 hover:underline"
-      >
-        Delete
-      </button>
-
+) : (
+  <div className="grid gap-4">
+    {addresses.length === 0 && (
+      <p className="text-gray-600">No addresses saved yet.</p>
+    )}
+    {addresses.map(addr => (
+      <div key={addr._id} className={`border p-4 rounded shadow ${selectedAddress?._id === addr._id ? 'border-green-500' : 'border-gray-300'}`}>
+        <h3 className="font-semibold text-lg">{addr.city} - {addr.area}</h3>
+        <p className="text-sm">
+          {addr.street}, Bldg {addr.building}, Floor {addr.floor}, Apt {addr.apartment}
+        </p>
+        <div className="flex gap-2 mt-2">
+          <input  id="addressRadio"  type="radio" name="address" onClick={() => handleSelectAddress(addr)} className="text-green-700" />
+          <button onClick={() => handleEditAddress(addr)} className="text-sm">Edit</button>
+          <button onClick={() => handleDeleteAddress(addr._id)} className="text-red-700 text-sm">Delete</button>
+        </div>
+      </div>
+    ))}
+    <div className="flex justify-between">
+        <Button
+      onClick={() => {
+        setIsEditing(true);
+        setEditingAddressId(null);
+reset({
+  city: "",
+  area: "",
+  street: "",
+  landmark: "",
+  building: "",
+  floor: null,
+  apartment: "",
+  notes: "",
+});
+        setSelectedCity("");
+      }}
+      className="mt-4 border border-primary text-primary p-2 rounded-lg "
+    >
+      Add New Address
+    </Button>
+    <Button onClick={handleNextStep} className="mt-4  bg-primary text-white p-3 rounded-lg">
+      Next
+    </Button>
     </div>
   </div>
+)}
 
-
-  <div className="space-y-1 text-gray-800 text-sm">
-    <p>
-      <span className="font-bold">Name:</span> {'userName'}
-    </p>
-<p className="text-sm text-gray-800">
-  <span className="font-bold">Address:</span>{" "}
-  Buld. No.: {savedAddress.building} - Street: {savedAddress.street} - Area: {savedAddress.area} - Floor: {savedAddress.floor} - Apt: {savedAddress.apartment} - Landmark: {savedAddress.landmark}
-</p>
-
-
-  </div>
-</div>
-
-               <Button
-            onClick={() => goToStep(currentStep+1)}
-            className="bg-green-500 mt-3 ms-auto hover:bg-green-700 text-white px-6 py-2 rounded-lg"
-          >
-            Next
-          </Button>
 </>
-    )}
-  </>
 )}
       {currentStep === 2 && (
         <Review

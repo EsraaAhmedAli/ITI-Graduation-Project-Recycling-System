@@ -60,15 +60,15 @@ export default function ResetPasswordForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (
-      !form.email ||
-      !form.otpCode ||
-      errors.password ||
-      errors.confirmPassword
-    ) {
-      alert("Please fix the form before submitting");
-      return;
-    }
+    // if (
+    //   !form.email ||
+    //   !form.otpCode ||
+    //   errors.password ||
+    //   errors.confirmPassword
+    // ) {
+    //   alert("Please fix the form before submitting");
+    //   return;
+    // }
 
     try {
       setLoading(true);
