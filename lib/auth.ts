@@ -17,7 +17,7 @@ interface AuthResponse {
     imageUrl?: string;
     isAuthenticated?: boolean;
   };
-  token: string;
+  accessToken: string;
 }
 
 interface VerifyData {
