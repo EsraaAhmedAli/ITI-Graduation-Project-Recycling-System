@@ -12,7 +12,11 @@ import {
   UserRoundPen,
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+
+import { FaRecycle } from "react-icons/fa";
+
 import { UserAuthContext } from "@/context/AuthFormContext";
+
 
 
 export default function Navbar() {
@@ -44,7 +48,16 @@ export default function Navbar() {
             <BadgeInfo className="w-5 h-5" />
             <span>About</span>
           </Link>
+
+          <Link href="/category" className="flex items-center text-gray-700 hover:text-success font-extrabold gap-1">
+            <FaRecycle className="w-5 h-5" />
+            <span>Recycling</span>
+          </Link>
+
+          <Link href="/cart" className="relative flex items-center text-gray-700 hover:text-success font-extrabold gap-1">
+
           <Link prefetch={true} href="/cart" className="relative flex items-center text-gray-700 hover:text-success font-extrabold gap-1">
+
             <ShoppingCart className="w-5 h-5" />
             <span>Cart</span>
             {totalItems > 0 && (
@@ -94,6 +107,11 @@ export default function Navbar() {
             <BadgeInfo className="w-5 h-5" />
             <span>About</span>
           </Link>
+          <Link href="/category" onClick={toggleMenu} className="flex items-center gap-2 font-extrabold text-gray-700 hover:bg-gray-100 px-3 py-2 rounded">
+            <FaRecycle className="w-5 h-5" />
+            <span>recycling</span>
+          </Link>
+
           <Link href="/cart" onClick={toggleMenu} className="flex items-center gap-2 font-extrabold text-gray-700 hover:bg-gray-100 px-3 py-2 rounded relative">
             <ShoppingCart className="w-5 h-5" />
             <span>Cart</span>
@@ -110,7 +128,9 @@ export default function Navbar() {
                 <UserRoundPen className="w-5 h-5" />
                 <span>Profile</span>
               </Link>
+
               <button onClick={()=>logout()} className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 rounded">
+
                 Logout
               </button>
             </>
