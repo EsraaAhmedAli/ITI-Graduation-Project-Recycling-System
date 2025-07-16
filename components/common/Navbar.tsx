@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   ShoppingCart,
   HousePlus,
@@ -12,21 +12,28 @@ import {
   UserRoundPen,
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
-
 import { FaRecycle } from "react-icons/fa";
-
 import { UserAuthContext } from "@/context/AuthFormContext";
 
 export default function Navbar() {
-  const { user, logout } = useContext(UserAuthContext) ?? {}
-  const token = localStorage.getItem('token')
 
+  const { user, logout } = useContext(UserAuthContext) ?? {};
+  const { cart } = useCart();
 
+  const [token, setToken] = useState<string | null>(null);
   const { cart } = useCart();
   //const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
   const totalItems = cart.length;
+
   const [isOpen, setIsOpen] = useState(false);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setToken(localStorage.getItem("token"));
+    }
+  }, []);
+
+  const totalItems = cart.length;
   const toggleMenu = () => setIsOpen(!isOpen);
 
   return (
@@ -63,7 +70,6 @@ export default function Navbar() {
             <FaRecycle className="w-5 h-5" />
             <span>Recycling</span>
           </Link>
-
           <Link
             prefetch={true}
             href="/cart"
@@ -151,7 +157,6 @@ export default function Navbar() {
             <FaRecycle className="w-5 h-5" />
             <span>Recycling</span>
           </Link>
-
           <Link
             href="/cart"
             onClick={toggleMenu}
@@ -166,7 +171,10 @@ export default function Navbar() {
             )}
           </Link>
 
-          {user != null && token ? (
+
+          {user && token ? (
+
+       
             <>
               <Link
                 href="/profile"
@@ -176,7 +184,6 @@ export default function Navbar() {
                 <UserRoundPen className="w-5 h-5" />
                 <span>Profile</span>
               </Link>
-
               <button
                 onClick={() => {
                   logout();
