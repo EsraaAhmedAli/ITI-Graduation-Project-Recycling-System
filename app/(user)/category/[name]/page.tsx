@@ -52,7 +52,7 @@ export default function UserCategoryPage() {
 
   if (isLoading) {
     return (
-  <Loader/>
+  <Loader title={'your items'}/>
     );
   }
 

@@ -5,24 +5,28 @@ import { UserAuthContext } from '@/context/AuthFormContext';
 import { Avatar } from 'flowbite-react';
 import api from '@/services/api';
 import { Order, OrdersResponse } from '@/components/Types/orders.type';
+import Loader from '@/components/common/loader';
 
 export default function ProfilePage() {
   const { user } = useContext(UserAuthContext) ?? {}
   const [allOrders, setAllOrders] = useState<Order[]>([]);
-  // const address = JSON.parse(localStorage.getItem('userAddress'))
+  const [loading, setLoading] = useState<boolean>(true);
+
   
-  const getAllOrders = async (): Promise<Order[]> => {
-    try {
-      const res = await api.get<OrdersResponse>('/orders');
-      setAllOrders(res.data.data);
-      console.log(res.data);
-      
-      return res.data.data;
-    } catch (err) {
-      console.error(err);
-      return [];
-    }
-  };
+const getAllOrders = async (): Promise<Order[]> => {
+  try {
+    setLoading(true);
+    const res = await api.get<OrdersResponse>('/orders');
+    setAllOrders(res.data.data);
+    return res.data.data;
+  } catch (err) {
+    console.error(err);
+    return [];
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   useEffect(() => {
     getAllOrders();
@@ -62,32 +66,35 @@ export default function ProfilePage() {
         </div>
 
         {/* Recent Activity */}
-        <div>
-          <h3 className="text-lg font-semibold text-green-800 mb-3">Recent Recycling Activity</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {allOrders.map((order, index) => (
-  <div key={order._id || index} className="border rounded-xl p-4 bg-green-50 shadow-sm mb-4">
-    <p className="text-sm text-gray-500 mb-1">
-      Date: {new Date(order.createdAt).toLocaleDateString()}
-    </p>
-    <p className="text-sm text-green-700 font-semibold mb-2">Status: {order.status}</p>
-
-    {/* Map over items */}
-    {order.items.map((item, i) => (
-      <div key={i} className="text-sm text-gray-700 ml-4 mb-1">
-        • {item.name} — {item.quantity}kg — +{item.totalPoints} pts
-      </div>
-    ))}
-
-    {/* Display Address */}
-    <div className="text-xs text-gray-500 mt-2 ml-1">
-      {order.address.street}, Bldg {order.address.building}, Floor {order.address.floor}, {order.address.area}, {order.address.city}
-    </div>
+   {loading ? (
+<Loader title={'your activity'}/>
+) : allOrders.length === 0 ? (
+  <div className="text-center text-gray-500 py-6">
+    You dont have any recycling activity yet. Start your first recycle today!
   </div>
-))}
-
+) : (
+  <div>
+    <h3 className="text-lg font-semibold text-green-800 mb-3">Recent Recycling Activity</h3>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {allOrders.map((order, index) => (
+        <div key={order._id || index} className="border rounded-xl p-4 bg-green-50 shadow-sm mb-4">
+          <p className="text-sm text-gray-500 mb-1">
+            Date: {new Date(order.createdAt).toLocaleDateString()}
+          </p>
+          <p className="text-sm text-green-700 font-semibold mb-2">Status: {order.status}</p>
+          {order.items.map((item, i) => (
+            <div key={i} className="text-sm text-gray-700 ml-4 mb-1">
+              • {item.name} — {item.quantity}kg — +{item.totalPoints} pts
+            </div>
+          ))}
+          <div className="text-xs text-gray-500 mt-2 ml-1">
+            {order.address.street}, Bldg {order.address.building}, Floor {order.address.floor}, {order.address.area}, {order.address.city}
           </div>
         </div>
+      ))}
+    </div>
+  </div>
+)}
 
   
 

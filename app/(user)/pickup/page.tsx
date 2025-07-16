@@ -10,6 +10,7 @@ import AddressStep from "./AddressStep";
 import api from "@/services/api";
 import { toast } from "react-toastify";
 import { UserAuthContext } from "@/context/AuthFormContext";
+import Loader from "@/components/common/loader";
 
 export default function PickupConfirmation() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -51,20 +52,23 @@ const{user}=useContext(UserAuthContext) ?? {}
   }
 const fetchAddresses = async () => {
   try {
+    setLoading(true);
     const res = await api.get("/addresses");
     setAddresses(res.data);
-    console.log(res.data);
-    
   } catch (err) {
     console.error("Failed to fetch addresses:", err);
+    toast.error("Failed to fetch addresses");
+  } finally {
+    setLoading(false);
   }
 };
 
+
 useEffect(() => {
-  fetchAddresses()
-  setIsEditing(false)
-  setLoading(false);
+  fetchAddresses();
+  setIsEditing(false);
 }, [reset]);
+
 
 
 const goToStep = (step: number) => {
@@ -83,20 +87,22 @@ const handleConfirm = () => {
 
   setLoadingBtn(true);
   api.post('orders', {
-    user: { userId: user?._id, phoneNumber: user?.phoneNumber, userName: user?.name },
     address: selectedAddress,
-    items: [{ "name": "Cans", "quantity": 10, "totalPoints": 500 }],
+    items: [{ name: "Cans", quantity: 10, totalPoints: 500 }],
+    phoneNumber: user?.phoneNumber,
+    userName: user?.name,
   })
   .then(res => {
     setLoadingBtn(false);
-    setCreatedOrderId(res.data.order._id);
+    setCreatedOrderId(res.data.data._id);
     setCurrentStep(3);
   })
   .catch(err => {
-    toast.error(err?.message);
+    toast.error(err?.message ?? 'Failed to create order');
     setLoadingBtn(false);
   });
 };
+
 
 
 const handleSaveAddress = async (data: FormInputs) => {
@@ -154,8 +160,9 @@ const handleUpdateAddress = async (data: FormInputs) => {
 };
 
 
-  if(loading) return null
-  return (
+if (loading) {
+  return <Loader title="your info" />;
+}  return (
     <div className="lg:w-3xl w-full mx-auto md:p-8 p-5 bg-white rounded-2xl shadow-lg border border-green-100">
       <div className="flex my-3 flex-col md:flex-row items-start md:items-center gap-4 md:gap-0">
 <Step label="Address" direction={direction} isCurrent={currentStep === 1} active={currentStep >= 1} stepNumber={1} />

@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { FaCoins, FaShoppingCart } from "react-icons/fa";
 import Image from "next/image";
+import Button from "../common/Button";
 
 interface Item {
   name: string;
@@ -53,13 +54,13 @@ export default function ItemCard({ item, index, onAddToCart }: ItemCardProps) {
             </span>
           </div>
 
-          <button
+          <Button
             onClick={() => onAddToCart(item)}
             className="mt-auto w-full py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded transition-colors duration-300 flex items-center justify-center gap-2"
           >
             <FaShoppingCart />
             Add to Cart
-          </button>
+          </Button>
         </div>
       </div>
     </motion.div>
