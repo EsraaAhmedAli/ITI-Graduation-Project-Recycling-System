@@ -16,10 +16,15 @@ import { FaRecycle } from "react-icons/fa";
 import { UserAuthContext } from "@/context/AuthFormContext";
 
 export default function Navbar() {
+
   const { user, logout } = useContext(UserAuthContext) ?? {};
   const { cart } = useCart();
 
   const [token, setToken] = useState<string | null>(null);
+  const { cart } = useCart();
+  //const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const totalItems = cart.length;
+
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
@@ -57,6 +62,7 @@ export default function Navbar() {
             <BadgeInfo className="w-5 h-5" />
             <span>About</span>
           </Link>
+
           <Link
             href="/category"
             className="flex items-center text-gray-700 hover:text-success font-extrabold gap-1"
@@ -165,7 +171,10 @@ export default function Navbar() {
             )}
           </Link>
 
+
           {user && token ? (
+
+       
             <>
               <Link
                 href="/profile"
