@@ -4,20 +4,20 @@ import { useContext, useEffect, useState } from 'react';
 import { UserAuthContext } from '@/context/AuthFormContext';
 import { Avatar } from 'flowbite-react';
 import api from '@/services/api';
-import { Order } from '@/components/Types/orders.type';
+import { Order, OrdersResponse } from '@/components/Types/orders.type';
 
 export default function ProfilePage() {
-  const { user } = useContext(UserAuthContext);
+  const { user } = useContext(UserAuthContext) ?? {}
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   // const address = JSON.parse(localStorage.getItem('userAddress'))
   
   const getAllOrders = async (): Promise<Order[]> => {
     try {
-      const res = await api.get<Order[]>('/orders');
-      setAllOrders(res.data);
-      console.log(res);
+      const res = await api.get<OrdersResponse>('/orders');
+      setAllOrders(res.data.data);
+      console.log(res.data);
       
-      return res.data;
+      return res.data.data;
     } catch (err) {
       console.error(err);
       return [];
@@ -35,7 +35,6 @@ export default function ProfilePage() {
     tier: 50,
   };
 
-  const categories = ['Plastic', 'Paper', 'Glass', 'Metal'];
 
   return (
     <div className="min-h-screen bg-green-50 py-10 px-4">
@@ -56,10 +55,9 @@ export default function ProfilePage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
           <StatBox label="Total Recycles" value={stats.totalRecycles} />
           <StatBox label="Points Collected" value={stats.points} />
-          <StatBox label="Categories Followed" value={stats.categories} />
           <StatBox label="Membership Tier" value={stats.tier} />
         </div>
 
