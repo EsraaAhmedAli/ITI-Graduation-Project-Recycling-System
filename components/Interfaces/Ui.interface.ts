@@ -6,6 +6,7 @@ export interface ButtonProps {
   padding?: string;
   margin?: string;
   className?: string;
-  type?: 'button' | 'submit' | 'reset';
+  type?: "button" | "submit" | "reset";
   disabled?: boolean;
+  loading?: boolean;
 }
