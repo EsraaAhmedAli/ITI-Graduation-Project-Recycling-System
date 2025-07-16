@@ -6,6 +6,8 @@ import { City, FormInputs } from "@/components/Types/address.type";
 import { UseFormRegister, FieldErrors, UseFormSetValue } from "react-hook-form";
 import { cityAreas } from "./cityAreas";
 import Button from "@/components/common/Button";
+import Link from "next/link";
+import { toast } from "react-toastify";
 
 interface Props {
   register: UseFormRegister<FormInputs>;
@@ -14,6 +16,7 @@ interface Props {
   setSelectedCity: (city: City | "") => void;
   setValue: UseFormSetValue<FormInputs>;
   isValid: boolean;
+  onCancel:()=>void
   onSubmit: () => void;
 }
 
@@ -25,6 +28,7 @@ export default function AddressStep({
   setValue,
   isValid,
   onSubmit,
+  onCancel
 }: Props) {
   const availableAreas = selectedCity ? cityAreas[selectedCity] : [];
 
@@ -34,6 +38,9 @@ export default function AddressStep({
     setValue("city", newCity, { shouldValidate: true });
     setValue("area", "");
   };
+
+
+
 
   return (
     <form
@@ -176,8 +183,6 @@ export default function AddressStep({
                 id="apartment-error"
                 message={errors.apartment?.message}
               />
-
-
             </div>
             <div>
               <label
@@ -195,14 +200,16 @@ export default function AddressStep({
         </div>
 
         <div className="flex justify-between mt-6">
-          <button
-            type="button"
-            className="border bg-red-700 text-white px-6 py-2 rounded-lg"
-            onClick={() => setSelectedCity("")}>
-            Cancel
-          </button>
           <Button
-            type="submit"
+            onClick={onCancel}
+
+            className="border bg-red-700 text-white px-6 py-2 rounded-lg"
+            >
+            Cancel
+          </Button>
+          <Button
+          onClick={()=>onSubmit()
+          }
             disabled={!isValid}
             aria-disabled={!isValid}
             className={`px-6 py-2 rounded-lg ${
