@@ -1,8 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import React, { createContext, useContext, useState, useEffect } from "react";
-import axios from "axios";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import api from "@/services/api";
 
 // === User Type ===
@@ -60,50 +59,120 @@ export const UserAuthProvider = ({ children }: { children: React.ReactNode }) =>
     setTokenState(token);
   };
 
-
-
-  // ✅ Logout
-  const logout = () => {
+  // ✅ Logout - clears everything and redirects
+  const logout = useCallback(() => {
     console.log("✅ Logging out");
     localStorage.removeItem("user");
     localStorage.removeItem("token");
     setUserState(null);
     setTokenState(null);
+    // Clear axios default headers
+    delete api.defaults.headers.common["Authorization"];
     router.push("/");
-  };
+  }, [router]);
 
-  // ✅ Load user + token on mount
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
+  // ✅ Manual refresh token - delegates to your axios interceptor
+  const refreshAccessToken = useCallback(async () => {
+    try {
+      console.log("🔄 Attempting to refresh access token...");
+      // Make any authenticated request to trigger the interceptor
+      // The interceptor will handle the token refresh automatically
+      const response = await api.get('/auth/refresh');
+      
+      // Update local state with the new token
+      const newToken = localStorage.getItem('token');
+      if (newToken) {
+        setTokenState(newToken);
+        console.log("✅ Token refreshed successfully");
+      } else {
+        throw new Error("No token found after refresh");
+      }
+    } catch (err) {
+      console.error("❌ Error refreshing token:", err);
+      logout();
+    }
+  }, [logout]);
+
+  // ✅ Check if user session is still valid
+  const validateSession = useCallback(async () => {
     const storedToken = localStorage.getItem("token");
-
+    const storedUser = localStorage.getItem("user");
+    
     if (storedUser) {
       setUserState(JSON.parse(storedUser));
     }
+    
     if (storedToken) {
       setTokenState(storedToken);
-    }
-
-    if (storedUser && !storedToken) {
-      // User exists but no token? Try to refresh
-      refreshAccessToken()
-        .finally(() => setIsLoading(false));
-    } else {
-      setIsLoading(false);
+      
+      try {
+        // Make a simple authenticated request to validate the token
+        // If token is expired, the interceptor will handle refresh automatically
+        await api.get('/auth/validate'); // or any protected endpoint
+        console.log("✅ Session is valid");
+      } catch (error) {
+        console.log("⚠️ Session validation failed, but interceptor should handle it");
+        // The interceptor will handle token refresh, so we don't need to do anything here
+      }
     }
   }, []);
-  const refreshAccessToken = async () => {
-  try {
-    const res = await api.get('/auth/refresh', { withCredentials: true });
-    const newToken = res.data.accessToken;
-    localStorage.setItem('token', newToken);
-    setToken(newToken);
-  } catch (err) {
-    console.error("Error refreshing:", err);
-    logout();
-  }
-};
 
+  // ✅ Load user + token on mount
+  useEffect(() => {
+    const initializeAuth = async () => {
+      try {
+        await validateSession();
+      } catch (error) {
+        console.error("❌ Error initializing auth:", error);
+        // Clear everything on error
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        setUserState(null);
+        setTokenState(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeAuth();
+  }, [validateSession]);
+
+  // ✅ Listen for token changes in localStorage (for cross-tab sync)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'token') {
+        if (e.newValue) {
+          setTokenState(e.newValue);
+        } else {
+          setTokenState(null);
+        }
+      }
+      if (e.key === 'user') {
+        if (e.newValue) {
+          setUserState(JSON.parse(e.newValue));
+        } else {
+          setUserState(null);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // ✅ Refresh token when app regains focus (optional)
+  useEffect(() => {
+    const handleFocus = () => {
+      if (user && token) {
+        // The interceptor will handle token refresh automatically on next request
+        // So we just need to make a simple request
+        validateSession();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [user, token, validateSession]);
 
   return (
     <UserAuthContext.Provider
