@@ -12,6 +12,9 @@
   "dependencies": {
     "flowbite-react": "^0.11.8",
     "framer-motion": "^12.23.3",
+    "fuzzball": "^2.2.2",
+    "gpt-tokenizer": "^3.0.1",
+    "groq-sdk": "^0.27.0",
     "lucide-react": "^0.525.0",
     "next": "15.3.5",
     "react": "^19.0.0",

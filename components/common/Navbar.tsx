@@ -8,7 +8,8 @@ import { useCart } from "@/context/CartContext";
 export default function Navbar() {
   const { cart } = useCart();
 
-  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+  // const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+    const totalItems = cart.length; // Count of unique items, not total quantity
 
   return (
     <nav className='sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm' aria-label='Main Navigation'>

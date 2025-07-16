@@ -1,0 +1,786 @@
+{
+  "Chair": {
+    "arname": "كرسي",
+    "unit": "piece"
+  },
+  "Plastics": {
+    "arname": "بلاستيك",
+    "unit": "KG"
+  },
+  "Coleman Water": {
+    "arname": "كولمان مياه",
+    "unit": "piece"
+  },
+  "Plastic Barrel": {
+    "arname": "برميل بلاستيك",
+    "unit": "piece"
+  },
+  "Acrylic": {
+    "arname": "أكريليك",
+    "unit": "KG"
+  },
+  "Solid Plastic": {
+    "arname": "بلاستيك صلب",
+    "unit": "KG"
+  },
+  "Books": {
+    "arname": "كتب",
+    "unit": "KG"
+  },
+  "Newspaper": {
+    "arname": "جرايد",
+    "unit": "KG"
+  },
+  "Cardboard": {
+    "arname": "كرتون",
+    "unit": "KG"
+  },
+  "Magazines": {
+    "arname": "مجلات",
+    "unit": "KG"
+  },
+  "Paper": {
+    "arname": "ورق",
+    "unit": "KG"
+  },
+  "Shredded paper": {
+    "arname": "ورق متقطع",
+    "unit": "KG"
+  },
+  "Used cooking oil": {
+    "arname": "زيت أكل مستعمل",
+    "unit": "KG"
+  },
+  "Mobile": {
+    "arname": "موبايل",
+    "unit": "piece"
+  },
+  "Laptop": {
+    "arname": "لابتوب",
+    "unit": "piece"
+  },
+  "Router": {
+    "arname": "راوتر",
+    "unit": "piece"
+  },
+  "Old computer monitor": {
+    "arname": "شاشة كمبيوتر قديمة",
+    "unit": "piece"
+  },
+  "Computer CPU": {
+    "arname": "بروسيسور كمبيوتر",
+    "unit": "piece"
+  },
+  "Receiver": {
+    "arname": "ريسيفر",
+    "unit": "piece"
+  },
+  "Tablet": {
+    "arname": "تابلت",
+    "unit": "piece"
+  },
+  "Laptop battery": {
+    "arname": "بطارية لابتوب",
+    "unit": "piece"
+  },
+  "Printer": {
+    "arname": "طابعة",
+    "unit": "piece"
+  },
+  "Scanner": {
+    "arname": "اسكانر",
+    "unit": "piece"
+  },
+  "Subwoofer": {
+    "arname": "صب ووفر",
+    "unit": "piece"
+  },
+  "Memory ram": {
+    "arname": "رامات",
+    "unit": "piece"
+  },
+  "Power supply": {
+    "arname": "باور سبلاي",
+    "unit": "piece"
+  },
+  "Screen card": {
+    "arname": "كارت شاشة",
+    "unit": "piece"
+  },
+  "Printing machine": {
+    "arname": "ماكينة طباعة",
+    "unit": "piece"
+  },
+  "Mobile motherboard": {
+    "arname": "مازر بورد موبايل",
+    "unit": "piece"
+  },
+  "Laptop motherboard": {
+    "arname": "مازر بورد لابتوب",
+    "unit": "piece"
+  },
+  "PlayStation 1": {
+    "arname": "بلاي ستيشن 1",
+    "unit": "piece"
+  },
+  "DVD player": {
+    "arname": "مشغل دي في دي",
+    "unit": "piece"
+  },
+  "Video device": {
+    "arname": "جهاز فيديو",
+    "unit": "piece"
+  },
+  "Microphone": {
+    "arname": "مايكروفون",
+    "unit": "piece"
+  },
+  "PC fan": {
+    "arname": "مروحة كمبيوتر",
+    "unit": "piece"
+  },
+  "Processor": {
+    "arname": "بروسيسور",
+    "unit": "piece"
+  },
+  "CD rom drive": {
+    "arname": "مشغل سي دي",
+    "unit": "piece"
+  },
+  "Airpods": {
+    "arname": "إيربودز",
+    "unit": "piece"
+  },
+  "Shaver": {
+    "arname": "ماكينة حلاقة",
+    "unit": "piece"
+  },
+  "Sound Card": {
+    "arname": "كارت صوت",
+    "unit": "piece"
+  },
+  "Network Card": {
+    "arname": "كارت شبكة",
+    "unit": "piece"
+  },
+  "Web Camera": {
+    "arname": "كاميرا ويب",
+    "unit": "piece"
+  },
+  "Hard disk": {
+    "arname": "هارد ديسك",
+    "unit": "piece"
+  },
+  "Hoverboard": {
+    "arname": "هوفر بورد",
+    "unit": "piece"
+  },
+  "Radio sound": {
+    "arname": "راديو",
+    "unit": "piece"
+  },
+  "Ipod": {
+    "arname": "آيبود",
+    "unit": "piece"
+  },
+  "Projector": {
+    "arname": "بروجيكتور",
+    "unit": "piece"
+  },
+  "Mifi": {
+    "arname": "ماي فاي",
+    "unit": "piece"
+  },
+  "PowerBank": {
+    "arname": "باور بانك",
+    "unit": "piece"
+  },
+  "Usb Modem": {
+    "arname": "مودم يو اس بي",
+    "unit": "piece"
+  },
+  "Wii": {
+    "arname": "وي",
+    "unit": "piece"
+  },
+  "Playstation 2": {
+    "arname": "بلاي ستيشن 2",
+    "unit": "piece"
+  },
+  "XBox": {
+    "arname": "إكس بوكس",
+    "unit": "piece"
+  },
+  "PlayStation Portable": {
+    "arname": "بلاي ستيشن محمول",
+    "unit": "piece"
+  },
+  "MB3": {
+    "arname": "إم بي 3",
+    "unit": "piece"
+  },
+  "UPS": {
+    "arname": "يو بي اس",
+    "unit": "KG"
+  },
+  "Big Printer": {
+    "arname": "طابعة كبيرة",
+    "unit": "piece"
+  },
+  "Radio cassette": {
+    "arname": "راديو كاسيت",
+    "unit": "piece"
+  },
+  "Digital Camera": {
+    "arname": "كاميرا ديجيتال",
+    "unit": "piece"
+  },
+  "DVR": {
+    "arname": "دي في ار",
+    "unit": "piece"
+  },
+  "Camera Switch": {
+    "arname": "مفتاح كاميرا",
+    "unit": "piece"
+  },
+  "Fax": {
+    "arname": "فاكس",
+    "unit": "piece"
+  },
+  "Paper shredder": {
+    "arname": "مفرمة ورق",
+    "unit": "piece"
+  },
+  "Computer monitor Lcd": {
+    "arname": "شاشة كمبيوتر إل سي دي",
+    "unit": "piece"
+  },
+  "Copper": {
+    "arname": "نحاس",
+    "unit": "KG"
+  },
+  "Basin mixer": {
+    "arname": "خلاط حوض",
+    "unit": "piece"
+  },
+  "Aluminium": {
+    "arname": "ألومنيوم",
+    "unit": "KG"
+  },
+  "Cooking pan": {
+    "arname": "طاسة",
+    "unit": "piece"
+  },
+  "Fire extinguisher": {
+    "arname": "طفاية حريق",
+    "unit": "piece"
+  },
+  "Iron.": {
+    "arname": "حديد",
+    "unit": "KG"
+  },
+  "Chandeliers": {
+    "arname": "نجف",
+    "unit": "piece"
+  },
+  "Clothes dryer": {
+    "arname": "مجفف ملابس",
+    "unit": "piece"
+  },
+  "Alumetal door": {
+    "arname": "باب ألوميتال",
+    "unit": "piece"
+  },
+  "Washing Machine Base": {
+    "arname": "قاعدة غسالة",
+    "unit": "piece"
+  },
+  "Water motor": {
+    "arname": "موتور مياه",
+    "unit": "piece"
+  },
+  "Trans": {
+    "arname": "ترانس",
+    "unit": "piece"
+  },
+  "Balloon Motor": {
+    "arname": "موتور بالونة",
+    "unit": "piece"
+  },
+  "Pan": {
+    "arname": "طاسة",
+    "unit": "piece"
+  },
+  "Granite Pot": {
+    "arname": "حلة جرانيت",
+    "unit": "piece"
+  },
+  "Stainless Sink": {
+    "arname": "حوض ستانلس",
+    "unit": "piece"
+  },
+  "Cans": {
+    "arname": "علب صفيح",
+    "unit": "KG"
+  },
+  "Ladder": {
+    "arname": "سلم",
+    "unit": "piece"
+  },
+  "Stainless": {
+    "arname": "ستانلس",
+    "unit": "KG"
+  },
+  "Tinplate": {
+    "arname": "صفيح",
+    "unit": "KG"
+  },
+  "Office chair": {
+    "arname": "كرسي مكتب",
+    "unit": "piece"
+  },
+  "Fridge Motor": {
+    "arname": "موتور ثلاجة",
+    "unit": "piece"
+  },
+  "Washing motor": {
+    "arname": "موتور غسالة",
+    "unit": "piece"
+  },
+  "Ceramic Pot": {
+    "arname": "حلة سيراميك",
+    "unit": "piece"
+  },
+  "Tefal pot": {
+    "arname": "حلة تيفال",
+    "unit": "piece"
+  },
+  "Stainless Kettle": {
+    "arname": "كاتل ستانلس",
+    "unit": "piece"
+  },
+  "Water knob": {
+    "arname": "مقبض مياه",
+    "unit": "piece"
+  },
+  "Ethernet cable": {
+    "arname": "كابل إنترنت",
+    "unit": "KG"
+  },
+  "Dry aluminum": {
+    "arname": "ألومنيوم ناشف",
+    "unit": "KG"
+  },
+  "Fan": {
+    "arname": "مروحة",
+    "unit": "piece"
+  },
+  "Iron": {
+    "arname": "مكواة",
+    "unit": "piece"
+  },
+  "Gas Heater 10 Liter": {
+    "arname": "سخان غاز 10 لتر",
+    "unit": "piece"
+  },
+  "Indoor AC unit": {
+    "arname": "وحدة تكييف داخلية",
+    "unit": "piece"
+  },
+  "Blender": {
+    "arname": "خلاط",
+    "unit": "piece"
+  },
+  "Microwave": {
+    "arname": "ميكروويف",
+    "unit": "piece"
+  },
+  "Fridge": {
+    "arname": "ثلاجة",
+    "unit": "piece"
+  },
+  "Washing Machine": {
+    "arname": "غسالة",
+    "unit": "piece"
+  },
+  "Dishwasher": {
+    "arname": "غسالة أطباق",
+    "unit": "piece"
+  },
+  "Vacuum": {
+    "arname": "مكنسة كهربائية",
+    "unit": "piece"
+  },
+  "Kettle": {
+    "arname": "كاتل",
+    "unit": "piece"
+  },
+  "Chopper": {
+    "arname": "مفرمة",
+    "unit": "piece"
+  },
+  "Heater Device": {
+    "arname": "دفاية",
+    "unit": "piece"
+  },
+  "Radio": {
+    "arname": "راديو",
+    "unit": "piece"
+  },
+  "Cooker": {
+    "arname": "بوتاجاز",
+    "unit": "piece"
+  },
+  "Electric fryer": {
+    "arname": "قلاية كهربائية",
+    "unit": "piece"
+  },
+  "Ventilation fan": {
+    "arname": "شفاط",
+    "unit": "piece"
+  },
+  "Kitchen machine": {
+    "arname": "كيتشن ماشين",
+    "unit": "piece"
+  },
+  "Mixer": {
+    "arname": "مضرب",
+    "unit": "piece"
+  },
+  "Toaster": {
+    "arname": "توستر",
+    "unit": "piece"
+  },
+  "Hair dryer": {
+    "arname": "سيشوار",
+    "unit": "piece"
+  },
+  "Babyliss": {
+    "arname": "بيبي ليس",
+    "unit": "piece"
+  },
+  "Insect Killer": {
+    "arname": "صاعق ناموس",
+    "unit": "piece"
+  },
+  "Electric fly insect killer": {
+    "arname": "صاعق حشرات",
+    "unit": "piece"
+  },
+  "Small Led Rechargeable": {
+    "arname": "كشاف ليد صغير شحن",
+    "unit": "piece"
+  },
+  "Digital clock": {
+    "arname": "ساعة رقمية",
+    "unit": "piece"
+  },
+  "Iron table": {
+    "arname": "ترابيزة مكواة",
+    "unit": "piece"
+  },
+  "Deep Freezer": {
+    "arname": "ديب فريزر",
+    "unit": "piece"
+  },
+  "Steam iron": {
+    "arname": "مكواة بخار",
+    "unit": "piece"
+  },
+  "Hand blender": {
+    "arname": "هاند بلندر",
+    "unit": "piece"
+  },
+  "Coffee maker": {
+    "arname": "ماكينة قهوة",
+    "unit": "piece"
+  },
+  "Blower": {
+    "arname": "منفاخ",
+    "unit": "piece"
+  },
+  "Tea thermos": {
+    "arname": "ترمس شاي",
+    "unit": "piece"
+  },
+  "Lamp shades": {
+    "arname": "أباجورة",
+    "unit": "piece"
+  },
+  "Dispenser": {
+    "arname": "كولدير",
+    "unit": "piece"
+  },
+  "Sandwich Maker": {
+    "arname": "صانع ساندويتش",
+    "unit": "piece"
+  },
+  "Theatre Home sound": {
+    "arname": "ساوند سيستم منزلي",
+    "unit": "piece"
+  },
+  "Mini bar fridge": {
+    "arname": "ثلاجة ميني بار",
+    "unit": "piece"
+  },
+  "Sewing machine": {
+    "arname": "ماكينة خياطة",
+    "unit": "piece"
+  },
+  "Old TV": {
+    "arname": "تلفزيون قديم",
+    "unit": "piece"
+  },
+  "Gas Stove": {
+    "arname": "بوتاجاز غاز",
+    "unit": "piece"
+  },
+  "Desert Air conditioner": {
+    "arname": "تكييف صحراوي",
+    "unit": "piece"
+  },
+  "Oven": {
+    "arname": "فرن",
+    "unit": "piece"
+  },
+  "Manual washing": {
+    "arname": "غسالة عادية",
+    "unit": "piece"
+  },
+  "Dryer": {
+    "arname": "مجفف",
+    "unit": "piece"
+  },
+  "Stand Mixer": {
+    "arname": "عجان",
+    "unit": "piece"
+  },
+  "Oil heater 9 fin": {
+    "arname": "دفاية زيت 9 ريشة",
+    "unit": "piece"
+  },
+  "Oil heater 11 fin": {
+    "arname": "دفاية زيت 11 ريشة",
+    "unit": "piece"
+  },
+  "Oil heater 15 fin": {
+    "arname": "دفاية زيت 15 ريشة",
+    "unit": "piece"
+  },
+  "Oil Heater - 7 Layers": {
+    "arname": "دفاية زيت - 7 ريش",
+    "unit": "piece"
+  },
+  "Cooker Hood": {
+    "arname": "شفاط مطبخ",
+    "unit": "piece"
+  },
+  "Ceramic Electric Stove": {
+    "arname": "بوتاجاز كهرباء سيراميك",
+    "unit": "piece"
+  },
+  "Half Automatic Washing Machine": {
+    "arname": "غسالة نصف أوتوماتيك",
+    "unit": "piece"
+  },
+  "Ceiling Fan": {
+    "arname": "مروحة سقف",
+    "unit": "piece"
+  },
+  "Donuts Maker": {
+    "arname": "صانعة دونات",
+    "unit": "piece"
+  },
+  "Intercom": {
+    "arname": "إنتركم",
+    "unit": "piece"
+  },
+  "Outdoor AC": {
+    "arname": "وحدة تكييف خارجية",
+    "unit": "piece"
+  },
+  "Small Water Heater": {
+    "arname": "سخان مياه صغير",
+    "unit": "piece"
+  },
+  "Air Purifier": {
+    "arname": "منقي هواء",
+    "unit": "piece"
+  },
+  "Small Dishwasher": {
+    "arname": "غسالة أطباق صغيرة",
+    "unit": "piece"
+  },
+  "Electric Heater 10 Liter": {
+    "arname": "سخان كهرباء 10 لتر",
+    "unit": "piece"
+  },
+  "Electric heater 20 Liter": {
+    "arname": "سخان كهرباء 20 لتر",
+    "unit": "piece"
+  },
+  "Electric heater 30 Liter": {
+    "arname": "سخان كهرباء 30 لتر",
+    "unit": "piece"
+  },
+  "Electric heater 40 Liter": {
+    "arname": "سخان كهرباء 40 لتر",
+    "unit": "piece"
+  },
+  "Electric heater 60 Liter": {
+    "arname": "سخان كهرباء 60 لتر",
+    "unit": "piece"
+  },
+  "Electric heater 50 Liter": {
+    "arname": "سخان كهرباء 50 لتر",
+    "unit": "piece"
+  },
+  "Big Led Rechargeable": {
+    "arname": "كشاف ليد كبير شحن",
+    "unit": "piece"
+  },
+  "Gas Heater 6 Liter": {
+    "arname": "سخان غاز 6 لتر",
+    "unit": "piece"
+  },
+  "Washing Machine Top Automatic": {
+    "arname": "غسالة فوق أوتوماتيك",
+    "unit": "piece"
+  },
+  "LED TV 32 inch": {
+    "arname": "شاشة 32 بوصة",
+    "unit": "piece"
+  },
+  "LED TV 43 inch": {
+    "arname": "شاشة 43 بوصة",
+    "unit": "piece"
+  },
+  "LED TV 54 inch": {
+    "arname": "شاشة 54 بوصة",
+    "unit": "piece"
+  },
+  "LED TV 64 inch": {
+    "arname": "شاشة 64 بوصة",
+    "unit": "piece"
+  },
+  "Typewriter": {
+    "arname": "آلة كاتبة",
+    "unit": "piece"
+  },
+  "Gramophone": {
+    "arname": "جراموفون",
+    "unit": "piece"
+  },
+  "Antique Phone": {
+    "arname": "تليفون قديم",
+    "unit": "piece"
+  },
+  "Car door": {
+    "arname": "باب عربية",
+    "unit": "piece"
+  },
+  "Cabot": {
+    "arname": "كابوت",
+    "unit": "piece"
+  },
+  "Car Vacuum Cleaner": {
+    "arname": "مكنسة عربية",
+    "unit": "piece"
+  },
+  "Tire Rim": {
+    "arname": "جنط كاوتش",
+    "unit": "piece"
+  },
+  "Car Battery": {
+    "arname": "بطارية عربية",
+    "unit": "piece"
+  },
+  "Radiator": {
+    "arname": "رادياتير",
+    "unit": "piece"
+  },
+  "Car Casette": {
+    "arname": "كاسيت عربية",
+    "unit": "piece"
+  },
+  "Dynamo": {
+    "arname": "دينامو",
+    "unit": "piece"
+  },
+  "Assistant": {
+    "arname": "مساعد",
+    "unit": "piece"
+  },
+  "Ignition Coil": {
+    "arname": "موبينة",
+    "unit": "piece"
+  },
+  "Shacman": {
+    "arname": "شاكمان",
+    "unit": "piece"
+  },
+  "Motorcycle battery": {
+    "arname": "بطارية موتوسيكل",
+    "unit": "piece"
+  },
+  "Fuel tank": {
+    "arname": "تانك بنزين",
+    "unit": "piece"
+  },
+  "Car drum": {
+    "arname": "طبلة عربية",
+    "unit": "piece"
+  },
+  "Oil filter": {
+    "arname": "فلتر زيت",
+    "unit": "piece"
+  },
+  "Fuel Filter": {
+    "arname": "فلتر بنزين",
+    "unit": "piece"
+  },
+  "Car Motor": {
+    "arname": "موتور عربية",
+    "unit": "piece"
+  },
+  "Battery Charger": {
+    "arname": "شاحن بطارية",
+    "unit": "piece"
+  },
+  "Driller": {
+    "arname": "شنيور",
+    "unit": "piece"
+  },
+  "Treadmill": {
+    "arname": "جهاز مشي",
+    "unit": "piece"
+  },
+  "Orbitrack": {
+    "arname": "أوربتراك",
+    "unit": "piece"
+  },
+  "Ab machine": {
+    "arname": "جهاز بطن",
+    "unit": "piece"
+  },
+  "Scooter": {
+    "arname": "سكوتر",
+    "unit": "piece"
+  },
+  "Baby Gears": {
+    "arname": "مستلزمات أطفال",
+    "unit": "piece"
+  },
+  "Child bicycle": {
+    "arname": "عجلة أطفال",
+    "unit": "piece"
+  },
+  "Milk Package": {
+    "arname": "علبة لبن",
+    "unit": "KG"
+  },
+  "Juice package": {
+    "arname": "علبة عصير",
+    "unit": "KG"
+  }
+}
