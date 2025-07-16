@@ -259,11 +259,11 @@ export default function CartPage() {
                   </div>
                 </div>
 
-                <button
+                <Link href={'/pickup'}
                   className="w-full bg-green-500 hover:bg-gray-800 text-white font-normal py-4 px-6 rounded-full transition-all duration-300 hover:shadow-lg flex items-center justify-center"
                 >
                   Proceed to Checkout
-                </button>
+                </Link>
 
                 <p className="text-xs text-[#aaa] mt-6 text-center">
                   Free shipping and returns available

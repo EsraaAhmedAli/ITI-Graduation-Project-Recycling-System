@@ -213,7 +213,7 @@ const handleUpdateAddress = async (data: FormInputs) => {
           {addr.street}, Bldg {addr.building}, Floor {addr.floor}, Apt {addr.apartment}
         </p>
         <div className="flex gap-2 mt-2">
-          <input id="addressRadio" type="radio" name="address" onClick={() => handleSelectAddress(addr)} className="text-green-700" />
+          <input  id="addressRadio"  type="radio" name="address" onClick={() => handleSelectAddress(addr)} className="text-green-700" />
           <button onClick={() => handleEditAddress(addr)} className="text-sm">Edit</button>
           <button onClick={() => handleDeleteAddress(addr._id)} className="text-red-700 text-sm">Delete</button>
         </div>
