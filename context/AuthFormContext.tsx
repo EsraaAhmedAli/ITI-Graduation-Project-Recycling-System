@@ -9,8 +9,6 @@ interface User {
   phoneNumber: string;
   imageUrl?: string;
   isAuthenticated?: boolean;
-  _id:number,
-  name:string
 }
 
 interface UserAuthContextType {
@@ -29,7 +27,6 @@ export const UserAuthProvider = ({
   children: React.ReactNode;
 }) => {
   const [user, setUserState] = useState<User | null>(null);
-  
 
   // Load user from localStorage
   useEffect(() => {
@@ -44,17 +41,15 @@ export const UserAuthProvider = ({
       localStorage.setItem("user", JSON.stringify(user));
     } else {
       localStorage.removeItem("user");
-
     }
     setUserState(user);
   };
 
   const logout = () => {
     localStorage.removeItem("user");
-          localStorage.removeItem('token')
+    localStorage.removeItem("token");
 
     setUserState(null);
-    
   };
 
   return (
