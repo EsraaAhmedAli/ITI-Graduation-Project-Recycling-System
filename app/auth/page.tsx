@@ -7,8 +7,10 @@ import Wrapper from "@/components/auth/Wrapper";
 import { HiEye, HiEyeOff } from "react-icons/hi";
 import PhoneInput from "@/components/auth/PhoneInput";
 import { useRouter } from "next/navigation";
-import { forgotPassword, initiateSignup, loginUser } from "@/lib/auth";
+import {  initiateSignup, loginUser } from "@/lib/auth";
 import { useUserAuth } from "@/context/AuthFormContext";
+import { toast } from "react-toastify";
+import Link from "next/link";
 
 const FormInitialState = {
   fullName: "",
@@ -113,9 +115,10 @@ export default function AuthForm(): React.JSX.Element {
       console.log("Signing up with:", form);
       setIsValid(true);
       await handleSendOtp();
+      setIsValid(false)
     } else {
       if (!validateEmail(form.email) || !validatePassword(form.password)) {
-        alert("Please fill all fields correctly");
+        toast.error("Please fill all fields correctly");
         return;
       }
       // Handle login logic here
@@ -137,26 +140,10 @@ export default function AuthForm(): React.JSX.Element {
       console.log("Token:", res.token);
       router.push("/cart");
     } catch (err) {
-      alert("Login failed. Please check your credentials.");
+      toast.error("Login failed. Please check your credentials.");
     }
   };
-  const handleForgotPassword = async () => {
-    try {
-      if (!form.email) {
-        alert("Please enter your email first.");
-        return;
-      }
 
-      await forgotPassword(form.email); // ✅ Send OTP
-      setUser({
-        ...form,
-        email: form.email,
-      });
-      router.push(`/auth/otp?from=forgot`);
-    } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to send OTP");
-    }
-  };
 
   const handleSendOtp = async () => {
     try {
@@ -166,10 +153,11 @@ export default function AuthForm(): React.JSX.Element {
         setUser({ ...form, isAuthenticated: true });
         router.push("/auth/otp?from=signup");
       } else {
-        alert("Failed to send OTP. Please try again.");
+        toast.error("Failed to send OTP. Please try again.");
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || "Something went wrong");
+      toast.error(err.response?.data?.message || "Something went wrong");
+      
     }
   };
 
@@ -328,13 +316,12 @@ export default function AuthForm(): React.JSX.Element {
         </Button>
       </form>
       {mode === "login" && (
-        <Button
-          type="button"
-          onClick={handleForgotPassword}
-          className="text-sm text-center flex ms-auto mt-5 text-blue-600 hover:underline cursor-pointer"
+        <Link
+        href={'/auth/forget-password'}
+          className="text-sm text-center flex flex-row justify-end ms-auto mt-5 text-blue-600 hover:underline cursor-pointer"
         >
           Forgot your password?
-        </Button>
+        </Link>
       )}
 
       <div className="mt-6 text-center text-xs text-gray-400">

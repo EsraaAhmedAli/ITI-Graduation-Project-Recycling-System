@@ -1,7 +1,6 @@
 "use client";
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 
-// If you're using TypeScript
 interface User {
   id?: string;
   fullName: string;
@@ -18,7 +17,6 @@ interface UserAuthContextType {
   logout: () => void;
 }
 
-// Create the context
 export const UserAuthContext = createContext<UserAuthContextType | undefined>(
   undefined
 );
@@ -28,9 +26,29 @@ export const UserAuthProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUserState] = useState<User | null>(null);
 
-  const logout = () => setUser(null);
+  // Load user from localStorage
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUserState(JSON.parse(storedUser));
+    }
+  }, []);
+
+  const setUser = (user: User | null) => {
+    if (user) {
+      localStorage.setItem("user", JSON.stringify(user));
+    } else {
+      localStorage.removeItem("user");
+    }
+    setUserState(user);
+  };
+
+  const logout = () => {
+    localStorage.removeItem("user");
+    setUserState(null);
+  };
 
   return (
     <UserAuthContext.Provider value={{ user, setUser, logout }}>
@@ -38,6 +56,7 @@ export const UserAuthProvider = ({
     </UserAuthContext.Provider>
   );
 };
+
 export const useUserAuth = () => {
   const context = useContext(UserAuthContext);
   if (!context) {
