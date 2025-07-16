@@ -8,6 +8,7 @@ import { HiEye, HiEyeOff } from "react-icons/hi";
 import PhoneInput from "@/components/auth/PhoneInput";
 import { useRouter } from "next/navigation";
 import { forgotPassword, initiateSignup, loginUser } from "@/lib/auth";
+import { setAccessToken } from "@/lib/axios";
 import { useUserAuth } from "@/context/AuthFormContext";
 
 const FormInitialState = {
@@ -132,11 +133,14 @@ export default function AuthForm(): React.JSX.Element {
       });
 
       setUser(res.user);
-      localStorage.setItem("token", res.token);
+      setAccessToken(res.token);
+      // Store token in localStorage (or cookies)
+      // localStorage.setItem("token", res.token);
       console.log("Login successful:", res.user);
       console.log("Token:", res.token);
       router.push("/cart");
-    } catch (err) {
+    } catch (error) {
+      // const e = error as Error;
       alert("Login failed. Please check your credentials.");
     }
   };

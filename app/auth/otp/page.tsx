@@ -5,7 +5,8 @@ import React, { useRef, useState } from "react";
 import { Button } from "flowbite-react";
 import Wrapper from "@/components/auth/Wrapper";
 import { useRouter } from "next/navigation";
-import { resetPassword, verifyOtpAndRegister } from "@/lib/auth";
+import { verifyOtpAndRegister } from "@/lib/auth";
+import { setAccessToken } from "@/lib/axios";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { useSearchParams } from "next/navigation";
 
@@ -93,10 +94,11 @@ export default function OTPInput({ length = 6, onSubmit }: OTPInputProps) {
       console.log(res);
 
       // Store token in localStorage (or cookies)
-      localStorage.setItem("token", res.token);
+      // localStorage.setItem("token", res.token);
 
       // Optionally store user in global context
       setUser(res.user); // if using React Context
+      setAccessToken(res.token); // Store token in axios instance
 
       router.push("/cart");
     } catch (error) {
