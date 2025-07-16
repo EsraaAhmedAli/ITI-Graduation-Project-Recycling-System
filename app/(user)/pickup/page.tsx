@@ -1,19 +1,32 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
+import { useState, useEffect, useContext } from "react";
+import { useForm } from "react-hook-form";
 import { City, FormInputs } from "@/components/Types/address.type";
 import Review from "./ReviewForm";
 import Step from "./Step";
 import Button from "@/components/common/Button";
 import AddressStep from "./AddressStep";
+import api from "@/services/api";
+import { toast } from "react-toastify";
+import { UserAuthContext } from "@/context/AuthFormContext";
 
 export default function PickupConfirmation() {
   const [currentStep, setCurrentStep] = useState(1);
+const [loading, setLoading] = useState<boolean>(true);
+const [copied, setCopied] = useState(false);
+const[loadingBtn , setLoadingBtn] = useState<boolean>(false)
+const [direction, setDirection] = useState<'forward' | 'backward'>('forward');
+
   const [selectedCity, setSelectedCity] = useState<City | "">("");
   const [formData, setFormData] = useState<FormInputs | null>(null);
-  const [savedAddress, setSavedAddress] = useState<FormInputs | null>(null);
+const [addresses, setAddresses] = useState<FormInputs[]>([]);
+const [selectedAddress, setSelectedAddress] = useState<FormInputs | null>(null);
+const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
+
   const [isEditing, setIsEditing] = useState(false);
+const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
+const{user}=useContext(UserAuthContext) ?? {}
 
   const {
     register,
@@ -25,68 +38,127 @@ export default function PickupConfirmation() {
     mode: "onChange",
     reValidateMode: "onChange",
   });
-
-  // Load saved address from localStorage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem("userAddress");
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      setSavedAddress(parsed);
-      setFormData(parsed);
-      setSelectedCity(parsed.city);
-      reset(parsed); // prefill form if needed
+  const handleNextStep=()=>{
+    if(!selectedAddress)
+    {
+      toast.error('please select address')
     }
-  }, [reset]);
+   else {
+    goToStep(2)
+   }
 
-  const handleStep1Submit: SubmitHandler<FormInputs> = (data) => {
-    setFormData(data);
-    setCurrentStep(2);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
 
-  const handleConfirm = () => {
-    if (!formData) return;
+  }
+const fetchAddresses = async () => {
+  try {
+    const res = await api.get("/addresses");
+    setAddresses(res.data);
+    console.log(res.data);
+    
+  } catch (err) {
+    console.error("Failed to fetch addresses:", err);
+  }
+};
 
-    console.log("Sending order to server:", formData);
+useEffect(() => {
+  fetchAddresses()
+  setIsEditing(false)
+  setLoading(false);
+}, [reset]);
+
+
+const goToStep = (step: number) => {
+  if (step > currentStep) {
+    setDirection('forward');
+  } else if (step < currentStep) {
+    setDirection('backward');
+  }
+  setCurrentStep(step);
+};
+const handleConfirm = () => {
+  if (!selectedAddress) {
+    toast.error("Please select an address");
+    return;
+  }
+
+  setLoadingBtn(true);
+  api.post('orders', {
+    user: { userId: user?._id, phoneNumber: user?.phoneNumber, userName: user?.name },
+    address: selectedAddress,
+    items: [{ "name": "Cans", "quantity": 10, "totalPoints": 500 }],
+  })
+  .then(res => {
+    setLoadingBtn(false);
+    setCreatedOrderId(res.data.order._id);
     setCurrentStep(3);
-  };
+  })
+  .catch(err => {
+    toast.error(err?.message);
+    setLoadingBtn(false);
+  });
+};
 
-  // Save new or edited address to localStorage & state
-  const handleSaveAddress = (data: FormInputs) => {
-    localStorage.setItem("userAddress", JSON.stringify(data));
-    setSavedAddress(data);
-    setFormData(data);
-    setSelectedCity(data.city);
+
+const handleSaveAddress = async (data: FormInputs) => {
+  try {
+    const res = await api.post('/addresses', data);
+    setAddresses(prev => [...prev, res.data]);
     setIsEditing(false);
+    setSelectedAddress(res.data);
     setCurrentStep(1);
-    reset(data);
-  };
-
-  // Delete saved address
-  const handleDeleteAddress = () => {
-    localStorage.removeItem("userAddress");
-    setSavedAddress(null);
-    setFormData(null);
-    setSelectedCity("");
-    setIsEditing(true);
     reset();
-  };
+    toast.success("Address saved!");
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to save address");
+  }
+};
 
-  // Start editing (show form prefilled)
-  const handleEditAddress = () => {
-    if (!savedAddress) return;
-    setIsEditing(true);
-    reset(savedAddress);
-    setSelectedCity(savedAddress.city);
-    setFormData(savedAddress);
-  };
 
-  // If editing or no saved address → show form,
-  // otherwise show saved address summary with edit/delete icons
+const handleDeleteAddress = async (id: string) => {
+  try {
+    await api.delete(`/addresses/${id}`);
+    setAddresses(prev => prev.filter(addr => addr._id !== id));
+    if (selectedAddress?._id === id) setSelectedAddress(null);
+    toast.success("Address deleted");
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to delete address");
+  }
+};
+const handleSelectAddress = (address: FormInputs) => {
+  setSelectedAddress(address);
+  setFormData(address);
+}
+
+const handleEditAddress = (address: FormInputs) => {
+  setIsEditing(true);
+  setEditingAddressId(address._id);
+  reset(address);
+  setSelectedCity(address.city as City);
+};
+const handleUpdateAddress = async (data: FormInputs) => {
+  try {
+    const res = await api.put(`/addresses/${editingAddressId}`, data);
+    setAddresses(prev => prev.map(addr => addr._id === editingAddressId ? res.data : addr));
+    setIsEditing(false);
+    setEditingAddressId(null);
+    setSelectedAddress(res.data);
+    toast.success("Address updated!");
+    setCurrentStep(1);
+    reset();
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to update address");
+  }
+};
+
+
+  if(loading) return null
   return (
     <div className="lg:w-3xl w-full mx-auto md:p-8 p-5 bg-white rounded-2xl shadow-lg border border-green-100">
       <div className="flex my-3 flex-col md:flex-row items-start md:items-center gap-4 md:gap-0">
-        <Step label="Address" active={currentStep >= 1} />
+<Step label="Address" direction={direction} isCurrent={currentStep === 1} active={currentStep >= 1} stepNumber={1} />
         <div
           className={`hidden md:flex flex-grow h-0.5 mx-2 ${
             currentStep >= 2 ? "bg-green-700" : "bg-gray-300"
@@ -97,7 +169,7 @@ export default function PickupConfirmation() {
             currentStep >= 2 ? "bg-green-700" : "bg-gray-300"
           }`}
         />
-        <Step label="Review" active={currentStep >= 2} />
+<Step label="Review" direction={direction} isCurrent={currentStep === 2} active={currentStep >= 2} stepNumber={2} />
         <div
           className={`hidden md:flex flex-grow h-0.5 mx-2 ${
             currentStep >= 3 ? "bg-green-700" : "bg-gray-300"
@@ -108,96 +180,141 @@ export default function PickupConfirmation() {
             currentStep >= 3 ? "bg-green-700" : "bg-gray-300"
           }`}
         />
-        <Step label="Finish" active={currentStep >= 3} />
+<Step label="Finish" direction={direction} isCurrent={currentStep === 3} active={currentStep >= 3} stepNumber={3} />
       </div>
 
  
 {currentStep === 1 && (
-  <>
-    {!savedAddress || isEditing ? (
-      <AddressStep
-        register={register}
-        errors={errors}
-        selectedCity={selectedCity}
-        setSelectedCity={setSelectedCity}
-        setValue={setValue}
-        isValid={isValid}
-        onSubmit={handleSubmit(handleSaveAddress)}
-      />
-    ) : (
 <>
-      <div className="border border-gray-300 rounded-lg p-6 shadow-md flex flex-col md:flex-row justify-between items-center bg-green-50">
-        <div className="space-y-1 text-gray-800 text-sm">
-          <h3 className="font-semibold text-green-700 mb-2">Saved Address</h3>
-          <p>
-            <span className="font-medium">City:</span> {savedAddress.city}
-          </p>
-          <p>
-            <span className="font-medium">Area:</span> {savedAddress.area}
-          </p>
-          <p>
-            <span className="font-medium">Street:</span> {savedAddress.street}
-          </p>
-          <p>
-            <span className="font-medium">Building:</span> {savedAddress.building}
-          </p>
-        </div>
-        <div className="flex items-center gap-4 mt-4 md:mt-0">
-          <button
-            aria-label="Edit Address"
-            onClick={handleEditAddress}
-            className="p-2 rounded-full hover:bg-gray-100 transition text-green-700"
-            title="Edit Address"
-          >
-            edit
-          </button>
-          <button
-            aria-label="Delete Address"
-            onClick={handleDeleteAddress}
-            className="p-2 rounded-full hover:bg-gray-100 transition text-red-600"
-            title="Delete Address"
-          >
-            delete
-          </button>
- 
-        </div>
-        
-      </div>
-               <Button
-            onClick={() => setCurrentStep(2)}
-            className="bg-green-600 mt-3 ms-auto hover:bg-green-700 text-white px-6 py-2 rounded-lg"
-          >
-            Next
-          </Button>
-</>
+{isEditing ? (
+<AddressStep
+  register={register}
+  errors={errors}
+  selectedCity={selectedCity}
+  setSelectedCity={setSelectedCity}
+  setValue={setValue}
+  isValid={isValid}
+  onSubmit={handleSubmit(editingAddressId ? handleUpdateAddress : handleSaveAddress)}
+  onCancel={() => {
+    setIsEditing(false);
+    setEditingAddressId(null);
+  }}
+/>
+
+) : (
+  <div className="grid gap-4">
+    {addresses.length === 0 && (
+      <p className="text-gray-600">No addresses saved yet.</p>
     )}
-  </>
+    {addresses.map(addr => (
+      <div key={addr._id} className={`border p-4 rounded shadow ${selectedAddress?._id === addr._id ? 'border-green-500' : 'border-gray-300'}`}>
+        <h3 className="font-semibold text-lg">{addr.city} - {addr.area}</h3>
+        <p className="text-sm">
+          {addr.street}, Bldg {addr.building}, Floor {addr.floor}, Apt {addr.apartment}
+        </p>
+        <div className="flex gap-2 mt-2">
+          <input  id="addressRadio"  type="radio" name="address" onClick={() => handleSelectAddress(addr)} className="text-green-700" />
+          <button onClick={() => handleEditAddress(addr)} className="text-sm">Edit</button>
+          <button onClick={() => handleDeleteAddress(addr._id)} className="text-red-700 text-sm">Delete</button>
+        </div>
+      </div>
+    ))}
+    <div className="flex justify-between">
+        <Button
+      onClick={() => {
+        setIsEditing(true);
+        setEditingAddressId(null);
+reset({
+  city: "",
+  area: "",
+  street: "",
+  landmark: "",
+  building: "",
+  floor: null,
+  apartment: "",
+  notes: "",
+});
+        setSelectedCity("");
+      }}
+      className="mt-4 border border-primary text-primary p-2 rounded-lg "
+    >
+      Add New Address
+    </Button>
+    <Button onClick={handleNextStep} className="mt-4  bg-primary text-white p-3 rounded-lg">
+      Next
+    </Button>
+    </div>
+  </div>
+)}
+
+</>
 )}
       {currentStep === 2 && (
         <Review
           formData={formData}
           onBack={() => setCurrentStep(1)}
           onConfirm={handleConfirm}
+          loading={loadingBtn}
         />
       )}
 
-      {currentStep === 3 && (
-        <div className="text-center space-y-4">
-          <h2 className="text-2xl font-bold text-green-700">Pickup Request Confirmed!</h2>
-          <p className="text-green-900">
-            Your request has been sent. We will contact you soon for pickup scheduling.
-          </p>
-          <Button
-            onClick={() => {
-              setCurrentStep(1);
-              setIsEditing(false);
-            }}
-            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg"
-          >
-            Make Another Request
-          </Button>
+  {currentStep === 3 && (
+  <div className="text-center max-w-lg mx-auto space-y-6 bg-green-50 p-8 rounded-xl shadow border border-green-100">
+    <div className="flex justify-center">
+      <svg
+        className="w-16 h-16 text-green-600 mb-4"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M5 13l4 4L19 7"
+        />
+      </svg>
+    </div>
+    <h2 className="text-3xl font-bold text-green-700">Pickup Request Confirmed!</h2>
+    <p className="text-green-900 text-lg">
+      Thank you for your request. We will contact you soon to schedule your pickup.
+    </p>
+    {createdOrderId && (
+      <div className="bg-white border border-green-300 rounded-lg p-4 shadow-sm inline-block">
+        <p className="text-sm text-green-800 mb-2 font-medium">Your Tracking Number:</p>
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-green-900 text-lg break-all">{createdOrderId}</span>
+            <button
+        onClick={() => {
+          navigator.clipboard.writeText(createdOrderId);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000); 
+        }}
+        className={`text-sm border px-2 py-1 rounded
+          ${copied
+            ? "bg-green-600 text-white border-green-600"
+            : "text-green-600 border-green-300 hover:text-green-800 hover:border-green-800"
+          }`}
+        title="Copy to clipboard"
+      >
+        {copied ? "Copied!" : "Copy"}
+      </button>
         </div>
-      )}
+      </div>
+    )}
+    <Button
+      onClick={() => {
+        setCurrentStep(1);
+        setIsEditing(false);
+        setCreatedOrderId(null);
+      }}
+      className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg"
+    >
+      Make Another Request
+    </Button>
+  </div>
+)}
+
     </div>
   );
 }
