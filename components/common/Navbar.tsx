@@ -21,8 +21,10 @@ export default function Navbar() {
   const { user, logout } = useContext(UserAuthContext) ?? {}
   const token = localStorage.getItem('token')
 
+
   const { cart } = useCart();
-  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+  //const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const totalItems = cart.length;
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleMenu = () => setIsOpen(!isOpen);
