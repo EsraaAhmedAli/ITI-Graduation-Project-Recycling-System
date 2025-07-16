@@ -54,8 +54,7 @@ export default function Navbar() {
             <span>Recycling</span>
           </Link>
 
-          <Link href="/cart" className="relative flex items-center text-gray-700 hover:text-success font-extrabold gap-1">
-
+          
           <Link prefetch={true} href="/cart" className="relative flex items-center text-gray-700 hover:text-success font-extrabold gap-1">
 
             <ShoppingCart className="w-5 h-5" />
