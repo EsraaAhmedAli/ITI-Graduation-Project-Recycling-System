@@ -12,11 +12,14 @@ import {
   UserRoundPen,
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+
+import { FaRecycle } from "react-icons/fa";
+
 import { UserAuthContext } from "@/context/AuthFormContext";
 
-
 export default function Navbar() {
-const {user,logout}=useContext(UserAuthContext)??{}
+  const { user, logout } = useContext(UserAuthContext) ?? {}
+  const token = localStorage.getItem('token')
 
   const { cart } = useCart();
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -35,15 +38,35 @@ const {user,logout}=useContext(UserAuthContext)??{}
 
         {/* Desktop Nav */}
         <div className="hidden md:flex items-center space-x-6">
-          <Link prefetch={true} href="/" className="flex items-center text-gray-700 hover:text-primary font-extrabold gap-1">
+          <Link
+            prefetch={true}
+            href="/"
+            className="flex items-center text-gray-700 hover:text-primary font-extrabold gap-1"
+          >
             <HousePlus className="w-5 h-5" />
             <span>Home</span>
           </Link>
-          <Link href="/dashboard" className="flex items-center text-gray-700 hover:text-success font-extrabold gap-1">
+          <Link
+            href="/dashboard"
+            className="flex items-center text-gray-700 hover:text-success font-extrabold gap-1"
+          >
             <BadgeInfo className="w-5 h-5" />
             <span>About</span>
           </Link>
-          <Link prefetch={true} href="/cart" className="relative flex items-center text-gray-700 hover:text-success font-extrabold gap-1">
+
+          <Link
+            href="/category"
+            className="flex items-center text-gray-700 hover:text-success font-extrabold gap-1"
+          >
+            <FaRecycle className="w-5 h-5" />
+            <span>Recycling</span>
+          </Link>
+
+          <Link
+            prefetch={true}
+            href="/cart"
+            className="relative flex items-center text-gray-700 hover:text-success font-extrabold gap-1"
+          >
             <ShoppingCart className="w-5 h-5" />
             <span>Cart</span>
             {totalItems > 0 && (
@@ -53,21 +76,35 @@ const {user,logout}=useContext(UserAuthContext)??{}
             )}
           </Link>
 
-          {user!=null  ? (
+          {token ? (
             <>
-              <Link href="/profile" className="flex items-center px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-success font-extrabold gap-1">
+              <Link
+                href="/profile"
+                className="flex items-center px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-success font-extrabold gap-1"
+              >
                 <UserRoundPen className="w-5 h-5" />
                 <span>Profile</span>
               </Link>
-              <button onClick={logout} className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-bold">Logout</button>
+              <button
+                onClick={() => logout()}
+                className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-bold"
+              >
+                Logout
+              </button>
             </>
           ) : (
             <>
-              <Link href="/auth" className="flex items-center px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-success font-extrabold gap-1">
+              <Link
+                href="/auth"
+                className="flex items-center px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-success font-extrabold gap-1"
+              >
                 <KeyRound className="w-5 h-5" />
                 <span>Login</span>
               </Link>
-              <Link href="/app/auth/register" className="px-4 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white font-bold flex items-center gap-1">
+              <Link
+                href="/app/auth/register"
+                className="px-4 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white font-bold flex items-center gap-1"
+              >
                 <span>Start Recycling</span>
               </Link>
             </>
@@ -76,7 +113,10 @@ const {user,logout}=useContext(UserAuthContext)??{}
 
         {/* Hamburger Icon */}
         <div className="md:hidden">
-          <button onClick={toggleMenu} className="text-gray-700 hover:text-success">
+          <button
+            onClick={toggleMenu}
+            className="text-gray-700 hover:text-success"
+          >
             {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
@@ -85,15 +125,36 @@ const {user,logout}=useContext(UserAuthContext)??{}
       {/* Mobile Menu */}
       {isOpen && (
         <div className="md:hidden bg-white/95 backdrop-blur-md px-4 py-4 space-y-2">
-          <Link href="/" onClick={toggleMenu} className="flex items-center gap-2 font-extrabold text-gray-700 hover:bg-gray-100 px-3 py-2 rounded">
+          <Link
+            href="/"
+            onClick={toggleMenu}
+            className="flex items-center gap-2 font-extrabold text-gray-700 hover:bg-gray-100 px-3 py-2 rounded"
+          >
             <HousePlus className="w-5 h-5" />
             <span>Home</span>
           </Link>
-          <Link href="/app/user/dashboard" onClick={toggleMenu} className="flex items-center gap-2 font-extrabold text-gray-700 hover:bg-gray-100 px-3 py-2 rounded">
+          <Link
+            href="/dashboard"
+            onClick={toggleMenu}
+            className="flex items-center gap-2 font-extrabold text-gray-700 hover:bg-gray-100 px-3 py-2 rounded"
+          >
             <BadgeInfo className="w-5 h-5" />
             <span>About</span>
           </Link>
-          <Link href="/cart" onClick={toggleMenu} className="flex items-center gap-2 font-extrabold text-gray-700 hover:bg-gray-100 px-3 py-2 rounded relative">
+          <Link
+            href="/category"
+            onClick={toggleMenu}
+            className="flex items-center gap-2 font-extrabold text-gray-700 hover:bg-gray-100 px-3 py-2 rounded"
+          >
+            <FaRecycle className="w-5 h-5" />
+            <span>Recycling</span>
+          </Link>
+
+          <Link
+            href="/cart"
+            onClick={toggleMenu}
+            className="flex items-center gap-2 font-extrabold text-gray-700 hover:bg-gray-100 px-3 py-2 rounded relative"
+          >
             <ShoppingCart className="w-5 h-5" />
             <span>Cart</span>
             {totalItems > 0 && (
@@ -103,23 +164,42 @@ const {user,logout}=useContext(UserAuthContext)??{}
             )}
           </Link>
 
-          {user!=null ? (
+          {user != null && token ? (
             <>
-              <Link href="/profile" onClick={toggleMenu} className="flex items-center gap-2 font-extrabold text-gray-700 hover:bg-gray-100 px-3 py-2 rounded">
+              <Link
+                href="/profile"
+                onClick={toggleMenu}
+                className="flex items-center gap-2 font-extrabold text-gray-700 hover:bg-gray-100 px-3 py-2 rounded"
+              >
                 <UserRoundPen className="w-5 h-5" />
                 <span>Profile</span>
               </Link>
-              <button onClick={logout} className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 rounded">
+
+              <button
+                onClick={() => {
+                  logout();
+                  setIsOpen(false);
+                }}
+                className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 rounded"
+              >
                 Logout
               </button>
             </>
           ) : (
             <>
-              <Link href="/auth" onClick={toggleMenu} className="flex items-center gap-2 font-extrabold text-gray-700 hover:bg-gray-100 px-3 py-2 rounded">
+              <Link
+                href="/auth"
+                onClick={toggleMenu}
+                className="flex items-center gap-2 font-extrabold text-gray-700 hover:bg-gray-100 px-3 py-2 rounded"
+              >
                 <KeyRound className="w-5 h-5" />
                 <span>Login</span>
               </Link>
-              <Link href="/app/auth/register" onClick={toggleMenu} className="flex items-center justify-center bg-green-500 hover:bg-green-600 text-white font-bold px-3 py-2 rounded">
+              <Link
+                href="/app/auth/register"
+                onClick={toggleMenu}
+                className="flex items-center justify-center bg-green-500 hover:bg-green-600 text-white font-bold px-3 py-2 rounded"
+              >
                 <span>Start Recycling</span>
               </Link>
             </>
