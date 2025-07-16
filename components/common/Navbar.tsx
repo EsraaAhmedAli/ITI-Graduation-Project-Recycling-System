@@ -16,8 +16,7 @@ import { UserAuthContext } from "@/context/AuthFormContext";
 
 
 export default function Navbar() {
-  const {user,logout}=useContext(UserAuthContext)
-  
+const {user,logout}=useContext(UserAuthContext)??{}
 
   const { cart } = useCart();
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -54,13 +53,13 @@ export default function Navbar() {
             )}
           </Link>
 
-          {user!=null ? (
+          {user!=null  ? (
             <>
               <Link href="/profile" className="flex items-center px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-success font-extrabold gap-1">
                 <UserRoundPen className="w-5 h-5" />
                 <span>Profile</span>
               </Link>
-              <button onClick={()=>logout()} className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-bold">Logout</button>
+              <button onClick={logout} className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-bold">Logout</button>
             </>
           ) : (
             <>
@@ -110,7 +109,7 @@ export default function Navbar() {
                 <UserRoundPen className="w-5 h-5" />
                 <span>Profile</span>
               </Link>
-              <button onClick={()=>logout()} className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 rounded">
+              <button onClick={logout} className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 rounded">
                 Logout
               </button>
             </>
