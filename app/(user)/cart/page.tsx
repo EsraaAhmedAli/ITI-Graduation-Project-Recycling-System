@@ -156,10 +156,10 @@ export default function CartPage() {
                           <h3 className="text-xl font-light text-gray-800 mb-1">{item.itemName}</h3>
 
                           <p className="text-sm text-gray-500">
-                            Price per item: {item.price.toFixed(2)} EGP
+                            Price per item: {item.price !== undefined ? item.price.toFixed(2) : "N/A"} EGP
                           </p>
                           <p className="text-sm text-gray-800">
-                            Total: {(item.price * item.quantity).toFixed(2)} EGP
+                            Price per item: {item.price !== undefined ? item.price.toFixed(2) : "N/A"} EGP
                           </p>
 
 
