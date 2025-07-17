@@ -51,7 +51,7 @@ export default function ProfilePage() {
   if (authLoading) {
     return (
       <div className="min-h-screen bg-green-50 py-10 px-4 flex items-center justify-center">
-        <Loader title="Loading your profile..." />
+        <Loader title=" your profile..." />
       </div>
     );
   }
@@ -77,7 +77,7 @@ export default function ProfilePage() {
           <div className="flex items-center space-x-4">
             <Avatar img='https://api.dicebear.com/7.x/bottts/svg?seed=user123' rounded size="lg" />
             <div>
-              <h2 className="text-xl font-semibold text-green-800">{user?.fullName || 'John Doe'}</h2>
+              <h2 className="text-xl font-semibold text-green-800">{user?.name || 'John Doe'}</h2>
               <p className="text-sm text-gray-500">{user?.email} — Eco-Warrior</p>
               <p className="text-xs text-gray-400">Cairo, July 2025</p>
             </div>
