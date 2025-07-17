@@ -53,9 +53,18 @@ export const resetPassword = async (data: {
   return api.post("/auth/resetPassword", data);
 };
 
-export const refreshAccessToken = async (): Promise<{
-  accessToken: string;
-}> => {
-  const res = await api.post<{ accessToken: string }>("/auth/refresh");
-  return res.data;
-};
+// export const refreshAccessToken = async (): Promise<{
+//   accessToken: string;
+// }> => {
+//   const res = await api.post<{ accessToken: string }>("/auth/refresh");
+//   return res.data;
+// };
+export async function refreshAccessToken(): Promise<{ accessToken: string }> {
+  const response = await api.get("/auth/refresh"); // backend returns new access token
+  const { accessToken } = response.data;
+
+  if (!accessToken) {
+    throw new Error("No access token returned");
+  }
+  return { accessToken };
+}
