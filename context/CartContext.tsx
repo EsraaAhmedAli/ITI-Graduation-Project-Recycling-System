@@ -48,6 +48,8 @@ const [loadingItemId, setLoadingItemId] = useState<string | null>(null);
         withCredentials: true,
       });
       setCart(res.data.items || []);
+      console.log(res.data);
+      
     } catch (err) {
       console.error("Failed to load cart", err);
     }
