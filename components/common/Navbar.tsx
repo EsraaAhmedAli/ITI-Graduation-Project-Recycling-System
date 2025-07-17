@@ -14,15 +14,13 @@ import {
 import { useCart } from "@/context/CartContext";
 import { FaRecycle } from "react-icons/fa";
 import { UserAuthContext } from "@/context/AuthFormContext";
+import Button from "./Button";
 
 export default function Navbar() {
-
-  const { user, logout } = useContext(UserAuthContext) ?? {};
-  const { cart } = useCart();
+  const { user, logout, isLoading } = useContext(UserAuthContext) ?? {};
 
   const [token, setToken] = useState<string | null>(null);
   const { cart } = useCart();
-  //const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
   const totalItems = cart.length;
 
   const [isOpen, setIsOpen] = useState(false);
@@ -33,8 +31,22 @@ export default function Navbar() {
     }
   }, []);
 
-  const totalItems = cart.length;
   const toggleMenu = () => setIsOpen(!isOpen);
+
+  // Loading skeleton for auth buttons
+  const AuthButtonsSkeleton = () => (
+    <div className="hidden md:flex items-center space-x-3">
+      <div className="w-16 h-8 bg-gray-200 animate-pulse rounded-lg"></div>
+      <div className="w-24 h-8 bg-gray-200 animate-pulse rounded-lg"></div>
+    </div>
+  );
+
+  const MobileAuthButtonsSkeleton = () => (
+    <div className="space-y-2">
+      <div className="w-full h-10 bg-gray-200 animate-pulse rounded"></div>
+      <div className="w-full h-10 bg-gray-200 animate-pulse rounded"></div>
+    </div>
+  );
 
   return (
     <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm">
@@ -84,7 +96,10 @@ export default function Navbar() {
             )}
           </Link>
 
-          {token ? (
+          {/* Auth Buttons - Show skeleton while loading */}
+          {isLoading ? (
+            <AuthButtonsSkeleton />
+          ) : user ? (
             <>
               <Link
                 href="/profile"
@@ -93,12 +108,12 @@ export default function Navbar() {
                 <UserRoundPen className="w-5 h-5" />
                 <span>Profile</span>
               </Link>
-              <button
-                onClick={() => logout()}
+              <Button
+                onClick={logout}
                 className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-bold"
               >
                 Logout
-              </button>
+              </Button>
             </>
           ) : (
             <>
@@ -171,10 +186,10 @@ export default function Navbar() {
             )}
           </Link>
 
-
-          {user && token ? (
-
-       
+          {/* Mobile Auth Buttons - Show skeleton while loading */}
+          {isLoading ? (
+            <MobileAuthButtonsSkeleton />
+          ) : user ? (
             <>
               <Link
                 href="/profile"

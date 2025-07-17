@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { categoryIcons } from "@/utils/categoryIcons";
 import CategoryCard from "./CategoryCard";
+import Loader from "../common/loader";
 
 interface Item {
   name: string;
@@ -68,7 +69,7 @@ export default function CategoryList({ basePath, maxToShow }: { basePath: string
 //className="m-12 px-2 sm:px-4 bg-white/100"
   return (
     <div>
-      {!isLoading && (
+      {!isLoading ?(
         <motion.section
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -109,7 +110,7 @@ export default function CategoryList({ basePath, maxToShow }: { basePath: string
             </div>
           )}
         </motion.section>
-      )}
+      ) : <Loader title="categories"/>} 
       <div className="text-center mt-8">
         <span className="text-green-700">For more detailed information on each category , Click on the respective image</span>
       </div>

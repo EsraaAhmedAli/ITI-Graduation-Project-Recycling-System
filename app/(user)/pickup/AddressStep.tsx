@@ -9,6 +9,7 @@ import Button from "@/components/common/Button";
 import Link from "next/link";
 import { toast } from "react-toastify";
 
+
 interface Props {
   register: UseFormRegister<FormInputs>;
   errors: FieldErrors<FormInputs>;
