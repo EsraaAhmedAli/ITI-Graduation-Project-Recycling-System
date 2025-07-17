@@ -10,7 +10,7 @@ export default function Loader({ title = 'content' }: LoaderProps) {
     <div
       role="status"
       aria-live="polite"
-      className="h-screen flex items-center justify-center bg-gray-50"
+      className="h-screen flex items-center justify-center"
     >
       <div className="text-center">
            <div className="text-center">
