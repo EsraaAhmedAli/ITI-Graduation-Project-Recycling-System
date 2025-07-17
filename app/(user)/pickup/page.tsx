@@ -11,6 +11,8 @@ import { toast } from "react-toastify";
 import { UserAuthContext } from "@/context/AuthFormContext";
 import Loader from "@/components/common/loader";
 import api from "@/lib/axios";
+import { useCart } from "@/context/CartContext";
+import Link from "next/link";
 
 export default function PickupConfirmation() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -30,7 +32,8 @@ export default function PickupConfirmation() {
   const [isEditing, setIsEditing] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const { user } = useContext(UserAuthContext) ?? {};
-
+  const {cart,clearCart} = useCart()
+  
   const {
     register,
     handleSubmit,
@@ -48,19 +51,25 @@ export default function PickupConfirmation() {
       goToStep(2);
     }
   };
-  const fetchAddresses = async () => {
-    try {
-      setLoading(true);
-      const res = await api.get("/addresses");
-
-      setAddresses(res.data);
-    } catch (err) {
-      console.error("Failed to fetch addresses:", err);
-      toast.error("Failed to fetch addresses");
-    } finally {
-      setLoading(false);
+const fetchAddresses = async () => {
+  try {
+    setLoading(true);
+    const res = await api.get("/addresses");
+    const fetchedAddresses = res.data;
+    setAddresses(fetchedAddresses);
+    
+    // Set first address as selected by default (if any)
+    if (fetchedAddresses.length > 0) {
+      setSelectedAddress(fetchedAddresses[0]);
+      setFormData(fetchedAddresses[0]);
     }
-  };
+  } catch (err) {
+    console.error("Failed to fetch addresses:", err);
+    toast.error("Failed to fetch addresses");
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     fetchAddresses();
@@ -75,30 +84,33 @@ export default function PickupConfirmation() {
     }
     setCurrentStep(step);
   };
-  const handleConfirm = () => {
-    if (!selectedAddress) {
-      toast.error("Please select an address");
-      return;
-    }
+ const handleConfirm = () => {
+  if (!selectedAddress) {
+    toast.error("Please select an address");
+    return;
+  }
 
-    setLoadingBtn(true);
-    api
-      .post("orders", {
-        address: selectedAddress,
-        items: [{ name: "Cans", quantity: 10, totalPoints: 500 }],
-        phoneNumber: user?.phoneNumber,
-        userName: user?.name,
-      })
-      .then((res) => {
-        setLoadingBtn(false);
-        setCreatedOrderId(res.data.data._id);
-        setCurrentStep(3);
-      })
-      .catch((err) => {
-        toast.error(err?.message ?? "Failed to create order");
-        setLoadingBtn(false);
-      });
-  };
+  setLoadingBtn(true);
+  api
+    .post("orders", {
+      address: selectedAddress,
+      items: cart,
+      phoneNumber: user?.phoneNumber,
+      userName: user?.name,
+    })
+    .then((res) => {
+      setCreatedOrderId(res.data.data._id);
+      clearCart(); // ✅ clear cart after successful order
+      setCurrentStep(3);
+    })
+    .catch((err) => {
+      toast.error(err?.message ?? "Failed to create order");
+    })
+    .finally(() => {
+      setLoadingBtn(false);
+    });
+};
+
 
   const handleSaveAddress = async (data: FormInputs) => {
     try {
@@ -224,6 +236,8 @@ export default function PickupConfirmation() {
             />
           ) : (
             <div className="grid gap-4">
+              {console.log(cart)
+              }
               {addresses.length === 0 && (
                 <p className="text-gray-600">No addresses saved yet.</p>
               )}
@@ -299,6 +313,7 @@ export default function PickupConfirmation() {
       )}
       {currentStep === 2 && (
         <Review
+          cartItems={cart}
           formData={formData}
           onBack={() => setCurrentStep(1)}
           onConfirm={handleConfirm}
@@ -330,7 +345,7 @@ export default function PickupConfirmation() {
             your pickup.
           </p>
           {createdOrderId && (
-            <div className="bg-white border border-green-300 rounded-lg p-4 shadow-sm inline-block">
+            <div className="bg-white border border-green-300 rounded-lg p-4 shadow-sm ">
               <p className="text-sm text-green-800 mb-2 font-medium">
                 Your Tracking Number:
               </p>
@@ -356,15 +371,12 @@ export default function PickupConfirmation() {
               </div>
             </div>
           )}
-          <Button
-            onClick={() => {
-              setCurrentStep(1);
-              setIsEditing(false);
-              setCreatedOrderId(null);
-            }}
+          <Link
+          href={'/profile'}
+     
             className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg">
-            Make Another Request
-          </Button>
+            See your orders
+          </Link>
         </div>
       )}
     </div>

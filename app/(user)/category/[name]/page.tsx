@@ -8,6 +8,7 @@ import Loader from "@/components/common/loader";
 
 
 interface Item {
+  _id:string,
   name: string;
   image: string;
   points: number;
@@ -20,7 +21,7 @@ export default function UserCategoryPage() {
   const categoryName = decodeURIComponent(params.name as string);
   const [items, setItems] = useState<Item[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { addToCart } = useCart();
+  const { addToCart ,loadingItemId} = useCart();
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -28,6 +29,8 @@ export default function UserCategoryPage() {
         const response = await fetch(`http://localhost:5000/categories/get-items/${categoryName}`);
         const data = await response.json();
         setItems(data);
+        console.log(data);
+        
       } catch (error) {
         console.error("Error fetching items:", error);
       } finally {
@@ -40,7 +43,7 @@ export default function UserCategoryPage() {
 
   const handleAddToCart = (item: Item) => {
     addToCart({
-      categoryId: categoryName,
+      categoryId: item._id,
       itemName: item.name,
       image: item.image,
       points: item.points,
@@ -68,7 +71,7 @@ export default function UserCategoryPage() {
         </div>
 
     
-        <SubcategoryList items={items} onAddToCart={handleAddToCart} />
+        <SubcategoryList items={items} loading={loadingItemId} onAddToCart={handleAddToCart} />
       </div>
     </div>
   );
