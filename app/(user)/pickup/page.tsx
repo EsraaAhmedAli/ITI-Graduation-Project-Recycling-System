@@ -7,10 +7,10 @@ import Review from "./ReviewForm";
 import Step from "./Step";
 import Button from "@/components/common/Button";
 import AddressStep from "./AddressStep";
-import api from "@/services/api";
 import { toast } from "react-toastify";
 import { UserAuthContext } from "@/context/AuthFormContext";
 import Loader from "@/components/common/loader";
+import api from "@/lib/axios";
 
 export default function PickupConfirmation() {
   const [currentStep, setCurrentStep] = useState(1);

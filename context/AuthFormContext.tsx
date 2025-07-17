@@ -1,8 +1,10 @@
 "use client";
 
+import api from "@/lib/axios";
+import { setAccessToken } from "@/lib/axios";
+
 import { useRouter } from "next/navigation";
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import api from "@/services/api";
 
 // === User Type ===
 interface User {
@@ -13,8 +15,6 @@ interface User {
   phoneNumber: string;
   imageUrl?: string;
   isAuthenticated?: boolean;
-  _id: number;
-  name: string;
 }
 
 // === Context Type ===
@@ -104,6 +104,8 @@ export const UserAuthProvider = ({ children }: { children: React.ReactNode }) =>
     
     if (storedToken) {
       setTokenState(storedToken);
+        setAccessToken(storedToken);  
+
       
       try {
         // Make a simple authenticated request to validate the token
