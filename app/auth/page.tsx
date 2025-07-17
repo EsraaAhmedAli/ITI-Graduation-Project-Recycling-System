@@ -7,11 +7,11 @@ import Wrapper from "@/components/auth/Wrapper";
 import { HiEye, HiEyeOff } from "react-icons/hi";
 import PhoneInput from "@/components/auth/PhoneInput";
 import { useRouter } from "next/navigation";
-import {  initiateSignup, loginUser } from "@/lib/auth";
+import { initiateSignup, loginUser } from "@/lib/auth";
+import { setAccessToken } from "@/lib/axios";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { toast } from "react-toastify";
 import Link from "next/link";
-import axios from "axios";
 
 const FormInitialState = {
   fullName: "",
@@ -28,7 +28,7 @@ const errorInitialState = {
 export default function AuthForm(): React.JSX.Element {
   const [mode, setMode] = useState<"signup" | "login">("login");
   const [form, setForm] = useState(FormInitialState);
-  const { setUser } = useUserAuth();
+  const { setUser,setToken } = useUserAuth();
 
   const [errors, setErrors] = useState(errorInitialState);
   const [showPassword, setShowPassword] = useState(false);
@@ -116,7 +116,7 @@ export default function AuthForm(): React.JSX.Element {
       console.log("Signing up with:", form);
       setIsValid(true);
       await handleSendOtp();
-      setIsValid(false)
+      setIsValid(false);
     } else {
       if (!validateEmail(form.email) || !validatePassword(form.password)) {
         toast.error("Please fill all fields correctly");
@@ -124,35 +124,32 @@ export default function AuthForm(): React.JSX.Element {
       }
       // Handle login logic here
       console.log("Logging in with:", form);
-      setIsValid(true)
+      setIsValid(true);
       await handleLoginUser();
-      setIsValid(false)
+      setIsValid(false);
     }
   };
 
 const handleLoginUser = async (): Promise<void> => {
-  
   try {
     const res = await loginUser({
       email: form.email,
       password: form.password,
     });
 
+    // ✅ IMPORTANT: Use context setters to save to localStorage
     setUser(res.user);
-    console.log('ress', res);
-
-    localStorage.setItem("token", res.accessToken);
+    setToken(res.accessToken); // ← This was missing!
+    
+    // ✅ Optional: You can still use setAccessToken if needed for API calls
+    setAccessToken(res.accessToken);
+    
     console.log("Login successful:", res.user);
-    router.push("/");
-  } catch (err: unknown) {
-    if (axios.isAxiosError(err)) {
-      const message = err.response?.data?.message || "Login failed. Please check your credentials.";
-      toast.error(message);
-    } else if (err && typeof err === "object" && "message" in err) {
-      toast.error(String((err as { message: unknown }).message));
-    } else {
-      toast.error("Login failed. Please check your credentials.");
-    }
+    console.log("Token:", res.accessToken);
+    router.push("/cart");
+  } catch (error) {
+    // const e = error as Error;
+    alert("Login failed. Please check your credentials.");
   }
 };
 
@@ -166,10 +163,8 @@ const handleLoginUser = async (): Promise<void> => {
       } else {
         toast.error("Failed to send OTP. Please try again.");
       }
-    } catch (err:unknown) {
-      
+    } catch (err: unknown) {
       toast.error(err.response?.data?.message || "Something went wrong");
-      
     }
   };
 
@@ -330,7 +325,7 @@ const handleLoginUser = async (): Promise<void> => {
       </form>
       {mode === "login" && (
         <Link
-        href={'/auth/forget-password'}
+          href={"/auth/forget-password"}
           className="text-sm text-center flex flex-row justify-end ms-auto mt-5 text-blue-600 hover:underline cursor-pointer"
         >
           Forgot your password?
