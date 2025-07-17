@@ -1,6 +1,5 @@
 import axios from "axios";
 
-console.log("🟢 FROM ENV:", process.env.NEXT_PUBLIC_API_BASE_URL);
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
@@ -11,18 +10,15 @@ let accessToken: string | null = null;
 
 export const setAccessToken = (token: string) => {
   accessToken = token;
-  console.log("📦 Access token set");
 };
 
 export const getAccessToken = () => accessToken;
 
 api.interceptors.request.use((config) => {
   const token = getAccessToken();
-  console.log(`📥 Sending request to ${config.url} with token: ${token ? "YES" : "NO"}`);
 
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
-    console.log("📤 Added Authorization header for request:", config.url);
   }
   return config;
 }, (error) => {
@@ -42,7 +38,6 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    console.log("🛑 Response error from:", original.url, "status:", error.response?.status);
 
     // Check if error is 401 and retry not done yet
     if (

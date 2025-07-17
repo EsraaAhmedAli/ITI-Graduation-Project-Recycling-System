@@ -6,6 +6,7 @@ import Image from "next/image";
 import Button from "../common/Button";
 
 interface Item {
+  _id:string,
   name: string;
   image: string;
   points: number;
@@ -17,13 +18,14 @@ interface ItemCardProps {
   item: Item;
   index: number;
   onAddToCart: (item: Item) => void;
+  loading:boolean
 }
 
 const getUnitText = (unit: 1 | 2): string => {
   return unit === 1 ? "KG" : "Pieces";
 };
 
-export default function ItemCard({ item, index, onAddToCart }: ItemCardProps) {
+export default function ItemCard({ item, index, onAddToCart,loading }: ItemCardProps) {
   return (
     <motion.div
       key={index}
@@ -34,6 +36,8 @@ export default function ItemCard({ item, index, onAddToCart }: ItemCardProps) {
     >
       <div className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 h-full flex flex-col">
         {/* Image */}
+        {console.log(item._id)
+        }
         <div className="relative h-48 w-full overflow-hidden">
           <Image
             src={item.image}
@@ -53,14 +57,14 @@ export default function ItemCard({ item, index, onAddToCart }: ItemCardProps) {
               {item.points} points per {getUnitText(item.measurement_unit)}
             </span>
           </div>
-
-          <Button
-            onClick={() => onAddToCart(item)}
-            className="mt-auto w-full py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded transition-colors duration-300 flex items-center justify-center gap-2"
-          >
-            <FaShoppingCart />
-            Add to Cart
-          </Button>
+<Button
+  disabled={loading==item._id}
+  onClick={() => onAddToCart(item)}
+  className="mt-auto w-full py-2 flex items-center justify-center gap-2"
+>
+  <FaShoppingCart />
+  Add to Cart
+</Button>
         </div>
       </div>
     </motion.div>

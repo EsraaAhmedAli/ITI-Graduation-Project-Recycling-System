@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import axios from "axios";
+import api from "@/lib/axios";
+import { toast } from "react-toastify";
 
 export interface CartItem {
   categoryId: string;
@@ -11,6 +13,7 @@ export interface CartItem {
   price: number;
   measurement_unit: number;
   quantity: number;
+  
 }
 
 interface CartContextType {
@@ -20,6 +23,9 @@ interface CartContextType {
   decreaseQty: (item: CartItem) => Promise<void>;
   removeFromCart: (item: CartItem) => Promise<void>;
   clearCart: () => Promise<void>;
+    loadCart: () => Promise<void>; 
+  loadingItemId: string | null;
+
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -34,11 +40,12 @@ export const useCart = () => {
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
+const [loadingItemId, setLoadingItemId] = useState<string | null>(null);
 
   const loadCart = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/cart", {
-        withCredentials: true
+      const res = await api.get("/cart", {
+        withCredentials: true,
       });
       setCart(res.data.items || []);
     } catch (err) {
@@ -50,38 +57,38 @@ export function CartProvider({ children }: { children: ReactNode }) {
     loadCart();
   }, []);
 
-  const addToCart = async (item: CartItem) => {
-    try {
-      await axios.post(
-        "http://localhost:5000/cart",
-        { categoryName: item.categoryId, quantity: item.quantity },
-        { withCredentials: true }
-      );
-      await loadCart();
-    } catch (err) {
-      console.error("Failed to add to cart", err);
-    }
-  };
+const addToCart = async (item: CartItem) => {
+  setLoadingItemId(item.categoryId);
+  try {
+    await api.post("/cart", item, { withCredentials: true });
+    toast.success("Item added to your cart");
+    await loadCart();
+  } catch (err) {
+    console.error("Failed to add to cart", err);
+  } finally {
+    setLoadingItemId(null);
+  }
+};
 
   const increaseQty = async (item: CartItem) => {
     try {
-      await axios.put(
-        "http://localhost:5000/cart",
-        { categoryName: item.categoryId, quantity: item.quantity + 1 },
+      await api.put(
+        "/cart",
+        { categoryId: item.categoryId, quantity: item.quantity + 1 },
         { withCredentials: true }
       );
       await loadCart();
     } catch (err) {
       console.error("Failed to increase quantity", err);
-    }
+    } 
   };
 
   const decreaseQty = async (item: CartItem) => {
     if (item.quantity <= 1) return;
     try {
-      await axios.put(
-        "http://localhost:5000/cart",
-        { categoryName: item.categoryId, quantity: item.quantity - 1 },
+      await api.put(
+        "/cart",
+        { categoryId: item.categoryId, quantity: item.quantity - 1 },
         { withCredentials: true }
       );
       await loadCart();
@@ -90,31 +97,46 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const removeFromCart = async (item: CartItem) => {
-    try {
-      await axios.delete(`http://localhost:5000/cart/${item.categoryId}`, {
-        withCredentials: true
-      });
-      await loadCart();
-    } catch (err) {
-      console.error("Failed to remove from cart", err);
-    }
-  };
+const removeFromCart = async (item: CartItem) => {
+  setLoadingItemId(item.categoryId);
+  try {
+    await api.delete(`/cart/${item.categoryId}`, {
+      withCredentials: true,
+    });
+    toast.success("Item removed from your cart");
+    await loadCart();
+  } catch (err) {
+    console.error("Failed to remove from cart", err);
+    toast.error("Failed to remove item from cart");
+  } finally {
+    setLoadingItemId(null);
+  }
+};
+
 
   const clearCart = async () => {
     try {
-      await axios.delete("http://localhost:5000/cart", {
-        withCredentials: true
+      await api.delete("cart", {
+        withCredentials: true,
       });
       setCart([]);
     } catch (err) {
       console.error("Failed to clear cart", err);
-    }
+    } 
   };
 
   return (
     <CartContext.Provider
-      value={{ cart, addToCart, increaseQty, decreaseQty, removeFromCart, clearCart }}
+      value={{
+        cart,
+        loadingItemId,
+        addToCart,
+        increaseQty,
+        decreaseQty,
+        removeFromCart,
+        clearCart,
+        loadCart,
+      }}
     >
       {children}
     </CartContext.Provider>
