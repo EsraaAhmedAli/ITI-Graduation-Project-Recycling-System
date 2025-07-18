@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useRef, useState } from "react";
@@ -9,6 +8,7 @@ import { verifyOtpAndRegister } from "@/lib/auth";
 import { setAccessToken } from "@/lib/axios";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { useSearchParams } from "next/navigation";
+import { toast } from "react-toastify";
 
 type OTPInputProps = {
   length?: number;
@@ -85,7 +85,7 @@ export default function OTPInput({ length = 6, onSubmit }: OTPInputProps) {
 
     try {
       const res = await verifyOtpAndRegister({
-        name: user?.fullName || "",
+        name: user?.name || "",
         email: user?.email || "",
         password: user?.password || "",
         phoneNumber: user?.phoneNumber?.padStart(11, "0") || "",
@@ -98,11 +98,10 @@ export default function OTPInput({ length = 6, onSubmit }: OTPInputProps) {
 
       // Optionally store user in global context
       setUser(res.user); // if using React Context
-      setAccessToken(res.token); // Store token in axios instance
-
+      setAccessToken(res.accessToken); // Store token in axios instance
       router.push("/cart");
     } catch (error) {
-      console.error("OTP submission failed:", error);
+      toast.error("OTP submission failed:", error);
     }
   };
 

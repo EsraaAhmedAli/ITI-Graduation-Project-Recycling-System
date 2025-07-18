@@ -15,13 +15,8 @@ const itemVariants = {
 };
 
 export default function CartPage() {
-  const {
-    cart,
-    removeFromCart,
-    clearCart,
-    increaseQty,
-    decreaseQty,
-  } = useCart();
+  const { cart, removeFromCart, clearCart, increaseQty, decreaseQty } =
+    useCart();
 
   const router = useRouter();
   const [totalItems, setTotalItems] = useState(0);
@@ -29,7 +24,10 @@ export default function CartPage() {
 
   useEffect(() => {
     const total = cart.reduce((sum, item) => sum + item.quantity, 0);
-    const price = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const price = cart.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
     setTotalItems(total);
     setTotalPrice(price);
   }, [cart]);
@@ -73,7 +71,10 @@ export default function CartPage() {
       {cart.length === 0 ? (
         <div className="text-center mt-20">
           <p className="text-gray-500 mb-6">Your cart is empty.</p>
-          <Button onClick={() => router.push("/categories")} className="bg-primary">
+          <Button
+            onClick={() => router.push("/categories")}
+            className="bg-primary"
+          >
             Browse Items
           </Button>
         </div>
@@ -98,7 +99,11 @@ export default function CartPage() {
                   <div className="p-6 flex flex-col sm:flex-row">
                     <div className="bg-[#f9f9f9] rounded-lg w-full sm:w-32 h-32 flex-shrink-0 flex items-center justify-center mb-4 sm:mb-0 mr-6 relative">
                       {item.image ? (
-                        <img src={item.image} alt={item.itemName} className="w-full sm:w-32 h-32 object-cover" />
+                        <img
+                          src={item.image}
+                          alt={item.itemName}
+                          className="w-full sm:w-32 h-32 object-cover"
+                        />
                       ) : (
                         <ShoppingBag className="w-8 h-8 text-[#ccc]" />
                       )}
@@ -140,7 +145,8 @@ export default function CartPage() {
                           {item.itemName}
                         </h3>
                         <p className="text-sm text-gray-500">
-                          Measurement Unit: {item.measurement_unit === 1 ? "Weight" : "Count"}
+                          Measurement Unit:{" "}
+                          {item.measurement_unit === 1 ? "Weight" : "Count"}
                         </p>
                         <p className="text-sm text-gray-800">
                           Price per item: {item.price?.toFixed(2) ?? "N/A"} EGP
@@ -159,7 +165,9 @@ export default function CartPage() {
                           >
                             <ChevronDown className="w-5 h-5" />
                           </button>
-                          <span className="px-3 text-base font-medium">{item.quantity}</span>
+                          <span className="px-3 text-base font-medium">
+                            {item.quantity}
+                          </span>
                           <button
                             onClick={() => increaseQty(item)}
                             className="w-10 h-10 flex items-center justify-center text-[#666] hover:text-black hover:bg-[#f5f5f5] rounded-r-full transition-all"
@@ -188,7 +196,10 @@ export default function CartPage() {
             >
               Clear Cart
             </Button>
-            <Button className="bg-primary" onClick={() => router.push("/pickup")}>
+            <Button
+              className="bg-primary"
+              onClick={() => router.push("/pickup")}
+            >
               Proceed to Pickup
             </Button>
           </div>

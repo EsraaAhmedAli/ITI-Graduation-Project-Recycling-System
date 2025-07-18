@@ -1,15 +1,16 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useUserAuth } from '@/context/AuthFormContext';
-import { Avatar } from 'flowbite-react';
-import { Order, OrdersResponse } from '@/components/Types/orders.type';
-import Loader from '@/components/common/loader';
-import { useRouter } from 'next/navigation';
-import api from '@/lib/axios';
-import { ProtectedRoute } from '@/lib/userProtectedRoute';
-import Swal from 'sweetalert2';
-import { motion } from 'framer-motion';
+import { useEffect, useState } from "react";
+import { useUserAuth } from "@/context/AuthFormContext";
+import { Avatar } from "flowbite-react";
+import { Order, OrdersResponse } from "@/components/Types/orders.type";
+import Loader from "@/components/common/loader";
+import { useRouter } from "next/navigation";
+import api from "@/lib/axios";
+import { ProtectedRoute } from "@/lib/userProtectedRoute";
+import Link from "next/link";
+import Swal from "sweetalert2";
+import Image from "next/image";
 
 export default function ProfilePage() {
   return (
@@ -23,90 +24,131 @@ function ProfileContent() {
   const { user, token } = useUserAuth();
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<'incoming' | 'past'>('incoming');
+  const [activeTab, setActiveTab] = useState("incoming");
+  const router = useRouter();
 
-  const incomingOrders = allOrders.filter(
-    (order) => order.status !== 'Completed' && order.status !== 'Cancelled'
-  );
-  const pastOrders = allOrders.filter(
-    (order) => order.status === 'Completed' || order.status === 'Cancelled'
-  );
-
-  const getAllOrders = async (): Promise<Order[]> => {
+  const getAllOrders = async (): Promise<void> => {
     try {
       setLoading(true);
-      const res = await api.get<OrdersResponse>('/orders');
+      const res = await api.get<OrdersResponse>("/orders");
       setAllOrders(res.data.data);
-      return res.data.data;
+      console.log(res.data.data);
+      
     } catch (err) {
       console.error(err);
-      return [];
     } finally {
       setLoading(false);
     }
+
+
   };
 
-  const handleCancelOrder = async (orderId: string) => {
-    const confirm = await Swal.fire({
-      title: 'Cancel this order?',
-      text: 'You will not be able to undo this action!',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Yes, cancel it!',
-    });
-
-    if (confirm.isConfirmed) {
+  const cancelOrder = async (orderId: string) => {
+  try {
+    const res = await api.patch(`/orders/${orderId}/cancel`);
+    return res.data;  // { success, message, data }
+  } catch (error) {
+    throw error;
+  }
+};
+const handleCancelOrder = (orderId: string) => {
+  Swal.fire({
+    title: "Are you sure you want to cancel this order?",
+    showCancelButton: true,
+    confirmButtonText: "Yes",
+    cancelButtonText: "No",
+    icon: "warning",
+  }).then(async (result) => {
+    if (result.isConfirmed) {
       try {
-        await api.patch(`/orders/${orderId}/cancel`);
-        await getAllOrders();
-        Swal.fire('Cancelled!', 'Your order has been cancelled.', 'success');
+        await cancelOrder(orderId);
+        setAllOrders((prev) =>
+          prev.map((order) =>
+            order._id === orderId ? { ...order, status: "Cancelled" } : order
+          )
+        );
+        Swal.fire("Order cancelled", "", "success");
       } catch (error) {
-        console.error('Cancel failed', error);
-        Swal.fire('Error', 'Could not cancel the order.', 'error');
+        console.error("Failed to cancel order:", error);
+        Swal.fire("Failed to cancel order", "", "error");
       }
+    } else {
+      Swal.fire("Your order is safe", "", "info");
     }
-  };
+  });
+};
 
   useEffect(() => {
-    if (user && token) {
-      getAllOrders();
-    }
+    if (user && token) getAllOrders();
   }, [user, token]);
 
-  const totalPoints = allOrders.reduce((acc, order) => {
-    return (
-      acc +
-      order.items.reduce((itemAcc, item) => itemAcc + (item.points ?? 0), 0)
-    );
-  }, 0);
+const filteredOrders = allOrders.filter((order) => {
+  const status = order.status
 
-  const stats = {
-    totalRecycles: allOrders?.length,
-    points: totalPoints,
-    categories: 4,
-    tier: 50,
-  };
+  if (activeTab === "incoming") {
+    return ["Pending", "accepted"].includes(status);
+  }
+  if (activeTab === "completed") {
+    return status === "completed";
+  }
+  if (activeTab === "Cancelled") {
+    return status === "Cancelled";
+  }
+  return true;
+});
 
-  const tabOrders = activeTab === 'incoming' ? incomingOrders : pastOrders;
+const totalPoints = allOrders
+  .filter(order => {
+    const status = order.status
+    return status !== "Cancelled" && status !== "Pending";
+  })
+  .reduce(
+    (acc, order) =>
+      acc + order.items.reduce((sum, item) => sum + (item.points || 0), 0),
+    0
+  );
+
+const stats = {
+  totalRecycles: allOrders.filter((or) => or.status !== "Cancelled").length,
+  points: totalPoints,
+  categories: 4,
+  tier: 50,
+};
+
+  const tabs = ["incoming", "completed", "cancelled"];
 
   return (
-    <div className="min-h-screen bg-green-50 py-10 px-4">
+    <div className="h-auto bg-green-50 px-4">
       <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-xl p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap">
           <div className="flex items-center space-x-4">
-            <Avatar img="https://api.dicebear.com/7.x/bottts/svg?seed=user123" rounded size="lg" />
+            <Avatar
+              img={
+                user?.imgUrl ||
+                "https://api.dicebear.com/7.x/bottts/svg?seed=user123"
+              }
+              rounded
+              size="lg"
+            />
             <div>
-              <h2 className="text-xl font-semibold text-green-800">{user?.fullName || 'John Doe'}</h2>
-              <p className="text-sm text-gray-500">{user?.email} — Eco-Warrior</p>
+              <h2 className="text-xl font-semibold text-green-800">
+                {user?.name || "John Doe"}
+              </h2>
+              <p className="text-sm text-gray-500">{user?.email}</p>
+              <p className="text-sm text-gray-500">
+                {user?.phoneNumber.padStart(11, "0")}
+              </p>
               <p className="text-xs text-gray-400">Cairo, July 2025</p>
             </div>
           </div>
-          <button className="bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700">
+
+          <Link
+            href="/editprofile"
+            className="bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700"
+          >
             Edit Profile
-          </button>
+          </Link>
         </div>
 
         {/* Stats */}
@@ -117,64 +159,58 @@ function ProfileContent() {
         </div>
 
         {/* Tabs */}
-        <div className="flex justify-center mb-4 space-x-4">
-          <button
-            onClick={() => setActiveTab('incoming')}
-            className={`px-4 py-2 rounded-full font-medium ${
-              activeTab === 'incoming'
-                ? 'bg-green-600 text-white'
-                : 'bg-green-100 text-green-700'
-            }`}
-          >
-            Incoming Orders
-          </button>
-          <button
-            onClick={() => setActiveTab('past')}
-            className={`px-4 py-2 rounded-full font-medium ${
-              activeTab === 'past'
-                ? 'bg-green-600 text-white'
-                : 'bg-green-100 text-green-700'
-            }`}
-          >
-            Past Orders
-          </button>
+        <div className="flex border-b gap-6">
+          {tabs.map((tab) => (
+            <button
+              key={tab}
+              className={`pb-2 capitalize font-semibold text-sm border-b-2 transition-colors duration-200 ${
+                activeTab === tab
+                  ? "border-green-600 text-green-800"
+                  : "border-transparent text-gray-500 hover:text-green-700"
+              }`}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab}
+            </button>
+          ))}
         </div>
 
         {/* Orders */}
         {loading ? (
-          <Loader title="your orders" />
-        ) : tabOrders.length === 0 ? (
-          <div className="text-center text-gray-500 py-6">
-            No {activeTab === 'incoming' ? 'incoming' : 'past'} orders found.
-          </div>
+          <Loader title="Loading orders..." />
+        ) : filteredOrders.length === 0 ? (
+          <p className="text-center text-gray-500">No orders in this tab yet.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {tabOrders.map((order) => (
-              <motion.div
+            {filteredOrders.map((order) => (
+              <div
                 key={order._id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="border rounded-2xl p-4 bg-white shadow hover:shadow-md"
+                className="border rounded-xl p-4 bg-green-50 shadow-sm space-y-2"
               >
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-green-700 font-semibold">Status: {order.status}</span>
-                  <span className="text-xs text-gray-400">
-                    {new Date(order.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-
+                <p className="text-sm text-gray-500">
+                  Date: {new Date(order.createdAt).toLocaleDateString()}
+                </p>
+                <p className="text-sm text-green-700 font-semibold">
+                  Status: {order.status}
+                </p>
                 {order.items.map((item, i) => (
-                  <div key={i} className="flex items-center gap-4 p-2 border-b last:border-none">
-                    <img
+                  <div
+                    key={i}
+                    className="flex items-center gap-4 bg-white p-2 rounded-lg shadow-sm"
+                  >
+                    <Image
+                    width={64}
+                    height={64}
                       src={item.image}
                       alt={item.itemName}
-                      className="w-14 h-14 rounded object-cover"
+                      className="rounded object-cover border"
                     />
                     <div className="flex flex-col text-sm">
-                      <span className="font-semibold text-green-800">{item.itemName}</span>
+                      <span className="font-semibold text-green-800">
+                        {item.itemName}
+                      </span>
                       <span className="text-gray-600">
-                        Qty: {item.quantity} {item.measurement_unit === 1 ? 'kg' : 'pcs'}
+                        Quantity: {item.quantity} {item.measurement_unit === 1 ? "kg" : "pcs"}
                       </span>
                       <span className="text-gray-600">Points: {item.points}</span>
                       <span className="text-gray-600">Price: {item.price} EGP</span>
@@ -182,21 +218,20 @@ function ProfileContent() {
                   </div>
                 ))}
 
-                <div className="text-xs text-gray-500 mt-2">
-                  {order.address.street}, Bldg {order.address.building}, Floor {order.address.floor},{' '}
-                  {order.address.area}, {order.address.city}
+                <div className="text-xs text-gray-500">
+                  {order.address.street}, Bldg {order.address.building}, Floor {order.address.floor}, {order.address.area}, {order.address.city}
                 </div>
 
-                {/* Cancel button only for incoming + not InProgress */}
-                {activeTab === 'incoming' && order.status !== 'InProgress' && order.status !== 'Cancelled' && (
+                {/* Cancel Button */}
+                {activeTab === "incoming" && (
                   <button
-                    onClick={() => handleCancelOrder(order._id!)}
-                    className="mt-3 w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded-xl text-sm"
+                    onClick={() => handleCancelOrder(order._id)}
+                    className="mt-2 px-3 py-1 text-sm text-white bg-red-500 hover:bg-red-600 rounded-md"
                   >
                     Cancel Order
                   </button>
                 )}
-              </motion.div>
+              </div>
             ))}
           </div>
         )}

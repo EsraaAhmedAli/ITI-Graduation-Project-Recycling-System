@@ -6,6 +6,7 @@ import { UserAuthProvider } from "@/context/AuthFormContext";
 import { CartProvider } from "@/context/CartContext";
 import { ToastContainer } from "react-toastify";
 import LayoutWrapper from "@/components/shared/layoutwrapper";
+import Navbar from "@/components/common/Navbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,7 +35,7 @@ export default function RootLayout({
       >
         <UserAuthProvider>
           <CartProvider>
-            <ToastContainer/>
+            <ToastContainer />
             <LayoutWrapper>{children}</LayoutWrapper>
             <Footer />
           </CartProvider>

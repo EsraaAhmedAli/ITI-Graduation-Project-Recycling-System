@@ -11,6 +11,7 @@ import { toast } from "react-toastify";
 import { UserAuthContext } from "@/context/AuthFormContext";
 import Loader from "@/components/common/loader";
 import api from "@/lib/axios";
+import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import Link from "next/link";
 
@@ -20,7 +21,6 @@ export default function PickupConfirmation() {
   const [copied, setCopied] = useState(false);
   const [loadingBtn, setLoadingBtn] = useState<boolean>(false);
   const [direction, setDirection] = useState<"forward" | "backward">("forward");
-
 
   const [selectedCity, setSelectedCity] = useState<City | "">("");
   const [formData, setFormData] = useState<FormInputs | null>(null);
@@ -66,7 +66,6 @@ export default function PickupConfirmation() {
       }
     } catch (err) {
       console.error("Failed to fetch addresses:", err);
-      toast.error("Failed to fetch addresses");
     } finally {
       setLoading(false);
     }
@@ -87,8 +86,6 @@ export default function PickupConfirmation() {
       setIsEditing(false);
     }
   }, [reset, user]);
-
-
 
   const handleNextStep = () => {
     if (!selectedAddress) {
@@ -312,7 +309,10 @@ export default function PickupConfirmation() {
                     >
                       Select address {addr._id}
                     </label>
-                    <button onClick={() => handleEditAddress(addr)} className="text-sm">
+                    <button
+                      onClick={() => handleEditAddress(addr)}
+                      className="text-sm"
+                    >
                       Edit
                     </button>
                     <button
@@ -387,8 +387,8 @@ export default function PickupConfirmation() {
             Pickup Request Confirmed!
           </h2>
           <p className="text-green-900 text-lg">
-            Thank you for your request. We will contact you soon to schedule your
-            pickup.
+            Thank you for your request. We will contact you soon to schedule
+            your pickup.
           </p>
           {createdOrderId && (
             <div className="bg-white border border-green-300 rounded-lg p-4 shadow-sm ">

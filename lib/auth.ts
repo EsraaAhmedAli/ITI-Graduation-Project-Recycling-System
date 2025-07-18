@@ -1,26 +1,19 @@
 // lib/api.ts
+import { User } from "@/components/Types/Auser.type";
 import api from "./axios";
 
 interface AuthResponse {
-  user: {
-    id: string;
-    fullName: string;
-    password: string;
-    email: string;
-    phoneNumber: string;
-    imageUrl?: string;
-    isAuthenticated?: boolean;
-  };
-  token: string;
+  user: User;
+  accessToken: string;
 }
 
 interface VerifyData {
   name: string;
   email: string;
-  password: string;
   phoneNumber: string;
   otpCode: string;
   provider?: string;
+  password: string;
 }
 export const verifyOtpAndRegister = async (
   data: VerifyData
@@ -60,7 +53,7 @@ export const resetPassword = async (data: {
 //   return res.data;
 // };
 export async function refreshAccessToken(): Promise<{ accessToken: string }> {
-  const response = await api.get("/auth/refresh"); // backend returns new access token
+  const response = await api.post("/auth/refresh"); // backend returns new access token
   const { accessToken } = response.data;
 
   if (!accessToken) {

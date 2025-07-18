@@ -44,13 +44,6 @@ export default function PhoneInput({ value, onChange }: PhoneInputProps) {
           />
         </div>
       </div>
-
-      {/* Helper/Error Message */}
-      {showError && (
-        <p className="mt-1 text-sm text-red-500">
-          it must start with any of [10,11,12,15] and be 10 digits long.
-        </p>
-      )}
     </div>
   );
 }
