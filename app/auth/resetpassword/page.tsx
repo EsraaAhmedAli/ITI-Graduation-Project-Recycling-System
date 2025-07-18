@@ -9,6 +9,7 @@ import Button from "@/components/common/Button";
 import { resetPassword } from "@/lib/auth";
 import { useSearchParams } from "next/navigation";
 import { useUserAuth } from "@/context/AuthFormContext";
+import { toast } from "react-toastify";
 
 export default function ResetPasswordForm() {
   const searchParams = useSearchParams();
@@ -74,13 +75,13 @@ export default function ResetPasswordForm() {
       setLoading(true);
       await resetPassword({
         email: form.email,
-        otpCode: form.otpCode,
+        otpCode: form.otpCode || "",
         newPassword: form.password,
       });
-      alert("Password reset successful");
+      toast.success("Password reset successful");
       router.push("/auth");
     } catch (err: any) {
-      alert(err.response?.data?.message || "Reset failed");
+      toast.error(err.response?.data?.message || "Reset failed");
     } finally {
       setLoading(false);
     }

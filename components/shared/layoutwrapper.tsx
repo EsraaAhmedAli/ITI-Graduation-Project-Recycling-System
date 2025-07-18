@@ -8,9 +8,9 @@ import { UserAuthContext } from "@/context/AuthFormContext";
 import { ToastContainer } from "react-toastify";
 
 export default function LayoutWrapper({ children }: { children: ReactNode }) {
-  const { user } = useContext(UserAuthContext) ??{}
+  const { user } = useContext(UserAuthContext) ?? {};
 
-  const isAdmin = user?.role !== "admin";
+  const isAdmin = user?.role === "admin";
 
   return (
     <>

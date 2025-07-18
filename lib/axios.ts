@@ -1,5 +1,6 @@
+// lib/axios.ts
 import axios from "axios";
-
+import { refreshAccessToken } from "./auth";
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
@@ -8,7 +9,7 @@ const api = axios.create({
 
 let accessToken: string | null = null;
 
-export const setAccessToken = (token: string) => {
+export const setAccessToken = (token: string | null) => {
   accessToken = token;
 };
 
@@ -16,28 +17,27 @@ export const getAccessToken = () => accessToken;
 
 api.interceptors.request.use((config) => {
   const token = getAccessToken();
+  console.log(`📥 Sending request to ${config.url} with ${token}`);
 
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
+    console.log("📤 Sending request with token:", config.url);
   }
   return config;
-}, (error) => {
-  // Request error
-  return Promise.reject(error);
 });
 
 // Avoid circular import by lazy requiring
 api.interceptors.response.use(
-  (response) => response,
+  (res) => res,
   async (error) => {
-    const original = error.config;
+    const original = error.config as any;
+    console.log("originale => ", original);
 
     if (!original) {
       // If no config is present, just reject
       console.error("⚠️ No request config found on error:", error);
       return Promise.reject(error);
     }
-
 
     // Check if error is 401 and retry not done yet
     if (
@@ -46,29 +46,19 @@ api.interceptors.response.use(
       !original.url.includes("/auth/refresh")
     ) {
       original._retry = true;
-      console.warn("🔁 Token expired. Attempting to refresh token...");
+      console.warn("🔁 Token expired. Attempting refresh...");
 
       try {
-        const { refreshAccessToken } = await import("./auth");
         const { accessToken: newToken } = await refreshAccessToken();
 
-        if (!newToken) {
-          throw new Error("No new access token returned from refresh");
-        }
-
         console.info("✅ Token refreshed successfully");
-
-        // Update token in memory and header
         setAccessToken(newToken);
-        original.headers.Authorization = `Bearer ${newToken}`;
 
-        // Retry original request with new token
+        original.headers.Authorization = `Bearer ${newToken}`;
         return api(original);
       } catch (refreshErr) {
-        console.error("❌ Token refresh failed. Logging out...", refreshErr);
-        // Optionally trigger logout here if you have it
-        // For example: import { logout } from "./auth"; logout();
-
+        console.error("❌ Token refresh failed. Logging out...");
+        // Optionally: redirect to login or throw error
         return Promise.reject(refreshErr);
       }
     }

@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { CircleDollarSign, Mic, CalendarCheck } from "lucide-react";
 import Button from "@/components/common/Button";
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 import CategoryList from "@/components/shared/CategoryList";
 
 export default function Home() {
@@ -20,9 +20,14 @@ export default function Home() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="absolute inset-0 flex flex-col items-center justify-center text-white bg-black/50">
-          <h1 className="text-4xl font-bold mb-4">Recycle Today for a Better Tomorrow</h1>
-          <p className="text-xl mb-6">Simple, community-driven recycling platform</p>
+          className="absolute inset-0 flex flex-col items-center justify-center text-white bg-black/50"
+        >
+          <h1 className="text-4xl font-bold mb-4">
+            Recycle Today for a Better Tomorrow
+          </h1>
+          <p className="text-xl mb-6">
+            Simple, community-driven recycling platform
+          </p>
           <div className="flex gap-4">
             <Link
               href="/category"
@@ -72,7 +77,9 @@ export default function Home() {
             </div>
             <div className="bg-base-200 rounded-2xl p-8 w-full text-center shadow-sm hover:shadow-md transition-all duration-300 h-full">
               <h3 className="text-2xl font-semibold mb-4">Sign Up</h3>
-              <p className="text-lg opacity-90">Create your account in just 30 seconds</p>
+              <p className="text-lg opacity-90">
+                Create your account in just 30 seconds
+              </p>
             </div>
           </div>
           <div className="hidden md:flex items-center justify-center py-16">
@@ -86,7 +93,9 @@ export default function Home() {
               </div>
             </div>
             <div className="bg-base-200 rounded-2xl p-8 w-full text-center shadow-sm hover:shadow-md transition-all duration-300 h-full">
-              <h3 className="text-2xl font-semibold mb-4">Select Type of Waste</h3>
+              <h3 className="text-2xl font-semibold mb-4">
+                Select Type of Waste
+              </h3>
               <p className="text-lg opacity-90">choose from categories</p>
             </div>
           </div>
@@ -102,7 +111,9 @@ export default function Home() {
             </div>
             <div className="bg-base-200 rounded-2xl p-8 w-full text-center shadow-sm hover:shadow-md transition-all duration-300 h-full">
               <h3 className="text-2xl font-semibold mb-4">Connect & Recycle</h3>
-              <p className="text-lg opacity-90">Find nearby centers or schedule pickup</p>
+              <p className="text-lg opacity-90">
+                Find nearby centers or schedule pickup
+              </p>
             </div>
           </div>
         </div>
@@ -114,7 +125,8 @@ export default function Home() {
             Join Our <span className="text-primary">Community</span>
           </h2>
           <p className="text-lg sm:text-xl mb-8 text-gray-700 max-w-2xl mx-auto">
-            Get exclusive recycling tips, updates, and special offers straight to your inbox.
+            Get exclusive recycling tips, updates, and special offers straight
+            to your inbox.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 max-w-md sm:max-w-xl mx-auto">
@@ -135,5 +147,4 @@ export default function Home() {
       </section>
     </>
   );
-
 }

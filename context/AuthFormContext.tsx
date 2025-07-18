@@ -4,19 +4,29 @@ import api from "@/lib/axios";
 import { setAccessToken } from "@/lib/axios";
 
 import { useRouter } from "next/navigation";
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
+import { User } from "@/components/Types/Auser.type";
 
 // === User Type ===
-interface User {
-  id?: string;
-  fullName: string;
-  email: string;
-  password: string;
-  phoneNumber: string;
-  imageUrl?: string;
-  isAuthenticated?: boolean;
-  name:string
-}
+// interface User {
+//   id: string;
+//   fullName: string;
+//   email: string;
+//   phoneNumber: string;
+//   password?: string;
+//   provider?: "google" | "facebook" | "none";
+//   role?: "admin" | "customer" | "buyer" | "delivery";
+//   isGuest: boolean;
+//   imgUrl?: string;
+//   createdAt?: string; // or Date if you parse it
+//   updatedAt?: string; // or Date if you parse it
+// }
 
 // === Context Type ===
 interface UserAuthContextType {
@@ -30,10 +40,16 @@ interface UserAuthContextType {
 }
 
 // === Create Context ===
-export const UserAuthContext = createContext<UserAuthContextType | undefined>(undefined);
+export const UserAuthContext = createContext<UserAuthContextType | undefined>(
+  undefined
+);
 
 // === Provider Component ===
-export const UserAuthProvider = ({ children }: { children: React.ReactNode }) => {
+export const UserAuthProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   const [user, setUserState] = useState<User | null>(null);
   const [token, setTokenState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -54,8 +70,10 @@ export const UserAuthProvider = ({ children }: { children: React.ReactNode }) =>
   const setToken = (token: string | null) => {
     if (token) {
       localStorage.setItem("token", token);
+      setAccessToken(token); // 👈 ADD THIS
     } else {
       localStorage.removeItem("token");
+      setAccessToken(null); // 👈 Clear token in memory
     }
     setTokenState(token);
   };
@@ -78,10 +96,10 @@ export const UserAuthProvider = ({ children }: { children: React.ReactNode }) =>
       console.log("🔄 Attempting to refresh access token...");
       // Make any authenticated request to trigger the interceptor
       // The interceptor will handle the token refresh automatically
-      const response = await api.get('/auth/refresh');
-      
+      const response = await api.get("/auth/refresh");
+
       // Update local state with the new token
-      const newToken = localStorage.getItem('token');
+      const newToken = localStorage.getItem("token");
       if (newToken) {
         setTokenState(newToken);
         console.log("✅ Token refreshed successfully");
@@ -98,23 +116,24 @@ export const UserAuthProvider = ({ children }: { children: React.ReactNode }) =>
   const validateSession = useCallback(async () => {
     const storedToken = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
-    
+
     if (storedUser) {
       setUserState(JSON.parse(storedUser));
     }
-    
+
     if (storedToken) {
       setTokenState(storedToken);
-        setAccessToken(storedToken);  
+      setAccessToken(storedToken);
 
-      
       try {
         // Make a simple authenticated request to validate the token
         // If token is expired, the interceptor will handle refresh automatically
-        await api.get('/auth/validate'); // or any protected endpoint
+        await api.get("/auth/validate"); // or any protected endpoint
         console.log("✅ Session is valid");
       } catch (error) {
-        console.log("⚠️ Session validation failed, but interceptor should handle it");
+        console.log(
+          "⚠️ Session validation failed, but interceptor should handle it"
+        );
         // The interceptor will handle token refresh, so we don't need to do anything here
       }
     }
@@ -143,14 +162,14 @@ export const UserAuthProvider = ({ children }: { children: React.ReactNode }) =>
   // ✅ Listen for token changes in localStorage (for cross-tab sync)
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'token') {
+      if (e.key === "token") {
         if (e.newValue) {
           setTokenState(e.newValue);
         } else {
           setTokenState(null);
         }
       }
-      if (e.key === 'user') {
+      if (e.key === "user") {
         if (e.newValue) {
           setUserState(JSON.parse(e.newValue));
         } else {
@@ -159,8 +178,8 @@ export const UserAuthProvider = ({ children }: { children: React.ReactNode }) =>
       }
     };
 
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
   // ✅ Refresh token when app regains focus (optional)
@@ -173,8 +192,8 @@ export const UserAuthProvider = ({ children }: { children: React.ReactNode }) =>
       }
     };
 
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
   }, [user, token, validateSession]);
 
   return (
