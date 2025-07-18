@@ -115,13 +115,26 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
       return `$${value}`;
     }
 
-    if (column.type === 'image') {
-      return (
-        <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center border border-green-200">
-          <span className="text-lg">{value}</span>
-        </div>
-      );
-    }
+    // if (column.type === 'image') {
+    //   return (
+    //     <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center border border-green-200">
+    //       <span className="text-lg">{value}</span>
+    //     </div>
+    //   );
+    // }
+
+
+  if (column.type === 'image') {
+  return (
+    <img
+      src={value}
+      alt={column.key}
+      className="w-12 h-12 rounded-full object-cover bg-green-50 flex items-center justify-center border border-green-200"
+    />
+  );
+}
+
+
 
     return value;
   };
