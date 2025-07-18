@@ -5,7 +5,6 @@ import { useUserAuth } from "@/context/AuthFormContext";
 import { Avatar } from "flowbite-react";
 import { Order, OrdersResponse } from "@/components/Types/orders.type";
 import Loader from "@/components/common/loader";
-import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
 import { ProtectedRoute } from "@/lib/userProtectedRoute";
 import Link from "next/link";
@@ -25,7 +24,6 @@ function ProfileContent() {
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState("incoming");
-  const router = useRouter();
 
   const getAllOrders = async (): Promise<void> => {
     try {
@@ -64,7 +62,7 @@ const handleCancelOrder = (orderId: string) => {
         await cancelOrder(orderId);
         setAllOrders((prev) =>
           prev.map((order) =>
-            order._id === orderId ? { ...order, status: "Cancelled" } : order
+            order._id === orderId ? { ...order, status: "cancelled" } : order
           )
         );
         Swal.fire("Order cancelled", "", "success");
@@ -91,16 +89,15 @@ const filteredOrders = allOrders.filter((order) => {
   if (activeTab === "completed") {
     return status === "completed";
   }
-  if (activeTab === "Cancelled") {
-    return status === "Cancelled";
+  if (activeTab === "cancelled") {  // Now this will match!
+    return status === "cancelled";
   }
   return true;
 });
-
 const totalPoints = allOrders
   .filter(order => {
     const status = order.status
-    return status !== "Cancelled" && status !== "Pending";
+    return status == 'completed';
   })
   .reduce(
     (acc, order) =>
@@ -109,13 +106,13 @@ const totalPoints = allOrders
   );
 
 const stats = {
-  totalRecycles: allOrders.filter((or) => or.status !== "Cancelled").length,
+  totalRecycles: allOrders.filter((or) => or.status !== "cancelled").length,
   points: totalPoints,
   categories: 4,
   tier: 50,
 };
 
-  const tabs = ["incoming", "completed", "cancelled"];
+const tabs = ["incoming", "completed", "cancelled"];
 
   return (
     <div className="h-auto bg-green-50 px-4">
@@ -223,7 +220,7 @@ const stats = {
                 </div>
 
                 {/* Cancel Button */}
-                {activeTab === "incoming" && (
+                {activeTab === "incoming" && order.status !=='accepted' && (
                   <button
                     onClick={() => handleCancelOrder(order._id)}
                     className="mt-2 px-3 py-1 text-sm text-white bg-red-500 hover:bg-red-600 rounded-md"
