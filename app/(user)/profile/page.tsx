@@ -1,13 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useUserAuth } from '@/context/AuthFormContext'; // Use the hook instead of useContext
+import { useUserAuth } from '@/context/AuthFormContext';
 import { Avatar } from 'flowbite-react';
 import { Order, OrdersResponse } from '@/components/Types/orders.type';
 import Loader from '@/components/common/loader';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/axios';
 import { ProtectedRoute } from '@/lib/userProtectedRoute';
+import Swal from 'sweetalert2';
+import { motion } from 'framer-motion';
 
 export default function ProfilePage() {
   return (
@@ -18,11 +20,17 @@ export default function ProfilePage() {
 }
 
 function ProfileContent() {
-  const { user, token, isLoading: authLoading } = useUserAuth(); // Use the hook and check both user and token
+  const { user, token } = useUserAuth();
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [activeTab, setActiveTab] = useState<'incoming' | 'past'>('incoming');
 
-  const router = useRouter();
+  const incomingOrders = allOrders.filter(
+    (order) => order.status !== 'Completed' && order.status !== 'Cancelled'
+  );
+  const pastOrders = allOrders.filter(
+    (order) => order.status === 'Completed' || order.status === 'Cancelled'
+  );
 
   const getAllOrders = async (): Promise<Order[]> => {
     try {
@@ -38,6 +46,35 @@ function ProfileContent() {
     }
   };
 
+  const handleCancelOrder = async (orderId: string) => {
+    const confirm = await Swal.fire({
+      title: 'Cancel this order?',
+      text: 'You will not be able to undo this action!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, cancel it!',
+    });
+
+    if (confirm.isConfirmed) {
+      try {
+        await api.patch(`/orders/${orderId}/cancel`);
+        await getAllOrders();
+        Swal.fire('Cancelled!', 'Your order has been cancelled.', 'success');
+      } catch (error) {
+        console.error('Cancel failed', error);
+        Swal.fire('Error', 'Could not cancel the order.', 'error');
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (user && token) {
+      getAllOrders();
+    }
+  }, [user, token]);
+
   const totalPoints = allOrders.reduce((acc, order) => {
     return (
       acc +
@@ -45,22 +82,14 @@ function ProfileContent() {
     );
   }, 0);
 
-  useEffect(() => {
-    // Only fetch orders if both user and token exist
-    if (user && token) {
-      getAllOrders();
-    }
-  }, [user, token]);
-
-  // The ProtectedRoute will handle the loading and redirect logic
-  // So we don't need to check authLoading or !user here anymore
-  
   const stats = {
     totalRecycles: allOrders?.length,
     points: totalPoints,
     categories: 4,
     tier: 50,
   };
+
+  const tabOrders = activeTab === 'incoming' ? incomingOrders : pastOrders;
 
   return (
     <div className="min-h-screen bg-green-50 py-10 px-4">
@@ -87,71 +116,90 @@ function ProfileContent() {
           <StatBox label="Membership Tier" value={stats.tier} />
         </div>
 
-        {/* Recent Activity */}
+        {/* Tabs */}
+        <div className="flex justify-center mb-4 space-x-4">
+          <button
+            onClick={() => setActiveTab('incoming')}
+            className={`px-4 py-2 rounded-full font-medium ${
+              activeTab === 'incoming'
+                ? 'bg-green-600 text-white'
+                : 'bg-green-100 text-green-700'
+            }`}
+          >
+            Incoming Orders
+          </button>
+          <button
+            onClick={() => setActiveTab('past')}
+            className={`px-4 py-2 rounded-full font-medium ${
+              activeTab === 'past'
+                ? 'bg-green-600 text-white'
+                : 'bg-green-100 text-green-700'
+            }`}
+          >
+            Past Orders
+          </button>
+        </div>
+
+        {/* Orders */}
         {loading ? (
-          <Loader title={'your activity'} />
-        ) : allOrders.length === 0 ? (
+          <Loader title="your orders" />
+        ) : tabOrders.length === 0 ? (
           <div className="text-center text-gray-500 py-6">
-            You don't have any recycling activity yet. Start your first recycle today!
+            No {activeTab === 'incoming' ? 'incoming' : 'past'} orders found.
           </div>
         ) : (
-          <div>
-            <h3 className="text-lg font-semibold text-green-800 mb-3">Recent Recycling Activity</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {allOrders.map((order, index) => (
-                <div
-                  key={order._id || index}
-                  className="border rounded-xl p-4 bg-green-50 shadow-sm mb-4 space-y-2"
-                >
-                  <p className="text-sm text-gray-500">
-                    Date: {new Date(order.createdAt).toLocaleDateString()}
-                  </p>
-                  <p className="text-sm text-green-700 font-semibold">Status: {order.status}</p>
-
-                  {order.items.map((item, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center gap-4 bg-white p-2 rounded-lg shadow-sm"
-                    >
-                      <img
-                        src={item.image}
-                        alt={item.itemName}
-                        className="w-14 h-14 rounded object-cover border"
-                      />
-                      <div className="flex flex-col text-sm">
-                        <span className="font-semibold text-green-800">{item.itemName}</span>
-                        <span className="text-gray-600">
-                          Quantity: {item.quantity}{' '}
-                          {item.measurement_unit === 1 ? 'kg' : 'pcs'}
-                        </span>
-                        <span className="text-gray-600">Points: {item.points}</span>
-                        <span className="text-gray-600">Price: {item.price} EGP</span>
-                      </div>
-                    </div>
-                  ))}
-
-                  <div className="text-xs text-gray-500 mt-2 ml-1">
-                    {order.address.street}, Bldg {order.address.building}, Floor{' '}
-                    {order.address.floor}, {order.address.area}, {order.address.city}
-                  </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {tabOrders.map((order) => (
+              <motion.div
+                key={order._id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="border rounded-2xl p-4 bg-white shadow hover:shadow-md"
+              >
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-green-700 font-semibold">Status: {order.status}</span>
+                  <span className="text-xs text-gray-400">
+                    {new Date(order.createdAt).toLocaleDateString()}
+                  </span>
                 </div>
-              ))}
-            </div>
+
+                {order.items.map((item, i) => (
+                  <div key={i} className="flex items-center gap-4 p-2 border-b last:border-none">
+                    <img
+                      src={item.image}
+                      alt={item.itemName}
+                      className="w-14 h-14 rounded object-cover"
+                    />
+                    <div className="flex flex-col text-sm">
+                      <span className="font-semibold text-green-800">{item.itemName}</span>
+                      <span className="text-gray-600">
+                        Qty: {item.quantity} {item.measurement_unit === 1 ? 'kg' : 'pcs'}
+                      </span>
+                      <span className="text-gray-600">Points: {item.points}</span>
+                      <span className="text-gray-600">Price: {item.price} EGP</span>
+                    </div>
+                  </div>
+                ))}
+
+                <div className="text-xs text-gray-500 mt-2">
+                  {order.address.street}, Bldg {order.address.building}, Floor {order.address.floor},{' '}
+                  {order.address.area}, {order.address.city}
+                </div>
+
+                {/* Cancel button only for incoming + not InProgress */}
+                {activeTab === 'incoming' && order.status !== 'InProgress' && order.status !== 'Cancelled' && (
+                  <button
+                    onClick={() => handleCancelOrder(order._id!)}
+                    className="mt-3 w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded-xl text-sm"
+                  >
+                    Cancel Order
+                  </button>
+                )}
+              </motion.div>
+            ))}
           </div>
         )}
-
-        {/* Goals & Settings */}
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <h3 className="text-lg font-semibold text-green-800 mb-3">Goals and Badges</h3>
-            <div className="w-full bg-gray-200 rounded-full h-3">
-              <div className="bg-green-600 h-3 rounded-full w-[60%]"></div>
-            </div>
-            <p className="text-sm text-gray-600 mt-1">
-              Recycle 15 kg plastic — 60% completed
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );
