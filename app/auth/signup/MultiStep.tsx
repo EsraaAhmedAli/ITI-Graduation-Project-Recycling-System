@@ -150,6 +150,7 @@ export function RegistrationForm() {
         password: watch("password") || "",
         phoneNumber: formattedPhone,
         otpCode: watch("otp") || "",
+        role:watch('role') || 'customer'
       });
       console.log(res);
 

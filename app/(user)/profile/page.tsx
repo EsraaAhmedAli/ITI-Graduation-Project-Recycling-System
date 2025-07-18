@@ -177,7 +177,7 @@ const stats = {
 
         {/* Orders */}
         {loading ? (
-          <Loader title="Loading orders..." />
+          <Loader title=" orders..." />
         ) : filteredOrders.length === 0 ? (
           <p className="text-center text-gray-500">No orders in this tab yet.</p>
         ) : (
