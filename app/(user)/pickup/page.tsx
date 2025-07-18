@@ -11,7 +11,6 @@ import { toast } from "react-toastify";
 import { UserAuthContext } from "@/context/AuthFormContext";
 import Loader from "@/components/common/loader";
 import api from "@/lib/axios";
-import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import Link from "next/link";
 
@@ -37,6 +36,7 @@ export default function PickupConfirmation() {
   const [notLoggedIn, setNotLoggedIn] = useState(false);
 
   const { user } = useContext(UserAuthContext) ?? {};
+  
   const { cart, clearCart } = useCart();
 
   // Redirect immediately if no user
@@ -117,6 +117,7 @@ export default function PickupConfirmation() {
         items: cart,
         phoneNumber: user?.phoneNumber,
         userName: user?.name,
+        email:user?.email
       })
       .then((res) => {
         setCreatedOrderId(res.data.data._id);
@@ -395,7 +396,7 @@ export default function PickupConfirmation() {
               <p className="text-sm text-green-800 mb-2 font-medium">
                 Your Tracking Number:
               </p>
-              <div className="flex items-center gap-2">
+              <div className="block   text-center">
                 <span className="font-mono text-green-900 text-lg break-all">
                   {createdOrderId}
                 </span>
