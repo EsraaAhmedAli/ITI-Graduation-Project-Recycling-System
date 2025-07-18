@@ -1,15 +1,24 @@
 'use client';
 
-import { useContext, useEffect, useState } from 'react';
-import { UserAuthContext } from '@/context/AuthFormContext';
+import { useEffect, useState } from 'react';
+import { useUserAuth } from '@/context/AuthFormContext'; // Use the hook instead of useContext
 import { Avatar } from 'flowbite-react';
 import { Order, OrdersResponse } from '@/components/Types/orders.type';
 import Loader from '@/components/common/loader';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/axios';
+import { ProtectedRoute } from '@/lib/userProtectedRoute';
 
 export default function ProfilePage() {
-  const { user, isLoading: authLoading } = useContext(UserAuthContext) ?? {};
+  return (
+    <ProtectedRoute>
+      <ProfileContent />
+    </ProtectedRoute>
+  );
+}
+
+function ProfileContent() {
+  const { user, token, isLoading: authLoading } = useUserAuth(); // Use the hook and check both user and token
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -28,32 +37,24 @@ export default function ProfilePage() {
       setLoading(false);
     }
   };
-const totalPoints = allOrders.reduce((acc, order) => {
-  return (
-    acc +
-    order.items.reduce((itemAcc, item) => itemAcc + (item.points ?? 0), 0)
-  );
-}, 0);
 
-  useEffect(() => {
-    if (user) getAllOrders();
-  }, [user]);
-
-  useEffect(() => {
-    if (authLoading) return;
-    if (!user) router.push('/auth/login');
-  }, [user, authLoading, router]);
-
-  if (authLoading) {
+  const totalPoints = allOrders.reduce((acc, order) => {
     return (
-      <div className="min-h-screen bg-green-50 py-10 px-4 flex items-center justify-center">
-        <Loader title=" your profile..." />
-      </div>
+      acc +
+      order.items.reduce((itemAcc, item) => itemAcc + (item.points ?? 0), 0)
     );
-  }
+  }, 0);
 
-  if (!user) return null;
+  useEffect(() => {
+    // Only fetch orders if both user and token exist
+    if (user && token) {
+      getAllOrders();
+    }
+  }, [user, token]);
 
+  // The ProtectedRoute will handle the loading and redirect logic
+  // So we don't need to check authLoading or !user here anymore
+  
   const stats = {
     totalRecycles: allOrders?.length,
     points: totalPoints,
@@ -69,7 +70,7 @@ const totalPoints = allOrders.reduce((acc, order) => {
           <div className="flex items-center space-x-4">
             <Avatar img="https://api.dicebear.com/7.x/bottts/svg?seed=user123" rounded size="lg" />
             <div>
-              <h2 className="text-xl font-semibold text-green-800">{user?.name || 'John Doe'}</h2>
+              <h2 className="text-xl font-semibold text-green-800">{user?.fullName || 'John Doe'}</h2>
               <p className="text-sm text-gray-500">{user?.email} — Eco-Warrior</p>
               <p className="text-xs text-gray-400">Cairo, July 2025</p>
             </div>
@@ -91,7 +92,7 @@ const totalPoints = allOrders.reduce((acc, order) => {
           <Loader title={'your activity'} />
         ) : allOrders.length === 0 ? (
           <div className="text-center text-gray-500 py-6">
-            You don’t have any recycling activity yet. Start your first recycle today!
+            You don't have any recycling activity yet. Start your first recycle today!
           </div>
         ) : (
           <div>
@@ -142,7 +143,7 @@ const totalPoints = allOrders.reduce((acc, order) => {
         {/* Goals & Settings */}
         <div className="grid md:grid-cols-2 gap-6">
           <div>
-            <h3 className="text-lg font-semibold text-green-800 mb-2">Goals and Badges</h3>
+            <h3 className="text-lg font-semibold text-green-800 mb-3">Goals and Badges</h3>
             <div className="w-full bg-gray-200 rounded-full h-3">
               <div className="bg-green-600 h-3 rounded-full w-[60%]"></div>
             </div>
