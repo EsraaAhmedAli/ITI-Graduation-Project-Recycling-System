@@ -7,7 +7,6 @@ import { CartProvider } from "@/context/CartContext";
 import { ToastContainer } from "react-toastify";
 import LayoutWrapper from "@/components/shared/layoutwrapper";
 
-
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
