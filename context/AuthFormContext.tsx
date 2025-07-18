@@ -96,7 +96,7 @@ export const UserAuthProvider = ({
       console.log("🔄 Attempting to refresh access token...");
       // Make any authenticated request to trigger the interceptor
       // The interceptor will handle the token refresh automatically
-      const response = await api.get("/auth/refresh");
+      const response = await api.post("/auth/refresh");
 
       // Update local state with the new token
       const newToken = localStorage.getItem("token");

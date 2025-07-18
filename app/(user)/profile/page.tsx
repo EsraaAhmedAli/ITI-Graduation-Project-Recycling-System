@@ -1,14 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useUserAuth } from "@/context/AuthFormContext"; // Use the hook instead of useContext
+import { useUserAuth } from "@/context/AuthFormContext";
 import { Avatar } from "flowbite-react";
 import { Order, OrdersResponse } from "@/components/Types/orders.type";
 import Loader from "@/components/common/loader";
 import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
 import { ProtectedRoute } from "@/lib/userProtectedRoute";
-import { Link } from "lucide-react";
+import Link from "next/link";
+import Swal from "sweetalert2";
+import Image from "next/image";
 
 export default function ProfilePage() {
   return (
@@ -19,50 +21,101 @@ export default function ProfilePage() {
 }
 
 function ProfileContent() {
-  const { user, token, isLoading: authLoading } = useUserAuth(); // Use the hook and check both user and token
+  const { user, token } = useUserAuth();
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  console.log("user insdie profle ", user);
-
+  const [activeTab, setActiveTab] = useState("incoming");
   const router = useRouter();
 
-  const getAllOrders = async (): Promise<Order[]> => {
+  const getAllOrders = async (): Promise<void> => {
     try {
       setLoading(true);
       const res = await api.get<OrdersResponse>("/orders");
       setAllOrders(res.data.data);
-      return res.data.data;
+      console.log(res.data.data);
+      
     } catch (err) {
       console.error(err);
-      return [];
     } finally {
       setLoading(false);
     }
+
+
   };
 
-  const totalPoints = allOrders.reduce((acc, order) => {
-    return (
-      acc +
-      order.items.reduce((itemAcc, item) => itemAcc + (item.points ?? 0), 0)
-    );
-  }, 0);
+  const cancelOrder = async (orderId: string) => {
+  try {
+    const res = await api.patch(`/orders/${orderId}/cancel`);
+    return res.data;  // { success, message, data }
+  } catch (error) {
+    throw error;
+  }
+};
+const handleCancelOrder = (orderId: string) => {
+  Swal.fire({
+    title: "Are you sure you want to cancel this order?",
+    showCancelButton: true,
+    confirmButtonText: "Yes",
+    cancelButtonText: "No",
+    icon: "warning",
+  }).then(async (result) => {
+    if (result.isConfirmed) {
+      try {
+        await cancelOrder(orderId);
+        setAllOrders((prev) =>
+          prev.map((order) =>
+            order._id === orderId ? { ...order, status: "Cancelled" } : order
+          )
+        );
+        Swal.fire("Order cancelled", "", "success");
+      } catch (error) {
+        console.error("Failed to cancel order:", error);
+        Swal.fire("Failed to cancel order", "", "error");
+      }
+    } else {
+      Swal.fire("Your order is safe", "", "info");
+    }
+  });
+};
 
   useEffect(() => {
-    // Only fetch orders if both user and token exist
-    if (user && token) {
-      getAllOrders();
-    }
+    if (user && token) getAllOrders();
   }, [user, token]);
 
-  // The ProtectedRoute will handle the loading and redirect logic
-  // So we don't need to check authLoading or !user here anymore
+const filteredOrders = allOrders.filter((order) => {
+  const status = order.status
 
-  const stats = {
-    totalRecycles: allOrders?.length,
-    points: totalPoints,
-    categories: 4,
-    tier: 50,
-  };
+  if (activeTab === "incoming") {
+    return ["Pending", "accepted"].includes(status);
+  }
+  if (activeTab === "completed") {
+    return status === "completed";
+  }
+  if (activeTab === "Cancelled") {
+    return status === "Cancelled";
+  }
+  return true;
+});
+
+const totalPoints = allOrders
+  .filter(order => {
+    const status = order.status
+    return status !== "Cancelled" && status !== "Pending";
+  })
+  .reduce(
+    (acc, order) =>
+      acc + order.items.reduce((sum, item) => sum + (item.points || 0), 0),
+    0
+  );
+
+const stats = {
+  totalRecycles: allOrders.filter((or) => or.status !== "Cancelled").length,
+  points: totalPoints,
+  categories: 4,
+  tier: 50,
+};
+
+  const tabs = ["incoming", "completed", "cancelled"];
 
   return (
     <div className="h-auto bg-green-50 px-4">
@@ -72,8 +125,8 @@ function ProfileContent() {
           <div className="flex items-center space-x-4">
             <Avatar
               img={
-                user?.imgUrl ??
-                "thtps://api.dicebear.com/7.x/bottts/svg?seed=user123"
+                user?.imgUrl ||
+                "https://api.dicebear.com/7.x/bottts/svg?seed=user123"
               }
               rounded
               size="lg"
@@ -82,19 +135,17 @@ function ProfileContent() {
               <h2 className="text-xl font-semibold text-green-800">
                 {user?.name || "John Doe"}
               </h2>
-              <p className="text-sm text-gray-500">
-                {user?.email} — Eco-Warrior
-              </p>
+              <p className="text-sm text-gray-500">{user?.email}</p>
               <p className="text-sm text-gray-500">
                 {user?.phoneNumber.padStart(11, "0")}
               </p>
-
               <p className="text-xs text-gray-400">Cairo, July 2025</p>
             </div>
           </div>
+
           <Link
-            href={"/editprofile"}
-            className="bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700 cursor-pointer"
+            href="/editprofile"
+            className="bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700"
           >
             Edit Profile
           </Link>
@@ -107,85 +158,83 @@ function ProfileContent() {
           <StatBox label="Membership Tier" value={stats.tier} />
         </div>
 
-        {/* Recent Activity */}
+        {/* Tabs */}
+        <div className="flex border-b gap-6">
+          {tabs.map((tab) => (
+            <button
+              key={tab}
+              className={`pb-2 capitalize font-semibold text-sm border-b-2 transition-colors duration-200 ${
+                activeTab === tab
+                  ? "border-green-600 text-green-800"
+                  : "border-transparent text-gray-500 hover:text-green-700"
+              }`}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        {/* Orders */}
         {loading ? (
-          <Loader title={"your activity"} />
-        ) : allOrders.length === 0 ? (
-          <div className="text-center text-gray-500 py-6">
-            You don't have any recycling activity yet. Start your first recycle
-            today!
-          </div>
+          <Loader title=" orders..." />
+        ) : filteredOrders.length === 0 ? (
+          <p className="text-center text-gray-500">No orders in this tab yet.</p>
         ) : (
-          <div>
-            <h3 className="text-lg font-semibold text-green-800 mb-3">
-              Recent Recycling Activity
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {allOrders.map((order, index) => (
-                <div
-                  key={order._id || index}
-                  className="border rounded-xl p-4 bg-green-50 shadow-sm mb-4 space-y-2"
-                >
-                  <p className="text-sm text-gray-500">
-                    Date: {new Date(order.createdAt).toLocaleDateString()}
-                  </p>
-                  <p className="text-sm text-green-700 font-semibold">
-                    Status: {order.status}
-                  </p>
-
-                  {order.items.map((item, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center gap-4 bg-white p-2 rounded-lg shadow-sm"
-                    >
-                      <img
-                        src={item.image}
-                        alt={item.itemName}
-                        className="w-14 h-14 rounded object-cover border"
-                      />
-                      <div className="flex flex-col text-sm">
-                        <span className="font-semibold text-green-800">
-                          {item.itemName}
-                        </span>
-                        <span className="text-gray-600">
-                          Quantity: {item.quantity}{" "}
-                          {item.measurement_unit === 1 ? "kg" : "pcs"}
-                        </span>
-                        <span className="text-gray-600">
-                          Points: {item.points}
-                        </span>
-                        <span className="text-gray-600">
-                          Price: {item.price} EGP
-                        </span>
-                      </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredOrders.map((order) => (
+              <div
+                key={order._id}
+                className="border rounded-xl p-4 bg-green-50 shadow-sm space-y-2"
+              >
+                <p className="text-sm text-gray-500">
+                  Date: {new Date(order.createdAt).toLocaleDateString()}
+                </p>
+                <p className="text-sm text-green-700 font-semibold">
+                  Status: {order.status}
+                </p>
+                {order.items.map((item, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-4 bg-white p-2 rounded-lg shadow-sm"
+                  >
+                    <Image
+                    width={64}
+                    height={64}
+                      src={item.image}
+                      alt={item.itemName}
+                      className="rounded object-cover border"
+                    />
+                    <div className="flex flex-col text-sm">
+                      <span className="font-semibold text-green-800">
+                        {item.itemName}
+                      </span>
+                      <span className="text-gray-600">
+                        Quantity: {item.quantity} {item.measurement_unit === 1 ? "kg" : "pcs"}
+                      </span>
+                      <span className="text-gray-600">Points: {item.points}</span>
+                      <span className="text-gray-600">Price: {item.price} EGP</span>
                     </div>
-                  ))}
-
-                  <div className="text-xs text-gray-500 mt-2 ml-1">
-                    {order.address.street}, Bldg {order.address.building}, Floor{" "}
-                    {order.address.floor}, {order.address.area},{" "}
-                    {order.address.city}
                   </div>
+                ))}
+
+                <div className="text-xs text-gray-500">
+                  {order.address.street}, Bldg {order.address.building}, Floor {order.address.floor}, {order.address.area}, {order.address.city}
                 </div>
-              ))}
-            </div>
+
+                {/* Cancel Button */}
+                {activeTab === "incoming" && (
+                  <button
+                    onClick={() => handleCancelOrder(order._id)}
+                    className="mt-2 px-3 py-1 text-sm text-white bg-red-500 hover:bg-red-600 rounded-md"
+                  >
+                    Cancel Order
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
         )}
-
-        {/* Goals & Settings */}
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <h3 className="text-lg font-semibold text-green-800 mb-2">
-              Goals and Badges
-            </h3>
-            <div className="w-full bg-gray-200 rounded-full h-3">
-              <div className="bg-green-600 h-3 rounded-full w-[60%]"></div>
-            </div>
-            <p className="text-sm text-gray-600 mt-1">
-              Recycle 15 kg plastic — 60% completed
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );

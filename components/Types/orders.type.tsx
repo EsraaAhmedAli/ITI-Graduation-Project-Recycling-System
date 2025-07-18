@@ -15,6 +15,11 @@ export interface Order {
     name: string;
     quantity: number;
     totalPoints: number;
+    image:string
+    points:number
+    measurement_unit:number
+    price:number
+    itemName:string
   }[];
   createdAt: string;
   updatedAt: string;

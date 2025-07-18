@@ -31,11 +31,9 @@ api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original = error.config as any;
-    console.log("originale => ", original);
 
     if (!original) {
       // If no config is present, just reject
-      console.error("⚠️ No request config found on error:", error);
       return Promise.reject(error);
     }
 

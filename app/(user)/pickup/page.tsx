@@ -66,7 +66,6 @@ export default function PickupConfirmation() {
       }
     } catch (err) {
       console.error("Failed to fetch addresses:", err);
-      toast.error("Failed to fetch addresses");
     } finally {
       setLoading(false);
     }
