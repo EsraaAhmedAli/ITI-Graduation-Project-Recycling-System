@@ -6,6 +6,10 @@ import Footer from "@/components/common/Footer";
 import { UserAuthProvider } from "@/context/AuthFormContext";
 import { CartProvider } from "@/context/CartContext";
 import { ToastContainer } from "react-toastify";
+import 'primereact/resources/themes/lara-light-green/theme.css'; 
+import 'primereact/resources/primereact.min.css';             
+import 'primeicons/primeicons.css';                            
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

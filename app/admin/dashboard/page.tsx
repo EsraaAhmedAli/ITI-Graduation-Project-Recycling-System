@@ -1,7 +1,8 @@
-import React from 'react'
 
-export default function page() {
+export default function AdminsPage() {
   return (
-    <div>dashboard</div>
-  )
+    <main className="p-8">
+     dashboard
+    </main>
+  );
 }
