@@ -11,6 +11,7 @@ import { toast } from "react-toastify";
 import { UserAuthContext } from "@/context/AuthFormContext";
 import Loader from "@/components/common/loader";
 import api from "@/lib/axios";
+import { useRouter } from "next/navigation";
 
 export default function PickupConfirmation() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -30,6 +31,7 @@ export default function PickupConfirmation() {
   const [isEditing, setIsEditing] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const { user } = useContext(UserAuthContext) ?? {};
+  const router = useRouter();
 
   const {
     register,
@@ -234,7 +236,8 @@ export default function PickupConfirmation() {
                     selectedAddress?._id === addr._id
                       ? "border-green-500"
                       : "border-gray-300"
-                  }`}>
+                  }`}
+                >
                   <h3 className="font-semibold text-lg">
                     {addr.city} - {addr.area}
                   </h3>
@@ -243,25 +246,30 @@ export default function PickupConfirmation() {
                     {addr.apartment}
                   </p>
                   <div className="flex gap-2 mt-2">
-                 <input
-  id={`addressRadio-${addr._id}`}
-  type="radio"
-  name="address"
-  checked={selectedAddress?._id === addr._id}
-  onChange={() => handleSelectAddress(addr)}
-  className="text-green-700"
-/>
-<label htmlFor={`addressRadio-${addr._id}`} className="sr-only">
-  Select address {addr._id}
-</label>
+                    <input
+                      id={`addressRadio-${addr._id}`}
+                      type="radio"
+                      name="address"
+                      checked={selectedAddress?._id === addr._id}
+                      onChange={() => handleSelectAddress(addr)}
+                      className="text-green-700"
+                    />
+                    <label
+                      htmlFor={`addressRadio-${addr._id}`}
+                      className="sr-only"
+                    >
+                      Select address {addr._id}
+                    </label>
                     <button
                       onClick={() => handleEditAddress(addr)}
-                      className="text-sm">
+                      className="text-sm"
+                    >
                       Edit
                     </button>
                     <button
                       onClick={() => handleDeleteAddress(addr._id)}
-                      className="text-red-700 text-sm">
+                      className="text-red-700 text-sm"
+                    >
                       Delete
                     </button>
                   </div>
@@ -284,12 +292,14 @@ export default function PickupConfirmation() {
                     });
                     setSelectedCity("");
                   }}
-                  className="mt-4 border border-primary text-primary p-2 rounded-lg ">
+                  className="mt-4 border border-primary text-primary p-2 rounded-lg "
+                >
                   Add New Address
                 </Button>
                 <Button
                   onClick={handleNextStep}
-                  className="mt-4  bg-primary text-white p-3 rounded-lg">
+                  className="mt-4  bg-primary text-white p-3 rounded-lg"
+                >
                   Next
                 </Button>
               </div>
@@ -313,7 +323,8 @@ export default function PickupConfirmation() {
               className="w-16 h-16 text-green-600 mb-4"
               fill="none"
               stroke="currentColor"
-              viewBox="0 0 24 24">
+              viewBox="0 0 24 24"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -350,7 +361,8 @@ export default function PickupConfirmation() {
               ? "bg-green-600 text-white border-green-600"
               : "text-green-600 border-green-300 hover:text-green-800 hover:border-green-800"
           }`}
-                  title="Copy to clipboard">
+                  title="Copy to clipboard"
+                >
                   {copied ? "Copied!" : "Copy"}
                 </button>
               </div>
@@ -362,7 +374,8 @@ export default function PickupConfirmation() {
               setIsEditing(false);
               setCreatedOrderId(null);
             }}
-            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg">
+            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg"
+          >
             Make Another Request
           </Button>
         </div>

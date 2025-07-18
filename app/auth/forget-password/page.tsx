@@ -7,10 +7,12 @@ import { FloatingInput } from "@/components/common/FlotingInput";
 import Button from "@/components/common/Button";
 import { forgotPassword } from "@/lib/auth";
 import { toast } from "react-toastify";
+import { useUserAuth } from "@/context/AuthFormContext";
 
 export default function ForgetPasswordForm() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const { user, setUser } = useUserAuth();
   const router = useRouter();
 
   const validateEmail = (email: string) => {
@@ -31,10 +33,13 @@ export default function ForgetPasswordForm() {
 
     try {
       await forgotPassword(email);
+      setUser({ ...user!, email });
       toast.success("OTP sent! Check your email to continue.");
       router.push(`/auth/otp?from=forgot`);
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to send OTP. Try again.");
+      toast.error(
+        err?.response?.data?.message || "Failed to send OTP. Try again."
+      );
     } finally {
       setLoading(false);
     }

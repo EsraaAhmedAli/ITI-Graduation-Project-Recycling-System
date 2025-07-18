@@ -28,7 +28,7 @@ const errorInitialState = {
 export default function AuthForm(): React.JSX.Element {
   const [mode, setMode] = useState<"signup" | "login">("login");
   const [form, setForm] = useState(FormInitialState);
-  const { setUser,setToken } = useUserAuth();
+  const { setUser, setToken } = useUserAuth();
 
   const [errors, setErrors] = useState(errorInitialState);
   const [showPassword, setShowPassword] = useState(false);
@@ -130,28 +130,28 @@ export default function AuthForm(): React.JSX.Element {
     }
   };
 
-const handleLoginUser = async (): Promise<void> => {
-  try {
-    const res = await loginUser({
-      email: form.email,
-      password: form.password,
-    });
+  const handleLoginUser = async (): Promise<void> => {
+    try {
+      const res = await loginUser({
+        email: form.email,
+        password: form.password,
+      });
 
-    // ✅ IMPORTANT: Use context setters to save to localStorage
-    setUser(res.user);
-    setToken(res.accessToken); // ← This was missing!
-    
-    // ✅ Optional: You can still use setAccessToken if needed for API calls
-    setAccessToken(res.accessToken);
-    
-    console.log("Login successful:", res.user);
-    console.log("Token:", res.accessToken);
-    router.push("/cart");
-  } catch (error) {
-    // const e = error as Error;
-    alert("Login failed. Please check your credentials.");
-  }
-};
+      // ✅ IMPORTANT: Use context setters to save to localStorage
+      setUser(res.user);
+      setToken(res.token); // ← This was missing!
+
+      // ✅ Optional: You can still use setAccessToken if needed for API calls
+      setAccessToken(res.token);
+
+      console.log("Login successful:", res.user);
+      console.log("Token:", res.token);
+      router.push("/cart");
+    } catch (error) {
+      // const e = error as Error;
+      alert("Login failed. Please check your credentials.");
+    }
+  };
 
   const handleSendOtp = async () => {
     try {
