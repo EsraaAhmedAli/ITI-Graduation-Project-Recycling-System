@@ -3,6 +3,7 @@ import { ButtonProps } from "../Interfaces/Ui.interface";
 
 const defaultClassName =
   "bg-primary text-white rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed";
+
 export default function Button({
   children,
   onClick,
@@ -10,7 +11,7 @@ export default function Button({
   height,
   padding,
   margin,
-  className = defaultClassName,
+  className = "",
   type = "button",
   disabled = false,
   loading = false,
@@ -22,13 +23,16 @@ export default function Button({
     margin,
   };
 
+  // Merge defaultClassName with incoming className
+  const combinedClassName = `${defaultClassName} ${className}`.trim();
+
   return (
     <button
       type={type}
       onClick={onClick}
       disabled={disabled}
       style={style}
-      className={className}
+      className={combinedClassName}
     >
       {loading && (
         <svg

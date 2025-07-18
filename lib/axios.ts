@@ -11,7 +11,6 @@ let accessToken: string | null = null;
 
 export const setAccessToken = (token: string | null) => {
   accessToken = token;
-  console.log("📦 Access token set");
 };
 
 export const getAccessToken = () => accessToken;
@@ -34,6 +33,13 @@ api.interceptors.response.use(
     const original = error.config as any;
     console.log("originale => ", original);
 
+    if (!original) {
+      // If no config is present, just reject
+      console.error("⚠️ No request config found on error:", error);
+      return Promise.reject(error);
+    }
+
+    // Check if error is 401 and retry not done yet
     if (
       error.response?.status === 401 &&
       !original._retry &&

@@ -1,7 +1,9 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
-
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import axios from "axios";
+import api from "@/lib/axios";
+import { toast } from "react-toastify";
 
 export interface CartItem {
   categoryId: string;
@@ -11,21 +13,22 @@ export interface CartItem {
   price: number;
   measurement_unit: number;
   quantity: number;
+  
 }
-
 
 interface CartContextType {
   cart: CartItem[];
-  addToCart: (item: CartItem) => void;
-  increaseQty: (item: CartItem) => void;
-  decreaseQty: (item: CartItem) => void;
-  removeFromCart: (item: CartItem) => void;
-  clearCart: () => void;
+  addToCart: (item: CartItem) => Promise<void>;
+  increaseQty: (item: CartItem) => Promise<void>;
+  decreaseQty: (item: CartItem) => Promise<void>;
+  removeFromCart: (item: CartItem) => Promise<void>;
+  clearCart: () => Promise<void>;
+    loadCart: () => Promise<void>; 
+  loadingItemId: string | null;
+
 }
 
-
 const CartContext = createContext<CartContextType | undefined>(undefined);
-
 
 export const useCart = () => {
   const context = useContext(CartContext);
@@ -35,60 +38,107 @@ export const useCart = () => {
   return context;
 };
 
-
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
+const [loadingItemId, setLoadingItemId] = useState<string | null>(null);
 
- 
-const addToCart = (item: CartItem) => {
-  setCart((prevCart) => {
-    const exists = prevCart.find(
-      (i) =>
-        i.itemName === item.itemName &&
-        i.categoryId === item.categoryId
-    );
-    if (exists) {
-      return prevCart.map((i) =>
-        i.itemName === item.itemName && i.categoryId === item.categoryId
-          ? { ...i, quantity: i.quantity + item.quantity }
-          : i
-      );
-    } else {
-      return [...prevCart, item];
+  const loadCart = async () => {
+    try {
+      const res = await api.get("/cart", {
+        withCredentials: true,
+      });
+      setCart(res.data.items || []);
+      console.log(res.data);
+      
+    } catch (err) {
+      console.error("Failed to load cart", err);
     }
-  });
+  };
+
+  useEffect(() => {
+    loadCart();
+  }, []);
+
+const addToCart = async (item: CartItem) => {
+  setLoadingItemId(item.categoryId);
+  try {
+    await api.post("/cart", item, { withCredentials: true });
+    toast.success("Item added to your cart");
+    await loadCart();
+  } catch (err) {
+    console.error("Failed to add to cart", err);
+  } finally {
+    setLoadingItemId(null);
+  }
+};
+
+  const increaseQty = async (item: CartItem) => {
+    try {
+      await api.put(
+        "/cart",
+        { categoryId: item.categoryId, quantity: item.quantity + 1 },
+        { withCredentials: true }
+      );
+      await loadCart();
+    } catch (err) {
+      console.error("Failed to increase quantity", err);
+    } 
+  };
+
+  const decreaseQty = async (item: CartItem) => {
+    if (item.quantity <= 1) return;
+    try {
+      await api.put(
+        "/cart",
+        { categoryId: item.categoryId, quantity: item.quantity - 1 },
+        { withCredentials: true }
+      );
+      await loadCart();
+    } catch (err) {
+      console.error("Failed to decrease quantity", err);
+    }
+  };
+
+const removeFromCart = async (item: CartItem) => {
+  setLoadingItemId(item.categoryId);
+  try {
+    await api.delete(`/cart/${item.categoryId}`, {
+      withCredentials: true,
+    });
+    toast.success("Item removed from your cart");
+    await loadCart();
+  } catch (err) {
+    console.error("Failed to remove from cart", err);
+    toast.error("Failed to remove item from cart");
+  } finally {
+    setLoadingItemId(null);
+  }
 };
 
 
- 
-  const increaseQty = (item: CartItem) => {
-    setCart((prev) =>
-      prev.map((i) =>
-        i === item ? { ...i, quantity: i.quantity + 1 } : i
-      )
-    );
+  const clearCart = async () => {
+    try {
+      await api.delete("cart", {
+        withCredentials: true,
+      });
+      setCart([]);
+    } catch (err) {
+      console.error("Failed to clear cart", err);
+    } 
   };
-
-  
-  const decreaseQty = (item: CartItem) => {
-    setCart((prev) =>
-      prev.map((i) =>
-        i === item ? { ...i, quantity: Math.max(i.quantity - 1, 1) } : i
-      )
-    );
-  };
-
- 
-  const removeFromCart = (item: CartItem) => {
-    setCart((prev) => prev.filter((i) => i !== item));
-  };
-
-  
-  const clearCart = () => setCart([]);
 
   return (
     <CartContext.Provider
-      value={{ cart, addToCart, increaseQty, decreaseQty, removeFromCart, clearCart }}
+      value={{
+        cart,
+        loadingItemId,
+        addToCart,
+        increaseQty,
+        decreaseQty,
+        removeFromCart,
+        clearCart,
+        loadCart,
+      }}
     >
       {children}
     </CartContext.Provider>

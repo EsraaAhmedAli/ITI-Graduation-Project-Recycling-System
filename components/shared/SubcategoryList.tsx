@@ -13,14 +13,15 @@ interface Item {
 interface SubcategoryListProps {
   items: Item[];
   onAddToCart: (item: Item) => void;
+  loading:boolean
 }
 
-export default function SubcategoryList({ items, onAddToCart }: SubcategoryListProps) {
+export default function SubcategoryList({ items, onAddToCart,loading }: SubcategoryListProps) {
   return (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {items.map((item, index) => (
-          <ItemCard key={index} item={item} index={index} onAddToCart={onAddToCart} />
+          <ItemCard key={index} loading={loading} item={item} index={index} onAddToCart={onAddToCart} />
         ))}
       </div>
 

@@ -139,17 +139,17 @@ export default function AuthForm(): React.JSX.Element {
 
       // ✅ IMPORTANT: Use context setters to save to localStorage
       setUser(res.user);
-      setToken(res.token); // ← This was missing!
+      setToken(res.accessToken); // ← This was missing!
 
       // ✅ Optional: You can still use setAccessToken if needed for API calls
-      setAccessToken(res.token);
+      setAccessToken(res.accessToken);
 
       console.log("Login successful:", res.user);
-      console.log("Token:", res.token);
+      console.log("Token:", res.accessToken);
       router.push("/cart");
     } catch (error) {
       // const e = error as Error;
-      alert("Login failed. Please check your credentials.");
+      toast.error("Login failed. Please check your credentials.");
     }
   };
 
@@ -179,7 +179,7 @@ export default function AuthForm(): React.JSX.Element {
 
       {/* Tabs */}
       <div className="flex justify-center mb-6 border-b border-gray-300 text-sm">
-        <Button
+        <button
           className={`pb-2 px-4 font-medium ${
             mode === "login"
               ? "text-green-800 border-b-2 border-green-600"
@@ -188,8 +188,8 @@ export default function AuthForm(): React.JSX.Element {
           onClick={handleLogin}
         >
           Log in
-        </Button>
-        <Button
+        </button>
+        <button
           className={`pb-2 px-4 font-medium ${
             mode === "signup"
               ? "text-green-800 border-b-2 border-green-600"
@@ -198,7 +198,7 @@ export default function AuthForm(): React.JSX.Element {
           onClick={handleSignup}
         >
           Sign up
-        </Button>
+        </button>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">

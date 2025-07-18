@@ -1,16 +1,25 @@
 "use client";
 
-import { useContext, useEffect, useState } from "react";
-import { UserAuthContext } from "@/context/AuthFormContext";
+import { useEffect, useState } from "react";
+import { useUserAuth } from "@/context/AuthFormContext"; // Use the hook instead of useContext
 import { Avatar } from "flowbite-react";
 import { Order, OrdersResponse } from "@/components/Types/orders.type";
 import Loader from "@/components/common/loader";
 import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
-import Link from "next/link";
+import { ProtectedRoute } from "@/lib/userProtectedRoute";
+import { Link } from "lucide-react";
 
 export default function ProfilePage() {
-  const { user, isLoading: authLoading } = useContext(UserAuthContext) ?? {};
+  return (
+    <ProtectedRoute>
+      <ProfileContent />
+    </ProtectedRoute>
+  );
+}
+
+function ProfileContent() {
+  const { user, token, isLoading: authLoading } = useUserAuth(); // Use the hook and check both user and token
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   console.log("user insdie profle ", user);
@@ -31,42 +40,26 @@ export default function ProfilePage() {
     }
   };
 
+  const totalPoints = allOrders.reduce((acc, order) => {
+    return (
+      acc +
+      order.items.reduce((itemAcc, item) => itemAcc + (item.points ?? 0), 0)
+    );
+  }, 0);
+
   useEffect(() => {
-    // Only fetch orders if user is authenticated
-    if (user) {
+    // Only fetch orders if both user and token exist
+    if (user && token) {
       getAllOrders();
     }
-  }, [user]);
+  }, [user, token]);
 
-  useEffect(() => {
-    // Wait for auth to finish loading before checking user
-    if (authLoading) {
-      return; // Still loading, don't redirect yet
-    }
-
-    if (!user) {
-      router.push("/auth/login");
-    }
-  }, [user, authLoading, router]);
-
-  // Show loading while auth is being initialized
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-green-50 py-10 px-4 flex items-center justify-center">
-        <Loader title=" your profile..." />
-      </div>
-    );
-  }
-
-  // If not authenticated after loading, don't render anything
-  // (redirect will happen in useEffect)
-  if (!user) {
-    return null;
-  }
+  // The ProtectedRoute will handle the loading and redirect logic
+  // So we don't need to check authLoading or !user here anymore
 
   const stats = {
     totalRecycles: allOrders?.length,
-    points: 620,
+    points: totalPoints,
     categories: 4,
     tier: 50,
   };
@@ -79,7 +72,7 @@ export default function ProfilePage() {
           <div className="flex items-center space-x-4">
             <Avatar
               img={
-                user.imgUrl ??
+                user?.imgUrl ??
                 "thtps://api.dicebear.com/7.x/bottts/svg?seed=user123"
               }
               rounded
@@ -119,7 +112,7 @@ export default function ProfilePage() {
           <Loader title={"your activity"} />
         ) : allOrders.length === 0 ? (
           <div className="text-center text-gray-500 py-6">
-            You dont have any recycling activity yet. Start your first recycle
+            You don't have any recycling activity yet. Start your first recycle
             today!
           </div>
         ) : (
@@ -131,20 +124,43 @@ export default function ProfilePage() {
               {allOrders.map((order, index) => (
                 <div
                   key={order._id || index}
-                  className="border rounded-xl p-4 bg-green-50 shadow-sm mb-4"
+                  className="border rounded-xl p-4 bg-green-50 shadow-sm mb-4 space-y-2"
                 >
-                  <p className="text-sm text-gray-500 mb-1">
+                  <p className="text-sm text-gray-500">
                     Date: {new Date(order.createdAt).toLocaleDateString()}
                   </p>
-                  <p className="text-sm text-green-700 font-semibold mb-2">
+                  <p className="text-sm text-green-700 font-semibold">
                     Status: {order.status}
                   </p>
+
                   {order.items.map((item, i) => (
-                    <div key={i} className="text-sm text-gray-700 ml-4 mb-1">
-                      • {item.name} — {item.quantity}kg — +{item.totalPoints}{" "}
-                      pts
+                    <div
+                      key={i}
+                      className="flex items-center gap-4 bg-white p-2 rounded-lg shadow-sm"
+                    >
+                      <img
+                        src={item.image}
+                        alt={item.itemName}
+                        className="w-14 h-14 rounded object-cover border"
+                      />
+                      <div className="flex flex-col text-sm">
+                        <span className="font-semibold text-green-800">
+                          {item.itemName}
+                        </span>
+                        <span className="text-gray-600">
+                          Quantity: {item.quantity}{" "}
+                          {item.measurement_unit === 1 ? "kg" : "pcs"}
+                        </span>
+                        <span className="text-gray-600">
+                          Points: {item.points}
+                        </span>
+                        <span className="text-gray-600">
+                          Price: {item.price} EGP
+                        </span>
+                      </div>
                     </div>
                   ))}
+
                   <div className="text-xs text-gray-500 mt-2 ml-1">
                     {order.address.street}, Bldg {order.address.building}, Floor{" "}
                     {order.address.floor}, {order.address.area},{" "}
@@ -156,7 +172,7 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* Drop-off & Settings */}
+        {/* Goals & Settings */}
         <div className="grid md:grid-cols-2 gap-6">
           <div>
             <h3 className="text-lg font-semibold text-green-800 mb-2">
