@@ -15,6 +15,7 @@ interface User {
   phoneNumber: string;
   imageUrl?: string;
   isAuthenticated?: boolean;
+  name:string
 }
 
 // === Context Type ===

@@ -1,8 +1,10 @@
 
+import React from 'react'
+
+import Sbar from "../../../components/sidebar/Sbar";
 export default function AdminsPage() {
   return (
-    <main className="p-8">
-     dashboard
-    </main>
-  );
+    <Sbar/>
+  )
+
 }
