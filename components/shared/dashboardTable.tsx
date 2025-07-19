@@ -1,13 +1,23 @@
-import React, { useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Search, Filter, Plus, MoreHorizontal, Edit, Trash2, Eye } from 'lucide-react';
-import Image from 'next/image';
+import React, { useMemo, useState } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  Filter,
+  Plus,
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  Eye,
+} from "lucide-react";
+import Image from "next/image";
 
 type Column = {
   key: string;
   label: string;
   sortable?: boolean;
-  type?: 'status' | 'price' | 'image' | string;
-  render:(item:T)=>void
+  type?: "status" | "price" | "image" | string;
+  render: (item: T) => void;
 };
 
 type DynamicTableProps<T> = {
@@ -41,15 +51,15 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
   onDelete = () => {},
 }: DynamicTableProps<T>) {
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortColumn, setSortColumn] = useState('');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortColumn, setSortColumn] = useState("");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [openMenuId, setOpenMenuId] = useState<string | number | null>(null);
 
   const filteredData = useMemo(() => {
     if (!searchTerm) return data;
-    return data.filter(item =>
-      Object.values(item).some(value =>
+    return data.filter((item) =>
+      Object.values(item).some((value) =>
         value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
       )
     );
@@ -60,9 +70,17 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
     return [...filteredData].sort((a, b) => {
       const aValue = a[sortColumn];
       const bValue = b[sortColumn];
-      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-      return 0;
+
+      // Safe guard in case of null or undefined
+      if (aValue == null) return 1;
+      if (bValue == null) return -1;
+
+      const aStr = aValue.toString().toLowerCase();
+      const bStr = bValue.toString().toLowerCase();
+
+      return sortDirection === "asc"
+        ? aStr.localeCompare(bStr)
+        : bStr.localeCompare(aStr);
     });
   }, [filteredData, sortColumn, sortDirection]);
 
@@ -73,10 +91,10 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
 
   const handleSort = (column: string) => {
     if (sortColumn === column) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
       setSortColumn(column);
-      setSortDirection('asc');
+      setSortDirection("asc");
     }
   };
 
@@ -88,32 +106,36 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
     setOpenMenuId(openMenuId === id ? null : id);
   };
 
-  const handleMenuAction = (action: 'edit' | 'delete' | 'view', item: T) => {
+  const handleMenuAction = (action: "edit" | "delete" | "view", item: T) => {
     setOpenMenuId(null);
-    if (action === 'edit') onEdit(item);
-    else if (action === 'delete') onDelete(item);
+    if (action === "edit") onEdit(item);
+    else if (action === "delete") onDelete(item);
   };
 
   const renderCellValue = (value: any, column: Column) => {
-    if (column.type === 'status') {
+    if (column.type === "status") {
       const statusColors: Record<string, string> = {
-        active: 'bg-green-100 text-green-800',
-        inactive: 'bg-gray-100 text-gray-600',
-        pending: 'bg-emerald-100 text-emerald-700',
-        'on sale': 'bg-teal-100 text-teal-700',
-        sourcing: 'bg-lime-100 text-lime-700',
-        recycled: 'bg-green-100 text-green-800',
-        processing: 'bg-emerald-100 text-emerald-700',
-        collected: 'bg-teal-100 text-teal-700',
+        active: "bg-green-100 text-green-800",
+        inactive: "bg-gray-100 text-gray-600",
+        pending: "bg-emerald-100 text-emerald-700",
+        "on sale": "bg-teal-100 text-teal-700",
+        sourcing: "bg-lime-100 text-lime-700",
+        recycled: "bg-green-100 text-green-800",
+        processing: "bg-emerald-100 text-emerald-700",
+        collected: "bg-teal-100 text-teal-700",
       };
       return (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[value?.toLowerCase()] || 'bg-gray-100 text-gray-800'}`}>
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium ${
+            statusColors[value?.toLowerCase()] || "bg-gray-100 text-gray-800"
+          }`}
+        >
           {value}
         </span>
       );
     }
 
-    if (column.type === 'price') {
+    if (column.type === "price") {
       return `$${value}`;
     }
 
@@ -125,77 +147,73 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
     //   );
     // }
 
-
-  if (column.type === 'image') {
-  return (
-    <Image
-    width={34}
-    height={34}
-      src={value}
-      alt={column.key}
-      className=" rounded-full object-cover bg-green-50 flex items-center justify-center border border-green-200"
-    />
-  );
-}
-
-
+    if (column.type === "image") {
+      return (
+        <Image
+          width={34}
+          height={34}
+          src={value}
+          alt={column.key}
+          className=" rounded-full object-cover bg-green-50 flex items-center justify-center border border-green-200"
+        />
+      );
+    }
 
     return value;
   };
 
-const renderPagination = () => {
-  const pages = [];
-  const pageGroupSize = 5;
-  const currentGroup = Math.floor((currentPage - 1) / pageGroupSize);
-  const startPage = currentGroup * pageGroupSize + 1;
-  const endPage = Math.min(startPage + pageGroupSize - 1, totalPages);
+  const renderPagination = () => {
+    const pages = [];
+    const pageGroupSize = 5;
+    const currentGroup = Math.floor((currentPage - 1) / pageGroupSize);
+    const startPage = currentGroup * pageGroupSize + 1;
+    const endPage = Math.min(startPage + pageGroupSize - 1, totalPages);
 
-  // « Previous group
-  if (startPage > 1) {
-    pages.push(
-      <button
-        key="prev-group"
-        onClick={() => handlePageChange(startPage - 1)}
-        className="px-3 py-1 rounded text-sm bg-white border border-green-200 hover:bg-green-50 text-green-700 transition-colors"
-      >
-        &laquo;
-      </button>
-    );
-  }
+    // « Previous group
+    if (startPage > 1) {
+      pages.push(
+        <button
+          key="prev-group"
+          onClick={() => handlePageChange(startPage - 1)}
+          className="px-3 py-1 rounded text-sm bg-white border border-green-200 hover:bg-green-50 text-green-700 transition-colors"
+        >
+          &laquo;
+        </button>
+      );
+    }
 
-  // Page numbers
-  for (let i = startPage; i <= endPage; i++) {
-    pages.push(
-      <button
-        key={i}
-        onClick={() => handlePageChange(i)}
-        className={`px-3 py-1 rounded text-sm transition-colors ${
-          i === currentPage
-            ? 'bg-green-500 text-white'
-            : 'bg-white text-gray-700 hover:bg-green-50 border border-green-200'
-        }`}
-      >
-        {i}
-      </button>
-    );
-  }
+    // Page numbers
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        <button
+          key={i}
+          onClick={() => handlePageChange(i)}
+          className={`px-3 py-1 rounded text-sm transition-colors ${
+            i === currentPage
+              ? "bg-green-500 text-white"
+              : "bg-white text-gray-700 hover:bg-green-50 border border-green-200"
+          }`}
+        >
+          {i}
+        </button>
+      );
+    }
 
-  // » Next group
-  if (endPage < totalPages) {
-    pages.push(
-      <button
-        key="next-group"
-        onClick={() => handlePageChange(endPage + 1)}
-        className="px-3 py-1 rounded text-sm bg-white border border-green-200 hover:bg-green-50 text-green-700 transition-colors"
-      >
-        &raquo;
-      </button>
-    );
-  }
+    // » Next group
+    if (endPage < totalPages) {
+      pages.push(
+        <button
+          key="next-group"
+          onClick={() => handlePageChange(endPage + 1)}
+          className="px-3 py-1 rounded text-sm bg-white border border-green-200 hover:bg-green-50 text-green-700 transition-colors"
+        >
+          &raquo;
+        </button>
+      );
+    }
 
-  return pages;
-};
-
+    return pages;
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-green-100">
@@ -205,10 +223,11 @@ const renderPagination = () => {
           <div className="flex items-center gap-4">
             <h1 className="text-2xl font-semibold text-green-800">{title}</h1>
             <span className="text-sm text-green-600 bg-green-100 px-2 py-1 rounded-full">
-              Showing {Math.min(itemsPerPage, sortedData.length)} of {sortedData.length}
+              Showing {Math.min(itemsPerPage, sortedData.length)} of{" "}
+              {sortedData.length}
             </span>
           </div>
-          
+
           <div className="flex items-center gap-3">
             {showSearch && (
               <div className="relative">
@@ -222,18 +241,16 @@ const renderPagination = () => {
                 />
               </div>
             )}
-            
+
             {showFilter && (
               <button className="flex items-center gap-2 px-4 py-2 border border-green-200 rounded-lg hover:bg-green-50 text-green-700 transition-colors">
                 <Filter className="w-4 h-4" />
                 Filter
               </button>
             )}
-            
-     
-            
+
             {showAddButton && (
-              <button 
+              <button
                 onClick={onAdd}
                 className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow-sm"
               >
@@ -254,7 +271,7 @@ const renderPagination = () => {
                 <th
                   key={column.key}
                   className={`px-6 py-3 text-left text-xs font-medium text-green-700 uppercase tracking-wider ${
-                    column.sortable ? 'cursor-pointer hover:bg-green-100' : ''
+                    column.sortable ? "cursor-pointer hover:bg-green-100" : ""
                   }`}
                   onClick={() => column.sortable && handleSort(column.key)}
                 >
@@ -262,7 +279,7 @@ const renderPagination = () => {
                     {column.label}
                     {column.sortable && sortColumn === column.key && (
                       <span className="text-green-600">
-                        {sortDirection === 'asc' ? '↑' : '↓'}
+                        {sortDirection === "asc" ? "↑" : "↓"}
                       </span>
                     )}
                   </div>
@@ -279,11 +296,14 @@ const renderPagination = () => {
             {currentData.map((item, index) => (
               <tr key={index} className="hover:bg-green-25 transition-colors">
                 {columns.map((column) => (
-                  <td key={column.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-{column.render
-  ? column.render(item)
-  : renderCellValue(item[column.key], column)
-}                  </td>
+                  <td
+                    key={column.key}
+                    className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                  >
+                    {column.render
+                      ? column.render(item)
+                      : renderCellValue(item[column.key], column)}{" "}
+                  </td>
                 ))}
                 {showActions && (
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -297,19 +317,19 @@ const renderPagination = () => {
                       >
                         <MoreHorizontal className="w-4 h-4" />
                       </button>
-                      
+
                       {openMenuId === (item.id || index) && (
                         <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-green-200">
                           <div className="py-1">
                             <button
-                              onClick={() => handleMenuAction('edit', item)}
+                              onClick={() => handleMenuAction("edit", item)}
                               className="flex items-center gap-2 w-full px-4 py-2 text-sm text-green-700 hover:bg-green-50 transition-colors"
                             >
                               <Edit className="w-4 h-4" />
                               Edit
                             </button>
                             <button
-                              onClick={() => handleMenuAction('view', item)}
+                              onClick={() => handleMenuAction("view", item)}
                               className="flex items-center gap-2 w-full px-4 py-2 text-sm text-green-700 hover:bg-green-50 transition-colors"
                             >
                               <Eye className="w-4 h-4" />
@@ -317,7 +337,7 @@ const renderPagination = () => {
                             </button>
                             <hr className="my-1 border-green-100" />
                             <button
-                              onClick={() => handleMenuAction('delete', item)}
+                              onClick={() => handleMenuAction("delete", item)}
                               className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -340,9 +360,11 @@ const renderPagination = () => {
         <div className="px-6 py-4 border-t border-green-100 bg-green-25">
           <div className="flex items-center justify-between">
             <div className="text-sm text-green-700">
-              Showing {startIndex + 1} to {Math.min(endIndex, sortedData.length)} of {sortedData.length} results
+              Showing {startIndex + 1} to{" "}
+              {Math.min(endIndex, sortedData.length)} of {sortedData.length}{" "}
+              results
             </div>
-            
+
             <div className="flex items-center gap-2">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
@@ -352,11 +374,9 @@ const renderPagination = () => {
                 <ChevronLeft className="w-4 h-4" />
                 Previous
               </button>
-              
-              <div className="flex gap-1">
-                {renderPagination()}
-              </div>
-              
+
+              <div className="flex gap-1">{renderPagination()}</div>
+
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
@@ -371,7 +391,7 @@ const renderPagination = () => {
       )}
     </div>
   );
-};
+}
 
 // Example usage component
 
