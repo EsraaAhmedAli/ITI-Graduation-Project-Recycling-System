@@ -5,6 +5,7 @@ import DynamicTable from '@/components/shared/dashboardTable';
 import { useParams, useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
 import React, { useEffect, useState } from 'react';
+import api from '@/lib/axios';
 
 export default function Page() {
   const [items, setItems] = useState([]);
@@ -22,30 +23,32 @@ export default function Page() {
   ];
 
   const fetchItems = async () => {
-    try {
-      const res = await fetch(`http://localhost:5000/api/categories/get-items/${name}`);
-      if (!res.ok) throw new Error('Failed to fetch items');
-      const data = await res.json();
-      const formatted = data.map((item: any) => ({
-        id: item._id,
-        image: item.image,
-        name: item.name || 'No name',
-        points: item.points,
-        price: item.price,
-        measurement_unit:
-          item.measurement_unit === 1
-            ? 'KG'
-            : item.measurement_unit === 2
-              ? 'Pieces'
-              : 'Unknown',
-      }));
-      setItems(formatted);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    const res = await api.get(`categories/get-items/${name}`);
+    const data = res.data;
+
+    const formatted = data.map((item: any) => ({
+      id: item._id,
+      image: item.image,
+      name: item.name || 'No name',
+      points: item.points,
+      price: item.price,
+      measurement_unit:
+        item.measurement_unit === 1
+          ? 'KG'
+          : item.measurement_unit === 2
+            ? 'Pieces'
+            : 'Unknown',
+    }));
+
+    setItems(formatted);
+  } catch (err: any) {
+    setError(err.message || "Something went wrong");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   useEffect(() => {
     if (name) fetchItems();

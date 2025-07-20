@@ -1,15 +1,24 @@
-import React, { useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Search, Filter, Plus, MoreHorizontal, Edit, Trash2, Eye } from 'lucide-react';
-import Image from 'next/image';
+import React, { useMemo, useState } from "react";
+
+import {
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  Filter,
+  Plus,
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  Eye,
+} from "lucide-react";
+import Image from "next/image";
 
 type Column = {
   key: string;
   label: string;
   sortable?: boolean;
-  type?: 'status' | 'price' | 'image' | string;
-
-  render:(item:T)=>void
-
+  type?: "status" | "price" | "image" | string;
+  render: (item: T) => void;
 };
 
 type DynamicTableProps<T> = {
@@ -26,7 +35,8 @@ type DynamicTableProps<T> = {
   onAdd?: () => void;
   onEdit?: (item: T) => void;
   onDelete?: (item: T) => void;
-  onAddSubCategory?: (item: T) => void;
+  onViewDetials?:(item :T)=> void
+    onAddSubCategory?: (item: T) => void;
   onImageClick?: (item: T) => void;
 };
 
@@ -40,22 +50,24 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
   showFilter = true,
   showAddButton = true,
   addButtonText = "Add New Item",
-  onAdd = () => { },
-  onEdit = () => { },
-  onDelete = () => { },
+  onAdd = () => {},
+  onEdit = () => {},
+  onViewDetials=()=>{},
+  onDelete = () => {},
   onAddSubCategory,
-  onImageClick,
+onImageClick,
+  
 }: DynamicTableProps<T>) {
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortColumn, setSortColumn] = useState('');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortColumn, setSortColumn] = useState("");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [openMenuId, setOpenMenuId] = useState<string | number | null>(null);
 
   const filteredData = useMemo(() => {
     if (!searchTerm) return data;
-    return data.filter(item =>
-      Object.values(item).some(value =>
+    return data.filter((item) =>
+      Object.values(item).some((value) =>
         value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
       )
     );
@@ -66,9 +78,17 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
     return [...filteredData].sort((a, b) => {
       const aValue = a[sortColumn];
       const bValue = b[sortColumn];
-      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-      return 0;
+
+      // Safe guard in case of null or undefined
+      if (aValue == null) return 1;
+      if (bValue == null) return -1;
+
+      const aStr = aValue.toString().toLowerCase();
+      const bStr = bValue.toString().toLowerCase();
+
+      return sortDirection === "asc"
+        ? aStr.localeCompare(bStr)
+        : bStr.localeCompare(aStr);
     });
   }, [filteredData, sortColumn, sortDirection]);
 
@@ -79,10 +99,10 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
 
   const handleSort = (column: string) => {
     if (sortColumn === column) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
       setSortColumn(column);
-      setSortDirection('asc');
+      setSortDirection("asc");
     }
   };
 
@@ -93,7 +113,6 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
   const toggleMenu = (id: string | number) => {
     setOpenMenuId(openMenuId === id ? null : id);
   };
-
   const handleMenuAction = (action: 'edit' | 'delete' | 'view' | 'add-sub', item: T) => {
     setOpenMenuId(null);
     if (action === 'edit') onEdit(item);
@@ -101,27 +120,30 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
     else if (action === 'add-sub' && onAddSubCategory) onAddSubCategory(item);
   };
 
-
   const renderCellValue = (value: any, column: Column) => {
-    if (column.type === 'status') {
+    if (column.type === "status") {
       const statusColors: Record<string, string> = {
-        active: 'bg-green-100 text-green-800',
-        inactive: 'bg-gray-100 text-gray-600',
-        pending: 'bg-emerald-100 text-emerald-700',
-        'on sale': 'bg-teal-100 text-teal-700',
-        sourcing: 'bg-lime-100 text-lime-700',
-        recycled: 'bg-green-100 text-green-800',
-        processing: 'bg-emerald-100 text-emerald-700',
-        collected: 'bg-teal-100 text-teal-700',
+        active: "bg-green-100 text-green-800",
+        inactive: "bg-gray-100 text-gray-600",
+        pending: "bg-emerald-100 text-emerald-700",
+        "on sale": "bg-teal-100 text-teal-700",
+        sourcing: "bg-lime-100 text-lime-700",
+        recycled: "bg-green-100 text-green-800",
+        processing: "bg-emerald-100 text-emerald-700",
+        collected: "bg-teal-100 text-teal-700",
       };
       return (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[value?.toLowerCase()] || 'bg-gray-100 text-gray-800'}`}>
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium ${
+            statusColors[value?.toLowerCase()] || "bg-gray-100 text-gray-800"
+          }`}
+        >
           {value}
         </span>
       );
     }
 
-    if (column.type === 'price') {
+    if (column.type === "price") {
       return `$${value}`;
     }
 
@@ -133,21 +155,17 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
     //   );
     // }
 
-
-
-  if (column.type === 'image') {
-  return (
-    <Image
-    width={34}
-    height={34}
-      src={value}
-      alt={column.key}
-      className=" rounded-full object-cover bg-green-50 flex items-center justify-center border border-green-200"
-    />
-  );
-}
-
-
+    if (column.type === "image") {
+      return (
+        <Image
+          width={34}
+          height={34}
+          src={value}
+          alt={column.key}
+          className=" rounded-full object-cover bg-green-50 flex items-center justify-center border border-green-200"
+        />
+      );
+    }
 
 
     return value;
@@ -179,10 +197,11 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
         <button
           key={i}
           onClick={() => handlePageChange(i)}
-          className={`px-3 py-1 rounded text-sm transition-colors ${i === currentPage
-              ? 'bg-green-500 text-white'
-              : 'bg-white text-gray-700 hover:bg-green-50 border border-green-200'
-            }`}
+          className={`px-3 py-1 rounded text-sm transition-colors ${
+            i === currentPage
+              ? "bg-green-500 text-white"
+              : "bg-white text-gray-700 hover:bg-green-50 border border-green-200"
+          }`}
         >
           {i}
         </button>
@@ -205,7 +224,6 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
     return pages;
   };
 
-
   return (
     <div className="bg-white rounded-lg shadow-sm border border-green-100">
       {/* Header */}
@@ -214,7 +232,8 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
           <div className="flex items-center gap-4">
             <h1 className="text-2xl font-semibold text-green-800">{title}</h1>
             <span className="text-sm text-green-600 bg-green-100 px-2 py-1 rounded-full">
-              Showing {Math.min(itemsPerPage, sortedData.length)} of {sortedData.length}
+              Showing {Math.min(itemsPerPage, sortedData.length)} of{" "}
+              {sortedData.length}
             </span>
           </div>
 
@@ -239,8 +258,6 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
               </button>
             )}
 
-
-
             {showAddButton && (
               <button
                 onClick={onAdd}
@@ -260,17 +277,22 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
           <thead className="bg-green-50">
             <tr>
               {columns.map((column) => (
+                
+                
                 <th
+                
                   key={column.key}
-                  className={`px-6 py-3 text-left text-xs font-medium text-green-700 uppercase tracking-wider ${column.sortable ? 'cursor-pointer hover:bg-green-100' : ''
-                    }`}
+                  className={`px-6 py-3 text-left text-xs font-medium text-green-700 uppercase tracking-wider ${
+                    column.sortable ? "cursor-pointer hover:bg-green-100" : ""
+                  }`}
                   onClick={() => column.sortable && handleSort(column.key)}
                 >
+        
                   <div className="flex items-center gap-2">
                     {column.label}
                     {column.sortable && sortColumn === column.key && (
                       <span className="text-green-600">
-                        {sortDirection === 'asc' ? '↑' : '↓'}
+                        {sortDirection === "asc" ? "↑" : "↓"}
                       </span>
                     )}
                   </div>
@@ -287,21 +309,17 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
             {currentData.map((item, index) => (
               <tr key={index} className="hover:bg-green-25 transition-colors">
                 {columns.map((column) => (
-                  <td key={column.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-
-                    {column.type === 'image' ? (
-                      <img
-                        src={item[column.key]}
-                        alt=""
-                        className="w-16 h-16 object-cover rounded cursor-pointer hover:opacity-80 transition"
-                        onClick={() => onImageClick?.(item)} // ✅ الضغط على الصورة
-                      />
-                    ) : (
-                      renderCellValue(item[column.key], column)
-                    )}
+                  
+                  <td
+                    key={column.key}
+                    className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                  >
+                    {column.render
+                      ? column.render(item)
+                      : renderCellValue(item[column.key], column)}{" "}
                   </td>
-
                 ))}
+                
                 {showActions && (
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <div className="relative">
@@ -328,7 +346,7 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
                           </button>
                         )}
                             <button
-                              onClick={() => handleMenuAction('edit', item)}
+                              onClick={() => handleMenuAction("edit", item)}
                               className="flex items-center gap-2 w-full px-4 py-2 text-sm text-green-700 hover:bg-green-50 transition-colors"
                             >
                               <Edit className="w-4 h-4" />
@@ -337,7 +355,8 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
 
 
                             <button
-                              onClick={() => handleMenuAction('view', item)}
+                             onClick={() => handleMenuAction("view", item)} // ✅
+
                               className="flex items-center gap-2 w-full px-4 py-2 text-sm text-green-700 hover:bg-green-50 transition-colors"
                             >
                               <Eye className="w-4 h-4" />
@@ -346,7 +365,7 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
 
                             <hr className="my-1 border-green-100" />
                             <button
-                              onClick={() => handleMenuAction('delete', item)}
+                              onClick={() => handleMenuAction("delete", item)}
                               className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -369,7 +388,9 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
         <div className="px-6 py-4 border-t border-green-100 bg-green-25">
           <div className="flex items-center justify-between">
             <div className="text-sm text-green-700">
-              Showing {startIndex + 1} to {Math.min(endIndex, sortedData.length)} of {sortedData.length} results
+              Showing {startIndex + 1} to{" "}
+              {Math.min(endIndex, sortedData.length)} of {sortedData.length}{" "}
+              results
             </div>
 
             <div className="flex items-center gap-2">
@@ -382,9 +403,7 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
                 Previous
               </button>
 
-              <div className="flex gap-1">
-                {renderPagination()}
-              </div>
+              <div className="flex gap-1">{renderPagination()}</div>
 
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
@@ -400,8 +419,9 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
       )}
     </div>
   );
-};
+}
 
 // Example usage component
 
 export default DynamicTable;
+

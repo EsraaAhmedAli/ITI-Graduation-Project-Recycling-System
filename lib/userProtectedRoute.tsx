@@ -1,52 +1,60 @@
+// lib/ProtectedRoute.tsx or components/common/ProtectedRoute.tsx
 "use client";
 
+import Loader from "@/components/common/loader";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  allowedRoles?: string[]; // e.g. ['admin'], ['customer'], etc.
 }
 
-export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+export const ProtectedRoute = ({
+  children,
+  allowedRoles,
+}: ProtectedRouteProps) => {
   const { user, token, isLoading } = useUserAuth();
   const router = useRouter();
-  const [showLoginMessage, setShowLoginMessage] = useState(false);
+  const [showDenied, setShowDenied] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && (!user || !token)) {
-      setShowLoginMessage(true);
-      // Optional: Add a delay before redirecting
-      const timer = setTimeout(() => {
-        router.push("/auth");
-      }, 2000); // Redirect after 2 seconds
+    if (!isLoading) {
+      // 1. Not authenticated
+      if (!user || !token) {
+        router.replace("/auth/login");
+        return;
+      }
 
-      return () => clearTimeout(timer);
+      // 2. Authenticated but not allowed role
+      if (allowedRoles && !allowedRoles.includes(user.role)) {
+        setShowDenied(true);
+        setTimeout(() => {
+          router.replace("/unauthorized");
+        }, 2000);
+      }
     }
-  }, [user, token, isLoading, router]);
+  }, [user, token, isLoading, router, allowedRoles]);
 
-  // Show loading while checking auth
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Loading...</div>
-      </div>
-    );
+    return <Loader></Loader>;
   }
 
-  // If user is not authenticated, show login message
   if (!user || !token) {
+    return null; // prevent flash
+  }
+
+  if (showDenied) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <h2 className="text-2xl font-semibold mb-4">Authentication Required</h2>
-          <p className="text-gray-600 mb-4">Please login first to access this page</p>
-          <button
-            onClick={() => router.push("/auth")}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors"
-          >
-            Go to Login
-          </button>
+          <h2 className="text-2xl font-semibold mb-4 text-red-600">
+            Access Denied
+          </h2>
+          <p className="text-gray-600">
+            You don't have permission to access this page
+          </p>
         </div>
       </div>
     );

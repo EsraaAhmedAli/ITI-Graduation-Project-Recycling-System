@@ -4,9 +4,13 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
 import AdminLayout from '@/components/shared/adminLayout';
+import api from '@/lib/axios';
+import Image from 'next/image';
 
 export default function EditItemPage() {
-  const { name, itemId } = useParams();
+  const { name:rawName, itemId } = useParams();
+  const name = decodeURIComponent(rawName || '').toLowerCase();
+
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -53,58 +57,68 @@ export default function EditItemPage() {
     if (name && itemId) fetchItem();
   }, [name, itemId]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, files } = e.target as HTMLInputElement;
-    if (name === 'image' && files) {
-      setFormData({ ...formData, image: files[0] });
-    } else {
-      setFormData({ ...formData, [name]: value });
-    }
-  };
+const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const { name, value, files } = e.target as HTMLInputElement;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setUploading(true);
+  if (name === 'image' && files && files[0]) {
+    const newImage = files[0];
+    const previewURL = URL.createObjectURL(newImage); // Create preview URL
 
-    try {
-      const data = new FormData();
-      data.append('name', formData.name);
-      data.append('points', formData.points);
-      data.append('price', formData.price);
-      data.append('measurement_unit', formData.measurement_unit);
-      if (formData.image) data.append('image', formData.image);
+    setFormData((prev) => ({
+      ...prev,
+      image: newImage,
+      currentImage: previewURL, // Set preview as currentImage
+    }));
+  } else {
+    setFormData({ ...formData, [name]: value });
+  }
+};
 
-      const res = await fetch(
-        `http://localhost:5000/api/categories/item/${name}/${itemId}`,
-        {
-          method: 'PUT',
-          body: data,
-        }
-      );
 
-      if (!res.ok) throw new Error('Failed to update item');
-      
-      await Swal.fire({
-        icon: 'success',
-        title: 'Success!',
-        text: 'Item updated successfully',
-        showConfirmButton: false,
-        timer: 1500,
-      });
-      
-      router.push(`/admin/categories/${name}/get-sub-category`);
-    } catch (err) {
-      console.error(err);
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'Failed to update item',
-        confirmButtonColor: '#10b981',
-      });
-    } finally {
-      setUploading(false);
-    }
-  };
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setUploading(true);
+
+  try {
+    const data = new FormData();
+    data.append('name', formData.name);
+    data.append('points', formData.points);
+    data.append('price', formData.price);
+    data.append('measurement_unit', formData.measurement_unit);
+    if (formData.image) data.append('image', formData.image);
+
+    const res = await api.put(
+      `/categories/item/${name}/${itemId}`,
+      data,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+
+    await Swal.fire({
+      icon: 'success',
+      title: 'Success!',
+      text: 'Item updated successfully',
+      showConfirmButton: false,
+      timer: 1500,
+    });
+
+    router.push(`/admin/categories/${name}/get-sub-category`);
+  } catch (err) {
+    console.error(err);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Failed to update item',
+      confirmButtonColor: '#10b981',
+    });
+  } finally {
+    setUploading(false);
+  }
+};
+
 
   if (loading) {
     return (
@@ -177,6 +191,7 @@ export default function EditItemPage() {
                 required
               >
                 <option value="1">KG</option>
+                <option value="1">gm</option>
                 <option value="2">Pieces</option>
               </select>
             </div>
@@ -187,10 +202,12 @@ export default function EditItemPage() {
               {formData.currentImage && (
                 <div className="mb-4">
                   <p className="text-sm text-gray-500 mb-2">Current Image:</p>
-                  <img
+                  <Image
                     src={formData.currentImage}
+                    width={30}
+                    height={30}
                     alt="Current item"
-                    className="w-32 h-32 object-cover rounded-lg border border-gray-200"
+                    className=" object-cover rounded-lg border border-gray-200"
                   />
                 </div>
               )}

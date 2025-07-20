@@ -10,9 +10,9 @@ import AddressStep from "./AddressStep";
 import { toast } from "react-toastify";
 import { UserAuthContext } from "@/context/AuthFormContext";
 import Loader from "@/components/common/loader";
-import api from "@/lib/axios";
 import { useCart } from "@/context/CartContext";
 import Link from "next/link";
+import api from "@/lib/axios";
 
 export default function PickupConfirmation() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -32,25 +32,13 @@ export default function PickupConfirmation() {
   const [isEditing, setIsEditing] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
 
-  // NEW: track if user is logged in or not for UI
   const [notLoggedIn, setNotLoggedIn] = useState(false);
 
   const { user } = useContext(UserAuthContext) ?? {};
   
   const { cart, clearCart } = useCart();
 
-  // Redirect immediately if no user
-  useEffect(() => {
-    if (!user) {
-      setNotLoggedIn(true);
-      setLoading(false); // stop loading spinner if any
-      // Optional: you can also redirect automatically here
-      // router.push("/auth");
-    } else {
-      setNotLoggedIn(false);
-    }
-  }, [user]);
-
+console.log("🔍 user in PickupConfirmation:", user);
   // Only fetch addresses if user exists
   const fetchAddresses = async () => {
     try {
@@ -59,17 +47,17 @@ export default function PickupConfirmation() {
       const fetchedAddresses = res.data;
       setAddresses(fetchedAddresses);
 
-      // Set first address as selected by default (if any)
       if (fetchedAddresses.length > 0) {
         setSelectedAddress(fetchedAddresses[0]);
         setFormData(fetchedAddresses[0]);
       }
     } catch (err) {
-      console.error("Failed to fetch addresses:", err);
+console.error("Failed to fetch addresses:", err?.response?.data || err);
     } finally {
       setLoading(false);
     }
   };
+
   const {
     register,
     handleSubmit,
@@ -110,6 +98,10 @@ export default function PickupConfirmation() {
       return;
     }
 
+  if (!cart || cart.length === 0) {
+    toast.error("Your cart is empty");
+    return;
+  }
     setLoadingBtn(true);
     api
       .post("orders", {
@@ -117,7 +109,8 @@ export default function PickupConfirmation() {
         items: cart,
         phoneNumber: user?.phoneNumber,
         userName: user?.name,
-        email:user?.email
+        email:user?.email,
+        imageUrl:user?.imgUrl
       })
       .then((res) => {
         setCreatedOrderId(res.data.data._id);

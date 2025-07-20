@@ -5,22 +5,27 @@ import {
   ShoppingCart,
   Users,
   Layers,
+  LogOutIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
-import { useState } from "react";
+import { useContext, useState } from "react";
+import { UserAuthContext } from "@/context/AuthFormContext";
 
 const menuItems = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/admin/dashboard" },
   { label: "Categories", icon: Layers, href: "/admin/categories" },
   { label: "Users", icon: Users, href: "/admin/users" },
   { label: "Orders", icon: ShoppingCart, href: "/admin/pickups" },
+  { label: "Logout", icon: LogOutIcon },
 ];
+
 
 export default function AdminSidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const{logout}=useContext(UserAuthContext) ??{}
 
   return (
     <aside
@@ -42,21 +47,39 @@ export default function AdminSidebar() {
 
       <nav className="mt-4">
         <ul className="flex flex-col gap-1">
-          {menuItems.map(({ label, icon: Icon, href }) => (
-            <li key={label}>
-              <Link
-                href={href}
-                className={clsx(
-                  "flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors",
-                  pathname === href && "bg-green-100 text-green-800 font-semibold",
-                  collapsed && "justify-center px-4"
-                )}
-              >
-                <Icon size={20} />
-                {!collapsed && <span>{label}</span>}
-              </Link>
-            </li>
-          ))}
+        {menuItems.map(({ label, icon: Icon, href }) => {
+  const isLogout = label === "Logout";
+
+  return (
+    <li key={label}>
+      {isLogout ? (
+        <button
+          onClick={logout}
+          className={clsx(
+            "flex cursor-pointer w-full items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors",
+            collapsed && "justify-center px-4"
+          )}
+        >
+          <Icon size={20} />
+          {!collapsed && <span>{label}</span>}
+        </button>
+      ) : (
+        <Link
+          href={href}
+          className={clsx(
+            "flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors",
+            pathname === href && "bg-green-100 text-green-800 font-semibold",
+            collapsed && "justify-center px-4"
+          )}
+        >
+          <Icon size={20} />
+          {!collapsed && <span>{label}</span>}
+        </Link>
+      )}
+    </li>
+  );
+})}
+
         </ul>
       </nav>
     </aside>
