@@ -2,36 +2,44 @@
 
 import AdminLayout from '@/components/shared/adminLayout';
 import DynamicTable from '@/components/shared/dashboardTable';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
 import React, { useEffect, useState } from 'react';
-import api from '@/lib/axios';
 
 export default function Page() {
-  const [categories, setCategories] = useState([]);
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const { name } = useParams(); // category name from dynamic route
   const router = useRouter();
 
   const columns = [
     { key: 'image', label: 'Image', type: 'image' },
-    { key: 'name', label: 'Category Name', sortable: true },
-    { key: 'description', label: 'Description', sortable: true },
+    { key: 'name', label: 'Item Name', sortable: true },
+    { key: 'points', label: 'Points', sortable: true },
+    { key: 'price', label: 'Price (EGP)', sortable: true },
+    { key: 'measurement_unit', label: 'Measurement Unit' },
   ];
 
-  // ✅ fetch categories from backend
-  const fetchCategories = async () => {
+  const fetchItems = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/categories');
-      if (!res.ok) throw new Error('Failed to fetch data');
+      const res = await fetch(`http://localhost:5000/api/categories/get-items/${name}`);
+      if (!res.ok) throw new Error('Failed to fetch items');
       const data = await res.json();
-      const formatted = data.map((cat: any) => ({
-        id: cat._id,
-        image: cat.image,
-        name: cat.name,
-        description: cat.description,
+      const formatted = data.map((item: any) => ({
+        id: item._id,
+        image: item.image,
+        name: item.name || 'No name',
+        points: item.points,
+        price: item.price,
+        measurement_unit:
+          item.measurement_unit === 1
+            ? 'KG'
+            : item.measurement_unit === 2
+              ? 'Pieces'
+              : 'Unknown',
       }));
-      setCategories(formatted);
+      setItems(formatted);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -40,10 +48,8 @@ export default function Page() {
   };
 
   useEffect(() => {
-    fetchCategories();
-  }, []);
-
-
+    if (name) fetchItems();
+  }, [name]);
 
   const handleDelete = async (item: any) => {
     const result = await Swal.fire({
@@ -58,8 +64,13 @@ export default function Page() {
 
     if (result.isConfirmed) {
       try {
-        await api.delete(`/categories/${item.name}`);
-        await fetchCategories();
+        // ✅ correct DELETE endpoint
+        await fetch(`http://localhost:5000/api/categories/item/${name}/${item.id}`, {
+          method: 'DELETE',
+        });
+
+        await fetchItems(); // ✅ refresh items list
+
         Swal.fire({
           icon: 'success',
           title: 'Deleted!',
@@ -78,29 +89,28 @@ export default function Page() {
     }
   };
 
-
   return (
     <AdminLayout>
       {loading ? (
         <p className="text-center py-10">Loading...</p>
       ) : error ? (
         <p className="text-center text-red-500 py-10">{error}</p>
-      ) : categories.length === 0 ? (
-        <p className="text-center text-gray-500 py-10">No categories found.</p>
+      ) : items.length === 0 ? (
+        <p className="text-center text-gray-500 py-10">No items found for this category.</p>
       ) : (
         <DynamicTable
-          data={categories}
+          data={items}
           columns={columns}
-          title="Categories"
+          title={`Items in Category ${name}`}
           itemsPerPage={5}
-          addButtonText="Add New Category"
-          onAdd={() => router.push('/admin/categories/add-category')}
-          onEdit={(item) => router.push(`/admin/categories/${item.name}/edit`)}
-          onDelete={handleDelete}
-          onAddSubCategory={(item) => router.push(`/admin/categories/${item.name}/add-sub-category`)}
-          onImageClick={(item) => router.push(`/admin/categories/${item.name}/get-sub-category`)}
+          addButtonText="Add New Item"
+          onAdd={() => router.push(`/admin/categories/${name}/add-sub-category`)}
+          onEdit={(item) =>
+            router.push(`/admin/categories/${name}/edit-sub-category/${item.id}`)
+          }
+        onDelete={handleDelete}
+        onImageClick={(item) => router.push(`/admin/categories`)}
         />
-
       )}
     </AdminLayout>
   );
