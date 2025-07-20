@@ -1,0 +1,215 @@
+'use client';
+
+import React, { useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import axios from '@/lib/axios';
+import Swal from 'sweetalert2';
+import AdminLayout from '@/components/shared/adminLayout';
+
+export default function AddSubCategoryPage() {
+  const router = useRouter();
+  const { name } = useParams(); // category name from dynamic route
+
+  const [formData, setFormData] = useState({
+    itemName: '',
+    points: '',
+    price: '',
+    measurement_unit: '',
+    image: null as File | null,
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, files } = e.target;
+    if (name === 'image' && files?.length) {
+      setFormData((prev) => ({ ...prev, image: files[0] }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const form = new FormData();
+      form.append('itemName', formData.itemName); 
+      form.append('points', formData.points);
+      form.append('price', formData.price);
+      form.append('measurement_unit', formData.measurement_unit);
+      if (formData.image) {
+        form.append('image', formData.image);
+      }
+
+      await axios.post(`/categories/add-item/${name}`, form, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Success!',
+        text: 'Sub-category added successfully',
+        showConfirmButton: false,
+        timer: 1500,
+        timerProgressBar: true,
+      });
+
+      router.push('/admin/categories');
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Something went wrong while adding the sub-category',
+        confirmButtonColor: '#10b981',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <AdminLayout>
+      <div className="max-w-2xl mx-auto p-6">
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <div className="p-6 bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
+            <h1 className="text-2xl font-bold">Add Sub-Category to "{name}"</h1>
+            <p className="mt-1 opacity-90">Fill in the details below to add a new sub-category</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Sub-Category Name *</label>
+              <input
+                type="text"
+                name="itemName"
+                value={formData.itemName}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
+                placeholder="Enter sub-category name"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Points *</label>
+                <input
+                  type="number"
+                  name="points"
+                  value={formData.points}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
+                  placeholder="Enter points"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Price *</label>
+                <input
+                  type="number"
+                  name="price"
+                  value={formData.price}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
+                  placeholder="Enter price"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Measurement Unit *</label>
+              <input
+                type="text"
+                name="measurement_unit"
+                value={formData.measurement_unit}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
+                placeholder="Enter measurement unit (e.g. kg, g, L)"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Sub-Category Image *</label>
+              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-emerald-400 transition-colors">
+                <div className="space-y-1 text-center">
+                  <svg
+                    className="mx-auto h-12 w-12 text-gray-400"
+                    stroke="currentColor"
+                    fill="none"
+                    viewBox="0 0 48 48"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  <div className="flex text-sm text-gray-600 justify-center">
+                    <label
+                      htmlFor="file-upload"
+                      className="relative cursor-pointer bg-white rounded-md font-medium text-emerald-600 hover:text-emerald-500 focus-within:outline-none"
+                    >
+                      <span>Upload a file</span>
+                      <input
+                        id="file-upload"
+                        name="image"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleChange}
+                        className="sr-only"
+                        required
+                      />
+                    </label>
+                    <p className="pl-1">or drag and drop</p>
+                  </div>
+                  <p className="text-xs text-gray-500">PNG, JPG, GIF up to 5MB</p>
+                </div>
+              </div>
+              {formData.image && (
+                <p className="text-sm text-gray-500 mt-1">
+                  <span className="font-medium">Selected:</span> {formData.image.name}
+                </p>
+              )}
+            </div>
+
+            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+              <button
+                type="button"
+                onClick={() => router.push('/admin/categories')}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
+                disabled={loading}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Processing...
+                  </span>
+                ) : (
+                  'Add Sub-Category'
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </AdminLayout>
+  );
+}

@@ -7,7 +7,9 @@ type Column = {
   label: string;
   sortable?: boolean;
   type?: 'status' | 'price' | 'image' | string;
+
   render:(item:T)=>void
+
 };
 
 type DynamicTableProps<T> = {
@@ -24,6 +26,8 @@ type DynamicTableProps<T> = {
   onAdd?: () => void;
   onEdit?: (item: T) => void;
   onDelete?: (item: T) => void;
+  onAddSubCategory?: (item: T) => void;
+  onImageClick?: (item: T) => void;
 };
 
 function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
@@ -36,9 +40,11 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
   showFilter = true,
   showAddButton = true,
   addButtonText = "Add New Item",
-  onAdd = () => {},
-  onEdit = () => {},
-  onDelete = () => {},
+  onAdd = () => { },
+  onEdit = () => { },
+  onDelete = () => { },
+  onAddSubCategory,
+  onImageClick,
 }: DynamicTableProps<T>) {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
@@ -88,11 +94,13 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
     setOpenMenuId(openMenuId === id ? null : id);
   };
 
-  const handleMenuAction = (action: 'edit' | 'delete' | 'view', item: T) => {
+  const handleMenuAction = (action: 'edit' | 'delete' | 'view' | 'add-sub', item: T) => {
     setOpenMenuId(null);
     if (action === 'edit') onEdit(item);
     else if (action === 'delete') onDelete(item);
+    else if (action === 'add-sub' && onAddSubCategory) onAddSubCategory(item);
   };
+
 
   const renderCellValue = (value: any, column: Column) => {
     if (column.type === 'status') {
@@ -126,6 +134,7 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
     // }
 
 
+
   if (column.type === 'image') {
   return (
     <Image
@@ -140,61 +149,61 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
 
 
 
+
     return value;
   };
 
-const renderPagination = () => {
-  const pages = [];
-  const pageGroupSize = 5;
-  const currentGroup = Math.floor((currentPage - 1) / pageGroupSize);
-  const startPage = currentGroup * pageGroupSize + 1;
-  const endPage = Math.min(startPage + pageGroupSize - 1, totalPages);
+  const renderPagination = () => {
+    const pages = [];
+    const pageGroupSize = 5;
+    const currentGroup = Math.floor((currentPage - 1) / pageGroupSize);
+    const startPage = currentGroup * pageGroupSize + 1;
+    const endPage = Math.min(startPage + pageGroupSize - 1, totalPages);
 
-  // « Previous group
-  if (startPage > 1) {
-    pages.push(
-      <button
-        key="prev-group"
-        onClick={() => handlePageChange(startPage - 1)}
-        className="px-3 py-1 rounded text-sm bg-white border border-green-200 hover:bg-green-50 text-green-700 transition-colors"
-      >
-        &laquo;
-      </button>
-    );
-  }
+    // « Previous group
+    if (startPage > 1) {
+      pages.push(
+        <button
+          key="prev-group"
+          onClick={() => handlePageChange(startPage - 1)}
+          className="px-3 py-1 rounded text-sm bg-white border border-green-200 hover:bg-green-50 text-green-700 transition-colors"
+        >
+          &laquo;
+        </button>
+      );
+    }
 
-  // Page numbers
-  for (let i = startPage; i <= endPage; i++) {
-    pages.push(
-      <button
-        key={i}
-        onClick={() => handlePageChange(i)}
-        className={`px-3 py-1 rounded text-sm transition-colors ${
-          i === currentPage
-            ? 'bg-green-500 text-white'
-            : 'bg-white text-gray-700 hover:bg-green-50 border border-green-200'
-        }`}
-      >
-        {i}
-      </button>
-    );
-  }
+    // Page numbers
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        <button
+          key={i}
+          onClick={() => handlePageChange(i)}
+          className={`px-3 py-1 rounded text-sm transition-colors ${i === currentPage
+              ? 'bg-green-500 text-white'
+              : 'bg-white text-gray-700 hover:bg-green-50 border border-green-200'
+            }`}
+        >
+          {i}
+        </button>
+      );
+    }
 
-  // » Next group
-  if (endPage < totalPages) {
-    pages.push(
-      <button
-        key="next-group"
-        onClick={() => handlePageChange(endPage + 1)}
-        className="px-3 py-1 rounded text-sm bg-white border border-green-200 hover:bg-green-50 text-green-700 transition-colors"
-      >
-        &raquo;
-      </button>
-    );
-  }
+    // » Next group
+    if (endPage < totalPages) {
+      pages.push(
+        <button
+          key="next-group"
+          onClick={() => handlePageChange(endPage + 1)}
+          className="px-3 py-1 rounded text-sm bg-white border border-green-200 hover:bg-green-50 text-green-700 transition-colors"
+        >
+          &raquo;
+        </button>
+      );
+    }
 
-  return pages;
-};
+    return pages;
+  };
 
 
   return (
@@ -208,7 +217,7 @@ const renderPagination = () => {
               Showing {Math.min(itemsPerPage, sortedData.length)} of {sortedData.length}
             </span>
           </div>
-          
+
           <div className="flex items-center gap-3">
             {showSearch && (
               <div className="relative">
@@ -222,18 +231,18 @@ const renderPagination = () => {
                 />
               </div>
             )}
-            
+
             {showFilter && (
               <button className="flex items-center gap-2 px-4 py-2 border border-green-200 rounded-lg hover:bg-green-50 text-green-700 transition-colors">
                 <Filter className="w-4 h-4" />
                 Filter
               </button>
             )}
-            
-     
-            
+
+
+
             {showAddButton && (
-              <button 
+              <button
                 onClick={onAdd}
                 className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow-sm"
               >
@@ -253,9 +262,8 @@ const renderPagination = () => {
               {columns.map((column) => (
                 <th
                   key={column.key}
-                  className={`px-6 py-3 text-left text-xs font-medium text-green-700 uppercase tracking-wider ${
-                    column.sortable ? 'cursor-pointer hover:bg-green-100' : ''
-                  }`}
+                  className={`px-6 py-3 text-left text-xs font-medium text-green-700 uppercase tracking-wider ${column.sortable ? 'cursor-pointer hover:bg-green-100' : ''
+                    }`}
                   onClick={() => column.sortable && handleSort(column.key)}
                 >
                   <div className="flex items-center gap-2">
@@ -280,10 +288,19 @@ const renderPagination = () => {
               <tr key={index} className="hover:bg-green-25 transition-colors">
                 {columns.map((column) => (
                   <td key={column.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-{column.render
-  ? column.render(item)
-  : renderCellValue(item[column.key], column)
-}                  </td>
+
+                    {column.type === 'image' ? (
+                      <img
+                        src={item[column.key]}
+                        alt=""
+                        className="w-16 h-16 object-cover rounded cursor-pointer hover:opacity-80 transition"
+                        onClick={() => onImageClick?.(item)} // ✅ الضغط على الصورة
+                      />
+                    ) : (
+                      renderCellValue(item[column.key], column)
+                    )}
+                  </td>
+
                 ))}
                 {showActions && (
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -297,10 +314,19 @@ const renderPagination = () => {
                       >
                         <MoreHorizontal className="w-4 h-4" />
                       </button>
-                      
+
                       {openMenuId === (item.id || index) && (
                         <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-green-200">
                           <div className="py-1">
+                           {onAddSubCategory && (
+                          <button
+                            onClick={() => handleMenuAction('add-sub', item)}
+                            className="flex items-center gap-2 w-full px-4 py-2 text-sm text-green-700 hover:bg-green-50 transition-colors"
+                          >
+                            <Plus className="w-4 h-4" />
+                            Add Sub Category
+                          </button>
+                        )}
                             <button
                               onClick={() => handleMenuAction('edit', item)}
                               className="flex items-center gap-2 w-full px-4 py-2 text-sm text-green-700 hover:bg-green-50 transition-colors"
@@ -308,6 +334,8 @@ const renderPagination = () => {
                               <Edit className="w-4 h-4" />
                               Edit
                             </button>
+
+
                             <button
                               onClick={() => handleMenuAction('view', item)}
                               className="flex items-center gap-2 w-full px-4 py-2 text-sm text-green-700 hover:bg-green-50 transition-colors"
@@ -315,6 +343,7 @@ const renderPagination = () => {
                               <Eye className="w-4 h-4" />
                               View Details
                             </button>
+
                             <hr className="my-1 border-green-100" />
                             <button
                               onClick={() => handleMenuAction('delete', item)}
@@ -342,7 +371,7 @@ const renderPagination = () => {
             <div className="text-sm text-green-700">
               Showing {startIndex + 1} to {Math.min(endIndex, sortedData.length)} of {sortedData.length} results
             </div>
-            
+
             <div className="flex items-center gap-2">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
@@ -352,11 +381,11 @@ const renderPagination = () => {
                 <ChevronLeft className="w-4 h-4" />
                 Previous
               </button>
-              
+
               <div className="flex gap-1">
                 {renderPagination()}
               </div>
-              
+
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}

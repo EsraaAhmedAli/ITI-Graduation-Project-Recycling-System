@@ -26,7 +26,7 @@ export default function UserCategoryPage() {
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/categories/get-items/${categoryName}`);
+        const response = await fetch(`http://localhost:5000/api/categories/get-items/${categoryName}`);
         const data = await response.json();
         setItems(data);
         console.log(data);

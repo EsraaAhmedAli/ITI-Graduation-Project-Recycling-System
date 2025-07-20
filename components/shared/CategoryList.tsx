@@ -31,7 +31,7 @@ export default function CategoryList({ basePath, maxToShow }: { basePath: string
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("http://localhost:5000/categories");
+        const response = await fetch("http://localhost:5000/api/categories");
         const data = await response.json();
         const processedData = data.map((category: Category) => ({
           ...category,
