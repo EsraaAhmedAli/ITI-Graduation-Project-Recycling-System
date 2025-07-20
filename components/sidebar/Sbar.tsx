@@ -10,7 +10,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { UserAuthContext } from "@/context/AuthFormContext";
 
 const menuItems = [
@@ -24,8 +24,21 @@ const menuItems = [
 
 export default function AdminSidebar() {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const{logout}=useContext(UserAuthContext) ??{}
+    useEffect(() => {
+    const saved = localStorage.getItem("sidebarCollapsed");
+    if (saved !== null) {
+      setCollapsed(saved === "true");
+    }
+  }, []);
+
+  // ⬇ Save to localStorage whenever collapsed state changes
+  const toggleSidebar = () => {
+    const newState = !collapsed;
+    setCollapsed(newState);
+    localStorage.setItem("sidebarCollapsed", String(newState));
+  };
 
   return (
     <aside
@@ -36,7 +49,7 @@ export default function AdminSidebar() {
     >
 <div
   className="flex items-center gap-2 p-4 border-b border-gray-200 cursor-pointer"
-  onClick={() => setCollapsed(!collapsed)}
+  onClick={toggleSidebar}
 >
   <span className="text-2xl font-extrabold bg-gradient-to-r from-accent-content to-success bg-clip-text text-transparent">
     {collapsed ? "X" : "Xchange"}
@@ -47,8 +60,14 @@ export default function AdminSidebar() {
 
       <nav className="mt-4">
         <ul className="flex flex-col gap-1">
-        {menuItems.map(({ label, icon: Icon, href }) => {
+{menuItems.map(({ label, icon: Icon, href }) => {
   const isLogout = label === "Logout";
+  const content = (
+    <>
+      <Icon size={20} />
+      {!collapsed && <span>{label}</span>}
+    </>
+  );
 
   return (
     <li key={label}>
@@ -60,10 +79,9 @@ export default function AdminSidebar() {
             collapsed && "justify-center px-4"
           )}
         >
-          <Icon size={20} />
-          {!collapsed && <span>{label}</span>}
+          {content}
         </button>
-      ) : (
+      ) : href ? (
         <Link
           href={href}
           className={clsx(
@@ -72,10 +90,9 @@ export default function AdminSidebar() {
             collapsed && "justify-center px-4"
           )}
         >
-          <Icon size={20} />
-          {!collapsed && <span>{label}</span>}
+          {content}
         </Link>
-      )}
+      ) : null}
     </li>
   );
 })}
