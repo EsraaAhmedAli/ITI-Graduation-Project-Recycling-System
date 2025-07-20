@@ -1,11 +1,14 @@
 import React, { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Search, Filter, Plus, MoreHorizontal, Edit, Trash2, Eye } from 'lucide-react';
+import Image from 'next/image';
 
 type Column = {
   key: string;
   label: string;
   sortable?: boolean;
   type?: 'status' | 'price' | 'image' | string;
+
+  render:(item:T)=>void
 
 };
 
@@ -131,15 +134,19 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
     // }
 
 
-    if (column.type === 'image') {
-      return (
-        <img
-          src={value}
-          alt={column.key}
-          className="w-12 h-12 rounded-full object-cover bg-green-50 flex items-center justify-center border border-green-200"
-        />
-      );
-    }
+
+  if (column.type === 'image') {
+  return (
+    <Image
+    width={34}
+    height={34}
+      src={value}
+      alt={column.key}
+      className=" rounded-full object-cover bg-green-50 flex items-center justify-center border border-green-200"
+    />
+  );
+}
+
 
 
 
@@ -281,6 +288,7 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
               <tr key={index} className="hover:bg-green-25 transition-colors">
                 {columns.map((column) => (
                   <td key={column.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+
                     {column.type === 'image' ? (
                       <img
                         src={item[column.key]}
@@ -292,6 +300,7 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
                       renderCellValue(item[column.key], column)
                     )}
                   </td>
+
                 ))}
                 {showActions && (
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
