@@ -7,6 +7,8 @@ import DynamicTable from "@/components/shared/dashboardTable";
 import api from "@/lib/axios";
 import { User } from "@/components/Types/Auser.type";
 import EditUserRoleModal from "./EditUserRoleModal";
+import Image from "next/image";
+import Loader from "@/components/common/loader";
 
 const AdminUsersPage = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -88,11 +90,29 @@ const AdminUsersPage = () => {
   // Inside return:
 
   const columns = [
-    {
-      key: "imgUrl",
-      label: "",
-      type: "image",
-    },
+   {
+  key: "imgUrl",
+  label: "",
+  render: (user: User) => {
+    if (user.imgUrl) {
+      return (
+        <Image
+        width={30}
+        height={30}
+          src={user.imgUrl}
+          alt={user.name}
+          className=" rounded-full object-cover"
+        />
+      );
+    } else {
+      return (
+        <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-semibold uppercase">
+          {user.name?.charAt(0) || "?"}
+        </div>
+      );
+    }
+  },
+},
     {
       key: "name",
       label: "Name",
@@ -142,7 +162,7 @@ const AdminUsersPage = () => {
   return (
     <AdminLayout>
       {loading ? (
-        <p className="text-center py-10 text-gray-500">Loading...</p>
+        <Loader title="users"/>
       ) : error ? (
         <p className="text-center py-10 text-red-500">{error}</p>
       ) : users.length === 0 ? (

@@ -34,6 +34,7 @@ type DynamicTableProps<T> = {
   onAdd?: () => void;
   onEdit?: (item: T) => void;
   onDelete?: (item: T) => void;
+  onViewDetials?:(item :T)=> void
 };
 
 function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
@@ -48,7 +49,9 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
   addButtonText = "Add New Item",
   onAdd = () => {},
   onEdit = () => {},
-  onDelete = () => {},
+  onViewDetials=()=>{},
+  onDelete = () => {
+  },
 }: DynamicTableProps<T>) {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -110,6 +113,7 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
     setOpenMenuId(null);
     if (action === "edit") onEdit(item);
     else if (action === "delete") onDelete(item);
+    else if(action==='view') onViewDetials(item)
   };
 
   const renderCellValue = (value: any, column: Column) => {
@@ -329,7 +333,8 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
                               Edit
                             </button>
                             <button
-                              onClick={() => handleMenuAction("view", item)}
+                             onClick={() => handleMenuAction("view", item)} // ✅
+
                               className="flex items-center gap-2 w-full px-4 py-2 text-sm text-green-700 hover:bg-green-50 transition-colors"
                             >
                               <Eye className="w-4 h-4" />
