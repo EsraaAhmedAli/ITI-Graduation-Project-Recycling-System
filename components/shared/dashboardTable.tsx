@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+
 import {
   ChevronLeft,
   ChevronRight,
@@ -35,6 +36,8 @@ type DynamicTableProps<T> = {
   onEdit?: (item: T) => void;
   onDelete?: (item: T) => void;
   onViewDetials?:(item :T)=> void
+    onAddSubCategory?: (item: T) => void;
+  onImageClick?: (item: T) => void;
 };
 
 function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
@@ -50,8 +53,10 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
   onAdd = () => {},
   onEdit = () => {},
   onViewDetials=()=>{},
-  onDelete = () => {
-  },
+  onDelete = () => {},
+  onAddSubCategory,
+onImageClick,
+  
 }: DynamicTableProps<T>) {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -108,12 +113,11 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
   const toggleMenu = (id: string | number) => {
     setOpenMenuId(openMenuId === id ? null : id);
   };
-
-  const handleMenuAction = (action: "edit" | "delete" | "view", item: T) => {
+  const handleMenuAction = (action: 'edit' | 'delete' | 'view' | 'add-sub', item: T) => {
     setOpenMenuId(null);
-    if (action === "edit") onEdit(item);
-    else if (action === "delete") onDelete(item);
-    else if(action==='view') onViewDetials(item)
+    if (action === 'edit') onEdit(item);
+    else if (action === 'delete') onDelete(item);
+    else if (action === 'add-sub' && onAddSubCategory) onAddSubCategory(item);
   };
 
   const renderCellValue = (value: any, column: Column) => {
@@ -162,6 +166,7 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
         />
       );
     }
+
 
     return value;
   };
@@ -272,13 +277,17 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
           <thead className="bg-green-50">
             <tr>
               {columns.map((column) => (
+                
+                
                 <th
+                
                   key={column.key}
                   className={`px-6 py-3 text-left text-xs font-medium text-green-700 uppercase tracking-wider ${
                     column.sortable ? "cursor-pointer hover:bg-green-100" : ""
                   }`}
                   onClick={() => column.sortable && handleSort(column.key)}
                 >
+        
                   <div className="flex items-center gap-2">
                     {column.label}
                     {column.sortable && sortColumn === column.key && (
@@ -300,6 +309,7 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
             {currentData.map((item, index) => (
               <tr key={index} className="hover:bg-green-25 transition-colors">
                 {columns.map((column) => (
+                  
                   <td
                     key={column.key}
                     className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
@@ -309,6 +319,7 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
                       : renderCellValue(item[column.key], column)}{" "}
                   </td>
                 ))}
+                
                 {showActions && (
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <div className="relative">
@@ -325,6 +336,15 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
                       {openMenuId === (item.id || index) && (
                         <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-green-200">
                           <div className="py-1">
+                           {onAddSubCategory && (
+                          <button
+                            onClick={() => handleMenuAction('add-sub', item)}
+                            className="flex items-center gap-2 w-full px-4 py-2 text-sm text-green-700 hover:bg-green-50 transition-colors"
+                          >
+                            <Plus className="w-4 h-4" />
+                            Add Sub Category
+                          </button>
+                        )}
                             <button
                               onClick={() => handleMenuAction("edit", item)}
                               className="flex items-center gap-2 w-full px-4 py-2 text-sm text-green-700 hover:bg-green-50 transition-colors"
@@ -332,6 +352,8 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
                               <Edit className="w-4 h-4" />
                               Edit
                             </button>
+
+
                             <button
                              onClick={() => handleMenuAction("view", item)} // ✅
 
@@ -340,6 +362,7 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
                               <Eye className="w-4 h-4" />
                               View Details
                             </button>
+
                             <hr className="my-1 border-green-100" />
                             <button
                               onClick={() => handleMenuAction("delete", item)}
@@ -401,3 +424,4 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
 // Example usage component
 
 export default DynamicTable;
+
