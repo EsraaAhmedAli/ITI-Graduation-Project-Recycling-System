@@ -1,6 +1,6 @@
 import { SetStateAction } from "react";
 
-export type City = 'Cairo' | 'Giza';
+export type City = 'Cairo' | 'Giza' | 'Alexandria' | 'Mansoura' | 'Aswan';
 
 export type Area =
   | 'Nasr City'
@@ -8,7 +8,18 @@ export type Area =
   | 'Maadi'
   | 'Dokki'
   | 'Mohandessin'
-  | '6th October';
+  | '6th October'
+  | 'Stanley'
+  | 'Smouha'
+  | 'Gleem'
+  | 'Sporting'
+  | 'El-Mansheya'
+  | 'Talkha'
+  | 'Sherbin'
+  | 'New Mansoura'
+  | 'El-Sahel'
+  | 'El-Nuba';
+
   export type FormInputs = {
         street:string,
       landmark: string

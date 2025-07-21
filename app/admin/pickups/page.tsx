@@ -47,7 +47,7 @@ export default function Page() {
       setError(null);
       const res = await api.get('/admin/orders');
       setOrders(res.data.data || []);
-      console.log(res.data.data[0].user.imageUrl);
+      console.log(res.data);
       
     } catch (err) {
       console.error('Failed to fetch orders:', err);

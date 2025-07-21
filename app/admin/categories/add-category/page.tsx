@@ -55,6 +55,8 @@ const isFormValid = name.trim() !== '' && description.trim() !== '' && imageFile
 
             router.push('/admin/categories');
         } catch (err: any) {
+            console.log(err);
+            
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
@@ -67,7 +69,7 @@ const isFormValid = name.trim() !== '' && description.trim() !== '' && imageFile
     };
 
     return (
-        <AdminLayout>
+        <>
             <div className="max-w-2xl mx-auto p-6">
                 <div className="bg-white rounded-lg shadow-md overflow-hidden">
                     <div className="p-6 bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
@@ -213,6 +215,6 @@ const isFormValid = name.trim() !== '' && description.trim() !== '' && imageFile
                     </form>
                 </div>
             </div>
-        </AdminLayout>
+        </>
     );
 }

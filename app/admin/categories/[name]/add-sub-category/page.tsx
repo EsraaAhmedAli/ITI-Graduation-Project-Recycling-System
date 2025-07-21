@@ -74,6 +74,8 @@ const handleSubmit = async (e: React.FormEvent) => {
     // success toast...
     router.push("/admin/categories");
   } catch (error) {
+    console.log(error);
+    
     // error toast...
   } finally {
     setLoading(false);
