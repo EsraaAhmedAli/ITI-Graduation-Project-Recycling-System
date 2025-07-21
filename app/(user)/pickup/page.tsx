@@ -37,6 +37,8 @@ export default function PickupConfirmation() {
   const { user } = useContext(UserAuthContext) ?? {};
   
   const { cart, clearCart } = useCart();
+  console.log(cart);
+  
 
 console.log("🔍 user in PickupConfirmation:", user);
   // Only fetch addresses if user exists
@@ -111,6 +113,7 @@ console.error("Failed to fetch addresses:", err?.response?.data || err);
         userName: user?.name,
         email:user?.email,
         imageUrl:user?.imgUrl
+
       })
       .then((res) => {
         setCreatedOrderId(res.data.data._id);

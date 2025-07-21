@@ -1,4 +1,4 @@
-"use client";
+ "use client";
 
 import {
   LayoutDashboard,
@@ -20,7 +20,6 @@ const menuItems = [
   { label: "Orders", icon: ShoppingCart, href: "/admin/pickups" },
   { label: "Logout", icon: LogOutIcon },
 ];
-
 
 export default function AdminSidebar() {
   const pathname = usePathname();
@@ -56,7 +55,6 @@ export default function AdminSidebar() {
   </span>
   <span className="text-green-600 text-sm ml-auto">{collapsed ? "»" : "«"}</span>
 </div>
-
 
       <nav className="mt-4">
         <ul className="flex flex-col gap-1">

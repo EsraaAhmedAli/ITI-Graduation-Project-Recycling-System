@@ -1,10 +1,8 @@
-"use client";
-
+// app/admin/layout.tsx
 import { ReactNode } from "react";
-import AdminSidebar from "../sidebar/Sbar";
+import AdminSidebar from "@/components/sidebar/Sbar";
 
-export default function AdminLayout({ children }: { children: ReactNode }) {
-    
+export default function AdminRootLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-screen">
       <AdminSidebar />

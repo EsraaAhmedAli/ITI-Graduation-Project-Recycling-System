@@ -1,7 +1,6 @@
 'use client';
 
 import React, {  useEffect, useState } from 'react';
-import AdminLayout from '@/components/shared/adminLayout';
 import DynamicTable from '@/components/shared/dashboardTable';
 import api from '@/lib/axios';
 import Loader from '@/components/common/loader';
@@ -116,7 +115,7 @@ const handleDeleteOrder = async (orderId: string) => {
   // Show error state
   if (error) {
     return (
-      <AdminLayout>
+      <>
         <div className="flex flex-col items-center justify-center min-h-96 bg-white rounded-lg shadow-sm border border-gray-200">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
             <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -132,14 +131,14 @@ const handleDeleteOrder = async (orderId: string) => {
             Try Again
           </button>
         </div>
-      </AdminLayout>
+      </>
     );
   }
 
   // Show empty state
   if (!orders || orders.length === 0) {
     return (
-      <AdminLayout>
+      <>
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           {/* Header */}
           <div className="px-6 py-4 border-b border-gray-200">
@@ -178,7 +177,7 @@ const handleDeleteOrder = async (orderId: string) => {
             </div>
           </div>
         </div>
-      </AdminLayout>
+      </>
     );
   }
 
@@ -300,7 +299,7 @@ onClickUser: () => {
   ];
 
   return (
-    <AdminLayout>
+    <>
       <DynamicTable
     
         data={transformedData}
@@ -318,6 +317,6 @@ onClickUser: () => {
    <UserModal selectedUser={selectedUser} show={isModalOpen} closingModalFn={closingModalFn}/>
       <ItemsModal selectedOrderItems={selectedOrderItems} show={isItemsModalOpen} onclose={()=>setIsItemsModalOpen(false)} />
   
-    </AdminLayout>
+    </>
   );
 }

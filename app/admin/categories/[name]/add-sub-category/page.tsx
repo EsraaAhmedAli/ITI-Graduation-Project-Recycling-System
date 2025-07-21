@@ -79,7 +79,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     setLoading(false);
   }}
   return (
-    <AdminLayout>
+    <>
       <div className="max-w-2xl mx-auto p-6">
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           <div className="p-6 bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
@@ -282,6 +282,6 @@ const handleSubmit = async (e: React.FormEvent) => {
           </form>
         </div>
       </div>
-    </AdminLayout>
+    </>
   );
 }
