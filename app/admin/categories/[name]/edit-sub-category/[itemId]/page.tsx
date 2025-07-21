@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
-import AdminLayout from '@/components/shared/adminLayout';
 import api from '@/lib/axios';
 import Image from 'next/image';
 
@@ -122,16 +121,16 @@ const handleSubmit = async (e: React.FormEvent) => {
 
   if (loading) {
     return (
-      <AdminLayout>
+      <>
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
         </div>
-      </AdminLayout>
+      </>
     );
   }
 
   return (
-    <AdminLayout>
+    <>
       <div className="max-w-2xl mx-auto p-6">
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           <div className="p-6 bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
@@ -285,6 +284,6 @@ const handleSubmit = async (e: React.FormEvent) => {
           </form>
         </div>
       </div>
-    </AdminLayout>
+    </>
   );
 }

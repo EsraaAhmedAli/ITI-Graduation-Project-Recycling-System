@@ -1,10 +1,9 @@
+import DashboardCharts from '@/components/shared/ChartWrapper';
 
-import React from 'react'
-
-import Sbar from "../../../components/sidebar/Sbar";
-export default function AdminsPage() {
+export default function AdminPage() {
   return (
-    <Sbar/>
-  )
-
+    <div className="p-6">
+      <DashboardCharts />
+    </div>
+  );
 }

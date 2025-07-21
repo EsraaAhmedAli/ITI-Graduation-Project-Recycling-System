@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
-import AdminLayout from "@/components/shared/adminLayout";
 import DynamicTable from "@/components/shared/dashboardTable";
 import api from "@/lib/axios";
 import { User } from "@/components/Types/Auser.type";
@@ -160,8 +159,8 @@ const AdminUsersPage = () => {
   ];
 
   return (
-    <AdminLayout>
-      {loading ? (
+      <>
+          {loading ? (
         <Loader title="users"/>
       ) : error ? (
         <p className="text-center py-10 text-red-500">{error}</p>
@@ -185,7 +184,8 @@ const AdminUsersPage = () => {
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveRole}
       />
-    </AdminLayout>
+      </>
+  
   );
 };
 
