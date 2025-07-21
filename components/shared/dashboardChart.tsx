@@ -12,13 +12,33 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, PointElemen
 
 const medalColors = ["#FFD700", "#C0C0C0", "#CD7F32"]; // gold, silver, bronze
 
-const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+// Get dynamic day labels based on current day
+const getCurrentDayLabels = () => {
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const today = new Date().getDay(); // 0 = Sunday, 1 = Monday, etc.
+  
+  // Reorder array to start from Monday and end with today
+  const mondayIndex = 0;
+  const reorderedDays = [];
+  
+  // Start from Monday (index 1)
+  for (let i = 0; i < 7; i++) {
+    const dayIndex = (mondayIndex + i) % 7;
+    reorderedDays.push(days[dayIndex]);
+  }
+  
+  return reorderedDays;
+};
+
+const dayLabels = getCurrentDayLabels();
+
 const statusColorMap = {
   Pending:    '#f59e0b', // yellow
   accepted:   '#34d399', // light green
   completed:  '#10b981', // emerald green
   cancelled:  '#ef4444', // red
 };
+
 const recentActivity = [
   { user: 'Sarah Hassan', action: 'Completed an order', time: '2h ago' },
   { user: 'Ali Mohamed', action: 'Recycled 5 items', time: '5h ago' },
@@ -26,79 +46,165 @@ const recentActivity = [
 ];
 
 
-
-const lineOptions = {
+const userGrowthBarOptions = {
   responsive: true,
-  plugins: { legend: { display: false } },
-  scales: {
-    y: { beginAtZero: true, grid: { color: '#d1fae5' } },
-    x: { grid: { color: '#d1fae5' } },
+  maintainAspectRatio: false,
+  plugins: { 
+    legend: { display: false },
+    tooltip: {
+      mode: 'index',
+      intersect: false,
+    }
   },
+  scales: {
+    y: { 
+      beginAtZero: true, 
+      grid: { color: '#d1fae5' },
+      ticks: {
+        stepSize: 1
+      },
+      title: { display: true, text: 'Users' }
+    },
+    x: {
+      grid: { color: '#d1fae5' },
+      ticks: {
+        maxRotation: 45,
+        minRotation: 45,
+        autoSkip: false,
+        font: {
+          size: 12,
+          weight: 'bold',
+        },
+      },
+      title: { display: true, text: 'Month' }
+    },
+
+  },
+            barThickness:50
+
 };
 
 const doughnutOptions = {
-  cutout: '70%',
-  plugins: {
-    legend: {
-      position: 'bottom',
-      labels: {
-        boxWidth: 10,
-        padding: 16,
-        usePointStyle: true,
-        pointStyle: 'circle'
-      }
-    }
-  }
-};
-
-const barOptions = lineOptions;
+                cutout: '75%',
+                plugins: {
+                  legend: {
+                    display: false
+                  }
+                },
+                animation: {
+                  easing: 'easeInOutQuad',
+                  duration: 700,
+                },
+              };
 
 export default function DashboardCharts() {
   const [totalOrders, setTotalOrders] = useState<number>(0);
   const [orderStatus, setOrderStatus] = useState<{ [status: string]: number }>({});
   const [ordersPerDay, setOrdersPerDay] = useState<number[]>([]);
   const [topUsers, setTopUsers] = useState([]);
-  const [materialCategory, setMaterialCategory] = useState<string>('All');
-const [categories, setCategories] = useState<string[]>([]);
+  const [userGrowth, setUserGrowth] = useState([]);
 
-  
+  const [categories, setCategories] = useState<string[]>([]);
+    const [chartData, setChartData] = useState<any>(null);
+
   const [topMaterials, setTopMaterials] = useState([]);
+  
   // Prepare data for Bar chart
-const barData = {
-  labels: topMaterials.map(m => m._id.itemName),
-  datasets: [
-    {
-      label: "Quantity",
-      data: topMaterials.map(m => m.totalQuantity),
-      backgroundColor: [
-        "#10b981", "#34d399", "#f59e0b", "#6366f1", "#f43f5e"
-      ],
-      borderRadius: 8,
-    }
-  ]
-};
+  const barData = {
+    labels: topMaterials.map(m => m._id.itemName),
+    datasets: [
+      {
+        label: "Quantity",
+        data: topMaterials.map(m => m.totalQuantity),
+        backgroundColor: [
+          "#10b981", "#34d399", "#f59e0b", "#6366f1", "#f43f5e"
+        ],
+        borderRadius: 8,
+      }
+    ]
+  };
 
-const barOptions = {
-  responsive: true,
-  plugins: {
-    legend: { display: false },
-  },
-  scales: {
-    x: { grid: { color: "#d1fae5" }, title: { display: true, text: 'Material' } },
-    y: { grid: { color: "#d1fae5" }, title: { display: true, text: 'Quantity' }, beginAtZero: true },
-  }
-};
+  const barOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+    },
+    scales: {
+      x: { grid: { color: "#d1fae5" }, title: { display: true, text: 'Material' } },
+      y: { grid: { color: "#d1fae5" }, title: { display: true, text: 'Quantity' }, beginAtZero: true },
+    },
+        barThickness: 50, // مثلا 20px بدل العرض الافتراضي
+  };
+
+  const [userStats, setUserStats] = useState({
+    total: 0,
+    thisMonth: 0,
+    lastMonth: 0,
+  });
 
   useEffect(() => {
+    async function fetchUserStats() {
+      try {
+        const res = await api.get("/stats");
+        const data = res.data;
+        
+        console.log("Raw API response:", data);
+
+        // Handle different response structures
+        let processedData = data;
+        
+        // If data is wrapped in a success object
+        if (data && data.success && data.data) {
+          processedData = data.data;
+        }
+        
+        // If data is directly an array or has different structure
+        if (Array.isArray(processedData) && processedData.length > 0) {
+          console.log("Processing data:", processedData);
+          
+          // Sort data by date to ensure proper order
+          const sortedData = processedData.sort((a, b) => {
+            const dateA = new Date(a.label || a.month || a.name);
+            const dateB = new Date(b.label || b.month || b.name);
+            return dateA.getTime() - dateB.getTime();
+          });
+
+          console.log("Sorted data:", sortedData);
+          setUserGrowth(sortedData);
+
+          const total = sortedData.reduce((sum, item) => sum + (item.count || item.users || item.value || 0), 0);
+          const thisMonth = sortedData[sortedData.length - 1]?.count || sortedData[sortedData.length - 1]?.users || sortedData[sortedData.length - 1]?.value || 0;
+          const lastMonth = sortedData[sortedData.length - 2]?.count || sortedData[sortedData.length - 2]?.users || sortedData[sortedData.length - 2]?.value || 0;
+
+          setUserStats({ total, thisMonth, lastMonth });
+        } else {
+          console.log("Data not in expected format:", processedData);
+          setUserGrowth([]);
+        }
+      } catch (error) {
+        console.error("Error fetching user growth:", error);
+        setUserGrowth([]);
+      }
+    }
+
     async function fetchAnalytics() {
       try {
         const res = await api.get("/orders/analytics");
         const json = res.data;
-
+        console.log("Analytics data:", json.data);
+        
         if (json.success) {
           setTotalOrders(json.data.totalOrders);
           setOrderStatus(json.data.statusCounts);
-          setOrdersPerDay(json.data.dailyOrders);
+          
+          // Fix the daily orders indexing - ensure it matches the current week
+          const dailyOrders = json.data.dailyOrders || [];
+          console.log("Daily orders from API:", dailyOrders);
+          
+          // If the API returns 7 days starting from Monday, use as is
+          // Otherwise, you might need to reorder based on your API's format
+          setOrdersPerDay(dailyOrders);
         }
       } catch (error) {
         console.error("Error fetching analytics:", error);
@@ -117,34 +223,119 @@ const barOptions = {
       }
     }
 
- async function fetchTopMaterials(category = 'All') {
+    async function fetchTopMaterials(category = 'All') {
+      try {
+        const params = category !== 'All' ? { category } : {};
+        const res = await api.get("/top-materials-recycled", { params });
+        const json = res.data;
+        if (json.success) {
+          setTopMaterials(json.data);
+        }
+      } catch (error) {
+        console.error("Error fetching top materials:", error);
+      }
+    }
+
+    async function fetchCategories() {
+      try {
+        const res = await api.get("categories/category-names");
+        if (res.data.success) setCategories(res.data.data);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    }
+async function fetchTopCities() {
   try {
-    const params = category !== 'All' ? { category } : {};
-    const res = await api.get("/top-materials-recycled", { params });
-    const json = res.data;
-    if (json.success) {
-      setTopMaterials(json.data);
+    const res = await api.get('/orders/analytics/top-cities');
+    const data = res.data.data || res.data; // Handle different response structures
+    
+    console.log("Top cities data:", data); // Debugging
+    
+    if (data && data.length > 0) {
+      const cities = data.map((entry: any) => entry.city || entry._id);
+      const orderCounts = data.map((entry: any) => entry.totalOrders);
+      
+setChartData({
+  labels: cities,
+  datasets: [
+    {
+      label: 'Total Orders by City',
+      data: orderCounts,
+      fill: false,
+      borderColor: '#22c55e',
+      backgroundColor: '#16a34a',
+      tension: 0, // Set tension to 0 for straight lines between points (zigzag effect)
+      borderWidth: 2, // Make the line slightly thicker
+      pointRadius: 5,
+      pointBackgroundColor: '#15803d',
+      pointHoverRadius: 7,
+      pointHitRadius: 10,
+      pointBorderWidth: 2,
+      pointBorderColor: '#fff',
+    },
+  ],
+});
+    } else {
+      console.log("No data received for top cities");
+      setChartData(null);
     }
   } catch (error) {
-    console.error("Error fetching top materials:", error);
+    console.error("Error fetching top cities:", error);
+    setChartData(null);
   }
 }
-  async function fetchCategories() {
-    const res = await api.get("categories/category-names");
-    if (res.data.success) setCategories(res.data.data);
-  }
-  fetchCategories();
+    fetchCategories();
     fetchAnalytics();
     fetchTopUsers();
     fetchTopMaterials();
+    fetchUserStats();
+    fetchTopCities()
   }, []);
-const ordersChartData = {
-  labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-  datasets: [{
-    label: 'Orders',
-    data: ordersPerDay,
-  }]
-};
+
+  // Fixed orders chart data with proper day labels
+  const ordersChartData = {
+    labels: dayLabels,
+    datasets: [{
+      label: 'Orders',
+      data: ordersPerDay,
+      backgroundColor: '#10b981',
+      borderRadius: 6,
+      borderSkipped: false
+    }]
+  };
+
+  // Updated user growth data for bar chart
+  const userGrowthData = {
+    labels: userGrowth.map((item) => {
+      // Format month names properly
+      const monthName = item.label || item.month || item.name || 'Unknown';
+      // If it's a date string, format it nicely
+      if (monthName.includes('-') || monthName.includes('/')) {
+        try {
+          const date = new Date(monthName);
+          return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        } catch {
+          return monthName;
+        }
+      }
+      return monthName;
+    }),
+    datasets: [
+      {
+        label: "Users",
+        data: userGrowth.map((item) => {
+          return item.count || item.users || item.value || 0;
+        }),
+        backgroundColor: "#10b981",
+        borderWidth:0,
+        borderRadius: 8,
+        hoverBackgroundColor: "#22c55e",
+        hoverBorderColor: "#15803d",
+      },
+    ],
+  };
+
+  console.log("Final userGrowthData:", userGrowthData);
 
 
   return (
@@ -153,14 +344,12 @@ const ordersChartData = {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-green-900">Dashboard insights</h1>
-<p className="text-sm text-green-700">{new Date()?.toLocaleString()}</p>
+          <p className="text-sm text-green-700">{new Date().toLocaleString()}</p>
         </div>
-    
       </div>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* <StatCard title="Total Points" value={totalPoints?.toLocaleString()} icon={<PointsIcon />} trend="up" trendValue="12%" /> */}
         <StatCard title="Total Orders" value={totalOrders?.toLocaleString()} icon={<OrdersIcon />} trend="up" trendValue="8%" />
         <StatCard title="Active Users" value={topUsers.length?.toLocaleString()} icon={<UsersIcon />} trend="steady" />
         <StatCard title="Materials Tracked" value={topMaterials.length?.toLocaleString()} icon={<MaterialsIcon />} trend="up" trendValue="5%" />
@@ -168,98 +357,59 @@ const ordersChartData = {
 
       {/* Analytics Row */}
       <div className="grid lg:grid-cols-3 md:grid-cols-2 gap-7">
-        <div className="bg-white rounded-xl p-6 shadow border border-green-100 flex-1 flex flex-col">
-          <div className="flex justify-between items-center mb-2">
-            <span className="font-medium text-green-800">Orders Trend</span>
-            <span className="text-xs text-green-400">This Month</span>
+        {/* Updated User Growth Chart - Now Bar Chart */}
+        <div className="bg-white p-6 rounded-2xl shadow border border-green-100">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold text-green-800">User Growth</h2>
+            <span className="text-xs text-green-500 bg-green-50 px-2 py-1 rounded">
+              {userGrowth.length} months
+            </span>
           </div>
-          <div className="h-32">
-            <Line
-              data={{
-                labels: ordersPerDay.labels,
-                datasets: [{
-                  label: 'Orders',
-                  data: ordersPerDay.data,
-                  borderColor: '#10b981',
-                  backgroundColor: 'rgba(16,185,129,0.15)',
-                  pointBackgroundColor: '#10b981',
-                  tension: 0.4,
-                }],
-              }}
-              options={lineOptions}
-            />
-          </div>
-          <div className="mt-4 flex justify-between">
-            <div>
-{ordersPerDay.length > 0 && (
-  <div className="text-lg font-bold text-green-900">
-    {ordersPerDay.reduce((a, b) => a + b, 0)} Orders
-  </div>
-)}              <div className="text-xs text-green-500">This Month</div>
-            </div>
-          <div className="flex gap-6">
-  <div className="text-center">
-    <div className="text-xs text-green-700">Best Day</div>
-    {ordersPerDay.length > 0 && (
-      <div className="text-sm font-semibold text-green-900">
-        {dayLabels[ordersPerDay.indexOf(Math.max(...ordersPerDay))]}
-      </div>
-    )}
-  </div>
-  <div className="text-center">
-    <div className="text-xs text-green-700">Lowest</div>
-    {ordersPerDay.length > 0 && (
-      <div className="text-sm font-semibold text-green-900">
-        {dayLabels[ordersPerDay.indexOf(Math.min(...ordersPerDay))]}
-      </div>
-    )}
-  </div>
-</div>
+          <div className="h-64">
+            {userGrowth && userGrowth.length > 0 ? (
+              <Bar data={userGrowthData} options={userGrowthBarOptions} />
+            ) : userGrowth && userGrowth.length === 0 ? (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                <div className="text-center">
+                  <div className="text-4xl mb-2">📊</div>
+                  <p className="text-sm">No data available</p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-full text-green-500">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto mb-2"></div>
+                  <p className="text-sm">Loading chart data...</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Order Status Chart */}
         <div className="bg-white rounded-xl p-6 shadow border border-green-100 flex-1 flex flex-col">
           <div className="flex justify-between items-center mb-2">
             <span className="font-medium text-green-800">Order Status</span>
             <span className="text-xs text-green-400">Overview</span>
           </div>
-          <div className="w-[260px] h-[250px] mx-auto">
-    <Doughnut
-      data={{
-        labels: Object.keys(orderStatus),
-        datasets: [{
-          data: Object.values(orderStatus),
-          backgroundColor: Object.keys(orderStatus).map(key => statusColorMap[key] || '#d1d5db'),
-          borderWidth: 0,
-        }]
-      }}
-      options={{
-        cutout: '75%',
-        plugins: {
-          legend: {
-            position: 'bottom',
-            labels: {
-              boxWidth: 20,
-              padding: 15,
-              usePointStyle: true,
-              pointStyle: 'circle',
-              font: { size: 14, weight: '600' },
-              color: '#065f46',
-            }
-          }
-        },
-        animation: {
-          easing: 'easeInOutQuad',
-          duration: 700,
-        },
-      }}
-    />
-
+          <div className="w-[220px] h-[150px] mx-auto">
+            <Doughnut
+              data={{
+                labels: Object.keys(orderStatus),
+                datasets: [{
+                  data: Object.values(orderStatus),
+                  backgroundColor: Object.keys(orderStatus).map(key => statusColorMap[key] || '#d1d5db'),
+                  borderWidth: 0,
+                }]
+              }}
+              options={doughnutOptions}
+            />
           </div>
           <div className="mt-4 flex flex-col gap-2">
             {Object.entries(orderStatus).map(([status, count]) => (
               <div key={status} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className={`w-3 h-3 rounded-full ${status === 'Pending' ? 'bg-yellow-400' : status === 'accepted' ? 'bg-green-500' : status=='completed' ? 'bg-green-900' : 'bg-red-500'}`}></span>
+                  <span className={`w-3 h-3 rounded-full ${status === 'Pending' ? 'bg-yellow-400' : status === 'accepted' ? 'bg-green-500' : status == 'completed' ? 'bg-green-900' : 'bg-red-500'}`}></span>
                   <span className="text-xs text-green-700">{status}</span>
                 </div>
                 <span className="text-xs font-semibold text-green-900">{count}</span>
@@ -267,100 +417,135 @@ const ordersChartData = {
             ))}
           </div>
         </div>
+
+        {/* Top Recyclers */}
         <div className="bg-white rounded-xl p-6 shadow border border-green-100 flex-1 flex flex-col">
           <div className="flex justify-between items-center mb-2">
             <span className="font-medium text-green-800">Top Recyclers</span>
             <button className="text-xs text-green-500 hover:underline">View All</button>
           </div>
-   <ul className="mt-3">
-  {topUsers.map((u, idx) => (
-    <li
-      key={u.id}
-      className={`flex items-center gap-3 py-3 px-2 rounded-lg transition hover:shadow-md
-        ${idx === 0 ? "bg-green-50" : idx === 1 ? "bg-green-100" : idx === 2 ? "bg-yellow-50" : ""}
-      `}
-      style={{ marginBottom: idx < topUsers.length - 1 ? "8px" : "0" }}
-    >
-      <span className="font-bold text-lg" style={{ color: medalColors[idx] || "#10b981" }}>
-        {idx < 3 ? <FaMedal style={{ verticalAlign: "middle", marginRight: 2 }} /> : null}
-        {idx + 1}
-      </span>
-      {u.imageUrl ? (
-        <Image
-          src={u.imageUrl}
-          alt={u.userName}
-          width={38}
-          height={38}
-          className="rounded-full border-2 border-green-200 shadow-sm"
-          title={u.email}
-        />
-      ) : (
-        <div
-          className="rounded-full border-2 border-green-200 shadow-sm bg-green-100 flex items-center justify-center"
-          style={{ width: 38, height: 38 }}
-          title={u.email}
-        >
-          <span className="text-green-700 font-bold text-lg">{u.userName?.charAt(0).toUpperCase()}</span>
-        </div>
-      )}
-      <div className="flex flex-col flex-1 min-w-0">
-        <span className="font-semibold text-green-900 truncate">{u.userName}</span>
-        <span className="text-xs text-green-500">{u.totalPoints} points</span>
-        {/* Optional progress bar */}
-        <div className="w-full bg-green-100 rounded-full h-2 mt-1">
-          <div
-            className="bg-green-500 h-2 rounded-full"
-            style={{
-              width: `${Math.round((u.totalPoints / (topUsers[0]?.totalPoints ?? 1)) * 100)}%`,
-            }}
-          />
-        </div>
-      </div>
-    </li>
-  ))}
-</ul>
-        </div>  
-      </div>
-
-      {/* Materials Table and Recent Activity */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
-<div className="bg-white rounded-xl p-6 shadow border border-green-100 flex-1 flex flex-col">
-  <div className="flex justify-between items-center mb-2">
-    <span className="font-medium text-green-800">Top Recycled Materials</span>
-    <select className="text-xs border border-green-200 rounded px-2 py-1 focus:outline-none focus:ring-green-500 bg-white">
-      <option>By Quantity</option>
-      <option>By Category</option>
-    </select>
-  </div>
-  {topMaterials.length > 0 && (
-    <div className="w-full mb-4">
-      <Bar data={barData} options={barOptions} />
-    </div>
-  )}
-  <table className="w-full mt-2">
-  </table>
-</div>
-        <div className="bg-white rounded-xl p-6 shadow border border-green-100 flex-1 flex flex-col">
-          <div className="flex justify-between items-center mb-2">
-            <span className="font-medium text-green-800">Recent Activity</span>
-            <button className="text-xs text-green-500 hover:underline">See All</button>
-          </div>
-          <ul className="mt-3 space-y-4">
-            {recentActivity.map((a, i) => (
-              <li key={i} className="flex items-center">
-                <div className="h-9 w-9 rounded-full bg-green-100 flex items-center justify-center mr-3">
-                  <ActivityIcon />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-green-900 truncate">
-                    {a.user} <span className="text-green-600 font-normal">{a.action}</span>
-                  </p>
-                  <p className="text-xs text-green-500">{a.time}</p>
+          <ul className="mt-3">
+            {topUsers.map((u, idx) => (
+              <li
+                key={u.id}
+                className={`flex items-center gap-3 py-3 px-2 rounded-lg transition hover:shadow-md
+                  ${idx === 0 ? "bg-green-50" : idx === 1 ? "bg-green-100" : idx === 2 ? "bg-yellow-50" : ""}
+                `}
+                style={{ marginBottom: idx < topUsers.length - 1 ? "8px" : "0" }}
+              >
+                <span className="font-bold text-lg" style={{ color: medalColors[idx] || "#10b981" }}>
+                  {idx < 3 ? <FaMedal style={{ verticalAlign: "middle", marginRight: 2 }} /> : null}
+                  {idx + 1}
+                </span>
+                {u.imageUrl ? (
+                  <Image
+                    src={u.imageUrl}
+                    alt={u.userName}
+                    width={38}
+                    height={38}
+                    className="rounded-full border-2 border-green-200 shadow-sm"
+                    title={u.email}
+                  />
+                ) : (
+                  <div
+                    className="rounded-full border-2 border-green-200 shadow-sm bg-green-100 flex items-center justify-center"
+                    style={{ width: 38, height: 38 }}
+                    title={u.email}
+                  >
+                    <span className="text-green-700 font-bold text-lg">{u.userName?.charAt(0).toUpperCase()}</span>
+                  </div>
+                )}
+                <div className="flex flex-col flex-1 min-w-0">
+                  <span className="font-semibold text-green-900 truncate">{u.userName}</span>
+                  <span className="text-xs text-green-500">{u.totalPoints} points</span>
+                  <div className="w-full bg-green-100 rounded-full h-2 mt-1">
+                    <div
+                      className="bg-green-500 h-2 rounded-full"
+                      style={{
+                        width: `${Math.round((u.totalPoints / (topUsers[0]?.totalPoints ?? 1)) * 100)}%`,
+                      }}
+                    />
+                  </div>
                 </div>
               </li>
             ))}
           </ul>
         </div>
+      </div>
+
+      {/* Materials Table and Recent Activity */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
+        <div className="bg-white rounded-xl p-6 shadow border border-green-100 flex-1 flex flex-col">
+          <div className="flex justify-between items-center mb-2">
+            <span className="font-medium text-green-800">Top Recycled Materials</span>
+            <select className="text-xs border border-green-200 rounded px-2 py-1 focus:outline-none focus:ring-green-500 bg-white">
+              <option>By Quantity</option>
+              <option>By Category</option>
+            </select>
+          </div>
+          {topMaterials.length > 0 && (
+            <div className="h-64 w-full mb-4">
+              <Bar data={barData} options={barOptions} />
+            </div>
+          )}
+        </div>
+<div className="bg-white p-6 rounded-xl shadow border border-green-100">
+  <h2 className="text-lg font-medium mb-4 text-green-700">Top Cities by Orders</h2>
+  {chartData ? (
+    <div className="h-64">
+ <Line 
+  data={chartData} 
+  options={{
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display:false
+      },
+      tooltip: {
+        mode: 'index',
+        intersect: false,
+      }
+    },
+    hover: {
+      mode: 'nearest',
+      intersect: true
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: {
+          color: '#d1fae5',
+        },
+        title: {
+          display: true,
+          text: 'Number of Orders',
+        },
+      },
+      x: {
+        grid: {
+          color: '#d1fae5',
+        },
+        title: {
+          display: true,
+          text: 'Cities',
+        },
+      },
+    },
+    elements: {
+      line: {
+        tension: 0 // This ensures straight lines between points
+      }
+    }
+  }}
+/>
+    </div>
+  ) : (
+    <div className="h-64 flex items-center justify-center text-gray-500">
+      {chartData === null ? 'No data available' : 'Loading chart...'}
+    </div>
+  )}
+</div>
       </div>
 
       {/* Weekly Orders Bar Chart */}
@@ -375,25 +560,20 @@ const ordersChartData = {
         </div>
         <div className="h-48">
           <Bar
-            data={{
-              labels: ordersPerDay.labels,
-              datasets: [{
-                label: 'Orders',
-                data: ordersPerDay.data,
-                backgroundColor: '#10b981',
-                borderRadius: 6,
-                borderSkipped: false
-              }]
-            }}
+            data={ordersChartData}
             options={barOptions}
           />
+        </div>
+        <div className="mt-2 text-xs text-gray-500">
+          Current day: {new Date().toLocaleDateString('en-US', { weekday: 'short' })} | 
+          Chart shows Monday to Sunday order distribution
         </div>
       </div>
     </div>
   );
 }
 
-// Stat Card
+// Stat Card Component
 function StatCard({ title, value, icon, trend, trendValue }: { 
   title: string; 
   value: string; 
@@ -413,18 +593,13 @@ function StatCard({ title, value, icon, trend, trendValue }: {
     steady: 'bg-amber-50 border-amber-200',
   };
 
-  // Enhanced trend icons
   const TrendUpIcon = () => <TrendingUp size={16} className="animate-pulse" />;
   const TrendDownIcon = () => <TrendingDown size={16} className="animate-pulse" />;
   const TrendSteadyIcon = () => <Minus size={16} />;
 
   return (
     <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-green-200 flex flex-col transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:-translate-y-1 group relative overflow-hidden backdrop-blur-sm">
-      
-      {/* Subtle animated background */}
       <div className="absolute inset-0 bg-gradient-to-br from-green-50/50 to-emerald-100/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      
-      {/* Decorative element */}
       <div className="absolute top-0 right-0 w-32 h-32 opacity-5 group-hover:opacity-10 transition-opacity duration-300">
         <div className="w-full h-full bg-green-500 rounded-full transform translate-x-16 -translate-y-16" />
       </div>
@@ -457,15 +632,8 @@ function StatCard({ title, value, icon, trend, trendValue }: {
   );
 }
 
-
-
-
-
-// Icons
+// Icon Components
 function OrdersIcon() { return <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="5" y="7" width="14" height="10" rx="2" strokeWidth={2} /><path d="M7 7V5a2 2 0 012-2h6a2 2 0 012 2v2" strokeWidth={2} /></svg>; }
 function UsersIcon() { return <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" strokeWidth={2} /><path d="M6 20v-2a6 6 0 0112 0v2" strokeWidth={2} /></svg>; }
 function MaterialsIcon() { return <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" strokeWidth={2} /><path d="M4 10h16" strokeWidth={2} /></svg>; }
-function TrendUpIcon() { return <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8" strokeWidth={2} /></svg>; }
-function TrendDownIcon() { return <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 7l-6 6-4-4-8 8" strokeWidth={2} /></svg>; }
-function TrendSteadyIcon() { return <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 12h14" strokeWidth={2} /></svg>; }
 function ActivityIcon() { return <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth={2} /><path d="M12 8v4l3 3" strokeWidth={2} /></svg>; }

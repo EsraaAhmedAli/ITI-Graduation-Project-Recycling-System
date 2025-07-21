@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/components/common/Navbar";
 import { UserAuthContext } from "@/context/AuthFormContext";
 import { ToastContainer } from "react-toastify";
+import Footer from "../common/Footer";
 
 export default function LayoutWrapper({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -23,7 +24,7 @@ if (isLoading) return null; // or a spinner
       {!isAdmin && <Navbar />}
       <ToastContainer />
       {children}
-      {!isAdmin && ""}
+      {!isAdmin && <Footer/>}
     </>
   );
 }

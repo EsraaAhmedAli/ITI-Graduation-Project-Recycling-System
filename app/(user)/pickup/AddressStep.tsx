@@ -6,9 +6,6 @@ import { City, FormInputs } from "@/components/Types/address.type";
 import { UseFormRegister, FieldErrors, UseFormSetValue } from "react-hook-form";
 import { cityAreas } from "./cityAreas";
 import Button from "@/components/common/Button";
-import Link from "next/link";
-import { toast } from "react-toastify";
-
 
 interface Props {
   register: UseFormRegister<FormInputs>;
@@ -17,7 +14,7 @@ interface Props {
   setSelectedCity: (city: City | "") => void;
   setValue: UseFormSetValue<FormInputs>;
   isValid: boolean;
-  onCancel:()=>void
+  onCancel: () => void;
   onSubmit: () => void;
 }
 
@@ -29,7 +26,7 @@ export default function AddressStep({
   setValue,
   isValid,
   onSubmit,
-  onCancel
+  onCancel,
 }: Props) {
   const availableAreas = selectedCity ? cityAreas[selectedCity] : [];
 
@@ -39,9 +36,6 @@ export default function AddressStep({
     setValue("city", newCity, { shouldValidate: true });
     setValue("area", "");
   };
-
-
-
 
   return (
     <form
@@ -74,6 +68,9 @@ export default function AddressStep({
               </option>
               <option value="Cairo">Cairo</option>
               <option value="Giza">Giza</option>
+              <option value="Alexandria">Alexandria</option>
+              <option value="Mansoura">Mansoura</option>
+              <option value="Aswan">Aswan</option>
             </Select>
             <FormError id="city-error" message={errors.city?.message} />
           </div>
@@ -203,14 +200,11 @@ export default function AddressStep({
         <div className="flex justify-between mt-6">
           <Button
             onClick={onCancel}
-
-            className="border bg-red-700 text-white px-6 py-2 rounded-lg"
-            >
+            className="border bg-red-700 text-white px-6 py-2 rounded-lg">
             Cancel
           </Button>
           <Button
-          onClick={()=>onSubmit()
-          }
+            onClick={() => onSubmit()}
             disabled={!isValid}
             aria-disabled={!isValid}
             className={`px-6 py-2 rounded-lg ${
