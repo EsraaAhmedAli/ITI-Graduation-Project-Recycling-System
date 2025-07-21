@@ -1,0 +1,17 @@
+[33mcommit 10a4acb0185e2af3578319c1093bb648f0d88e61[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32msh-ai-integration[m[33m, [m[1;31morigin/sh-ai-integration[m[33m)[m
+Author: sarah hesham <sarah.h.nashaat@gmail.com>
+Date:   Tue Jul 22 01:14:58 2025 +0300
+
+    Remove env files from git tracking
+
+[33mcommit 8d8eddf436a2759674b0950b56f21e0959359205[m
+Author: sarah hesham <sarah.h.nashaat@gmail.com>
+Date:   Tue Jul 22 01:02:38 2025 +0300
+
+    ai help to give ideas to recycle
+
+[33mcommit c74f91ef99e996e1ef83826fcef17c8a19a82432[m
+Author: sarah hesham <sarah.h.nashaat@gmail.com>
+Date:   Tue Jul 15 15:19:48 2025 +0300
+
+    pickup completion
