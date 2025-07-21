@@ -13,6 +13,7 @@ import Loader from "@/components/common/loader";
 import { useCart } from "@/context/CartContext";
 import Link from "next/link";
 import api from "@/lib/axios";
+import { ChevronRight, Edit3, Home, MapPin, Plus, Trash2 } from "lucide-react";
 
 export default function PickupConfirmation() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -271,59 +272,142 @@ console.error("Failed to fetch addresses:", err?.response?.data || err);
               }}
             />
           ) : (
-            <div className="grid gap-4">
-              {addresses.length === 0 && (
-                <p className="text-gray-600">No addresses saved yet.</p>
+      <div className="max-w-4xl mx-auto p-6 space-y-6">
+      {/* Header */}
+      <div className="text-center space-y-2 mb-8">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-4">
+          <MapPin className="w-8 h-8 text-white" />
+        </div>
+        <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+          Choose Your Address
+        </h2>
+        <p className="text-gray-600">Select or add a delivery address</p>
+      </div>
+
+      {/* Address Grid */}
+      <div className="grid gap-6">
+        {addresses.length === 0 ? (
+          <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded-3xl border border-gray-200">
+            <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">No addresses yet</h3>
+            <p className="text-gray-600 mb-6">Add your first delivery address to get started</p>
+            <button
+              onClick={handleAddNew}
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+            >
+              <Plus className="w-5 h-5" />
+              Add Address
+            </button>
+          </div>
+        ) : (
+          addresses.map((addr) => (
+            <div
+              key={addr._id}
+              className={`group relative overflow-hidden rounded-3xl border-2 transition-all duration-300 cursor-pointer transform hover:scale-[1.02] hover:shadow-xl ${
+                selectedAddress?._id === addr._id
+                  ? "border-green-400 bg-gradient-to-br from-green-50 to-emerald-50 shadow-lg shadow-green-100"
+                  : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-md"
+              }`}
+              onClick={() => handleSelectAddress(addr)}
+            >
+              {/* Selection Indicator */}
+              {selectedAddress?._id === addr._id && (
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-400 to-emerald-500"></div>
               )}
-              {addresses.map((addr) => (
-                <div
-                  key={addr._id}
-                  className={`border p-4 rounded shadow ${
-                    selectedAddress?._id === addr._id
-                      ? "border-green-500"
-                      : "border-gray-300"
-                  }`}
-                >
-                  <h3 className="font-semibold text-lg">
-                    {addr.city} - {addr.area}
-                  </h3>
-                  <p className="text-sm">
-                    {addr.street}, Bldg {addr.building}, Floor {addr.floor}, Apt{" "}
-                    {addr.apartment}
-                  </p>
-                  <div className="flex gap-2 mt-2">
+              
+              <div className="p-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 space-y-3">
+                    {/* Header */}
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-xl transition-colors duration-300 ${
+                        selectedAddress?._id === addr._id 
+                          ? "bg-green-100 text-green-600" 
+                          : "bg-gray-100 text-gray-600 group-hover:bg-blue-100 group-hover:text-blue-600"
+                      }`}>
+                        <Home className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-800">
+                          {addr.city} • {addr.area}
+                        </h3>
+                        {addr.landmark && (
+                          <p className="text-sm text-gray-500 flex items-center gap-1">
+                            <MapPin className="w-3 h-3" />
+                            {addr.landmark}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Address Details */}
+                    <div className="bg-gray-50 rounded-2xl p-4 space-y-2">
+                      <div className="flex flex-wrap gap-4 text-sm text-gray-700">
+                        <span className="flex items-center gap-2">
+                          <span className="font-medium">Street:</span>
+                          {addr.street}
+                        </span>
+                        <span className="flex items-center gap-2">
+                          <span className="font-medium">Building:</span>
+                          {addr.building}
+                        </span>
+                        <span className="flex items-center gap-2">
+                          <span className="font-medium">Floor:</span>
+                          {addr.floor}
+                        </span>
+                        <span className="flex items-center gap-2">
+                          <span className="font-medium">Apt:</span>
+                          {addr.apartment}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Radio Button */}
+                  <div className="ml-4">
                     <input
-                      id={`addressRadio-${addr._id}`}
                       type="radio"
                       name="address"
                       checked={selectedAddress?._id === addr._id}
                       onChange={() => handleSelectAddress(addr)}
-                      className="text-green-700"
+                      className="w-5 h-5 text-green-600 border-2 border-gray-300 focus:ring-green-500 focus:ring-2"
                     />
-                    <label
-                      htmlFor={`addressRadio-${addr._id}`}
-                      className="sr-only"
-                    >
-                      Select address {addr._id}
-                    </label>
-                    <button
-                      onClick={() => handleEditAddress(addr)}
-                      className="text-sm"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteAddress(addr._id)}
-                      className="text-red-700 text-sm"
-                    >
-                      Delete
-                    </button>
                   </div>
                 </div>
-              ))}
-              <div className="flex justify-between">
-                <Button
-                  onClick={() => {
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditAddress(addr);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl font-medium hover:bg-blue-100 transition-colors duration-200"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                    Edit
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteAddress(addr._id);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl font-medium hover:bg-red-100 transition-colors duration-200"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Bottom Actions */}
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-center pt-8 border-t border-gray-200">
+        <button
+ onClick={() => {
                     setIsEditing(true);
                     setEditingAddressId(null);
                     reset({
@@ -337,19 +421,39 @@ console.error("Failed to fetch addresses:", err?.response?.data || err);
                       notes: "",
                     });
                     setSelectedCity("");
-                  }}
-                  className="mt-4 border border-primary text-primary p-2 rounded-lg "
-                >
-                  Add New Address
-                </Button>
-                <Button
-                  onClick={handleNextStep}
-                  className="mt-4  bg-primary text-white p-3 rounded-lg"
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
+                  }}          className="w-full cursor-pointer sm:w-auto flex items-center justify-center gap-3 px-8 py-4 bg-white border-2 border-dashed border-gray-300 text-gray-700 rounded-2xl font-semibold hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300 group"
+        >
+          <div className="p-1 rounded-lg bg-gray-100 group-hover:bg-blue-100 transition-colors duration-300">
+            <Plus className="w-5 h-5" />
+          </div>
+          Add New Address
+        </button>
+        
+        <Button
+          onClick={handleNextStep}
+          disabled={!selectedAddress}
+          className={`w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 rounded-2xl font-semibold transition-all duration-300 transform ${
+            selectedAddress
+              ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:shadow-lg hover:scale-105 shadow-green-200"
+              : "bg-gray-200 text-gray-500 cursor-not-allowed"
+          }`}
+        >
+          Continue
+          <ChevronRight className="w-5 h-5" />
+        </Button>
+      </div>
+
+      {/* Progress Indicator */}
+      <div className="flex justify-center pt-4">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+          <div className="w-8 h-1 bg-green-500 rounded-full"></div>
+          <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+          <div className="w-8 h-1 bg-gray-300 rounded-full"></div>
+          <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+        </div>
+      </div>
+    </div>
           )}
         </>
       )}
