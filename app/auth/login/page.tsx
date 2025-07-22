@@ -58,7 +58,7 @@ export default function LoginPage(): React.JSX.Element {
       setUser(res.user);
       setToken(res.accessToken);
       setAccessToken(res.accessToken);
-      router.push("/profile");
+      router.push("/");
     } catch (err) {
       toast.success("Login failed. Please check your credentials.");
     } finally {

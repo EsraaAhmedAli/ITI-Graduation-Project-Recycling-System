@@ -10,9 +10,11 @@ import {
   X,
   Menu,
   UserRoundPen,
+  GalleryVerticalEnd,
+  Recycle,
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
-import { FaRecycle } from "react-icons/fa";
+import { FaRecycle, FaRobot } from "react-icons/fa";
 import { UserAuthContext } from "@/context/AuthFormContext";
 import Button from "./Button";
 
@@ -73,23 +75,23 @@ export default function Navbar() {
             href="/category"
             className="flex items-center text-gray-700 hover:text-success font-extrabold gap-1"
           >
-            <FaRecycle className="w-5 h-5" />
-            <span>Recycling</span>
+            <GalleryVerticalEnd className="w-5 h-5" />
+            <span>Categories</span>
           </Link>
                 <Link
             href="/ideas"
             className="flex items-center text-gray-700 hover:text-success font-extrabold gap-1"
           >
-            <BadgeInfo className="w-5 h-5" />
-            <span>Help with ideas</span>
+            <FaRobot className="w-5 h-5" />
+            <span>Eco-Assist</span>
           </Link>
           <Link
             prefetch={true}
             href="/cart"
             className="relative flex items-center text-gray-700 hover:text-success font-extrabold gap-1"
           >
-            <ShoppingCart className="w-5 h-5" />
-            <span>Cart</span>
+            <Recycle className="w-5 h-5" />
+            <span>Recyclables</span>
             {totalItems > 0 && (
               <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
                 {totalItems}

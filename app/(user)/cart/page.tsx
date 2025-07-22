@@ -1,12 +1,12 @@
 "use client";
 
 import { useCart } from "@/context/CartContext";
-import { Button } from "flowbite-react";
 import Swal from "sweetalert2";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { X, ChevronDown, ChevronUp, ShoppingBag } from "lucide-react";
+import { X, Leaf, Recycle, Truck, Scale, Package } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "flowbite-react";
 
 const itemVariants = {
   hidden: { opacity: 0, y: 10 },
@@ -15,21 +15,17 @@ const itemVariants = {
 };
 
 export default function CartPage() {
-  const { cart, removeFromCart, clearCart, increaseQty, decreaseQty } =
-    useCart();
-
+  const { cart, removeFromCart, clearCart, increaseQty, decreaseQty } = useCart();
   const router = useRouter();
   const [totalItems, setTotalItems] = useState(0);
-  const [totalPrice, setTotalPrice] = useState(0);
+  const [totalPoints, setTotalPoints] = useState(0);
 
   useEffect(() => {
     const total = cart.reduce((sum, item) => sum + item.quantity, 0);
-    const price = cart.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
-    );
+    const points = cart.reduce((sum, item) => sum + (item.points || 0) * item.quantity, 0);
+    
     setTotalItems(total);
-    setTotalPrice(price);
+    setTotalPoints(points);
   }, [cart]);
 
   const confirmAction = async ({
@@ -65,26 +61,42 @@ export default function CartPage() {
   };
 
   return (
-    <div className="p-4 sm:p-8">
-      <h1 className="text-2xl font-bold mb-6 text-center">Your Cart</h1>
+    <div className="p-4 sm:p-8 max-w-4xl mx-auto">
+      <div className="flex items-center gap-3 mb-6">
+        <Recycle className="w-8 h-8 text-green-600" />
+        <h1 className="text-2xl font-bold text-gray-800">Confrim items you wan to recycle </h1>
+      </div>
 
       {cart.length === 0 ? (
-        <div className="text-center mt-20">
-          <p className="text-gray-500 mb-6">Your cart is empty.</p>
+        <div className="text-center mt-20 bg-green-50 rounded-xl p-8">
+          <Leaf className="w-12 h-12 mx-auto text-green-400 mb-4" />
+          <p className="text-gray-600 mb-6 text-lg">Your recycling bin is empty.</p>
           <Button
             onClick={() => router.push("/categories")}
-            className="bg-primary"
+            gradientDuoTone="greenToBlue"
+            className="rounded-full px-6 py-3"
           >
-            Browse Items
+            Browse Recyclable Items
           </Button>
         </div>
       ) : (
         <>
-          <div className="text-right mb-4 text-sm text-gray-600">
-            Total Items: {totalItems} | Total Price: {totalPrice.toFixed(2)} EGP
+          <div className="bg-green-50 rounded-xl p-4 mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white p-4 rounded-lg shadow-sm text-center">
+              <div className="text-gray-500 text-sm">Total Items</div>
+              <div className="text-2xl font-bold text-green-600">{totalItems}</div>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow-sm text-center">
+              <div className="text-gray-500 text-sm">Earned Points</div>
+              <div className="text-2xl font-bold text-blue-600">{totalPoints}</div>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow-sm text-center">
+              <div className="text-gray-500 text-sm">Earned Money</div>
+              <div className="text-2xl font-bold text-emerald-600">{'50'} EGP</div>
+            </div>
           </div>
 
-          <div className="grid gap-4">
+          <div className="space-y-4">
             <AnimatePresence>
               {cart.map((item, idx) => (
                 <motion.div
@@ -94,85 +106,75 @@ export default function CartPage() {
                   animate="visible"
                   exit="exit"
                   layout
-                  className="bg-white rounded-xl shadow-xs border border-[#eee] overflow-hidden group"
+                  className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow"
                 >
-                  <div className="p-6 flex flex-col sm:flex-row">
-                    <div className="bg-[#f9f9f9] rounded-lg w-full sm:w-32 h-32 flex-shrink-0 flex items-center justify-center mb-4 sm:mb-0 mr-6 relative">
+                  <div className="p-4 flex flex-col sm:flex-row gap-4">
+                    <div className="bg-green-50 rounded-lg w-full sm:w-24 h-24 flex-shrink-0 flex items-center justify-center relative">
                       {item.image ? (
                         <img
                           src={item.image}
                           alt={item.itemName}
-                          className="w-full sm:w-32 h-32 object-cover"
+                          className="w-full h-full object-cover"
                         />
                       ) : (
-                        <ShoppingBag className="w-8 h-8 text-[#ccc]" />
+                        <Package className="w-8 h-8 text-green-300" />
                       )}
-
-                      <button
-                        onClick={() =>
-                          Swal.fire({
-                            title: "Are you sure?",
-                            text: "Do you really want to remove this item from cart?",
-                            icon: "warning",
-                            showCancelButton: true,
-                            confirmButtonText: "Yes, remove it",
-                            cancelButtonText: "No, keep it",
-                            confirmButtonColor: "#16a34a",
-                            cancelButtonColor: "#d33",
-                          }).then((result) => {
-                            if (result.isConfirmed) {
-                              removeFromCart(item);
-                              Swal.fire({
-                                icon: "success",
-                                title: "Removed!",
-                                text: "Item removed from cart.",
-                                timer: 1500,
-                                showConfirmButton: false,
-                              });
-                            }
-                          })
-                        }
-                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-[#999] hover:text-red-500"
-                        title="Remove"
-                      >
-                        <X className="w-5 h-5" />
-                      </button>
                     </div>
 
-                    <div className="flex-1 flex flex-col sm:flex-row">
-                      <div className="flex-1">
-                        <h3 className="text-xl font-light text-gray-800 mb-1">
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start">
+                        <h3 className="text-lg font-medium text-gray-800">
                           {item.itemName}
                         </h3>
-                        <p className="text-sm text-gray-500">
-                          Measurement Unit:{" "}
-                          {item.measurement_unit === 1 ? "Weight" : "Count"}
-                        </p>
-                        <p className="text-sm text-gray-800">
-                          Price per item: {item.price?.toFixed(2) ?? "N/A"} EGP
-                        </p>
-                        <p className="text-sm text-gray-700">
-                          Points: {item.points}
-                        </p>
+                        <button
+                          onClick={() =>
+                            confirmAction({
+                              title: "Remove Item?",
+                              text: `Remove ${item.itemName} from your recycling collection?`,
+                              onConfirm: () => removeFromCart(item),
+                            })
+                          }
+                          className="text-gray-400 hover:text-red-500 transition-colors"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
                       </div>
 
-                      <div className="flex sm:flex-col items-center sm:items-end justify-between mt-4 sm:mt-0">
-                        <div className="flex items-center border border-[#eee] rounded-full">
+                      <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
+                        <div className="flex items-center text-gray-600">
+                          <Scale className="w-4 h-4 mr-1" />
+                          {item.measurement_unit === 1 ? "By Kilo" : "By Piece"}
+                        </div>
+                        <div className="text-green-600 font-medium">
+                          {item.points} points each
+                        </div>
+                        <div className="text-blue-600">
+                          Saves {item.co2_saved || 0} kg CO₂
+                        </div>
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-between">
+                        <div className="flex items-center border border-gray-200 rounded-full">
                           <button
                             onClick={() => decreaseQty(item)}
-                            className="w-10 h-10 flex items-center justify-center text-[#666] hover:text-black hover:bg-[#f5f5f5] rounded-l-full transition-all"
+                            className={`w-8 h-8 flex items-center justify-center rounded-l-full transition-all 
+                              ${
+                                item.quantity <= 1
+                                  ? "text-gray-300 bg-gray-100 cursor-not-allowed"
+                                  : "text-gray-600 hover:bg-gray-50"
+                              }`}
                             disabled={item.quantity <= 1}
                           >
-                            <ChevronDown className="w-5 h-5" />
+                            -
                           </button>
                           <span className="px-3 text-base font-medium">
                             {item.quantity}
                           </span>
                           <button
                             onClick={() => increaseQty(item)}
-                            className="w-10 h-10 flex items-center justify-center text-[#666] hover:text-black hover:bg-[#f5f5f5] rounded-r-full transition-all"
+                            className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-50 rounded-r-full transition-all"
                           >
-                            <ChevronUp className="w-5 h-5" />
+                            +
                           </button>
                         </div>
                       </div>
@@ -183,26 +185,29 @@ export default function CartPage() {
             </AnimatePresence>
           </div>
 
-          <div className="flex justify-between mt-8">
-            <Button
-              color="failure"
-              onClick={() =>
-                confirmAction({
-                  title: "Clear Cart?",
-                  text: "Are you sure you want to remove all items?",
-                  onConfirm: clearCart,
-                })
-              }
-            >
-              Clear Cart
-            </Button>
-            <Button
-              className="bg-primary"
-              onClick={() => router.push("/pickup")}
-            >
-              Proceed to Pickup
-            </Button>
-          </div>
+   <div className="mt-8 flex flex-col sm:flex-row justify-between gap-4">
+  <Button
+    color="light"
+    onClick={() =>
+      confirmAction({
+        title: "Clear All?",
+        text: "Are you sure you want to remove all items from your recycling collection?",
+        onConfirm: clearCart,
+      })
+    }
+    className="border border-gray-300 text-gray-700 hover:bg-gray-50"
+  >
+    Clear Collection
+  </Button>
+  
+  <Button
+    onClick={() => router.push("/pickup")}
+    className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg"
+  >
+    <Truck className="w-5 h-5" />
+    Schedule Pickup
+  </Button>
+</div>
         </>
       )}
     </div>

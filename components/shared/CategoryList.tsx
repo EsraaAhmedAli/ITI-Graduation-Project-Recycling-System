@@ -80,7 +80,7 @@ export default function CategoryList({ basePath, maxToShow }: { basePath: string
             <h2 className="text-3xl md:text-3xl font-bold text-left text-accent-content mb-2">
               Recycling Categories
             </h2>
-            <span className="text-green-700">Explore various recycling categories to learn more about what you can recycle and how</span>
+            <span className="text-green-700">Having leftovers and want to earn money ? tell us what you have</span>
           </div>
 
           <motion.div

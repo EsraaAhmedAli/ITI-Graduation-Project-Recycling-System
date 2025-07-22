@@ -146,7 +146,7 @@ export default function AuthForm(): React.JSX.Element {
 
       console.log("Login successful:", res.user);
       console.log("Token:", res.accessToken);
-      router.push("/cart");
+      router.push("/");
     } catch (error) {
       // const e = error as Error;
       toast.error("Login failed. Please check your credentials.");
