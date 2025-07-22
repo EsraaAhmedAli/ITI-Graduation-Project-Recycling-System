@@ -21,6 +21,8 @@ export default function ProfilePage() {
 
 function ProfileContent() {
   const { user, token } = useUserAuth();
+  console.log(user);
+  
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState("incoming");
@@ -106,7 +108,7 @@ const totalPoints = allOrders
   );
 
 const stats = {
-  totalRecycles: allOrders.filter((or) => or.status !== "cancelled").length,
+  totalRecycles: allOrders.filter((or) => or.status == "completed").length,
   points: totalPoints,
   categories: 4,
   tier: 50,

@@ -2,21 +2,21 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
-import AdminLayout from "@/components/shared/adminLayout";
 import DynamicTable from "@/components/shared/dashboardTable";
 import api from "@/lib/axios";
 import { User } from "@/components/Types/Auser.type";
 import EditUserRoleModal from "./EditUserRoleModal";
-import FilterDrawer, {
-  FilterConfig,
-  FilterOption,
-} from "@/components/shared/FilterSection";
+import FilterDrawer, { FilterConfig } from "@/components/shared/FilterSection";
+import Image from "next/image";
+import Loader from "@/components/common/loader";
 
 const AdminUsersPage = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [filters, setFilters] = useState<Record<string, string[]>>({});
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const router = useRouter();
 
   // Fetch users
@@ -72,7 +72,7 @@ const AdminUsersPage = () => {
       name: "role",
       title: "Role",
       type: "checkbox",
-      options: ["admin", "buyer", "customer", "celivery"].map((value) => ({
+      options: ["admin", "buyer", "customer", "delivery"].map((value) => ({
         label: value,
         value,
       })),
@@ -131,9 +131,6 @@ const AdminUsersPage = () => {
     }
   };
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-
   const handleChangeRole = (user: User) => {
     setSelectedUser(user);
     setIsModalOpen(true);
@@ -161,7 +158,25 @@ const AdminUsersPage = () => {
     {
       key: "imgUrl",
       label: "",
-      type: "image",
+      render: (user: User) => {
+        if (user.imgUrl) {
+          return (
+            <Image
+              width={30}
+              height={30}
+              src={user.imgUrl}
+              alt={user.name}
+              className=" rounded-full object-cover"
+            />
+          );
+        } else {
+          return (
+            <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-semibold uppercase">
+              {user.name?.charAt(0) || "?"}
+            </div>
+          );
+        }
+      },
     },
     {
       key: "name",
@@ -216,25 +231,15 @@ const AdminUsersPage = () => {
   ];
 
   return (
-    <AdminLayout>
+    <>
       {loading ? (
-        <p className="text-center py-10 text-gray-500">Loading...</p>
+        <Loader title="users" />
       ) : error ? (
         <p className="text-center py-10 text-red-500">{error}</p>
       ) : users.length === 0 ? (
         <p className="text-center py-10 text-gray-400">No users found.</p>
       ) : (
         <>
-          <div className="mb-4">
-            <FilterDrawer
-              filtersConfig={filtersConfig}
-              activeFilters={filters}
-              onChangeFilters={(updated) => {
-                setFilters(updated);
-              }}
-            />
-          </div>
-
           <DynamicTable
             data={filteredData}
             columns={columns}
@@ -246,13 +251,13 @@ const AdminUsersPage = () => {
             showAddButton={false}
             onDelete={handleDelete}
             onEdit={handleChangeRole}
-            onView={handleViewDetails}
+            onViewDetails={handleViewDetails}
             onExternalFiltersChange={(updated) => setFilters(updated)} // ✅ Needed
             filtersConfig={filtersConfig} // ✅ Needed
             externalFilters={filters}
             getRenderedValue={getRenderedValue}
           />
-          <div className="p-4 bg-gray-100 rounded-lg mb-4">
+          {/* <div className="p-4 bg-gray-100 rounded-lg mb-4">
             <h3 className="font-bold mb-2">Debug Info:</h3>
             <div>Active Filters: {JSON.stringify(filters)}</div>
             <div>Filtered Count: {filteredData.length}</div>
@@ -263,7 +268,7 @@ const AdminUsersPage = () => {
                 {getRenderedValue(user, "phoneNumber")}
               </div>
             ))}
-          </div>
+          </div> */}
         </>
       )}
 
@@ -273,7 +278,7 @@ const AdminUsersPage = () => {
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveRole}
       />
-    </AdminLayout>
+    </>
   );
 };
 

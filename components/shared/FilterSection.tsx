@@ -1,44 +1,26 @@
-import { useState } from "react";
-import { Filter, X, ChevronDown, ChevronUp } from "lucide-react";
+import { X, ChevronDown, ChevronUp } from "lucide-react";
 import { useFilters } from "@/hooks/useFilters";
-
-export type FilterOption = {
-  label: string;
-  value: string;
-  color?: string; // For color swatches
-};
-
-export type FilterType =
-  | "checkbox"
-  | "range"
-  | "color-swatch"
-  | "search"
-  | "multi-select";
-
-export interface FilterConfig {
-  name: string;
-  title: string;
-  type: FilterType;
-  options: FilterOption[];
-  min?: number; // For range
-  max?: number; // For range
-  step?: number; // For range
-}
+import { FilterConfig } from "../Types/filter.type";
 
 interface FilterDrawerProps {
   filtersConfig: FilterConfig[];
   onChangeFilters: (filters: Record<string, string[]>) => void;
   activeFilters: Record<string, string[]>;
   className?: string;
+  isOpen: boolean;
+  onClose: () => void;
+  onOpen?: () => void;
 }
 
 export default function FilterDrawer({
-  filtersConfig,
+  filtersConfig = [],
   onChangeFilters,
   activeFilters,
   className = "",
+  isOpen,
+  onClose,
+  onOpen,
 }: FilterDrawerProps) {
-  const [isOpen, setIsOpen] = useState(false);
   const {
     expandedGroups,
     selectedCount,
@@ -48,6 +30,7 @@ export default function FilterDrawer({
     clearAll,
     toggleGroup,
   } = useFilters(filtersConfig, activeFilters, onChangeFilters);
+
   const renderFilterInput = (filter: FilterConfig) => {
     switch (filter.type) {
       case "checkbox":
@@ -160,89 +143,57 @@ export default function FilterDrawer({
   };
 
   return (
-    <div className={`relative ${className}`}>
-      {/* Toggle Button + Clear All */}
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-            isOpen
-              ? "bg-green-100 text-green-700"
-              : "hover:bg-gray-100 text-gray-700"
-          }`}
-        >
-          <Filter className="w-4 h-4" />
-          <span className="text-sm font-medium">
-            {selectedCount > 0 ? `${selectedCount} Filters` : "Filters"}
-          </span>
-          {isOpen ? (
-            <ChevronUp className="w-4 h-4" />
-          ) : (
-            <ChevronDown className="w-4 h-4" />
+    <div
+      className={`fixed top-16 right-4 w-full max-w-md bg-white z-50 shadow-lg rounded-lg transition-all duration-200 ${
+        isOpen
+          ? "opacity-100 translate-y-0 h-[70vh] overflow-y-auto"
+          : "opacity-0 translate-y-4 h-0 overflow-hidden"
+      }`}
+    >
+      {/* Panel Header */}
+      <div className="sticky top-0 bg-white p-4 border-b border-gray-200 flex justify-between items-center">
+        <h3 className="text-lg font-medium">Filters</h3>
+        <div className="flex items-center gap-4">
+          {selectedCount > 0 && (
+            <button
+              onClick={clearAll}
+              className="text-sm text-gray-500 hover:text-gray-700"
+            >
+              Clear all
+            </button>
           )}
-        </button>
-
-        {selectedCount > 0 && (
           <button
-            onClick={clearAll}
-            className="text-sm text-gray-500 hover:underline"
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
           >
-            Clear all
+            <X className="w-5 h-5" />
           </button>
-        )}
+        </div>
       </div>
 
-      {/* Modal Overlay */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-opacity-50 z-40"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
-
-      {/* Filter Panel */}
-      <div
-        className={`fixed sm:absolute top-16 left-0 sm:left-auto right-0 sm:top-10 w-full sm:w-96 bg-white z-50 shadow-lg rounded-lg transition-all duration-200 ${
-          isOpen
-            ? "opacity-100 translate-y-0"
-            : "opacity-0 translate-y-2 pointer-events-none"
-        }`}
-      >
-        <div className="p-4 max-h-[70vh] overflow-y-auto">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium">Filters</h3>
+      {/* Scrollable Filter Content */}
+      <div className="p-4 h-[calc(70vh-56px)] overflow-y-auto">
+        {filtersConfig.map((filter) => (
+          <div key={filter.name} className="mb-6 last:mb-0">
             <button
-              onClick={() => setIsOpen(false)}
-              className="text-gray-500 hover:text-gray-700"
+              onClick={() => toggleGroup(filter.name)}
+              className="flex items-center justify-between w-full text-left mb-2"
             >
-              <X className="w-5 h-5" />
+              <h4 className="text-sm font-medium text-gray-700">
+                {filter.title}
+              </h4>
+              {expandedGroups[filter.name] ? (
+                <ChevronUp className="w-4 h-4 text-gray-500" />
+              ) : (
+                <ChevronDown className="w-4 h-4 text-gray-500" />
+              )}
             </button>
-          </div>
 
-          <div className="space-y-4">
-            {filtersConfig.map((filter) => (
-              <div key={filter.name} className="border-b pb-4 last:border-b-0">
-                <button
-                  onClick={() => toggleGroup(filter.name)}
-                  className="flex items-center justify-between w-full text-left"
-                >
-                  <h4 className="text-sm font-medium text-gray-700">
-                    {filter.title}
-                  </h4>
-                  {expandedGroups[filter.name] ? (
-                    <ChevronUp className="w-4 h-4" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4" />
-                  )}
-                </button>
-
-                {expandedGroups[filter.name] && (
-                  <div className="mt-3">{renderFilterInput(filter)}</div>
-                )}
-              </div>
-            ))}
+            {expandedGroups[filter.name] && (
+              <div className="mt-3 pl-1">{renderFilterInput(filter)}</div>
+            )}
           </div>
-        </div>
+        ))}
       </div>
     </div>
   );

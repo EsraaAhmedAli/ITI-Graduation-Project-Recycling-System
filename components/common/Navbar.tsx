@@ -67,13 +67,7 @@ export default function Navbar() {
             <HousePlus className="w-5 h-5" />
             <span>Home</span>
           </Link>
-          <Link
-            href="/dashboard"
-            className="flex items-center text-gray-700 hover:text-success font-extrabold gap-1"
-          >
-            <BadgeInfo className="w-5 h-5" />
-            <span>About</span>
-          </Link>
+    
 
           <Link
             href="/category"
@@ -81,6 +75,13 @@ export default function Navbar() {
           >
             <FaRecycle className="w-5 h-5" />
             <span>Recycling</span>
+          </Link>
+                <Link
+            href="/ideas"
+            className="flex items-center text-gray-700 hover:text-success font-extrabold gap-1"
+          >
+            <BadgeInfo className="w-5 h-5" />
+            <span>Help with ideas</span>
           </Link>
           <Link
             prefetch={true}

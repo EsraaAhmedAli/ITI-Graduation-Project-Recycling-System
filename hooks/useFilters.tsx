@@ -1,8 +1,8 @@
-import { FilterConfig } from "@/components/shared/FilterSection";
+import { FilterConfig } from "@/components/Types/filter.type";
 import { useState } from "react";
 
 export function useFilters(
-  filtersConfig: FilterConfig[],
+  filtersConfig: FilterConfig[] = [],
   activeFilters: Record<string, string[]>,
   onChangeFilters: (filters: Record<string, string[]>) => void
 ) {
