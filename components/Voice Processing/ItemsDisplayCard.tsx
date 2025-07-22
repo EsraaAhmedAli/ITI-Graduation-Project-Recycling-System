@@ -104,9 +104,12 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
       if (foundItem) {
         const cartItem = {
           categoryId: "ai-voice-order",
+            itemName: item.material, // ✅ added
+            price: 0, // ✅ you must send something; adjust if needed
+
           subcategoryName: item.material,
           points: Math.floor(item.quantity * (item.unit === "KG" ? 5 : 2)),
-          unit: item.unit,
+ measurement_unit: item.unit === "KG" ? 1 : 2, // ✅ send a number (e.g. 1 for KG, 2 for piece)
           quantity: item.quantity,
         };
         addToCart(cartItem);

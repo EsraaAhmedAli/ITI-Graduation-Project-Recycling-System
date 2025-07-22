@@ -13,7 +13,7 @@ import Loader from "@/components/common/loader";
 import { useCart } from "@/context/CartContext";
 import Link from "next/link";
 import api from "@/lib/axios";
-import { ChevronRight, Edit3, Home, MapPin, Plus, Trash2 } from "lucide-react";
+import { Building2, ChevronRight, Edit3, Home, MapPin, Plus, Trash2 } from "lucide-react";
 
 export default function PickupConfirmation() {
   const [currentStep, setCurrentStep] = useState(1);

@@ -33,7 +33,7 @@ export default function Home() {
               href="/category"
               className="bg-green-500 hover:bg-green-600 text-white font-semibold py-4 px-8 rounded"
             >
-              Get Started
+              Drop your waste !
             </Link>
             <Link
               href="/about"
