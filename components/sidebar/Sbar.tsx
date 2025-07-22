@@ -5,6 +5,7 @@ import {
   ShoppingCart,
   Users,
   Layers,
+  LocationEditIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -16,6 +17,7 @@ const menuItems = [
   { label: "Categories", icon: Layers, href: "/admin/categories" },
   { label: "Users", icon: Users, href: "/admin/users" },
   { label: "Orders", icon: ShoppingCart, href: "/admin/pickups" },
+  { label: "Addresses", icon: LocationEditIcon, href: "/admin/address" },
 ];
 
 export default function AdminSidebar() {
@@ -29,16 +31,17 @@ export default function AdminSidebar() {
         collapsed ? "w-20" : "w-64"
       )}
     >
-<div
-  className="flex items-center gap-2 p-4 border-b border-gray-200 cursor-pointer"
-  onClick={() => setCollapsed(!collapsed)}
->
-  <span className="text-2xl font-extrabold bg-gradient-to-r from-accent-content to-success bg-clip-text text-transparent">
-    {collapsed ? "X" : "Xchange"}
-  </span>
-  <span className="text-green-600 text-sm ml-auto">{collapsed ? "»" : "«"}</span>
-</div>
-
+      <div
+        className="flex items-center gap-2 p-4 border-b border-gray-200 cursor-pointer"
+        onClick={() => setCollapsed(!collapsed)}
+      >
+        <span className="text-2xl font-extrabold bg-gradient-to-r from-accent-content to-success bg-clip-text text-transparent">
+          {collapsed ? "X" : "Xchange"}
+        </span>
+        <span className="text-green-600 text-sm ml-auto">
+          {collapsed ? "»" : "«"}
+        </span>
+      </div>
 
       <nav className="mt-4">
         <ul className="flex flex-col gap-1">
@@ -48,7 +51,8 @@ export default function AdminSidebar() {
                 href={href}
                 className={clsx(
                   "flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors",
-                  pathname === href && "bg-green-100 text-green-800 font-semibold",
+                  pathname === href &&
+                    "bg-green-100 text-green-800 font-semibold",
                   collapsed && "justify-center px-4"
                 )}
               >

@@ -79,10 +79,13 @@ export const UserAuthProvider = ({
   };
 
   // ✅ Logout - clears everything and redirects
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
     console.log("✅ Logging out");
+    // await api.post("/auth/logout");
+
     localStorage.removeItem("user");
     localStorage.removeItem("token");
+
     setUserState(null);
     setTokenState(null);
     // Clear axios default headers

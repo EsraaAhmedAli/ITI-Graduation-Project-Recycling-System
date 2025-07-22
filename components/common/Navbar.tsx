@@ -13,11 +13,11 @@ import {
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { FaRecycle } from "react-icons/fa";
-import { UserAuthContext } from "@/context/AuthFormContext";
+import { UserAuthContext, useUserAuth } from "@/context/AuthFormContext";
 import Button from "./Button";
 
 export default function Navbar() {
-  const { user, logout, isLoading } = useContext(UserAuthContext) ?? {};
+  const { user, logout, isLoading } = useUserAuth();
 
   const [token, setToken] = useState<string | null>(null);
   const { cart } = useCart();
@@ -212,7 +212,7 @@ export default function Navbar() {
           ) : (
             <>
               <Link
-                href="/auth"
+                href="/auth/login"
                 onClick={toggleMenu}
                 className="flex items-center gap-2 font-extrabold text-gray-700 hover:bg-gray-100 px-3 py-2 rounded"
               >

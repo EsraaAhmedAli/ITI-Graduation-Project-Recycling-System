@@ -8,6 +8,7 @@ export interface User {
   role: "admin" | "customer" | "buyer" | "delivery";
   isGuest: boolean;
   imgUrl?: string;
-  createdAt?: string; // or Date if you parse it
-  updatedAt?: string; // or Date if you parse it
+  createdAt?: string | Date; // or Date if you parse it
+  updatedAt?: string | Date; // or Date if you parse it
+  lastActiveAt?: string | Date; // or Date if you parse it
 }
