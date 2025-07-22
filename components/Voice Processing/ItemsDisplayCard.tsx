@@ -1,15 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
-import itemsData from "@/data/items.json";
+import api from "@/lib/axios";
+import Image from "next/image";
+import { toast } from "react-toastify";
 
 type ValidatedItem = {
   material: string;
   quantity: number;
-  unit: "KG" | "pieces";
+  unit: "KG" | "pieces" | "piece";
 };
+
+interface DatabaseItem {
+  _id: string;
+  name: string;
+  image: string;
+  points: number;
+  price: number;
+  measurement_unit: 1 | 2;
+}
+
+interface EnrichedItem extends ValidatedItem {
+  _id?: string;
+  image?: string;
+  points?: number;
+  price?: number;
+  measurement_unit?: 1 | 2;
+  found: boolean;
+}
 
 interface ItemsDisplayCardProps {
   items: ValidatedItem[];
@@ -17,10 +37,83 @@ interface ItemsDisplayCardProps {
 }
 
 const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
-  const [localItems, setLocalItems] = useState<ValidatedItem[]>(items);
+  const [localItems, setLocalItems] = useState<EnrichedItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
   const { addToCart } = useCart();
   const router = useRouter();
+
+  // Function to fetch item details from database
+  const fetchItemDetails = async (itemName: string): Promise<DatabaseItem | null> => {
+    try {
+      // First, try to get all categories to find which one contains our item
+      const categoriesResponse = await api.get('/categories');
+      const categories = categoriesResponse.data;
+      
+      for (const category of categories) {
+        try {
+          const itemsResponse = await api.get(`/categories/get-items/${category.name}`);
+          const categoryItems = itemsResponse.data;
+          
+          // Look for exact match or close match
+          const foundItem = categoryItems.find((item: DatabaseItem) => 
+            item.name.toLowerCase() === itemName.toLowerCase() ||
+            item.name.toLowerCase().includes(itemName.toLowerCase()) ||
+            itemName.toLowerCase().includes(item.name.toLowerCase())
+          );
+          
+          if (foundItem) {
+            return foundItem;
+          }
+        } catch (error) {
+          console.error(`Error fetching items for category ${category.name}:`, error);
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching item details:', error);
+      return null;
+    }
+  };
+
+  // Function to enrich items with database details
+  const enrichItems = useCallback(async () => {
+    setIsLoading(true);
+    const enrichedItems: EnrichedItem[] = [];
+    
+    for (const item of items) {
+      const dbItem = await fetchItemDetails(item.material);
+      
+      if (dbItem) {
+        enrichedItems.push({
+          ...item,
+          _id: dbItem._id,
+          image: dbItem.image,
+          points: dbItem.points,
+          price: dbItem.price,
+          measurement_unit: dbItem.measurement_unit,
+          found: true
+        });
+      } else {
+        // If not found in database, create with default values
+        enrichedItems.push({
+          ...item,
+          points: item.unit === "KG" ? 5 : 2, // Default points
+          price: item.unit === "KG" ? 1.5 : 0.5, // Default price
+          measurement_unit: item.unit === "KG" ? 1 : 2,
+          image: "/placeholder-item.jpg", // Default image
+          found: false
+        });
+      }
+    }
+    
+    setLocalItems(enrichedItems);
+    setIsLoading(false);
+  }, [items]);
+
+  useEffect(() => {
+    enrichItems();
+  }, [enrichItems]);
 
   const increaseQuantity = (index: number) => {
     setLocalItems((prev) =>
@@ -87,34 +180,81 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
 
   const handleQuantityBlur = (index: number) => {
     const item = localItems[index];
-    const minValue = (item.unit === "pieces" || item.unit === "piece") ? 1 : 0.25;
+    const isKG = item.unit === "KG";
     
-    setLocalItems((prev) =>
-      prev.map((item, i) =>
-        i === index ? { ...item, quantity: Math.max(item.quantity || minValue, minValue) } : item
-      )
-    );
+    if (isKG) {
+      // For KG items, round to nearest 0.25
+      const rounded = Math.round(item.quantity * 4) / 4;
+      const minValue = 0.25;
+      const finalValue = Math.max(rounded, minValue);
+      
+      setLocalItems((prev) =>
+        prev.map((item, i) =>
+          i === index ? { ...item, quantity: finalValue } : item
+        )
+      );
+    } else {
+      // For pieces, round to nearest integer
+      const minValue = 1;
+      const finalValue = Math.max(Math.round(item.quantity || 0), minValue);
+      
+      setLocalItems((prev) =>
+        prev.map((item, i) =>
+          i === index ? { ...item, quantity: finalValue } : item
+        )
+      );
+    }
   };
 
-  const addAllToCart = () => {
-    localItems.forEach((item) => {
-      const foundItem = itemsData[item.material] ||
-        Object.entries(itemsData).find(([key]) => key.toLowerCase() === item.material.toLowerCase())?.[1];
+  // Validate quantity before adding to cart
+  const validateQuantityForCart = (quantity: number, unit: string): boolean => {
+    if (unit === "KG") {
+      // Check for 0.25 increments
+      const multiplied = Math.round(quantity * 4);
+      return multiplied >= 1 && Math.abs(quantity * 4 - multiplied) < 0.0001;
+    } else {
+      // Piece items must be whole numbers >= 1
+      return Number.isInteger(quantity) && quantity >= 1;
+    }
+  };
 
-      if (foundItem) {
+  const addAllToCart = async () => {
+    for (const item of localItems) {
+      // Validate quantity before adding
+      if (!validateQuantityForCart(item.quantity, item.unit)) {
+        const message = item.unit === "KG" 
+          ? `${item.material}: For KG items, quantity must be in 0.25 increments`
+          : `${item.material}: For Piece items, quantity must be whole numbers ≥ 1`;
+        toast.error(message);
+        return;
+      }
+
+      if (item.found && item._id) {
+        // For items found in database, use their actual data
         const cartItem = {
-          categoryId: "ai-voice-order",
-            itemName: item.material, // ✅ added
-            price: 0, // ✅ you must send something; adjust if needed
-
-          subcategoryName: item.material,
-          points: Math.floor(item.quantity * (item.unit === "KG" ? 5 : 2)),
- measurement_unit: item.unit === "KG" ? 1 : 2, // ✅ send a number (e.g. 1 for KG, 2 for piece)
+          categoryId: item._id,
+          itemName: item.material,
+          image: item.image || "/placeholder-item.jpg",
+          points: item.points || 0,
+          price: item.price || 0,
+          measurement_unit: item.measurement_unit || (item.unit === "KG" ? 1 : 2),
           quantity: item.quantity,
         };
-        addToCart(cartItem);
+        await addToCart(cartItem);
+      } else {
+        // For items not found in database, use default values but still add to cart
+        const cartItem = {
+          categoryId: `voice-order-${item.material.toLowerCase().replace(/\s+/g, '-')}`,
+          itemName: item.material,
+          image: "/placeholder-item.jpg",
+          points: item.points || (item.unit === "KG" ? 5 : 2),
+          price: item.price || (item.unit === "KG" ? 1.5 : 0.5),
+          measurement_unit: item.unit === "KG" ? 1 : 2,
+          quantity: item.quantity,
+        };
+        await addToCart(cartItem);
       }
-    });
+    }
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 3000);
   };
@@ -140,6 +280,21 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
       handleCloseWithoutSaving();
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-4" onClick={handleBackdropClick}>
+        <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-md p-6">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+            </div>
+            <p className="text-gray-600 mb-4">Loading item details...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (localItems.length === 0) {
     return (
@@ -238,7 +393,8 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
 
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {localItems.map((item, index) => {
-              const calculatedPoints = Math.floor(item.quantity * (item.unit === "KG" ? 5 : 2));
+              const calculatedPoints = Math.floor(item.quantity * (item.points || (item.unit === "KG" ? 5 : 2)));
+              const calculatedPrice = (item.quantity * (item.price || (item.unit === "KG" ? 1.5 : 0.5))).toFixed(2);
               
               return (
                 <div
@@ -246,21 +402,26 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                   className="bg-gradient-to-r from-primary/5 to-secondary/5 border border-primary/20 rounded-xl p-5 hover:from-primary/10 hover:to-secondary/10 transition-all duration-200"
                 >
                   <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-800 text-xl mb-2">
-                        {item.material}
-                      </h4>
-                      <div className="flex items-center space-x-6">
-                        <p className="text-sm text-gray-600 flex items-center space-x-1">
-                          <span>Unit:</span>
-                          <span className="font-medium">{item.unit === "KG" ? "Kilograms" : "Pieces"}</span>
-                        </p>
-                        <div className="flex items-center space-x-1">
-                          <span className="text-sm text-success font-semibold">
-                            {calculatedPoints} pts
-                          </span>
+                    <div className="flex items-start space-x-4 flex-1">
+                      {/* Item Image */}
+                      <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        {item.image && item.image !== "/placeholder-item.jpg" ? (
+                          <Image 
+                            src={item.image} 
+                            alt={item.material}
+                            width={64}
+                            height={64}
+                            className="w-full h-full object-cover rounded-lg"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              const nextSibling = e.currentTarget.nextElementSibling as HTMLElement;
+                              if (nextSibling) nextSibling.classList.remove('hidden');
+                            }}
+                          />
+                        ) : null}
+                        <div className={`${item.image && item.image !== "/placeholder-item.jpg" ? 'hidden' : ''} text-gray-400`}>
                           <svg
-                            className="w-4 h-4 text-success"
+                            className="w-8 h-8"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -269,9 +430,65 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               strokeWidth={2}
-                              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+                              d="M20 7l-8-4-8 4m16 0l-8 4-8-4m16 0v10l-8 4-8-4V7"
                             />
                           </svg>
+                        </div>
+                      </div>
+                      
+                      <div className="flex-1">
+                        <div className="flex items-start justify-between">
+                          <h4 className="font-semibold text-gray-800 text-xl mb-2">
+                            {item.material}
+                            {!item.found && (
+                              <span className="ml-2 text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded-full">
+                                Not in catalog
+                              </span>
+                            )}
+                          </h4>
+                        </div>
+                        <div className="flex items-center space-x-6 mb-2">
+                          <p className="text-sm text-gray-600 flex items-center space-x-1">
+                            <span>Unit:</span>
+                            <span className="font-medium">{item.unit === "KG" ? "Kilograms" : "Pieces"}</span>
+                          </p>
+                          <div className="flex items-center space-x-1">
+                            <span className="text-sm text-success font-semibold">
+                              {calculatedPoints} pts
+                            </span>
+                            <svg
+                              className="w-4 h-4 text-success"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+                              />
+                            </svg>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <span className="text-sm text-blue-600 font-semibold">
+                              {calculatedPrice} EGP
+                            </span>
+                            <svg
+                              className="w-4 h-4 text-blue-600"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+                              />
+                              <circle cx="12" cy="12" r="2" />
+                            </svg>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -406,7 +623,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
             </div>
 
             <div className="pt-4 border-t border-gray-200">
-              <div className="grid grid-cols-3 gap-4 text-center">
+              <div className="grid grid-cols-4 gap-4 text-center">
                 <div>
                   <div className="text-sm text-gray-600">Total Items</div>
                   <div className="text-xl font-semibold text-gray-800">{localItems.length}</div>
@@ -420,7 +637,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                 <div>
                   <div className="text-sm text-gray-600">Total Points</div>
                   <div className="text-xl font-semibold text-success flex items-center justify-center space-x-1">
-                    <span>{localItems.reduce((sum, item) => sum + Math.floor(item.quantity * (item.unit === "KG" ? 5 : 2)), 0)}</span>
+                    <span>{localItems.reduce((sum, item) => sum + Math.floor(item.quantity * (item.points || (item.unit === "KG" ? 5 : 2))), 0)}</span>
                     <svg
                       className="w-5 h-5"
                       fill="none"
@@ -433,6 +650,26 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                         strokeWidth={2}
                         d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
                       />
+                    </svg>
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-600">Total Price</div>
+                  <div className="text-xl font-semibold text-blue-600 flex items-center justify-center space-x-1">
+                    <span>{localItems.reduce((sum, item) => sum + (item.quantity * (item.price || (item.unit === "KG" ? 1.5 : 0.5))), 0).toFixed(2)} EGP</span>
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+                      />
+                      <circle cx="12" cy="12" r="2" />
                     </svg>
                   </div>
                 </div>
