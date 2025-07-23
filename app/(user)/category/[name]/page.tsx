@@ -73,17 +73,19 @@ export default function UserCategoryPage() {
     return impacts[category.toLowerCase()] || 'Contributes to a cleaner environment';
   };
 
-  const handleAddToCollection = (item: Item) => {
-    addToCart({
-      categoryId: item._id,
-      itemName: item.name,
-      image: item.image,
-      points: item.points,
-      price: item.price,
-      measurement_unit: item.measurement_unit,
-      quantity: 1,
-    });
-  };
+const handleAddToCollection = (item: Item) => {
+  addToCart({
+    categoryId: item._id,
+    categoryName, // 👈 أضفنا اسم الفئة هنا
+    itemName: item.name,
+    image: item.image,
+    points: item.points,
+    price: item.price,
+    measurement_unit: item.measurement_unit,
+    quantity: 1,
+  });
+};
+
 
   const getMeasurementText = (unit: 1 | 2): string => {
     return unit === 1 ? "per kg" : "per item";
