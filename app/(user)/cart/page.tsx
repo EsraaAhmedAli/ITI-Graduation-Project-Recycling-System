@@ -20,7 +20,8 @@ export default function CartPage() {
   const [totalItems, setTotalItems] = useState(0);
   const [totalPoints, setTotalPoints] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
-  console.log(totalPrice);
+  console.log("total price" , totalPrice);
+  console.log("lllllllllllllllllllllllllllllllllllllll");
 
 
   useEffect(() => {
