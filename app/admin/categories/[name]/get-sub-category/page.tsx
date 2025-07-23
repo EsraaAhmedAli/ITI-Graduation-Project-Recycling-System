@@ -1,6 +1,5 @@
 'use client';
 
-import AdminLayout from '@/components/shared/adminLayout';
 import DynamicTable from '@/components/shared/dashboardTable';
 import { useParams, useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
@@ -93,7 +92,7 @@ export default function Page() {
   };
 
   return (
-    <AdminLayout>
+    <>
       {loading ? (
         <p className="text-center py-10">Loading...</p>
       ) : error ? (
@@ -115,6 +114,6 @@ export default function Page() {
         onImageClick={(item) => router.push(`/admin/categories`)}
         />
       )}
-    </AdminLayout>
+    </>
   );
 }
