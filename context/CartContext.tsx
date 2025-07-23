@@ -4,16 +4,17 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import api from "@/lib/axios";
 import { toast } from "react-toastify";
 
-export interface CartItem {
+interface CartItem {
   categoryId: string;
+  categoryName: string; 
   itemName: string;
-  image: string;
+  image?: string;
   points: number;
   price: number;
   measurement_unit: number;
   quantity: number;
-  
 }
+
 
 interface CartContextType {
   cart: CartItem[];

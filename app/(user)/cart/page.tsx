@@ -23,14 +23,14 @@ export default function CartPage() {
 
 
   useEffect(() => {
-  const total = cart.reduce((sum, item) => sum + item.quantity, 0);
-  const points = cart.reduce((sum, item) => sum + (item.points || 0) * item.quantity, 0);
-  const price = cart.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
+    const total = cart.reduce((sum, item) => sum + item.quantity, 0);
+    const points = cart.reduce((sum, item) => sum + (item.points || 0) * item.quantity, 0);
+    const price = cart.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
 
-  setTotalItems(total);
-  setTotalPoints(points);
-  setTotalPrice(price);
-}, [cart]);
+    setTotalItems(total);
+    setTotalPoints(points);
+    setTotalPrice(price);
+  }, [cart]);
 
 
   const confirmAction = async ({
@@ -131,6 +131,10 @@ export default function CartPage() {
                         <h3 className="text-lg font-medium text-gray-800">
                           {item.itemName}
                         </h3>
+                        <p className="text-sm text-gray-500 mt-1">
+                          Category: <span className="text-green-600">{item.categoryName}</span>
+                        </p>
+
                         <button
                           onClick={() =>
                             confirmAction({
@@ -163,10 +167,9 @@ export default function CartPage() {
                           <button
                             onClick={() => decreaseQty(item)}
                             className={`w-8 h-8 flex items-center justify-center rounded-l-full transition-all 
-                              ${
-                                item.quantity <= 1
-                                  ? "text-gray-300 bg-gray-100 cursor-not-allowed"
-                                  : "text-gray-600 hover:bg-gray-50"
+                              ${item.quantity <= 1
+                                ? "text-gray-300 bg-gray-100 cursor-not-allowed"
+                                : "text-gray-600 hover:bg-gray-50"
                               }`}
                             disabled={item.quantity <= 1}
                           >
@@ -191,7 +194,7 @@ export default function CartPage() {
           </div>
 
 
-  {/* <Button
+          {/* <Button
     color="light"
     onClick={() =>
       confirmAction({
@@ -204,47 +207,47 @@ export default function CartPage() {
   >
     Clear Collection
   </Button> */}
-  
-<div className="mt-8 bg-white rounded-xl shadow p-6">
-  <div className="flex justify-between items-center gap-4">
-    {/* الزرار الأول - Clear Collection */}
-    <Button
-      color="light"
-      onClick={() =>
-        confirmAction({
-          title: "Clear All?",
-          text: "Are you sure you want to remove all items from your recycling collection?",
-          onConfirm: clearCart,
-        })
-      }
-      className="border border-gray-300 text-gray-700 hover:bg-gray-50"
-    >
-      Clear Collection
-    </Button>
 
-    {/* الزرار الثاني - Schedule Pickup */}
-    <div className="flex flex-col items-end">
-      <Button
-        onClick={() => router.push("/pickup")}
-        disabled={totalPrice < 100}
-        className={`flex items-center gap-2 px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg
+          <div className="mt-8 bg-white rounded-xl shadow p-6">
+            <div className="flex justify-between items-center gap-4">
+              {/* الزرار الأول - Clear Collection */}
+              <Button
+                color="light"
+                onClick={() =>
+                  confirmAction({
+                    title: "Clear All?",
+                    text: "Are you sure you want to remove all items from your recycling collection?",
+                    onConfirm: clearCart,
+                  })
+                }
+                className="border border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
+                Clear Collection
+              </Button>
+
+              {/* الزرار الثاني - Schedule Pickup */}
+              <div className="flex flex-col items-end">
+                <Button
+                  onClick={() => router.push("/pickup")}
+                  disabled={totalPrice < 100}
+                  className={`flex items-center gap-2 px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg
           ${totalPrice < 100
-            ? 'bg-gray-300 text-white cursor-not-allowed'
-            : 'bg-green-500 hover:bg-green-600 text-white'}
+                      ? 'bg-gray-300 text-white cursor-not-allowed'
+                      : 'bg-green-500 hover:bg-green-600 text-white'}
         `}
-      >
-        <Truck className="w-5 h-5" />
-        Schedule Pickup
-      </Button>
+                >
+                  <Truck className="w-5 h-5" />
+                  Schedule Pickup
+                </Button>
 
-      {totalPrice < 100 && (
-        <p className="text-xs text-red-600 mt-1 text-right">
-          You should reach at least 100 EGP
-        </p>
-      )}
-    </div>
-  </div>
-</div>
+                {totalPrice < 100 && (
+                  <p className="text-xs text-red-600 mt-1 text-right">
+                    You should reach at least 100 EGP
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
 
 
 
