@@ -20,8 +20,7 @@ export default function CartPage() {
   const [totalItems, setTotalItems] = useState(0);
   const [totalPoints, setTotalPoints] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
-  console.log("total price" , totalPrice);
-  console.log("lllllllllllllllllllllllllllllllllllllll");
+
 
 
   useEffect(() => {
@@ -229,24 +228,35 @@ export default function CartPage() {
 
               {/* الزرار الثاني - Schedule Pickup */}
               <div className="flex flex-col items-end">
-                <Button
-                  onClick={() => router.push("/pickup")}
-                  disabled={totalPrice > 100}
-                  className={`flex items-center gap-2 px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg
-          ${totalPrice < 100
-                      ? 'bg-gray-300 text-white cursor-not-allowed'
-                      : 'bg-green-500 hover:bg-green-600 text-white'}
-        `}
-                >
-                  <Truck className="w-5 h-5" />
-                  Schedule Pickup
-                </Button>
+  {/* onClick={() => router.push("/pickup")}
+  disabled={totalPrice < 100}
+  className={`flex items-center gap-2 px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg
+    ${totalPrice < 100
+      ? 'bg-gray-300 text-white cursor-not-allowed pointer-events-none'
+      : 'bg-green-500 hover:bg-green-600 text-white'}
+  `} */}
+<div className={totalPrice < 100 ? "pointer-events-none" : ""}>
+  <Button
+    onClick={() => router.push("/pickup")}
+    disabled={totalPrice < 100}
+    className={`flex items-center gap-2 px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg
+      ${totalPrice < 100
+        ? 'bg-gray-300 text-white cursor-not-allowed'
+        : 'bg-green-500 hover:bg-green-600 text-white'}
+    `}
+  >
+    <Truck className="w-5 h-5" />
+    Schedule Pickup
+  </Button>
+</div>
 
-                {totalPrice > 100 && (
-                  <p className="text-xs text-red-600 mt-1 text-right">
-                    You should reach at least 100 EGP
-                  </p>
-                )}
+{totalPrice < 100 && (
+  <p className="text-xs text-red-600 mt-1 text-right">
+    You should reach at least 100 EGP
+  </p>
+)}
+
+
               </div>
             </div>
           </div>

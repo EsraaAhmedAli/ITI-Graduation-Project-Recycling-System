@@ -10,6 +10,35 @@ import { ProtectedRoute } from "@/lib/userProtectedRoute";
 import Link from "next/link";
 import Swal from "sweetalert2";
 import Image from "next/image";
+import { Pencil, RefreshCcw } from "lucide-react";
+import RecyclingModal from "@/components/eWalletModal/ewalletModal";
+import { useUserPoints } from "@/hooks/useGetUserPoints";
+
+// Add interface for user points
+interface UserPointsData {
+  userId: string;
+  name: string;
+  email: string;
+  totalPoints: number;
+  pointsHistory: Array<{
+    orderId?: string;
+    points: number;
+    type: 'earned' | 'deducted' | 'adjusted';
+    reason: string;
+    timestamp: string;
+  }>;
+  pagination: {
+    currentPage: number;
+    totalItems: number;
+    totalPages: number;
+    hasMore: boolean;
+  };
+}
+
+interface UserPointsResponse {
+  success: boolean;
+  data: UserPointsData;
+}
 
 export default function ProfilePage() {
   return (
@@ -22,7 +51,11 @@ export default function ProfilePage() {
 function ProfileContent() {
   const { user, token } = useUserAuth();
   console.log(user);
-  
+    const { userPoints, pointsLoading, getUserPoints } = useUserPoints({
+    userId: user?._id,
+    name: user?.name,
+    email: user?.email,
+  });
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState("incoming");
@@ -39,82 +72,83 @@ function ProfileContent() {
     } finally {
       setLoading(false);
     }
-
-
   };
+const closeModal=()=>{
+  setModalOpen(false)
+}
+
+  const refreshPoints = async () => {
+  await getUserPoints();
+};
 
   const cancelOrder = async (orderId: string) => {
-  try {
-    const res = await api.patch(`/orders/${orderId}/cancel`);
-    return res.data;  // { success, message, data }
-  } catch (error) {
-    throw error;
-  }
-};
-const handleCancelOrder = (orderId: string) => {
-  Swal.fire({
-    title: "Are you sure you want to cancel this order?",
-    showCancelButton: true,
-    confirmButtonText: "Yes",
-    cancelButtonText: "No",
-    icon: "warning",
-  }).then(async (result) => {
-    if (result.isConfirmed) {
-      try {
-        await cancelOrder(orderId);
-        setAllOrders((prev) =>
-          prev.map((order) =>
-            order._id === orderId ? { ...order, status: "cancelled" } : order
-          )
-        );
-        Swal.fire("Order cancelled", "", "success");
-      } catch (error) {
-        console.error("Failed to cancel order:", error);
-        Swal.fire("Failed to cancel order", "", "error");
-      }
-    } else {
-      Swal.fire("Your order is safe", "", "info");
+    try {
+      const res = await api.patch(`/orders/${orderId}/cancel`);
+      return res.data;
+    } catch (error) {
+      throw error;
     }
-  });
-};
+  };
+
+  const handleCancelOrder = (orderId: string) => {
+    Swal.fire({
+      title: "Are you sure you want to cancel this order?",
+      showCancelButton: true,
+      confirmButtonText: "Yes",
+      cancelButtonText: "No",
+      icon: "warning",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await cancelOrder(orderId);
+          setAllOrders((prev) =>
+            prev.map((order) =>
+              order._id === orderId ? { ...order, status: "cancelled" } : order
+            )
+          );
+          Swal.fire("Order cancelled", "", "success");
+        } catch (error) {
+          console.error("Failed to cancel order:", error);
+          Swal.fire("Failed to cancel order", "", "error");
+        }
+      } else {
+        Swal.fire("Your order is safe", "", "info");
+      }
+    });
+  };
 
   useEffect(() => {
-    if (user && token) getAllOrders();
+    if (user && token) {
+      getAllOrders();
+      getUserPoints(); // Fetch user points
+    }
   }, [user, token]);
 
-const filteredOrders = allOrders.filter((order) => {
-  const status = order.status
-
-  if (activeTab === "incoming") {
-    return ["Pending", "accepted"].includes(status);
-  }
-  if (activeTab === "completed") {
-    return status === "completed";
-  }
-  if (activeTab === "cancelled") {  // Now this will match!
-    return status === "cancelled";
-  }
-  return true;
-});
-const totalPoints = allOrders
-  .filter(order => {
+  const filteredOrders = allOrders.filter((order) => {
     const status = order.status
-    return status == 'completed';
-  })
-  .reduce(
-    (acc, order) =>
-      acc + order.items.reduce((sum, item) => sum + (item.points || 0), 0),
-    0
-  );
 
-const stats = {
-  totalRecycles: allOrders.filter((or) => or.status == "completed").length,
-  points: totalPoints,
-  categories: 4,
-  tier: 50,
-};
+    if (activeTab === "incoming") {
+      return ["Pending", "accepted"].includes(status);
+    }
+    if (activeTab === "completed") {
+      return status === "completed";
+    }
+    if (activeTab === "cancelled") {
+      return status === "cancelled";
+    }
+    return true;
+  });
 
-const tabs = ["incoming", "completed", "cancelled"];
+  // Updated stats to use stored points instead of calculated points
+  const stats = {
+    totalRecycles: allOrders.filter((or) => or.status == "completed").length,
+    points: userPoints?.totalPoints || 0, // Use stored points
+    categories: 4,
+    tier: 50,
+  };
+
+  const tabs = ["incoming", "completed", "cancelled"];
+  const [modalOpen, setModalOpen] = useState(false);
 
   return (
     <div className="h-auto bg-green-50 px-4">
@@ -142,20 +176,68 @@ const tabs = ["incoming", "completed", "cancelled"];
             </div>
           </div>
 
-          <Link
-            href="/editprofile"
-            className="bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700"
-          >
-            Edit Profile
-          </Link>
-        </div>
+   <div className="flex gap-4 items-center mt-4">
+      {/* Return & Earn Button */}
+      <button
+       onClick={() => setModalOpen(true)}
+        className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-700 text-white px-5 py-2 rounded-full shadow-md hover:scale-105 transition-transform duration-200"
+      >
+        <RefreshCcw size={18} />
+        Return & Earn
+      </button>
 
-        {/* Stats */}
+      {/* Edit Profile Link */}
+      <Link
+        href="/editprofile"
+        className="flex items-center gap-2 bg-white border border-green-600 text-green-700 px-4 py-2 rounded-full hover:bg-green-100 transition-colors duration-200"
+      >
+        <Pencil size={16} />
+        Edit Profile
+      </Link>
+    </div>
+        </div>
+        <RecyclingModal   onPointsUpdated={refreshPoints}
+ modalOpen={modalOpen} closeModal={closeModal} totalPoints={userPoints?.totalPoints}/>
+
+        {/* Stats - Updated to show loading state for points */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
           <StatBox label="Total Recycles" value={stats.totalRecycles} />
-          <StatBox label="Points Collected" value={stats.points} />
+          <StatBox 
+            label="Points Collected" 
+            value={stats.points} 
+            loading={pointsLoading}
+          />
           <StatBox label="Membership Tier" value={stats.tier} />
         </div>
+
+        {/* Points History Section - New addition */}
+        {userPoints && userPoints.pointsHistory.length > 0 && (
+          <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-xl">
+            <h3 className="text-lg font-semibold text-green-800 mb-3">Recent Points Activity</h3>
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              {userPoints.pointsHistory.slice(0, 3).map((entry, index) => (
+                <div key={index} className="flex items-center justify-between bg-white p-3 rounded-lg shadow-sm">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-800">{entry.reason}</p>
+                    <p className="text-xs text-gray-500">
+                      {new Date(entry.timestamp).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className={`font-bold text-sm ${
+                    entry.points > 0 ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {entry.points > 0 ? '+' : ''}{entry.points} pts
+                  </div>
+                </div>
+              ))}
+            </div>
+            {userPoints.pointsHistory.length > 3 && (
+              <button className="mt-2 text-sm text-green-600 hover:text-green-700 font-medium">
+                View all activity →
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="flex border-b gap-6">
@@ -192,14 +274,24 @@ const tabs = ["incoming", "completed", "cancelled"];
                 <p className="text-sm text-green-700 font-semibold">
                   Status: {order.status}
                 </p>
+                
+                {/* Show points earned for completed orders */}
+                {order.status === 'completed' && (
+                  <div className="bg-green-100 p-2 rounded-lg">
+                    <p className="text-sm text-green-700 font-semibold">
+                      ✅ Points Earned: {order.items.reduce((sum, item) => sum + (item.points || 0), 0)} pts
+                    </p>
+                  </div>
+                )}
+                
                 {order.items.map((item, i) => (
                   <div
                     key={i}
                     className="flex items-center gap-4 bg-white p-2 rounded-lg shadow-sm"
                   >
                     <Image
-                    width={64}
-                    height={64}
+                      width={64}
+                      height={64}
                       src={item.image}
                       alt={item.itemName}
                       className="rounded object-cover border"
@@ -239,11 +331,21 @@ const tabs = ["incoming", "completed", "cancelled"];
   );
 }
 
-function StatBox({ label, value }: { label: string; value: number }) {
+// Updated StatBox to handle loading state
+function StatBox({ label, value, loading = false }: { label: string; value: number; loading?: boolean }) {
   return (
     <div className="bg-green-100 text-green-800 p-4 rounded-xl shadow-sm">
-      <p className="text-2xl font-bold">{value}</p>
-      <p className="text-sm">{label}</p>
+      {loading ? (
+        <div className="animate-pulse">
+          <div className="h-8 bg-green-200 rounded mb-1"></div>
+          <div className="h-4 bg-green-200 rounded w-3/4"></div>
+        </div>
+      ) : (
+        <>
+          <p className="text-2xl font-bold">{value}</p>
+          <p className="text-sm">{label}</p>
+        </>
+      )}
     </div>
   );
 }

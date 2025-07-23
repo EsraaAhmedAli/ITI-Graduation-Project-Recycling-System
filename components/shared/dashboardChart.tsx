@@ -261,7 +261,7 @@ export default function DashboardCharts() {
 
     async function fetchTopUsers() {
       try {
-        const res = await api.get("/top-users-points");
+        const res = await api.get("/users/points/leaderboard");
         const json = res.data;
         if (json.success) {
           setTopUsers(json.data);
@@ -479,6 +479,7 @@ export default function DashboardCharts() {
                   ${idx === 0 ? "bg-green-50" : idx === 1 ? "bg-green-100" : idx === 2 ? "bg-yellow-50" : ""}
                 `}
               >
+              
                 <span className="font-bold text-sm md:text-lg" style={{ color: medalColors[idx] || "#10b981" }}>
                   {idx < 3 ? <FaMedal className="inline mr-1" /> : null}
                   {idx + 1}

@@ -13,7 +13,7 @@ interface Item {
   image: string;
   points: number;
   price: number;
-  categoryName:String;
+  categoryName:string;
   measurement_unit: 1 | 2;
 }
 
@@ -31,36 +31,50 @@ export default function UserCategoryPage() {
   const [categoryStats, setCategoryStats] = useState<CategoryStats | null>(null);
   const { addToCart, loadingItemId } = useCart();
 
-  useEffect(() => {
-    const fetchItems = async () => {
-      try {
-        const response = await fetch(`http://localhost:5000/api/categories/get-items/${categoryName}`);
-        const data = await response.json();
-        setItems(data);
-        
-        // Calculate category statistics
-        if (data.length > 0) {
-          const pointsArray = data.map((item: Item) => item.points);
-          const minPoints = Math.min(...pointsArray);
-          const maxPoints = Math.max(...pointsArray);
-          
-          setCategoryStats({
-            totalItems: data.length,
-            estimatedImpact: getEnvironmentalImpact(categoryName),
-            pointsRange: minPoints === maxPoints ? `${minPoints} points` : `${minPoints}-${maxPoints} points`
-          });
+useEffect(() => {
+  const fetchItems = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/categories/get-items/${categoryName}`);
+      const data = await response.json();
+      
+      // Validate and normalize items
+      const normalizedItems = data.map((item: any) => {
+        if (!item.categoryName) {
+          console.warn(`Item ${item._id} missing categoryName, using URL param`);
         }
-        
-      } catch (error) {
-        console.error("Error fetching items:", error);
-      } finally {
-        setIsLoading(false);
+        return {
+          ...item,
+          categoryName: item.categoryName || categoryName,
+          measurement_unit: Number(item.measurement_unit) as 1 | 2 // Ensure correct type
+        };
+      });
+      
+      setItems(normalizedItems);
+      
+      // Calculate stats
+      if (normalizedItems.length > 0) {
+        const pointsArray = normalizedItems.map((item: Item) => item.points);
+        setCategoryStats({
+          totalItems: normalizedItems.length,
+          estimatedImpact: getEnvironmentalImpact(categoryName),
+          pointsRange: getPointsRange(pointsArray)
+        });
       }
-    };
+    } catch (error) {
+      console.error("Fetch error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    fetchItems();
-  }, [categoryName]);
+  fetchItems();
+}, [categoryName]);
 
+const getPointsRange = (points: number[]) => {
+  const min = Math.min(...points);
+  const max = Math.max(...points);
+  return min === max ? `${min} pts` : `${min}-${max} pts`;
+};
   const getEnvironmentalImpact = (category: string): string => {
     const impacts: { [key: string]: string } = {
       'plastic': 'Reduces ocean pollution and saves marine life',
@@ -74,19 +88,33 @@ export default function UserCategoryPage() {
     return impacts[category.toLowerCase()] || 'Contributes to a cleaner environment';
   };
 
-const handleAddToCollection = (item: Item) => {
-  addToCart({
-    categoryId: item._id,
-    categoryName, // 👈 أضفنا اسم الفئة هنا
-    itemName: item.name,
-    image: item.image,
-    points: item.points,
-    price: item.price,
-    measurement_unit: item.measurement_unit,
-    quantity: 1,
-  });
-};
+const handleAddToCollection = async (item: Item) => {
+  try {
+    // Validate required fields
+    if (!item.categoryName) {
+      throw new Error(`Missing categoryName for item ${item._id}`);
+    }
 
+    const cartItem = {
+      categoryId: item._id,
+      categoryName: item.categoryName,
+      itemName: item.name,
+      image: item.image,
+      points: item.points,
+      price: item.price,
+      measurement_unit: item.measurement_unit,
+      quantity: item.measurement_unit === 1 ? 0.25 : 1 // Default quantities
+    };
+
+    console.log('Adding to cart:', cartItem); // Debug log
+    
+    await addToCart(cartItem);
+    // Show success UI feedback here
+  } catch (error) {
+    console.error('Add to cart failed:', error);
+    // Show error UI feedback here
+  }
+};
 
   const getMeasurementText = (unit: 1 | 2): string => {
     return unit === 1 ? "per kg" : "per item";
