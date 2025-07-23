@@ -20,6 +20,7 @@ export default function CartPage() {
   const [totalItems, setTotalItems] = useState(0);
   const [totalPoints, setTotalPoints] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
+  console.log(totalPrice);
 
 
   useEffect(() => {
@@ -229,7 +230,7 @@ export default function CartPage() {
               <div className="flex flex-col items-end">
                 <Button
                   onClick={() => router.push("/pickup")}
-                  disabled={totalPrice < 100}
+                  disabled={totalPrice > 100}
                   className={`flex items-center gap-2 px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg
           ${totalPrice < 100
                       ? 'bg-gray-300 text-white cursor-not-allowed'
@@ -240,7 +241,7 @@ export default function CartPage() {
                   Schedule Pickup
                 </Button>
 
-                {totalPrice < 100 && (
+                {totalPrice > 100 && (
                   <p className="text-xs text-red-600 mt-1 text-right">
                     You should reach at least 100 EGP
                   </p>

@@ -13,6 +13,7 @@ interface Item {
   image: string;
   points: number;
   price: number;
+  categoryName:String;
   measurement_unit: 1 | 2;
 }
 
