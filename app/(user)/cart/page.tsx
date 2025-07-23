@@ -19,14 +19,19 @@ export default function CartPage() {
   const router = useRouter();
   const [totalItems, setTotalItems] = useState(0);
   const [totalPoints, setTotalPoints] = useState(0);
+  const [totalPrice, setTotalPrice] = useState(0);
+
 
   useEffect(() => {
-    const total = cart.reduce((sum, item) => sum + item.quantity, 0);
-    const points = cart.reduce((sum, item) => sum + (item.points || 0) * item.quantity, 0);
-    
-    setTotalItems(total);
-    setTotalPoints(points);
-  }, [cart]);
+  const total = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const points = cart.reduce((sum, item) => sum + (item.points || 0) * item.quantity, 0);
+  const price = cart.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
+
+  setTotalItems(total);
+  setTotalPoints(points);
+  setTotalPrice(price);
+}, [cart]);
+
 
   const confirmAction = async ({
     title,
@@ -92,7 +97,7 @@ export default function CartPage() {
             </div>
             <div className="bg-white p-4 rounded-lg shadow-sm text-center">
               <div className="text-gray-500 text-sm">Earned Money</div>
-              <div className="text-2xl font-bold text-emerald-600">{'50'} EGP</div>
+              <div className="text-2xl font-bold text-emerald-600">{totalPrice} EGP</div>
             </div>
           </div>
 
@@ -185,8 +190,8 @@ export default function CartPage() {
             </AnimatePresence>
           </div>
 
-   <div className="mt-8 flex flex-col sm:flex-row justify-between gap-4">
-  <Button
+
+  {/* <Button
     color="light"
     onClick={() =>
       confirmAction({
@@ -198,16 +203,53 @@ export default function CartPage() {
     className="border border-gray-300 text-gray-700 hover:bg-gray-50"
   >
     Clear Collection
-  </Button>
+  </Button> */}
   
-  <Button
-    onClick={() => router.push("/pickup")}
-    className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg"
-  >
-    <Truck className="w-5 h-5" />
-    Schedule Pickup
-  </Button>
+<div className="mt-8 bg-white rounded-xl shadow p-6">
+  <div className="flex justify-between items-center gap-4">
+    {/* الزرار الأول - Clear Collection */}
+    <Button
+      color="light"
+      onClick={() =>
+        confirmAction({
+          title: "Clear All?",
+          text: "Are you sure you want to remove all items from your recycling collection?",
+          onConfirm: clearCart,
+        })
+      }
+      className="border border-gray-300 text-gray-700 hover:bg-gray-50"
+    >
+      Clear Collection
+    </Button>
+
+    {/* الزرار الثاني - Schedule Pickup */}
+    <div className="flex flex-col items-end">
+      <Button
+        onClick={() => router.push("/pickup")}
+        disabled={totalPrice < 100}
+        className={`flex items-center gap-2 px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg
+          ${totalPrice < 100
+            ? 'bg-gray-300 text-white cursor-not-allowed'
+            : 'bg-green-500 hover:bg-green-600 text-white'}
+        `}
+      >
+        <Truck className="w-5 h-5" />
+        Schedule Pickup
+      </Button>
+
+      {totalPrice < 100 && (
+        <p className="text-xs text-red-600 mt-1 text-right">
+          You should reach at least 100 EGP
+        </p>
+      )}
+    </div>
+  </div>
 </div>
+
+
+
+
+
         </>
       )}
     </div>
