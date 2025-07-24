@@ -291,13 +291,7 @@ console.error("Failed to fetch addresses:", err?.response?.data || err);
             <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-800 mb-2">No addresses yet</h3>
             <p className="text-gray-600 mb-6">Add your first delivery address to get started</p>
-            <button
-              onClick={handleAddNew}
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-105"
-            >
-              <Plus className="w-5 h-5" />
-              Add Address
-            </button>
+          
           </div>
         ) : (
           addresses.map((addr) => (
