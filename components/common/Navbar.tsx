@@ -88,7 +88,7 @@ export default function Navbar() {
             className="relative flex items-center text-gray-700 hover:text-success font-extrabold gap-1"
           >
             <Recycle className="w-5 h-5" />
-            <span>Recyclables</span>
+            <span>Your collection</span>
             {totalItems > 0 && (
               <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
                 {totalItems}

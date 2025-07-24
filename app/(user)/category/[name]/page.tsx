@@ -1,11 +1,13 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState, useMemo } from "react";
 import { useCart } from "@/context/CartContext";
-import SubcategoryList from "@/components/shared/SubcategoryList";
 import Loader from "@/components/common/loader";
-import { Recycle, Leaf, Award, Info } from "lucide-react";
+import { Recycle, Info } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/lib/axios";
+import Image from "next/image";
 
 interface Item {
   _id: string;
@@ -13,7 +15,7 @@ interface Item {
   image: string;
   points: number;
   price: number;
-  categoryName:string;
+  categoryName: string;
   measurement_unit: 1 | 2;
 }
 
@@ -26,126 +28,82 @@ interface CategoryStats {
 export default function UserCategoryPage() {
   const params = useParams();
   const categoryName = decodeURIComponent(params.name as string);
-  const [items, setItems] = useState<Item[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [categoryStats, setCategoryStats] = useState<CategoryStats | null>(null);
   const { addToCart, loadingItemId } = useCart();
 
-useEffect(() => {
-  const fetchItems = async () => {
-    try {
-      const response = await fetch(`http://localhost:5000/api/categories/get-items/${categoryName}`);
-      const data = await response.json();
-      
-      // Validate and normalize items
-      const normalizedItems = data.map((item: any) => {
-        if (!item.categoryName) {
-          console.warn(`Item ${item._id} missing categoryName, using URL param`);
-        }
-        return {
-          ...item,
-          categoryName: item.categoryName || categoryName,
-          measurement_unit: Number(item.measurement_unit) as 1 | 2 // Ensure correct type
-        };
-      });
-      
-      setItems(normalizedItems);
-      
-      // Calculate stats
-      if (normalizedItems.length > 0) {
-        const pointsArray = normalizedItems.map((item: Item) => item.points);
-        setCategoryStats({
-          totalItems: normalizedItems.length,
-          estimatedImpact: getEnvironmentalImpact(categoryName),
-          pointsRange: getPointsRange(pointsArray)
-        });
-      }
-    } catch (error) {
-      console.error("Fetch error:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  fetchItems();
-}, [categoryName]);
-
-const getPointsRange = (points: number[]) => {
-  const min = Math.min(...points);
-  const max = Math.max(...points);
-  return min === max ? `${min} pts` : `${min}-${max} pts`;
-};
+  const { data, isLoading, error } = useQuery<Item[]>({
+    queryKey: ["subcategory", categoryName],
+    queryFn: async () => {
+      const res = await api.get(`/categories/get-items/${categoryName}`);
+      const normalizedItems = res.data.map((item: any) => ({
+        ...item,
+        categoryName: item.categoryName || categoryName,
+        measurement_unit: Number(item.measurement_unit) as 1 | 2
+      }));
+      return normalizedItems;
+    },
+    staleTime: 60 * 1000,
+    refetchOnMount: false
+  });
   const getEnvironmentalImpact = (category: string): string => {
-    const impacts: { [key: string]: string } = {
-      'plastic': 'Reduces ocean pollution and saves marine life',
-      'paper': 'Saves trees and reduces deforestation',
-      'metal': 'Conserves natural resources and reduces mining',
-      'glass': 'Infinitely recyclable with 100% material recovery',
-      'electronics': 'Prevents toxic waste and recovers precious metals',
-      'organic': 'Creates compost and reduces methane emissions'
+    const impacts: Record<string, string> = {
+      plastic: "Reduces ocean pollution and saves marine life",
+      paper: "Saves trees and reduces deforestation",
+      metal: "Conserves natural resources and reduces mining",
+      glass: "Infinitely recyclable with 100% material recovery",
+      electronics: "Prevents toxic waste and recovers precious metals",
+      organic: "Creates compost and reduces methane emissions"
     };
-    
-    return impacts[category.toLowerCase()] || 'Contributes to a cleaner environment';
+    return impacts[category.toLowerCase()] || "Contributes to a cleaner environment";
+  };
+  const getPointsRange = (points: number[]) => {
+    const min = Math.min(...points);
+    const max = Math.max(...points);
+    return min === max ? `${min} pts` : `${min}-${max} pts`;
   };
 
-const handleAddToCollection = async (item: Item) => {
-  try {
-    // Validate required fields
-    if (!item.categoryName) {
-      throw new Error(`Missing categoryName for item ${item._id}`);
-    }
-
-    const cartItem = {
-      categoryId: item._id,
-      categoryName: item.categoryName,
-      itemName: item.name,
-      image: item.image,
-      points: item.points,
-      price: item.price,
-      measurement_unit: item.measurement_unit,
-      quantity: item.measurement_unit === 1 ? 0.25 : 1 // Default quantities
+  const categoryStats = useMemo(() => {
+    if (!data || data.length === 0) return null;
+    const points = data.map((item) => item.points);
+    return {
+      totalItems: data.length,
+      estimatedImpact: getEnvironmentalImpact(categoryName),
+      pointsRange: getPointsRange(points)
     };
+  }, [data, categoryName]);
 
-    console.log('Adding to cart:', cartItem); // Debug log
-    
-    await addToCart(cartItem);
-    // Show success UI feedback here
-  } catch (error) {
-    console.error('Add to cart failed:', error);
-    // Show error UI feedback here
-  }
-};
+  
+
+
+  const handleAddToCollection = async (item: Item) => {
+    try {
+      const cartItem = {
+        categoryId: item._id,
+        categoryName: item.categoryName,
+        itemName: item.name,
+        image: item.image,
+        points: item.points,
+        price: item.price,
+        measurement_unit: item.measurement_unit,
+        quantity: item.measurement_unit === 1 ? 0.25 : 1
+      };
+      await addToCart(cartItem);
+    } catch (error) {
+      console.error("Add to cart failed:", error);
+    }
+  };
 
   const getMeasurementText = (unit: 1 | 2): string => {
     return unit === 1 ? "per kg" : "per item";
   };
 
-  if (isLoading) {
-    return <Loader title={'recyclable items'} />;
-  }
+  if (isLoading) return <Loader title="recyclable items" />;
+  if (error) return <p className="text-red-500 text-center">Failed to load items.</p>;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
-      {/* Hero Section */}
-
-
-      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Info Banner */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
-          <div className="flex items-start gap-3">
-            <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-            <div>
-              <h3 className="font-semibold text-blue-900 mb-2">How Recycling Works</h3>
-              <p className="text-blue-800 text-sm leading-relaxed">
-                Select the items you want to recycle, add them to your collection, and schedule a pickup or drop-off. 
-                You'll earn points based on the type and quantity of materials, which can be redeemed for rewards or donated to environmental causes.
-              </p>
-            </div>
-          </div>
-        </div>
+   
 
-        {/* Items Grid */}
         <div className="mb-6">
           <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
             <Recycle className="w-5 h-5 text-green-600" />
@@ -156,16 +114,19 @@ const handleAddToCollection = async (item: Item) => {
           </p>
         </div>
 
-        {/* Custom Items Display for Recycling */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {items.map((item) => (
+          {data!.map((item) => (
             <div key={item._id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
               <div className="relative">
-                <img 
-                  src={item.image} 
-                  alt={item.name}
-                  className="w-full h-48 object-cover"
-                />
+          <div className="relative w-full h-48">
+  <Image
+    src={item.image}
+    alt={item.name}
+    fill
+    className="object-cover rounded" // add "rounded" if you want rounded corners like before
+    sizes="100vw"
+  />
+</div>
                 <div className="absolute top-3 right-3 bg-green-500 text-white px-2 py-1 rounded-full text-sm font-semibold">
                   +{item.points} pts
                 </div>
@@ -201,7 +162,7 @@ const handleAddToCollection = async (item: Item) => {
           ))}
         </div>
 
-        {items.length === 0 && (
+        {data!.length === 0 && (
           <div className="text-center py-12">
             <Recycle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-500 mb-2">No items available</h3>

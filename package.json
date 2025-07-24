@@ -10,6 +10,7 @@
     "postinstall": "flowbite-react patch"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.83.0",
     "axios": "^1.10.0",
     "chart.js": "^4.5.0",
     "d3-geo": "^3.1.1",
