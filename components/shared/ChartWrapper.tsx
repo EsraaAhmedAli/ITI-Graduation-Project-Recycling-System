@@ -3,7 +3,7 @@
 
 import dynamic from 'next/dynamic';
 
-const DashboardCharts = dynamic(() => import('./dashboardChart'), {
+const DashboardCharts = dynamic(() => import('./dashboard/dashboardChart'), {
   ssr: false,
 });
 

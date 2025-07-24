@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useState, useMemo } from "react";
 import {
   ShoppingCart,
   HousePlus,
@@ -19,19 +19,13 @@ import { UserAuthContext } from "@/context/AuthFormContext";
 import Button from "./Button";
 
 export default function Navbar() {
-  const { user, logout, isLoading } = useContext(UserAuthContext) ?? {};
+  const authContext = useContext(UserAuthContext);
+  const { user, logout, isLoading } = authContext ?? {};
 
-  const [token, setToken] = useState<string | null>(null);
   const { cart } = useCart();
-  const totalItems = cart.length;
+  const totalItems = useMemo(() => cart.length, [cart.length]);
 
   const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setToken(localStorage.getItem("token"));
-    }
-  }, []);
 
   const toggleMenu = () => setIsOpen(!isOpen);
 
@@ -69,22 +63,25 @@ export default function Navbar() {
             <HousePlus className="w-5 h-5" />
             <span>Home</span>
           </Link>
-    
 
           <Link
+            prefetch={true}
             href="/category"
             className="flex items-center text-gray-700 hover:text-success font-extrabold gap-1"
           >
             <GalleryVerticalEnd className="w-5 h-5" />
             <span>Categories</span>
           </Link>
-                <Link
+          
+          <Link
+            prefetch={true}
             href="/ideas"
             className="flex items-center text-gray-700 hover:text-success font-extrabold gap-1"
           >
             <FaRobot className="w-5 h-5" />
             <span>Eco-Assist</span>
           </Link>
+          
           <Link
             prefetch={true}
             href="/cart"
@@ -99,12 +96,13 @@ export default function Navbar() {
             )}
           </Link>
 
-          {/* Auth Buttons - Show skeleton while loading */}
+          {/* Auth Buttons */}
           {isLoading ? (
             <AuthButtonsSkeleton />
           ) : user ? (
             <>
               <Link
+                prefetch={true}
                 href="/profile"
                 className="flex items-center px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-success font-extrabold gap-1"
               >
@@ -121,6 +119,7 @@ export default function Navbar() {
           ) : (
             <>
               <Link
+                prefetch={true}
                 href="/auth/login"
                 className="flex items-center px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-success font-extrabold gap-1"
               >
@@ -128,6 +127,7 @@ export default function Navbar() {
                 <span>Login</span>
               </Link>
               <Link
+                prefetch={true}
                 href="/auth/signup"
                 className="px-4 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white font-bold flex items-center gap-1"
               >
@@ -152,6 +152,7 @@ export default function Navbar() {
       {isOpen && (
         <div className="md:hidden bg-white/95 backdrop-blur-md px-4 py-4 space-y-2">
           <Link
+            prefetch={true}
             href="/"
             onClick={toggleMenu}
             className="flex items-center gap-2 font-extrabold text-gray-700 hover:bg-gray-100 px-3 py-2 rounded"
@@ -159,7 +160,9 @@ export default function Navbar() {
             <HousePlus className="w-5 h-5" />
             <span>Home</span>
           </Link>
+          
           <Link
+            prefetch={true}
             href="/dashboard"
             onClick={toggleMenu}
             className="flex items-center gap-2 font-extrabold text-gray-700 hover:bg-gray-100 px-3 py-2 rounded"
@@ -167,7 +170,9 @@ export default function Navbar() {
             <BadgeInfo className="w-5 h-5" />
             <span>About</span>
           </Link>
+          
           <Link
+            prefetch={true}
             href="/category"
             onClick={toggleMenu}
             className="flex items-center gap-2 font-extrabold text-gray-700 hover:bg-gray-100 px-3 py-2 rounded"
@@ -175,7 +180,9 @@ export default function Navbar() {
             <FaRecycle className="w-5 h-5" />
             <span>Recycling</span>
           </Link>
+          
           <Link
+            prefetch={true}
             href="/cart"
             onClick={toggleMenu}
             className="flex items-center gap-2 font-extrabold text-gray-700 hover:bg-gray-100 px-3 py-2 rounded relative"
@@ -189,12 +196,13 @@ export default function Navbar() {
             )}
           </Link>
 
-          {/* Mobile Auth Buttons - Show skeleton while loading */}
+          {/* Mobile Auth Buttons */}
           {isLoading ? (
             <MobileAuthButtonsSkeleton />
           ) : user ? (
             <>
               <Link
+                prefetch={true}
                 href="/profile"
                 onClick={toggleMenu}
                 className="flex items-center gap-2 font-extrabold text-gray-700 hover:bg-gray-100 px-3 py-2 rounded"
@@ -215,6 +223,7 @@ export default function Navbar() {
           ) : (
             <>
               <Link
+                prefetch={true}
                 href="/auth"
                 onClick={toggleMenu}
                 className="flex items-center gap-2 font-extrabold text-gray-700 hover:bg-gray-100 px-3 py-2 rounded"
@@ -223,6 +232,7 @@ export default function Navbar() {
                 <span>Login</span>
               </Link>
               <Link
+                prefetch={true}
                 href="/app/auth/register"
                 onClick={toggleMenu}
                 className="flex items-center justify-center bg-green-500 hover:bg-green-600 text-white font-bold px-3 py-2 rounded"

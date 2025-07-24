@@ -1,4 +1,4 @@
-import DashboardCharts from '@/components/shared/ChartWrapper';
+import DashboardCharts from "@/components/shared/dashboard/dashboardChart";
 
 export default function AdminPage() {
   return (
