@@ -78,7 +78,7 @@ export default function CartPage() {
           <Leaf className="w-12 h-12 mx-auto text-green-400 mb-4" />
           <p className="text-gray-600 mb-6 text-lg">Your recycling bin is empty.</p>
           <Button
-            onClick={() => router.push("/categories")}
+            onClick={() => router.push("/category")}
             gradientDuoTone="greenToBlue"
             className="rounded-full px-6 py-3"
           >
