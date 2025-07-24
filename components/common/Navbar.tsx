@@ -17,6 +17,7 @@ import { useCart } from "@/context/CartContext";
 import { FaRecycle, FaRobot } from "react-icons/fa";
 import { UserAuthContext } from "@/context/AuthFormContext";
 import Button from "./Button";
+import NavbarSearch from "./search";
 
 export default function Navbar() {
   const authContext = useContext(UserAuthContext);
@@ -47,11 +48,14 @@ export default function Navbar() {
   return (
     <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
-        <Link href="/" className="flex items-center">
-          <div className="text-2xl font-extrabold bg-gradient-to-r from-accent-content to-success bg-clip-text text-transparent">
-            XChange
-          </div>
-        </Link>
+        <div className="flex items-center gap-6">
+          <Link href="/" className="flex items-center">
+            <div className="text-2xl font-extrabold bg-gradient-to-r from-accent-content to-success bg-clip-text text-transparent">
+              XChange
+            </div>
+          </Link>
+          <NavbarSearch />
+        </div>
 
         {/* Desktop Nav */}
         <div className="hidden md:flex items-center space-x-6">
@@ -72,7 +76,7 @@ export default function Navbar() {
             <GalleryVerticalEnd className="w-5 h-5" />
             <span>Categories</span>
           </Link>
-          
+
           <Link
             prefetch={true}
             href="/ideas"
@@ -81,7 +85,7 @@ export default function Navbar() {
             <FaRobot className="w-5 h-5" />
             <span>Eco-Assist</span>
           </Link>
-          
+
           <Link
             prefetch={true}
             href="/cart"
@@ -160,7 +164,7 @@ export default function Navbar() {
             <HousePlus className="w-5 h-5" />
             <span>Home</span>
           </Link>
-          
+
           <Link
             prefetch={true}
             href="/dashboard"
@@ -170,7 +174,7 @@ export default function Navbar() {
             <BadgeInfo className="w-5 h-5" />
             <span>About</span>
           </Link>
-          
+
           <Link
             prefetch={true}
             href="/category"
@@ -180,7 +184,7 @@ export default function Navbar() {
             <FaRecycle className="w-5 h-5" />
             <span>Recycling</span>
           </Link>
-          
+
           <Link
             prefetch={true}
             href="/cart"
