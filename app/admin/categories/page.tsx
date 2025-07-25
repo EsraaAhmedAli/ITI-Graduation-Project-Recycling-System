@@ -3,16 +3,18 @@
 import DynamicTable from '@/components/shared/dashboardTable';
 import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import api from '@/lib/axios';
 import Loader from '@/components/common/loader';
 import Image from 'next/image';
 import Button from '@/components/common/Button';
+import { useCategories } from '@/hooks/useGetCategories';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function Page() {
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+    const { data, isLoading, error } = useCategories();
+  const queryClient = useQueryClient(); // 👈 init queryClient
+
   const router = useRouter();
 
  const columns = [
@@ -35,31 +37,6 @@ export default function Page() {
   { key: "description", label: "Description", sortable: true },
 ];
 
-  // ✅ fetch categories from backend
- const fetchCategories = async () => {
-  try {
-    const res = await api.get('/categories');
-    const data = res.data;
-
-    const formatted = data.map((cat: any) => ({
-      id: cat._id,
-      image: cat.image,
-      name: cat.name,
-      description: cat.description,
-    }));
-
-    setCategories(formatted);
-  } catch (err: any) {
-    setError(err.message);
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
 
 const handleAddNewCategory=()=>{
    router.push('/admin/categories/add-category')
@@ -78,8 +55,8 @@ const handleAddNewCategory=()=>{
 
     if (result.isConfirmed) {
       try {
-        await api.delete(`/categories/${item.name}`);
-        await fetchCategories();
+await api.delete(`/categories/${encodeURIComponent(item.name)}`);
+        queryClient.invalidateQueries({ queryKey: ['categories list'] });
         Swal.fire({
           icon: "success",
           title: "Deleted!",
@@ -101,11 +78,11 @@ const handleAddNewCategory=()=>{
 
   return (
     <>
-      {loading ? (
+      {isLoading ? (
         <Loader title='categories'/>
       ) : error ? (
         <p className="text-center text-red-500 py-10">{error}</p>
-      ) : categories.length === 0 ? (
+      ) : data?.length === 0 ? (
         <>
         <p className="text-center text-gray-500 py-10">No categories found.</p>
 <div className="flex justify-center">
@@ -121,7 +98,7 @@ const handleAddNewCategory=()=>{
         
       ) : (
         <DynamicTable
-          data={categories}
+          data={data}
           columns={columns}
           title="Categories"
           itemsPerPage={5}

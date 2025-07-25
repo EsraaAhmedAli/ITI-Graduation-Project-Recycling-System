@@ -99,7 +99,7 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
   const totalPages = Math.ceil(sortedData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentData = sortedData.slice(startIndex, endIndex);
+  const currentData = sortedData?.slice(startIndex, endIndex);
 
   // Get columns that should be visible on mobile (priority-based)
   const mobileColumns = useMemo(() => {

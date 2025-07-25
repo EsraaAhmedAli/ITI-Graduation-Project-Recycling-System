@@ -128,7 +128,7 @@ const closeModal=()=>{
     const status = order.status
 
     if (activeTab === "incoming") {
-      return ["Pending", "accepted"].includes(status);
+      return ["Pending", "assigntocourier"].includes(status);
     }
     if (activeTab === "completed") {
       return status === "completed";
@@ -314,7 +314,7 @@ const closeModal=()=>{
                 </div>
 
                 {/* Cancel Button */}
-                {activeTab === "incoming" && order.status !=='accepted' && (
+                {activeTab === "incoming" && order.status !=='assigntocourier' && (
                   <button
                     onClick={() => handleCancelOrder(order._id)}
                     className="mt-2 px-3 py-1 text-sm text-white bg-red-500 hover:bg-red-600 rounded-md"
