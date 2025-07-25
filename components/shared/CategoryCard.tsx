@@ -28,7 +28,7 @@ export default function CategoryCard({ name, image, onClick }: Props) {
         <div className="w-64 h-60 mb-8 rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-[var(--color-base-100)] via-yellow-50 to-[var(--color-base-200)] border-2 border-transparent group-hover:border-[var(--color-primary)] group-hover:scale-105 flex flex-col items-center justify-center backdrop-blur-md p-4 relative">
           <div className="relative mb-6">
             <span className="block w-28 h-28 rounded-full bg-gradient-to-tr from-[var(--color-primary)] to-[var(--color-accent)] p-1 shadow-lg transition-transform duration-300 group-hover:scale-110">
-              <span className="block w-full h-full rounded-full bg-white overflow-hidden flex items-center justify-center border-4 border-[var(--color-base-200)] group-hover:border-[var(--color-primary)] transition-all duration-300">
+              <span className=" w-full h-full rounded-full bg-white overflow-hidden flex items-center justify-center border-4 border-[var(--color-base-200)] group-hover:border-[var(--color-primary)] transition-all duration-300">
                 <Image
                   src={image}
                   alt={`Image of ${name}`}

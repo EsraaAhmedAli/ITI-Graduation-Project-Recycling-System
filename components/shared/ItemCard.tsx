@@ -35,9 +35,7 @@ export default function ItemCard({ item, index, onAddToCart,loading }: ItemCardP
       className="group"
     >
       <div className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 h-full flex flex-col">
-        {/* Image */}
-        {console.log(item._id)
-        }
+     
         <div className="relative h-48 w-full overflow-hidden">
           <Image
             src={item.image}

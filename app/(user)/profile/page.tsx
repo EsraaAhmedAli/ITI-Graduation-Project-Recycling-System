@@ -9,36 +9,15 @@ import api from "@/lib/axios";
 import { ProtectedRoute } from "@/lib/userProtectedRoute";
 import Link from "next/link";
 import Swal from "sweetalert2";
-import Image from "next/image";
-import { Pencil, RefreshCcw } from "lucide-react";
+import { CheckCircle, Pencil, RefreshCcw, Truck, XCircle } from "lucide-react";
 import RecyclingModal from "@/components/eWalletModal/ewalletModal";
 import { useUserPoints } from "@/hooks/useGetUserPoints";
+import ItemsModal from "@/components/shared/itemsModal";
+import PointsActivity from "@/components/accordion/accordion";
+import MembershipTier from "@/components/memberTireShip/memberTireShip";
 
-// Add interface for user points
-interface UserPointsData {
-  userId: string;
-  name: string;
-  email: string;
-  totalPoints: number;
-  pointsHistory: Array<{
-    orderId?: string;
-    points: number;
-    type: 'earned' | 'deducted' | 'adjusted';
-    reason: string;
-    timestamp: string;
-  }>;
-  pagination: {
-    currentPage: number;
-    totalItems: number;
-    totalPages: number;
-    hasMore: boolean;
-  };
-}
 
-interface UserPointsResponse {
-  success: boolean;
-  data: UserPointsData;
-}
+
 
 export default function ProfilePage() {
   return (
@@ -59,6 +38,8 @@ function ProfileContent() {
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState("incoming");
+const [isRecyclingModalOpen, setIsRecyclingModalOpen] = useState(false);
+const [isItemsModalOpen, setIsItemsModalOpen] = useState(false);
 
   const getAllOrders = async (): Promise<void> => {
     try {
@@ -123,6 +104,18 @@ const closeModal=()=>{
       getUserPoints(); // Fetch user points
     }
   }, [user, token]);
+const [selectedOrderItems, setSelectedOrderItems] = useState<any[]>([]);
+
+const openItemsModal = (items: any[]) => {
+  setSelectedOrderItems(items);
+  setIsItemsModalOpen(true);
+};
+
+const closeItemsModal = () => {
+  setSelectedOrderItems([]);
+  setIsItemsModalOpen(false);
+};
+
 
   const filteredOrders = allOrders.filter((order) => {
     const status = order.status
@@ -141,7 +134,7 @@ const closeModal=()=>{
 
   // Updated stats to use stored points instead of calculated points
   const stats = {
-    totalRecycles: allOrders.filter((or) => or.status == "completed").length,
+    totalRecycles: allOrders.filter((or) => or.status == "completed")?.length,
     points: userPoints?.totalPoints || 0, // Use stored points
     categories: 4,
     tier: 50,
@@ -179,7 +172,7 @@ const closeModal=()=>{
    <div className="flex gap-4 items-center mt-4">
       {/* Return & Earn Button */}
       <button
-       onClick={() => setModalOpen(true)}
+onClick={() => setIsRecyclingModalOpen(true)}
         className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-700 text-white px-5 py-2 rounded-full shadow-md hover:scale-105 transition-transform duration-200"
       >
         <RefreshCcw size={18} />
@@ -196,8 +189,13 @@ const closeModal=()=>{
       </Link>
     </div>
         </div>
-        <RecyclingModal   onPointsUpdated={refreshPoints}
- modalOpen={modalOpen} closeModal={closeModal} totalPoints={userPoints?.totalPoints}/>
+ <RecyclingModal
+  onPointsUpdated={refreshPoints}
+  modalOpen={isRecyclingModalOpen}
+  closeModal={() => setIsRecyclingModalOpen(false)}
+  totalPoints={userPoints?.totalPoints}
+/>
+
 
         {/* Stats - Updated to show loading state for points */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
@@ -207,37 +205,12 @@ const closeModal=()=>{
             value={stats.points} 
             loading={pointsLoading}
           />
-          <StatBox label="Membership Tier" value={stats.tier} />
+<MembershipTier totalPoints={userPoints?.totalPoints} />
         </div>
 
         {/* Points History Section - New addition */}
-        {userPoints && userPoints.pointsHistory.length > 0 && (
-          <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-xl">
-            <h3 className="text-lg font-semibold text-green-800 mb-3">Recent Points Activity</h3>
-            <div className="space-y-2 max-h-40 overflow-y-auto">
-              {userPoints.pointsHistory.slice(0, 3).map((entry, index) => (
-                <div key={index} className="flex items-center justify-between bg-white p-3 rounded-lg shadow-sm">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-800">{entry.reason}</p>
-                    <p className="text-xs text-gray-500">
-                      {new Date(entry.timestamp).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div className={`font-bold text-sm ${
-                    entry.points > 0 ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {entry.points > 0 ? '+' : ''}{entry.points} pts
-                  </div>
-                </div>
-              ))}
-            </div>
-            {userPoints.pointsHistory.length > 3 && (
-              <button className="mt-2 text-sm text-green-600 hover:text-green-700 font-medium">
-                View all activity →
-              </button>
-            )}
-          </div>
-        )}
+       <PointsActivity userPoints={userPoints} />
+
 
         {/* Tabs */}
         <div className="flex border-b gap-6">
@@ -263,67 +236,54 @@ const closeModal=()=>{
           <p className="text-center text-gray-500">No orders in this tab yet.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredOrders.map((order) => (
-              <div
-                key={order._id}
-                className="border rounded-xl p-4 bg-green-50 shadow-sm space-y-2"
-              >
-                <p className="text-sm text-gray-500">
-                  Date: {new Date(order.createdAt).toLocaleDateString()}
-                </p>
-                <p className="text-sm text-green-700 font-semibold">
-                  Status: {order.status}
-                </p>
-                
-                {/* Show points earned for completed orders */}
-                {order.status === 'completed' && (
-                  <div className="bg-green-100 p-2 rounded-lg">
-                    <p className="text-sm text-green-700 font-semibold">
-                      ✅ Points Earned: {order.items.reduce((sum, item) => sum + (item.points || 0), 0)} pts
-                    </p>
-                  </div>
-                )}
-                
-                {order.items.map((item, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-4 bg-white p-2 rounded-lg shadow-sm"
-                  >
-                    <Image
-                      width={64}
-                      height={64}
-                      src={item.image}
-                      alt={item.itemName}
-                      className="rounded object-cover border"
-                    />
-                    <div className="flex flex-col text-sm">
-                      <span className="font-semibold text-green-800">
-                        {item.itemName}
-                      </span>
-                      <span className="text-gray-600">
-                        Quantity: {item.quantity} {item.measurement_unit === 1 ? "kg" : "pcs"}
-                      </span>
-                      <span className="text-gray-600">Points: {item.points}</span>
-                      <span className="text-gray-600">Price: {item.price} EGP</span>
-                    </div>
-                  </div>
-                ))}
+{filteredOrders.map((order) => (
+  <div
+    key={order._id}
+    className=" rounded-xl p-4 bg-green-50 shadow-sm flex flex-col justify-between"
+  >
+    <div className="flex justify-between items-center mb-2 text-sm text-gray-600">
+      <span>Date: {new Date(order.createdAt).toLocaleDateString()}</span>
+      <span className="flex items-center gap-1 font-semibold">
+        {["Pending", "assigntocourier"].includes(order.status) && (
+          <>
+            <Truck size={16} className="text-yellow-600" />
+            <span className="text-yellow-700">In Transit</span>
+          </>
+        )}
+        {order.status === "completed" && (
+          <>
+            <CheckCircle size={16} className="text-green-600" />
+            <span className="text-green-700">Completed</span>
+          </>
+        )}
+        {order.status === "cancelled" && (
+          <>
+            <XCircle size={16} className="text-red-600" />
+            <span className="text-red-700 capitalize">{order.status}</span>
+          </>
+        )}
+      </span>
+    </div>
 
-                <div className="text-xs text-gray-500">
-                  {order.address.street}, Bldg {order.address.building}, Floor {order.address.floor}, {order.address.area}, {order.address.city}
-                </div>
+    {/* Address summary */}
+    <div className="text-xs text-gray-500 mb-4">
+      {order.address.street}, Bldg {order.address.building}, Floor {order.address.floor}, {order.address.area}, {order.address.city}
+    </div>
 
-                {/* Cancel Button */}
-                {activeTab === "incoming" && order.status !=='assigntocourier' && (
-                  <button
-                    onClick={() => handleCancelOrder(order._id)}
-                    className="mt-2 px-3 py-1 text-sm text-white bg-red-500 hover:bg-red-600 rounded-md"
-                  >
-                    Cancel Order
-                  </button>
-                )}
-              </div>
-            ))}
+    <button
+      onClick={() => openItemsModal(order.items)}
+      className="self-start text-sm  text-green-500 rounded-md transition"
+    >
+      View Details
+    </button>
+  </div>
+))}
+<ItemsModal
+  show={isItemsModalOpen}
+  onclose={closeItemsModal}
+  selectedOrderItems={selectedOrderItems}
+/>
+
           </div>
         )}
       </div>

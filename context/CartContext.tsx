@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode, Dispatch, SetStateAction } from "react";
 import api from "@/lib/axios";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 
 export interface CartItem {
   categoryId: string;

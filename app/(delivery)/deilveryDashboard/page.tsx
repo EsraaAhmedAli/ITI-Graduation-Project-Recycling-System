@@ -4,9 +4,11 @@ import DynamicTable from '@/components/shared/dashboardTable'
 import api from '@/lib/axios'
 import Image from 'next/image'
 import React, { useEffect, useState, useRef } from 'react'
-import { Camera, CheckCircle, Upload, X } from 'lucide-react'
+import { Camera, CheckCircle, Upload, X, Package, Clock, User, MapPin, Truck, LogOut } from 'lucide-react'
 import { Modal, ModalBody, ModalHeader } from 'flowbite-react'
 import Button from '@/components/common/Button'
+import { useUserAuth } from '@/context/AuthFormContext'
+import toast from 'react-hot-toast'
 
 export default function Page() {
   const [orders, setOrders] = useState([])
@@ -21,7 +23,7 @@ export default function Page() {
   const [notes, setNotes] = useState('');
   const [completing, setCompleting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
+ const{logout}= useUserAuth()
   const getAssignedOrdersToDelivery = async () => {
     const res = api.get('my-orders').then(res => {
       setOrders(res.data.orders)
@@ -80,7 +82,7 @@ export default function Page() {
       });
 
       if (response.status === 200) {
-        alert('Order completed successfully!');
+        toast('Order completed successfully!');
         setShowCompleteModal(false);
         resetModal();
         getAssignedOrdersToDelivery(); // Refresh orders
@@ -110,33 +112,72 @@ export default function Page() {
     resetModal();
   };
 
+  // Get status badge styling
+  const getStatusBadge = (status: string) => {
+    const statusStyles = {
+      'assigntocourier': 'bg-gradient-to-r from-blue-100 to-blue-50 text-blue-800 border border-blue-200',
+      'completed': 'bg-gradient-to-r from-green-100 to-green-50 text-green-800 border border-green-200',
+      'pending': 'bg-gradient-to-r from-yellow-100 to-yellow-50 text-yellow-800 border border-yellow-200',
+      'cancelled': 'bg-gradient-to-r from-red-100 to-red-50 text-red-800 border border-red-200'
+    };
+
+    const defaultStyle = 'bg-gradient-to-r from-gray-100 to-gray-50 text-gray-800 border border-gray-200';
+    
+    return (
+      <span className={`px-3 py-1.5 rounded-full text-xs font-semibold ${statusStyles[status] || defaultStyle}`}>
+        {status === 'assigntocourier' ? 'Ready for Delivery' : status.charAt(0).toUpperCase() + status.slice(1)}
+      </span>
+    );
+  };
+
   const columns = [
     {
       key: 'userName',
-      label: 'User',
+      label: 'Customer',
       render: (row: any) => (
-        <div className="flex items-center gap-2">
-          <Image
-            src={row.user?.imageUrl || '/default-avatar.png'}
-            alt={row.user?.userName}
-            width={32}
-            height={32}
-            className="rounded-full border border-green-200"
-          />
-          <span>{row.user?.userName}</span>
+        <div className="flex items-center gap-3 py-2">
+          <div className="relative">
+            <Image
+              src={row.user?.imageUrl || '/default-avatar.png'}
+              alt={row.user?.userName}
+              width={44}
+              height={44}
+              className="rounded-full border-2 border-white shadow-md ring-2 ring-gray-100"
+            />
+            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+          </div>
+          <div className="flex flex-col">
+            <span className="font-semibold text-gray-900">{row.user?.userName}</span>
+            <span className="text-xs text-gray-500 flex items-center gap-1">
+              <User className="w-3 h-3" />
+              Customer
+            </span>
+          </div>
         </div>
       ),
       priority: 1,
     },
     {
       key: 'createdAt',
-      label: 'Created At',
-      render: (row: any) =>
-        new Date(row.createdAt).toLocaleDateString("en-GB", {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric',
-        }),
+      label: 'Order Date',
+      render: (row: any) => (
+        <div className="flex flex-col">
+          <span className="font-medium text-gray-900">
+            {new Date(row.createdAt).toLocaleDateString("en-GB", {
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric',
+            })}
+          </span>
+          <span className="text-xs text-gray-500 flex items-center gap-1">
+            <Clock className="w-3 h-3" />
+            {new Date(row.createdAt).toLocaleTimeString("en-GB", {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </span>
+        </div>
+      ),
       sortable: true,
       priority: 3,
     },
@@ -146,17 +187,17 @@ export default function Page() {
       render: (row: any) => (
         <button
           onClick={() => handleViewOrderDetails(row)}
-          className="text-blue-600 hover:underline"
+          className="group flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-all duration-200 border border-blue-200 hover:border-blue-300 hover:shadow-sm"
         >
-          View
+          <Package className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
+          View Details
         </button>
       ),
     },
     {
       key: 'status',
       label: 'Status',
-      type: 'status',
-      render: (row: any) => row.status,
+      render: (row: any) => getStatusBadge(row.status),
       priority: 4,
     },
     {
@@ -167,17 +208,17 @@ export default function Page() {
           {row.status === 'assigntocourier' && (
             <button
               onClick={() => handleCompleteOrder(row)}
-              className="bg-green-600 text-white px-3 py-1 rounded-md text-sm hover:bg-green-700 flex items-center gap-1"
+              className="group flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg text-sm font-semibold transition-all duration-200 hover:shadow-lg hover:scale-105 active:scale-95"
             >
-              <CheckCircle className="w-4 h-4" />
+              <CheckCircle className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
               Complete
             </button>
           )}
           {row.status === 'completed' && row.deliveryProof && (
-            <span className="text-green-600 text-sm flex items-center gap-1">
+            <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-100 to-green-50 text-green-800 rounded-lg border border-green-200">
               <CheckCircle className="w-4 h-4" />
-              Delivered
-            </span>
+              <span className="text-sm font-semibold">Delivered</span>
+            </div>
           )}
         </div>
       ),
@@ -185,15 +226,59 @@ export default function Page() {
   ];
 
   return (
-    <>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+      {/* Header Section */}
+      <div className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl shadow-lg">
+                <Truck className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Delivery Dashboard</h1>
+                <p className="text-gray-600">Manage your assigned delivery orders</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-lg border border-blue-200">
+                <Package className="w-5 h-5 text-blue-600" />
+                <span className="text-sm font-semibold text-blue-800">{orders.length} Orders</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <button onClick={logout}>
+              <LogOut/>
+
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+    {orders.length === 0 ? (
+      <div className="py-20 flex flex-col items-center justify-center text-gray-500">
+        <Truck className="mb-4 w-12 h-12 text-gray-400" />
+        <h2 className="text-xl font-semibold mb-2">No orders assigned yet</h2>
+        <p className="text-sm max-w-xs text-center">
+          Once orders are assigned to you, they will appear here.
+        </p>
+      </div>
+    ) : (
       <DynamicTable 
         data={orders} 
-        title='assigned orders' 
+        title="Assigned Orders" 
         columns={columns} 
         showActions={false} 
         showAddButton={false} 
         showFilter={false}
       />
+    )}
+  </div>
+</div>
 
       <CourierOrderDetailsModal
         show={isDetailsModalOpen}
@@ -304,7 +389,7 @@ export default function Page() {
               color="success"
               onClick={completeOrderWithProof}
               disabled={!photoPreview || completing}
-              className="flex-1 flex items-center justify-center gap-2"
+              className="flex-1 flex items-center justify-center gap-2 py-2"
             >
               {completing ? (
                 <>
@@ -323,6 +408,6 @@ export default function Page() {
       </ModalBody>
     </Modal>
       )}
-    </>
+    </div>
   )
 }

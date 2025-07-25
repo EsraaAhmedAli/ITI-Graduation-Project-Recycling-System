@@ -8,6 +8,7 @@ import LayoutWrapper from "@/components/shared/layoutwrapper";
 
 import React from "react";
 import ReactQueryProvider from "@/components/providers/reactQueryProvider";
+import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -44,6 +45,7 @@ export default function RootLayout({
         <UserAuthProvider>
     <ReactQueryProvider>
           <CartProvider>
+            <Toaster/>
             <ToastContainer />
             <LayoutWrapper>{children}</LayoutWrapper>
           </CartProvider>

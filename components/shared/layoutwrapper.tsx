@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode, useContext, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Navbar from "@/components/common/Navbar";
 import { UserAuthContext } from "@/context/AuthFormContext";
 import { ToastContainer } from "react-toastify";
@@ -9,27 +9,35 @@ import Footer from "../common/Footer";
 
 export default function LayoutWrapper({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
+
   const { user, isLoading } = useContext(UserAuthContext) ?? {};
+
   const isAdmin = user?.role === "admin";
+  const isDelivery = user?.role === "delivery";
 
   useEffect(() => {
-    if (isAdmin) {
-      router.push("/admin/dashboard");
-    }
-  }, [isAdmin, router]);
+    if (isLoading) return;
 
-  if (isLoading) return null; // Or a spinner
+    if (isAdmin && !pathname.startsWith("/admin")) {
+      router.push("/admin/dashboard");
+    } else if (isDelivery && !pathname.startsWith("/deilvery")) {
+      router.push("/deilveryDashboard");
+    }
+  }, [isAdmin, isDelivery, isLoading, pathname, router]);
+
+  if (isLoading) return null;
+
+  const shouldHideLayout = isAdmin || isDelivery;
 
   return (
     <>
-      {!isAdmin && <Navbar />}
+      {!shouldHideLayout && <Navbar />}
       <ToastContainer />
-
-    
 
       {children}
 
-      {!isAdmin && <Footer />}
+      {!shouldHideLayout && <Footer />}
     </>
   );
 }
