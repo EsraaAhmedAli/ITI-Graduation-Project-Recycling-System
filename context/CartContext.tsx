@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState, ReactNode, Dispatch, Se
 import api from "@/lib/axios";
 import { toast } from "react-toastify";
 
-interface CartItem {
+export interface CartItem {
   categoryId: string;
   categoryName: string; 
   itemName: string;

@@ -16,6 +16,7 @@ interface SubcategoryListProps {
   loading:boolean
 }
 
+
 export default function SubcategoryList({ items, onAddToCart,loading }: SubcategoryListProps) {
   return (
     <>

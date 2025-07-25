@@ -82,7 +82,7 @@ await api.delete(`/categories/${encodeURIComponent(item.name)}`);
         <Loader title='categories'/>
       ) : error ? (
         <p className="text-center text-red-500 py-10">{error}</p>
-      ) : data?.length === 0 ? (
+      ) : data.data?.length === 0 ? (
         <>
         <p className="text-center text-gray-500 py-10">No categories found.</p>
 <div className="flex justify-center">
@@ -98,7 +98,7 @@ await api.delete(`/categories/${encodeURIComponent(item.name)}`);
         
       ) : (
         <DynamicTable
-          data={data}
+          data={data?.data}
           columns={columns}
           title="Categories"
           itemsPerPage={5}

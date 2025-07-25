@@ -9,42 +9,66 @@ import CategoryList from "@/components/shared/CategoryList";
 export default function Home() {
   return (
     <>
-      <motion.section className="relative w-full h-[700px]">
-        <Image
-          src="/beautiful-tree.jpg"
-          alt="Recycling"
-          fill
-          className="object-cover object-center"
-        />
+    <motion.section className="relative w-full h-[90vh] min-h-[700px] overflow-hidden">
+        <div className="absolute inset-0">
+          <Image
+            src="/beautiful-tree.jpg"
+            alt="Recycling"
+            fill
+            className="object-cover object-center scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/40 to-transparent" />
+        </div>
+        
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="absolute inset-0 flex flex-col items-center justify-center text-white bg-black/50"
+          transition={{ duration: 1, ease: "easeOut" }}
+          className="relative z-10 flex flex-col items-center justify-center h-full text-white px-4"
         >
-          <h1 className="text-4xl font-bold mb-4">
-            Recycle Today for a Better Tomorrow
-          </h1>
-          <p className="text-xl mb-6">
-            Simple, community-driven recycling platform
-          </p>
-          <div className="flex gap-4">
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.8 }}
+            className="text-center max-w-4xl"
+          >
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+              Recycle Today for a
+              <span className="block bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+                Better Tomorrow
+              </span>
+            </h1>
+            <p className="text-xl md:text-2xl mb-10 text-gray-200 max-w-2xl mx-auto leading-relaxed">
+              Join our community-driven platform and make recycling simple, rewarding, and impactful
+            </p>
+          </motion.div>
+          
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.6, duration: 0.6 }}
+            className="flex flex-col sm:flex-row gap-4"
+          >
             <Link
               href="/category"
-              className="bg-green-500 hover:bg-green-600 text-white font-semibold py-4 px-8 rounded"
+              className="group relative overflow-hidden bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-4 px-10 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
             >
-              Drop your waste !
+              <span className="relative z-10">Drop Your Waste!</span>
+              <div className="absolute inset-0 bg-white/20 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
             </Link>
             <Link
               href="/about"
-              className="bg-white text-green-700 hover:bg-gray-100 font-semibold py-4 px-8 rounded"
+              className="group bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white hover:text-gray-900 font-semibold py-4 px-10 rounded-full transition-all duration-300 transform hover:scale-105"
             >
               Learn More
             </Link>
-          </div>
+          </motion.div>
         </motion.div>
-      </motion.section>
 
+        {/* Floating elements for visual interest */}
+        <div className="absolute top-20 left-10 w-20 h-20 bg-green-400/10 rounded-full blur-xl animate-pulse" />
+        <div className="absolute bottom-32 right-16 w-32 h-32 bg-blue-400/10 rounded-full blur-xl animate-pulse delay-1000" />
+      </motion.section>
       <section className="flex flex-col md:flex-row justify-between items-stretch gap-6 px-4 py-10 text-2xl bg-base-100 text-center rounded-2xl mx-15">
         <div className="flex-1 flex flex-col items-center">
           <Mic className="w-10 h-10 text-green-600 mx-auto md:mx-0 mb-2" />

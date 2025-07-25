@@ -1,42 +1,38 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
-import { useCart } from "@/context/CartContext";
-import { Recycle, Leaf, Package, ChevronRight, Minus, Plus } from "lucide-react";
+import { CartItem, useCart } from "@/context/CartContext";
+import { Recycle, Leaf, Package, Minus, Plus } from "lucide-react";
+import { useGetItems } from "@/hooks/useGetItems";
 
-interface Item {
-  _id: string;
-  name: string;
-  points: number;
-  price: number;
-  measurement_unit: string;
-  image: string;
-  quantity: number;
-  categoryName: string;
-  categoryId: string;
-  description?: string;
-}
+// interface Item {
+//   _id: string;
+//   name: string;
+//   points: number;
+//   price: number;
+//   measurement_unit: string;
+//   image: string;
+//   quantity: number;
+//   categoryName: string;
+//   categoryId: string;
+//   description?: string;
+// }
 
 export default function ItemDetailsPage() {
-  const { itemName } = useParams();
-  const [item, setItem] = useState<Item | null>(null);
+const { itemName } = useParams();
+const decodedName = typeof itemName === "string" ? decodeURIComponent(itemName) : "";
   const [selectedQuantity, setSelectedQuantity] = useState(1);
   const { addToCart } = useCart();
 
-  useEffect(() => {
-    if (itemName) {
-      fetch("http://localhost:5000/api/categories/get-items")
-        .then((res) => res.json())
-        .then((data) => {
-          const found = data.items.find(
-            (i: Item) => i.name.toLowerCase() === decodeURIComponent(itemName as string).toLowerCase()
-          );
-          setItem(found || null);
-        })
-        .catch(console.error);
-    }
-  }, [itemName]);
+
+
+
+  const{data:items}=useGetItems()
+const item = items?.find(
+  (i) => i.name.toLowerCase() === decodedName.toLowerCase()
+) ?? null;
+
 
   if (!item) {
     return (
@@ -45,15 +41,29 @@ export default function ItemDetailsPage() {
       </div>
     );
   }
+function convertToCartItem(item: any, quantity: number): CartItem {
+  return {
+    categoryId: item.categoryId,
+    categoryName: item.categoryName,
+    itemName: item.name,
+    image: item.image,
+    points: item.points,
+    price: item.price,
+    measurement_unit: item.measurement_unit,
+    quantity,
+  };
+}
 
-  const remainingQuantity = item.quantity - selectedQuantity;
-  const isLowStock = item.quantity <= 5;
-  const isOutOfStock = item.quantity <= 0;
-  const stockPercentage = Math.min(100, (remainingQuantity / item.quantity) * 100);
+  const remainingQuantity = item?.quantity - selectedQuantity;
+  const isLowStock = item?.quantity <= 5;
+  const isOutOfStock = item?.quantity <= 0;
+  const stockPercentage = Math.min(100, (remainingQuantity / item?.quantity) * 100);
 
   const handleAddToCart = () => {
     if (!isOutOfStock && remainingQuantity >= 0) {
-      addToCart({ ...item, quantity: selectedQuantity });
+      console.log("Item being added to cart:", item);
+
+addToCart(convertToCartItem(item, selectedQuantity));
     }
   };
 
@@ -65,8 +75,8 @@ export default function ItemDetailsPage() {
           <div className="space-y-4">
             <div className="relative aspect-square w-full rounded-xl bg-gray-50 overflow-hidden shadow-sm">
               <Image
-                src={item.image}
-                alt={item.name}
+                src={item?.image}
+                alt={item?.name}
                 fill
                 className="object-cover"
                 priority
@@ -79,17 +89,17 @@ export default function ItemDetailsPage() {
             {/* Category and Title */}
             <div>
               <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 mb-3">
-                {item.categoryName}
+                {item?.categoryName}
               </span>
-              <h1 className="text-3xl font-bold text-gray-900">{item.name}</h1>
-              {item.description && (
-                <p className="text-gray-600 mt-2">{item.description}</p>
+              <h1 className="text-3xl font-bold text-gray-900">{item?.name}</h1>
+              {item?.description && (
+                <p className="text-gray-600 mt-2">{item?.description}</p>
               )}
             </div>
 
             {/* Price and Points */}
             <div className="flex items-baseline space-x-4">
-              <span className="text-3xl font-bold text-gray-900">${(item.price * selectedQuantity).toFixed(2)}</span>
+              <span className="text-3xl font-bold text-gray-900">${(item?.price * selectedQuantity).toFixed(2)}</span>
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-green-100 text-green-800">
                 <Recycle className="w-4 h-4 mr-1" />
                 {item.points * selectedQuantity} points
@@ -104,7 +114,7 @@ export default function ItemDetailsPage() {
                   isOutOfStock ? 'text-red-600' : 
                   isLowStock ? 'text-amber-600' : 'text-green-600'
                 }`}>
-                  {isOutOfStock ? 'Out of Stock' : `${item.quantity} ${item.measurement_unit}`}
+                  {isOutOfStock ? 'Out of Stock' : `${item?.quantity} ${item.measurement_unit}`}
                 </span>
               </div>
               

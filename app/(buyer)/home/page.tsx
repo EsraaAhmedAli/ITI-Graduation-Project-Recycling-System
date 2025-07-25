@@ -4,9 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import PromotionSlider from "@/components/buyer/PromotionSlider";
 import TopMaterial from "@/components/buyer/TopMaterial";
-import BannerMobile from "@/components/buyer/BannerMobile";
 import { Search, Star, ChevronRight } from "lucide-react";
 import RecycleSmartDoubt from "@/components/buyer/RecycleSmartDoubt";
+import { useGetItems } from "@/hooks/useGetItems";
 
 interface Item {
   _id: string;
@@ -21,40 +21,41 @@ interface Item {
 }
 
 export default function BuyerHomePage() {
-  const [items, setItems] = useState<Item[]>([]);
+  // const [items, setItems] = useState<Item[]>([]);
   const [filteredItems, setFilteredItems] = useState<Item[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [isLoading, setIsLoading] = useState(true);
+  // const [isLoading, setIsLoading] = useState(true);
 
   // Fetch items from API
-  useEffect(() => {
-    setIsLoading(true);
-    fetch("http://localhost:5000/api/categories/get-items")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.items) {
-          setItems(data.items);
-          setFilteredItems(data.items);
-        } else {
-          console.error("items not found in response");
-        }
-      })
-      .catch((err) => console.error("Fetch error:", err))
-      .finally(() => setIsLoading(false));
-  }, []);
+  // useEffect(() => {
+  //   setIsLoading(true);
+  //   fetch("http://localhost:5000/api/categories/get-items")
+  //     .then((res) => res.json())
+  //     .then((data) => {
+  //       if (data.items) {
+  //         setItems(data.items);
+  //         setFilteredItems(data.items);
+  //       } else {
+  //         console.error("items not found in response");
+  //       }
+  //     })
+  //     .catch((err) => console.error("Fetch error:", err))
+  //     .finally(() => setIsLoading(false));
+  // }, []);
 
+  const{data:items,isLoading}= useGetItems()
   // Filter based on search and category
   useEffect(() => {
     const term = searchTerm.toLowerCase();
 
-    const filtered = items.filter((item) => {
+    const filtered = items?.filter((item) => {
       const matchesSearch =
         item.name.toLowerCase().includes(term) ||
-        item.categoryName.toLowerCase().includes(term);
+        item?.categoryName.toLowerCase().includes(term);
 
       const matchesCategory =
-        selectedCategory === "all" || item.categoryName === selectedCategory;
+        selectedCategory === "all" || item?.categoryName === selectedCategory;
 
       return matchesSearch && matchesCategory;
     });
@@ -63,7 +64,7 @@ export default function BuyerHomePage() {
   }, [searchTerm, selectedCategory, items]);
 
   const uniqueCategories = Array.from(
-    new Set(items.map((item) => item.categoryName))
+    new Set(items?.map((item) => item.categoryName))
   );
 
   return (
@@ -130,7 +131,7 @@ export default function BuyerHomePage() {
             <div className="flex justify-center items-center h-64">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
             </div>
-          ) : filteredItems.length === 0 ? (
+          ) : filteredItems?.length === 0 ? (
             <div className="text-center py-16 bg-white rounded-xl shadow-sm max-w-2xl mx-auto">
               <div className="mx-auto h-24 w-24 text-gray-400 mb-4">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -157,12 +158,12 @@ export default function BuyerHomePage() {
             <>
               <h2 className="text-xl font-semibold text-gray-800 mb-6">
                 {selectedCategory === "all" ? "All Items" : selectedCategory} 
-                <span className="text-gray-500 ml-2">({filteredItems.length})</span>
+                <span className="text-gray-500 ml-2">({filteredItems?.length})</span>
               </h2>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredItems.map((item) => (
-                  <Link key={item._id} href={`/home/items/${item.name}`} passHref>
+                {filteredItems?.map((item) => (
+                  <Link key={item._id} href={`/home/items/${encodeURIComponent(item.name)}`} passHref>
                     <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 cursor-pointer h-full flex flex-col border border-gray-100">
                       <div className="relative aspect-square w-full">
                         <Image

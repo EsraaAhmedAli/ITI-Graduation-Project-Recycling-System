@@ -32,7 +32,7 @@ export default function EditItemPage() {
           `http://localhost:5000/api/categories/get-items/${name}`
         );
         const data = await res.json();
-        const item = data.find((i: any) => i._id === itemId);
+        const item = data.data.find((i: any) => i._id === itemId);
         if (item) {
           setFormData({
             name: item.name,

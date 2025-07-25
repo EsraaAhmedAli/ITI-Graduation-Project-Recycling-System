@@ -1,5 +1,5 @@
 export interface Item {
-  name: string;
+  name:string
   image: string;
   points: number;
   price: number;
@@ -8,8 +8,14 @@ export interface Item {
 
 export interface Category {
   _id: string;
+  categoryName:string;
   name: string;
+  points:number;
+  quantity:number
   image: string;
   description?: string; 
-  items: Item[];
+  itemt: Item[];
+  measurement_unit?:1|2
+  price:number
+
 }

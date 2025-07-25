@@ -9,6 +9,7 @@ import ItemsModal from '@/components/shared/itemsModal';
 import CourierSelectionModal from '../../../components/courierSelectionModal'; // You'll need to create this component
 import Swal from 'sweetalert2';
 import { toast } from 'react-toastify';
+import { useUsers } from '@/hooks/useGetUsers';
 
 
 export default function Page() {
@@ -54,17 +55,19 @@ export default function Page() {
     }
   };
 
-  const getCouriers = async () => {
-    try {
-      const res = await api.get('/users?role=delivery'); // Adjust the endpoint as needed
-      console.log(res);
+  const { data } = useUsers("delivery");
+
+  // const getCouriers = async () => {
+  //   try {
+  //     const res = await api.get('/users?role=delivery'); 
+  //     console.log(res);
       
-      setCouriers(res.data.data || []);
-    } catch (err) {
-      console.error('Failed to fetch couriers:', err);
-      toast.error('Failed to fetch couriers');
-    }
-  };
+  //     setCouriers(res.data.data || []);
+  //   } catch (err) {
+  //     console.error('Failed to fetch couriers:', err);
+  //     toast.error('Failed to fetch couriers');
+  //   }
+  // };
 
   const handleDeleteOrder = async (orderId: string) => {
     
@@ -321,7 +324,7 @@ const allowedStatusTransitions: Record<string, string[]> = {
           if (newStatus === 'assignToCourier') {
             // Open courier selection modal instead of changing status directly
             setSelectedOrderForCourier(order.orderId);
-            await getCouriers(); // Fetch available couriers
+            // await getCouriers(); // Fetch available couriers
             setIsCourierModalOpen(true);
             // Reset the select to current status
             e.target.value = currentStatus;
@@ -385,7 +388,7 @@ const allowedStatusTransitions: Record<string, string[]> = {
       <ItemsModal selectedOrderItems={selectedOrderItems} show={isItemsModalOpen} onclose={()=>setIsItemsModalOpen(false)} />
       <CourierSelectionModal 
         show={isCourierModalOpen}
-        couriers={couriers}
+        couriers={data}
         onSelectCourier={(courierId: string) => handleAssignToCourier(selectedOrderForCourier!, courierId)}
         onClose={() => {
           setIsCourierModalOpen(false);

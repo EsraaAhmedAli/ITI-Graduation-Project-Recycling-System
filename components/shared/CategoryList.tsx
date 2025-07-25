@@ -14,7 +14,7 @@ import { Category } from "../Types/categories.type";
 export default function CategoryList({  maxToShow }: { basePath: string, maxToShow?: number }) {
   const [showAll, setShowAll] = useState(false);
 
-    const { data, isLoading, error } = useCategories();
+    const { data, isLoading, error } = useCategories(); 
 
 
 
@@ -39,7 +39,7 @@ export default function CategoryList({  maxToShow }: { basePath: string, maxToSh
   if (isLoading) return <Loader title="categories" />;
   if (error) return <p className="text-red-500 text-center">Error loading categories.</p>;
 
-  const categoriesToShow = showAll ? data! : (maxToShow ? data!.slice(0, maxToShow) : data!);
+  const categoriesToShow = showAll ? data?.data : (maxToShow ? data?.data?.slice(0, maxToShow) : data?.data);
 
   return (
     <div>
@@ -64,14 +64,14 @@ export default function CategoryList({  maxToShow }: { basePath: string, maxToSh
           animate="visible"
           className="flex flex-wrap justify-start items-start gap-6 pl-18"
         >
-          {categoriesToShow.map((category: Category) => (
+          {categoriesToShow?.map((category: Category) => (
             <motion.div key={category._id} variants={itemVariants}>
-              <CategoryCard name={category.name} image={category.image} />
+              <CategoryCard name={category?.name} image={category?.image} />
             </motion.div>
           ))}
         </motion.div>
 
-        {!showAll && maxToShow && data!.length > maxToShow && (
+        {!showAll && maxToShow && data?.data.length > maxToShow && (
           <div className="flex justify-center mt-8">
             <button
               onClick={() => setShowAll(true)}
