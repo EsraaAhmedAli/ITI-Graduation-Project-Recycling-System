@@ -27,7 +27,7 @@ export default function Page() {
       const res = await api.get(`categories/get-items/${name}`);
       const data = res.data;
 
-      const formatted = data.map((item: any) => ({
+      const formatted = data.data.map((item: any) => ({
         id: item._id,
         image: item.image,
         name: item.name || "No name",

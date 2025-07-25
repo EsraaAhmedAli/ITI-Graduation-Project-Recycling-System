@@ -29,8 +29,9 @@ const UserAvatar = memo<{ user: TopUser; index: number }>(({ user, index }) => {
       className="w-8 h-8 md:w-[38px] md:h-[38px] rounded-full border-2 border-green-200 shadow-sm bg-green-100 flex items-center justify-center"
       title={user.email}
     >
+   
       <span className="text-green-700 font-bold text-sm md:text-lg">
-        {user.userName?.charAt(0).toUpperCase()}
+        {user.name?.charAt(0).toUpperCase()}
       </span>
     </div>
   );
@@ -108,7 +109,7 @@ const TopRecyclersCard = memo<TopRecyclersCardProps>(({ topUsers, loading }) => 
             {/* User Info */}
             <div className="flex flex-col flex-1 min-w-0">
               <span className="font-semibold text-green-900 truncate text-sm md:text-base">
-                {user.userName}
+                {user.name}
               </span>
               <span className="text-xs text-green-500 mb-1">
                 {user.totalPoints.toLocaleString()} points

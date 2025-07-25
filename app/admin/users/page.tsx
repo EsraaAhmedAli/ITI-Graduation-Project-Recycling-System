@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import DynamicTable from "@/components/shared/dashboardTable";
@@ -8,37 +8,41 @@ import { User } from "@/components/Types/Auser.type";
 import EditUserRoleModal from "./EditUserRoleModal";
 import Image from "next/image";
 import Loader from "@/components/common/loader";
+import { useUsers } from "@/hooks/useGetUsers";
+import { useQueryClient } from "@tanstack/react-query";
 
 const AdminUsersPage = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const router = useRouter();
+const queryClient = useQueryClient();
 
-  const fetchUsers = async () => {
-    try {
-      const res = await api.get("/users"); // Your admin-protected endpoint
-      console.log(res.data.data);
+  const{data:users,isLoading,error}= useUsers()
+  // const fetchUsers = async () => {
+  //   try {
+  //     const res = await api.get("/users"); // Your admin-protected endpoint
+  //     console.log(res.data.data);
       
-      setUsers(res.data.data || res.data); // Adjust if paginated
-    } catch (err: any) {
-      setError(err?.response?.data?.message || "Failed to load users");
-    } finally {
-      setLoading(false);
-    }
-  };
+  //     setUsers(res.data.data || res.data); // Adjust if paginated
+  //   } catch (err: any) {
+  //     setError(err?.response?.data?.message || "Failed to load users");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-  useEffect(() => {
-  }, [users]);
+  // useEffect(() => {
+  //   fetchUsers();
+  // }, []);
+  // useEffect(() => {
+  // }, [users]);
+
+
+
 
   const handleDelete = async (user: User) => {
     try {
       await api.delete(`/users/${user._id}`);
       toast.success("User deleted");
-      fetchUsers();
+    queryClient.invalidateQueries({ queryKey: ["users"] });
     } catch {
       toast.error("Delete failed");
     }
@@ -73,20 +77,19 @@ const AdminUsersPage = () => {
     setIsModalOpen(true);
   };
 
-  const handleSaveRole = async (id: string, newRole: User["role"]) => {
-    try {
-      await api.patch(`/users/${id}`, { role: newRole });
-      toast.success("Role updated!");
+const handleSaveRole = async (id: string, newRole: User["role"]) => {
+  try {
+    await api.patch(`/users/${id}`, { role: newRole });
+    toast.success("Role updated!");
 
-      setUsers((prev) =>
-        prev.map((u) => (u._id === id ? { ...u, role: newRole } : u))
-      );
-      setIsModalOpen(false);
-    } catch (error) {
-      toast.error("Failed to update role");
-    }
-  };
+    // 🔁 Refetch the users list
+    queryClient.invalidateQueries({ queryKey: ["users"] });
 
+    setIsModalOpen(false);
+  } catch (error) {
+    toast.error(`Failed to update role ${error}`);
+  }
+};
   // Inside return:
 
   const columns = [
@@ -161,11 +164,11 @@ const AdminUsersPage = () => {
 
   return (
       <>
-          {loading ? (
+          {isLoading ? (
         <Loader title="users"/>
       ) : error ? (
         <p className="text-center py-10 text-red-500">{error}</p>
-      ) : users.length === 0 ? (
+      ) : users?.length === 0 ? (
         <p className="text-center py-10 text-gray-400">No users found.</p>
       ) : (
         <DynamicTable

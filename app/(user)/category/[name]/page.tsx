@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import { useState, useMemo } from "react";
 import { useCart } from "@/context/CartContext";
 import Loader from "@/components/common/loader";
-import { Recycle, Info } from "lucide-react";
+import { Recycle, Info, Plus, Sparkles } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import Image from "next/image";
@@ -33,17 +33,20 @@ export default function UserCategoryPage() {
   const { data, isLoading, error } = useQuery<Item[]>({
     queryKey: ["subcategory", categoryName],
     queryFn: async () => {
-      const res = await api.get(`/categories/get-items/${categoryName}`);
-      const normalizedItems = res.data.map((item: any) => ({
+      const res = await api.get(`/categories/get-items/${encodeURIComponent(categoryName)}`);
+      const normalizedItems = res.data.data.map((item: any) => ({
         ...item,
         categoryName: item.categoryName || categoryName,
         measurement_unit: Number(item.measurement_unit) as 1 | 2
       }));
+      console.log(res)
+      
       return normalizedItems;
     },
     staleTime: 60 * 1000,
     refetchOnMount: false
   });
+  
   const getEnvironmentalImpact = (category: string): string => {
     const impacts: Record<string, string> = {
       plastic: "Reduces ocean pollution and saves marine life",
@@ -55,6 +58,7 @@ export default function UserCategoryPage() {
     };
     return impacts[category.toLowerCase()] || "Contributes to a cleaner environment";
   };
+
   const getPointsRange = (points: number[]) => {
     const min = Math.min(...points);
     const max = Math.max(...points);
@@ -70,9 +74,6 @@ export default function UserCategoryPage() {
       pointsRange: getPointsRange(points)
     };
   }, [data, categoryName]);
-
-  
-
 
   const handleAddToCollection = async (item: Item) => {
     try {
@@ -97,63 +98,105 @@ export default function UserCategoryPage() {
   };
 
   if (isLoading) return <Loader title="recyclable items" />;
-  if (error) return <p className="text-red-500 text-center">Failed to load items.</p>;
+  if (error) {
+    console.error("❌ Query Error:", error);
+    return <p className="text-red-500 text-center">Failed to load items.</p>;
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
-      <div className="max-w-7xl mx-auto px-6 py-8">
-   
-
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <Recycle className="w-5 h-5 text-green-600" />
-            Recyclable {categoryName} Items
-          </h2>
-          <p className="text-gray-600 mb-6">
-            Browse through recyclable {categoryName.toLowerCase()} items. Points are awarded based on material value and environmental benefit.
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        {/* Header Section */}
+        <div className="mb-10">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-emerald-100 rounded-xl">
+              <Recycle className="w-6 h-6 text-emerald-600" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+                {categoryName} Collection
+              </h1>
+              <p className="text-slate-600 mt-1">
+                Discover recyclable items with environmental impact
+              </p>
+            </div>
+          </div>
+          
+          {categoryStats && (
+            <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-slate-200/50 shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="w-5 h-5 text-emerald-500" />
+                <span className="font-semibold text-slate-700">Environmental Impact</span>
+              </div>
+              <p className="text-slate-600 mb-4">{categoryStats.estimatedImpact}</p>
+              <div className="flex flex-wrap gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-500">Total Items:</span>
+                  <span className="font-semibold text-slate-700">{categoryStats.totalItems}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-500">Points Range:</span>
+                  <span className="font-semibold text-emerald-600">{categoryStats.pointsRange}</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Items Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {data!.map((item) => (
-            <div key={item._id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-              <div className="relative">
-          <div className="relative w-full h-48">
-  <Image
-    src={item.image}
-    alt={item.name}
-    fill
-    className="object-cover rounded" // add "rounded" if you want rounded corners like before
-    sizes="100vw"
-  />
-</div>
-                <div className="absolute top-3 right-3 bg-green-500 text-white px-2 py-1 rounded-full text-sm font-semibold">
-                  +{item.points} pts
+            <div key={item._id} className="group bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300 hover:-translate-y-1">
+              
+              {/* Image Container - Reduced Size */}
+              <div className="relative bg-gradient-to-br from-slate-100 to-slate-50">
+               <div className="relative w-full h-48">
+                  <Image
+                    src={item.image}
+                    alt={item.name}
+                    fill
+                    className="object-contain group-hover:scale-105 transition-transform duration-300"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  />
+                </div>
+                {/* Points Badge */}
+                <div className="absolute top-3 right-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg">
+                  +{item.points}
                 </div>
               </div>
               
-              <div className="p-6">
-                <h3 className="font-semibold text-gray-900 mb-2">{item.name.toUpperCase()}</h3>
+              {/* Content */}
+              <div className="p-5">
+                <h3 className="font-bold text-slate-900 mb-3 text-sm uppercase tracking-wide leading-tight">
+                  {item.name}
+                </h3>
+                
+                {/* Price and Unit Info */}
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm text-gray-500">
+                  <span className="text-xs text-slate-500 font-medium bg-slate-100 px-2 py-1 rounded-lg">
                     {getMeasurementText(item.measurement_unit)}
                   </span>
-                  <span className="text-green-600 font-semibold">
-                    {item.price} EGP
-                  </span>
+                  <div className="text-right">
+                    <span className="text-lg font-bold text-slate-900">
+                      {item.price}
+                    </span>
+                    <span className="text-sm text-slate-500 ml-1">EGP</span>
+                  </div>
                 </div>
                 
+                {/* Add to Collection Button */}
                 <button
                   onClick={() => handleAddToCollection(item)}
                   disabled={loadingItemId === item._id}
-                  className="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-2 px-4 rounded-lg font-medium hover:from-green-600 hover:to-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white py-2.5 px-4 rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm hover:shadow-md group/button"
                 >
                   {loadingItemId === item._id ? (
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
                     <>
-                      <Recycle className="w-4 h-4" />
-                      Add to Collection
+                      <Plus className="w-4 h-4 group-hover/button:rotate-90 transition-transform duration-200" />
+                      <span className="text-sm">Add to Collection</span>
                     </>
                   )}
                 </button>
@@ -162,11 +205,17 @@ export default function UserCategoryPage() {
           ))}
         </div>
 
+        {/* Empty State */}
         {data!.length === 0 && (
-          <div className="text-center py-12">
-            <Recycle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-500 mb-2">No items available</h3>
-            <p className="text-gray-400">Check back later for more recyclable {categoryName.toLowerCase()} items.</p>
+          <div className="text-center py-16">
+            <div className="w-20 h-20 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <Recycle className="w-10 h-10 text-slate-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-slate-600 mb-2">No items available</h3>
+            <p className="text-slate-500 max-w-md mx-auto">
+              We're working on adding more recyclable {categoryName.toLowerCase()} items. 
+              Check back soon for new additions!
+            </p>
           </div>
         )}
       </div>
