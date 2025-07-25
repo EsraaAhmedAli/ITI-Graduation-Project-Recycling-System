@@ -22,7 +22,8 @@ import NavbarSearch from "./search";
 export default function Navbar() {
   const authContext = useContext(UserAuthContext);
   const { user, logout, isLoading } = authContext ?? {};
-
+  console.log(user);
+  
   const { cart } = useCart();
   const totalItems = useMemo(() => cart.length, [cart.length]);
 

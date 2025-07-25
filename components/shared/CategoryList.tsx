@@ -3,41 +3,22 @@
 import { motion } from "framer-motion";
 import CategoryCard from "./CategoryCard";
 import Loader from "../common/loader";
-import { useQuery } from "@tanstack/react-query";
-import api from "@/lib/axios";
-import { useState } from "react";
 
-interface Item {
-  name: string;
-  image: string;
-  points: number;
-  price: number;
-  measurement_unit: 1 | 2;
-}
+import {  useState } from "react";
+import { useCategories } from "@/hooks/useGetCategories";
+import { Category } from "../Types/categories.type";
 
-interface Category {
-  _id: string;
-  name: string;
-  image: string;
-  description?: string; 
-  items: Item[];
-}
 
-export default function CategoryList({ basePath, maxToShow }: { basePath: string, maxToShow?: number }) {
+
+
+export default function CategoryList({  maxToShow }: { basePath: string, maxToShow?: number }) {
   const [showAll, setShowAll] = useState(false);
 
-  // ✅ Fetch categories using react-query
-  const { data, isLoading, error } = useQuery<Category[]>({
-    queryKey: ['categories list'],
-    queryFn: async () => {
-      const res = await api.get("/categories");
-      return res.data;
-    },
-    staleTime: 1000 * 60,
-    refetchOnMount: false,
-    refetchOnWindowFocus:false
-  });
+    const { data, isLoading, error } = useCategories();
 
+
+
+  
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {

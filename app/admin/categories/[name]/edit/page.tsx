@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import AdminLayout from '@/components/shared/adminLayout';
 import Swal from 'sweetalert2';
 import api from '@/lib/axios';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function EditCategoryPage() {
+  const queryClient = useQueryClient();
+
   const router = useRouter();
   const { name } = useParams();
   const [category, setCategory] = useState({ 
@@ -20,7 +22,9 @@ export default function EditCategoryPage() {
   useEffect(() => {
     const fetchCategory = async () => {
       try {
-        const res = await api.get(`/categories/${name}`);
+        const res = await api.get(`get-items/${encodeURIComponent(name)}`);
+        console.log(res.data);
+        
         setCategory({
           name: res.data.name,
           description: res.data.description,
@@ -88,7 +92,7 @@ export default function EditCategoryPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.put(`/categories/${name}`, category);
+await api.put(`/categories/${encodeURIComponent(name)}`, category);
       await Swal.fire({
         icon: 'success',
         title: 'Success!',
@@ -96,7 +100,10 @@ export default function EditCategoryPage() {
         showConfirmButton: false,
         timer: 1500,
       });
+      queryClient.invalidateQueries({ queryKey: ['categories list'] });
+
       router.push('/admin/categories');
+      
     } catch (err) {
       console.error(err);
       Swal.fire({
@@ -110,16 +117,16 @@ export default function EditCategoryPage() {
 
   if (loading) {
     return (
-      <AdminLayout>
+      <>
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
         </div>
-      </AdminLayout>
+      </>
     );
   }
 
   return (
-    <AdminLayout>
+    <>
       <div className="max-w-2xl mx-auto p-6">
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           <div className="p-6 bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
@@ -229,6 +236,6 @@ export default function EditCategoryPage() {
           </form>
         </div>
       </div>
-    </AdminLayout>
+    </>
   );
 }

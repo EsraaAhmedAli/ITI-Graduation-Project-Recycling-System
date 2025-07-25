@@ -18,7 +18,9 @@ const AdminUsersPage = () => {
   const fetchUsers = async () => {
     try {
       const res = await api.get("/users"); // Your admin-protected endpoint
-      setUsers(res.data.results || res.data); // Adjust if paginated
+      console.log(res.data.data);
+      
+      setUsers(res.data.data || res.data); // Adjust if paginated
     } catch (err: any) {
       setError(err?.response?.data?.message || "Failed to load users");
     } finally {
@@ -30,7 +32,6 @@ const AdminUsersPage = () => {
     fetchUsers();
   }, []);
   useEffect(() => {
-    console.log(users);
   }, [users]);
 
   const handleDelete = async (user: User) => {

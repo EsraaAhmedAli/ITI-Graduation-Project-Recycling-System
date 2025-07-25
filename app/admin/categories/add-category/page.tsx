@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
 import api from '@/lib/axios';
-import AdminLayout from '@/components/shared/adminLayout';
 import Image from 'next/image';
 import Button from '@/components/common/Button';
 

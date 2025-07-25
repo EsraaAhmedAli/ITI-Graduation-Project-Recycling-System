@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, Dispatch, SetStateAction } from "react";
 import api from "@/lib/axios";
 import { toast } from "react-toastify";
 
@@ -173,6 +173,7 @@ const removeFromCart = async (item: CartItem) => {
       await api.delete("cart", {
         withCredentials: true,
       });
+
       setCart([]);
     } catch (err) {
       console.error("Failed to clear cart", err);

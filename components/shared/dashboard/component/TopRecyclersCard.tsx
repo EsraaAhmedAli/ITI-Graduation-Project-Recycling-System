@@ -14,8 +14,8 @@ const UserAvatar = memo<{ user: TopUser; index: number }>(({ user, index }) => {
   if (user.imageUrl) {
     return (
       <Image
+      alt='user'
         src={user.imageUrl}
-        alt={user.userName}
         width={32}
         height={32}
         className="md:w-[38px] md:h-[38px] rounded-full border-2 border-green-200 shadow-sm"
@@ -88,7 +88,7 @@ const TopRecyclersCard = memo<TopRecyclersCardProps>(({ topUsers, loading }) => 
       <ul className="mt-3 space-y-2">
         {topUsers.map((user, idx) => (
           <li
-            key={user.id}
+            key={user._id}
             className={`flex items-center gap-2 md:gap-3 py-2 md:py-3 px-2 rounded-lg transition-all duration-200 hover:shadow-md transform hover:scale-[1.02] ${getBackgroundClass(idx)}`}
           >
             {/* Rank with Medal */}

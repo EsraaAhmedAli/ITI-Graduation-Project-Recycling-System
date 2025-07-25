@@ -6,22 +6,19 @@ import api from '@/lib/axios';
 import Loader from '@/components/common/loader';
 import UserModal from '@/components/shared/userModal';
 import ItemsModal from '@/components/shared/itemsModal';
+import CourierSelectionModal from '../../../components/courierSelectionModal'; // You'll need to create this component
 import Swal from 'sweetalert2';
 import { toast } from 'react-toastify';
 
-const allowedStatusTransitions: Record<string, string[]> = {
-  pending: ["accepted", "cancelled"],   
-  accepted: ["completed"],               
-  completed: [],                        // no further changes allowed
-  cancelled: [],                        // no further changes allowed
-};
 
 export default function Page() {
 
   const [orders, setOrders] = useState([]);
   const [isItemsModalOpen, setIsItemsModalOpen] = useState<boolean>(false);
   const [selectedOrderItems, setSelectedOrderItems] = useState<null | any[]>(null);
-
+  const [isCourierModalOpen, setIsCourierModalOpen] = useState<boolean>(false);
+  const [selectedOrderForCourier, setSelectedOrderForCourier] = useState<string | null>(null);
+  const [couriers, setCouriers] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -56,54 +53,118 @@ export default function Page() {
       setLoading(false);
     }
   };
-const handleDeleteOrder = async (orderId: string) => {
-  
-  const result = await Swal.fire({
-    title: 'Are you sure?',
-    text: 'This order will be permanently deleted.',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#10B981', // green
-    cancelButtonColor: '#d33',
-    confirmButtonText: 'Yes, delete it!',
-  });
 
-  if (result.isConfirmed) {
+  const getCouriers = async () => {
     try {
-      await api.delete(`/orders/${orderId.orderId}`);
-      Swal.fire('Deleted!', 'The order has been deleted.', 'success');
-
-      setOrders((prev) => prev.filter((order: any) => order._id !== orderId.orderId));
+      const res = await api.get('/users?role=delivery'); // Adjust the endpoint as needed
+      console.log(res);
+      
+      setCouriers(res.data.data || []);
     } catch (err) {
-      console.error(err);
-      Swal.fire('Error', 'Failed to delete order. Try again.', 'error');
+      console.error('Failed to fetch couriers:', err);
+      toast.error('Failed to fetch couriers');
     }
-  }
-};
+  };
 
+  const handleDeleteOrder = async (orderId: string) => {
+    
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'This order will be permanently deleted.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#10B981', // green
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!',
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await api.delete(`/orders/${orderId.orderId}`);
+        Swal.fire('Deleted!', 'The order has been deleted.', 'success');
+
+        setOrders((prev) => prev.filter((order: any) => order._id !== orderId.orderId));
+      } catch (err) {
+        console.error(err);
+        Swal.fire('Error', 'Failed to delete order. Try again.', 'error');
+      }
+    }
+  };
+
+  const handleAssignToCourier = async (orderId: string, courierId: string) => {
+    try {
+      await api.put(`/orders/${orderId}/assign-courier`, { 
+        courierId: courierId,
+        status: 'assignToCourier' 
+      });
+      toast.success('Order assigned to courier successfully');
+      setIsCourierModalOpen(false);
+      setSelectedOrderForCourier(null);
+      await getOrdersByAdmin();
+    } catch (err) {
+      console.error('Failed to assign courier:', err);
+      toast.error('Failed to assign courier to order');
+    }
+  };
 
   useEffect(() => {
     getOrdersByAdmin();
   }, []);
- const closingModalFn = ()=>{
-  setIsModalOpen(false)
- }
+
+  const closingModalFn = ()=>{
+    setIsModalOpen(false)
+  }
  
- const getStatusBadge = (status: string) => {
-    const base = 'px-2 py-1 text-xs font-semibold rounded-full';
-    switch (status.toLowerCase()) {
-      case 'pending':
-        return <span className={`${base} bg-yellow-100 text-yellow-800`}>Pending</span>;
-      case 'accepted':
-        return <span className={`${base} bg-blue-100 text-blue-800`}>Accepted</span>;
-      case 'completed':
-        return <span className={`${base} bg-green-100 text-green-800`}>Completed</span>;
-      case 'cancelled':
-        return <span className={`${base} bg-red-100 text-red-800`}>Cancelled</span>;
-      default:
-        return <span className={`${base} bg-gray-100 text-gray-800`}>{status}</span>;
-    }
-  };
+const getStatusBadge = (status: string) => {
+  const base = 'px-2 py-1 text-xs font-semibold rounded-full';
+
+  switch (status) {
+    case 'pending':
+      return <span className={`${base} bg-yellow-100 text-yellow-800`}>Pending</span>;
+    case 'assigntoCourier':
+      return <span className={`${base} bg-blue-100 text-blue-800`}>Assigned</span>;
+    case 'completed':
+      return <span className={`${base} bg-green-100 text-green-800`}>Completed</span>;
+    case 'cancelled':
+      return <span className={`${base} bg-red-100 text-red-800`}>Cancelled</span>;
+    default:
+      return <span className={`${base} bg-gray-100 text-gray-800`}>{status}</span>;
+  }
+};
+const STATUS = {
+  PENDING: 'pending',
+  ASSIGN_TO_COURIER: 'assignToCourier', 
+  COMPLETED: 'completed',
+  CANCELLED: 'cancelled'
+} as const;
+const normalizeStatus = (status: string): string => {
+  const normalized = status.toLowerCase().trim();
+  
+  // Handle common variations
+  switch (normalized) {
+    case 'pending':
+      return STATUS.PENDING;
+    case 'assigntocourier':
+    case 'assignedtocourier':
+    case 'assigned':
+      return STATUS.ASSIGN_TO_COURIER;
+    case 'completed':
+    case 'complete':
+      return STATUS.COMPLETED;
+    case 'cancelled':
+    case 'canceled':
+      return STATUS.CANCELLED;
+    default:
+      return status; // Return original if no match
+  }
+};
+
+const allowedStatusTransitions: Record<string, string[]> = {
+  [STATUS.PENDING]: [STATUS.ASSIGN_TO_COURIER, STATUS.CANCELLED],
+  [STATUS.ASSIGN_TO_COURIER]: [STATUS.COMPLETED, STATUS.CANCELLED],
+  [STATUS.COMPLETED]: [],
+  [STATUS.CANCELLED]: [],
+};
 
   // Show loading state
   if (loading) {
@@ -192,20 +253,19 @@ const handleDeleteOrder = async (orderId: string) => {
     status: order.status,
     createdAt: new Date(order.createdAt).toLocaleString(),
     userName: order.user?.userName || 'Unknown',
-onClickUser: () => {
-  const user = order.user || {};
-  setSelectedUser({
-    name: user.userName || 'Unknown',
-    email: user.email ?? 'Not Provided',
-    phone: user.phoneNumber || 'N/A',
-    imageUrl: user.imageUrl || null,
-    address: order.address || {},
-  });
-  setIsModalOpen(true);
-},
+    onClickUser: () => {
+      const user = order.user || {};
+      setSelectedUser({
+        name: user.userName || 'Unknown',
+        email: user.email ?? 'Not Provided',
+        phone: user.phoneNumber || 'N/A',
+        imageUrl: user.imageUrl || null,
+        address: order.address || {},
+      });
+      setIsModalOpen(true);
+    },
 
-    
-  onDelete: () => handleDeleteOrder(order._id), 
+    onDelete: () => handleDeleteOrder(order._id), 
 
   }));
 
@@ -257,7 +317,18 @@ onClickUser: () => {
         const handleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
           const newStatus = e.target.value;
           if (newStatus === currentStatus) return;
+          
+          if (newStatus === 'assignToCourier') {
+            // Open courier selection modal instead of changing status directly
+            setSelectedOrderForCourier(order.orderId);
+            await getCouriers(); // Fetch available couriers
+            setIsCourierModalOpen(true);
+            // Reset the select to current status
+            e.target.value = currentStatus;
+            return;
+          }
 
+          // Handle other status changes normally
           try {
             await api.put(`/admin/orders/${order.orderId}/status`, { status: newStatus });
             toast.success(`Order status updated to ${newStatus}`);
@@ -275,7 +346,7 @@ onClickUser: () => {
             className={`px-2 py-1 rounded border ${
               currentStatus === "pending"
                 ? "border-yellow-400 bg-yellow-100 text-yellow-800"
-                : currentStatus === "accepted"
+                : currentStatus === "assigntocourier"
                 ? "border-blue-400 bg-blue-100 text-blue-800"
                 : currentStatus === "completed"
                 ? "border-green-400 bg-green-100 text-green-800"
@@ -301,22 +372,26 @@ onClickUser: () => {
   return (
     <>
       <DynamicTable
-    
         data={transformedData}
         columns={columns}
         title="Orders"
         itemsPerPage={5}
         showAddButton={false}
         showFilter={false}
-         onDelete={(id: string) => handleDeleteOrder(id)}
-
-     
-        
+        onDelete={(id: string) => handleDeleteOrder(id)}
       />
 
-   <UserModal selectedUser={selectedUser} show={isModalOpen} closingModalFn={closingModalFn}/>
+      <UserModal selectedUser={selectedUser} show={isModalOpen} closingModalFn={closingModalFn}/>
       <ItemsModal selectedOrderItems={selectedOrderItems} show={isItemsModalOpen} onclose={()=>setIsItemsModalOpen(false)} />
-  
+      <CourierSelectionModal 
+        show={isCourierModalOpen}
+        couriers={couriers}
+        onSelectCourier={(courierId: string) => handleAssignToCourier(selectedOrderForCourier!, courierId)}
+        onClose={() => {
+          setIsCourierModalOpen(false);
+          setSelectedOrderForCourier(null);
+        }}
+      />
     </>
   );
 }
