@@ -74,17 +74,20 @@ export default function CartPage() {
       </div>
 
       {cart.length === 0 ? (
-        <div className="text-center mt-20 bg-green-50 rounded-xl p-8">
-          <Leaf className="w-12 h-12 mx-auto text-green-400 mb-4" />
-          <p className="text-gray-600 mb-6 text-lg">Your recycling bin is empty.</p>
-          <Button
-            onClick={() => router.push("/category")}
-            gradientDuoTone="greenToBlue"
-            className="rounded-full px-6 py-3"
-          >
-            Browse Recyclable Items
-          </Button>
-        </div>
+     <div className="flex flex-col items-center justify-center mt-24 bg-gradient-to-br from-green-50 to-blue-50 p-10 rounded-2xl shadow-md transition-all duration-300">
+    <Leaf className="w-16 h-16 text-green-500 mb-4 animate-bounce-slow" />
+    <h2 className="text-xl font-semibold text-gray-700 mb-2">Your recycling bin is empty</h2>
+    <p className="text-gray-500 text-sm mb-6 text-center max-w-md">
+      Start making a positive impact on the environment. Browse available recyclable items and add them to your bin!
+    </p>
+    <Button
+      onClick={() => router.push("/category")}
+      gradientDuoTone="greenToBlue"
+      className="rounded-full px-6 py-3 shadow-lg hover:shadow-xl transition"
+    >
+      Browse Recyclable Items
+    </Button>
+  </div>
       ) : (
         <>
           <div className="bg-green-50 rounded-xl p-4 mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">

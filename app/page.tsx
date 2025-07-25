@@ -5,6 +5,7 @@ import { CircleDollarSign, Mic, CalendarCheck } from "lucide-react";
 import Button from "@/components/common/Button";
 import { motion } from "framer-motion";
 import CategoryList from "@/components/shared/CategoryList";
+import SubscriptionForm from "@/components/common/subscriptionForm/subscriptionForm";
 
 export default function Home() {
   return (
@@ -142,33 +143,41 @@ export default function Home() {
           </div>
         </div>
       </section>
-      <CategoryList basePath="/category" maxToShow={6} />
-      <section className="bg-gradient-to-br from-primary/10 to-secondary/10 py-16 px-4 sm:px-6 lg:px-8 rounded-2xl mx-4 sm:mx-8 lg:mx-16 my-12">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-6 text-accent-content">
-            Join Our <span className="text-primary">Community</span>
-          </h2>
-          <p className="text-lg sm:text-xl mb-8 text-gray-700 max-w-2xl mx-auto">
-            Get exclusive recycling tips, updates, and special offers straight
-            to your inbox.
-          </p>
+  <CategoryList basePath="/category" maxToShow={5} horizontal />
+   <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/10 py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-8 rounded-3xl mx-4 sm:mx-8 lg:mx-16 my-12 sm:my-16 lg:my-20">
+  {/* Background decorative elements */}
+  <div className="absolute inset-0 overflow-hidden">
+    <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/10 rounded-full blur-2xl"></div>
+    <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-secondary/10 rounded-full blur-2xl"></div>
+    <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-accent/5 rounded-full blur-xl"></div>
+  </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 max-w-md sm:max-w-xl mx-auto">
-            <input
-              type="email"
-              placeholder="Your email address"
-              className="flex-grow px-5 py-3 sm:py-4 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent shadow-sm text-base"
-            />
-            <Button className="px-6 py-3 sm:py-4 bg-primary hover:bg-primary-focus text-white font-semibold rounded-full transition-all duration-300 transform hover:scale-105 shadow-md">
-              Subscribe Now
-            </Button>
-          </div>
+  <div className="relative max-w-4xl mx-auto text-center">
+    {/* Header with enhanced typography */}
+    <div className="mb-8 sm:mb-12">
+      <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 text-accent-content leading-tight">
+        Join Our{" "}
+        <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+          Eco Community
+        </span>
+      </h2>
+      <p className="text-base sm:text-lg lg:text-xl mb-2 text-gray-700 max-w-2xl mx-auto leading-relaxed">
+        Get exclusive recycling tips, sustainability insights, and special offers 
+        delivered straight to your inbox.
+      </p>
+      <p className="text-sm sm:text-base text-gray-600 max-w-xl mx-auto">
+        Join <span className="font-semibold text-primary">10,000+</span> eco-warriors making a difference
+      </p>
+    </div>
 
-          <p className="text-sm text-gray-500 mt-4">
-            We respect your privacy. Unsubscribe at any time.
-          </p>
-        </div>
-      </section>
+ 
+
+ 
+    <SubscriptionForm/>
+
+
+  </div>
+</section>
     </>
   );
 }

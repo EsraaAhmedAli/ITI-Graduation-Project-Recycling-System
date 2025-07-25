@@ -8,10 +8,12 @@ import {  useState } from "react";
 import { useCategories } from "@/hooks/useGetCategories";
 import { Category } from "../Types/categories.type";
 
+import Marquee from "react-fast-marquee";
 
 
 
-export default function CategoryList({  maxToShow }: { basePath: string, maxToShow?: number }) {
+export default function CategoryList({  maxToShow,  horizontal = false,
+ }: { basePath: string, maxToShow?: number , horizontal:boolean }) {
   const [showAll, setShowAll] = useState(false);
 
     const { data, isLoading, error } = useCategories(); 
@@ -19,22 +21,7 @@ export default function CategoryList({  maxToShow }: { basePath: string, maxToSh
 
 
   
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 }
-    }
-  };
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1, y: 0,
-      transition: { duration: 0.5, ease: [0.42, 0, 0.58, 1] as [number, number, number, number] }
-    },
-    exit: { opacity: 0, x: -50, transition: { duration: 0.2 } }
-  };
 
   if (isLoading) return <Loader title="categories" />;
   if (error) return <p className="text-red-500 text-center">Error loading categories.</p>;
@@ -58,18 +45,30 @@ export default function CategoryList({  maxToShow }: { basePath: string, maxToSh
           </span>
         </div>
 
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="flex flex-wrap justify-start items-start gap-6 pl-18"
-        >
-          {categoriesToShow?.map((category: Category) => (
-            <motion.div key={category._id} variants={itemVariants}>
-              <CategoryCard name={category?.name} image={category?.image} />
-            </motion.div>
-          ))}
-        </motion.div>
+     {horizontal ? (
+  <Marquee speed={100} gradient={false} pauseOnHover className="overflow-hidden">
+    <div className="flex gap-6 pl-4">
+      {categoriesToShow?.map((category: Category) => (
+        <div key={category._id} className="min-w-[200px]">
+          <CategoryCard name={category?.name} image={category?.image} />
+        </div>
+      ))}
+    </div>
+  </Marquee>
+) : (
+<div className="flex flex-wrap justify-start items-start gap-6 pl-18">
+  {categoriesToShow?.map((category: Category) => (
+    <div
+      key={category._id}
+      className="transform transition-transform duration-300 hover:scale-105"
+    >
+      <CategoryCard name={category?.name} image={category?.image} />
+    </div>
+  ))}
+</div>
+
+)}
+
 
         {!showAll && maxToShow && data?.data.length > maxToShow && (
           <div className="flex justify-center mt-8">
