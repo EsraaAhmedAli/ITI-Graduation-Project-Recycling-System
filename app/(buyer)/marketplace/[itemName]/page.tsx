@@ -6,33 +6,20 @@ import { CartItem, useCart } from "@/context/CartContext";
 import { Recycle, Leaf, Package, Minus, Plus } from "lucide-react";
 import { useGetItems } from "@/hooks/useGetItems";
 
-// interface Item {
-//   _id: string;
-//   name: string;
-//   points: number;
-//   price: number;
-//   measurement_unit: string;
-//   image: string;
-//   quantity: number;
-//   categoryName: string;
-//   categoryId: string;
-//   description?: string;
-// }
-
 export default function ItemDetailsPage() {
-const { itemName } = useParams();
-const decodedName = typeof itemName === "string" ? decodeURIComponent(itemName) : "";
+  const { itemName } = useParams();
+  const decodedName = typeof itemName === "string" ? decodeURIComponent(itemName) : "";
   const [selectedQuantity, setSelectedQuantity] = useState(1);
   const { addToCart } = useCart();
 
+  const { data: items } = useGetItems();
+  const item = items?.find(
+    (i) => i.name.toLowerCase() === decodedName.toLowerCase()
+  ) ?? null;
 
-
-
-  const{data:items}=useGetItems()
-const item = items?.find(
-  (i) => i.name.toLowerCase() === decodedName.toLowerCase()
-) ?? null;
-
+  const getMeasurementText = (unit: number) => {
+    return unit === 1 ? 'kg' : 'pieces';
+  };
 
   if (!item) {
     return (
@@ -41,18 +28,19 @@ const item = items?.find(
       </div>
     );
   }
-function convertToCartItem(item: any, quantity: number): CartItem {
-  return {
-    categoryId: item.categoryId,
-    categoryName: item.categoryName,
-    itemName: item.name,
-    image: item.image,
-    points: item.points,
-    price: item.price,
-    measurement_unit: item.measurement_unit,
-    quantity,
-  };
-}
+
+  function convertToCartItem(item: any, quantity: number): CartItem {
+    return {
+      categoryId: item.categoryId,
+      categoryName: item.categoryName,
+      itemName: item.name,
+      image: item.image,
+      points: item.points,
+      price: item.price,
+      measurement_unit: item.measurement_unit,
+      quantity,
+    };
+  }
 
   const remainingQuantity = item?.quantity - selectedQuantity;
   const isLowStock = item?.quantity <= 5;
@@ -61,9 +49,7 @@ function convertToCartItem(item: any, quantity: number): CartItem {
 
   const handleAddToCart = () => {
     if (!isOutOfStock && remainingQuantity >= 0) {
-      console.log("Item being added to cart:", item);
-
-addToCart(convertToCartItem(item, selectedQuantity));
+      addToCart(convertToCartItem(item, selectedQuantity));
     }
   };
 
@@ -78,7 +64,7 @@ addToCart(convertToCartItem(item, selectedQuantity));
                 src={item?.image}
                 alt={item?.name}
                 fill
-                className="object-contain"
+                className="object-cover"
                 priority
               />
             </div>
@@ -114,7 +100,7 @@ addToCart(convertToCartItem(item, selectedQuantity));
                   isOutOfStock ? 'text-red-600' : 
                   isLowStock ? 'text-amber-600' : 'text-green-600'
                 }`}>
-                  {isOutOfStock ? 'Out of Stock' : `${item?.quantity} ${item.measurement_unit}`}
+                  {isOutOfStock ? 'Out of Stock' : `${item?.quantity} ${getMeasurementText(item.measurement_unit)}`}
                 </span>
               </div>
               
@@ -130,7 +116,7 @@ addToCart(convertToCartItem(item, selectedQuantity));
                   ></div>
                 </div>
                 <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>After purchase: {Math.max(0, remainingQuantity)}</span>
+                  <span>After purchase: {Math.max(0, remainingQuantity)} {getMeasurementText(item.measurement_unit)}</span>
                   <span>{stockPercentage.toFixed(0)}% remaining</span>
                 </div>
               </div>
@@ -140,7 +126,7 @@ addToCart(convertToCartItem(item, selectedQuantity));
                   <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
-                  Low stock - only {item.quantity} left!
+                  Low stock - only {item.quantity} {getMeasurementText(item.measurement_unit)} left!
                 </p>
               )}
             </div>
@@ -164,7 +150,7 @@ addToCart(convertToCartItem(item, selectedQuantity));
                 >
                   <Plus className="w-4 h-4" />
                 </button>
-                <span className="text-sm text-gray-500">{item.measurement_unit}</span>
+                <span className="text-sm text-gray-500">{getMeasurementText(item.measurement_unit)}</span>
               </div>
             </div>
 

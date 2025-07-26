@@ -78,7 +78,7 @@ const PromotionSlider: React.FC = () => {
 
   return (
     <div 
-      className="relative w-full h-[400px] md:h-[500px] overflow-hidden  "
+      className="relative w-full h-[400px] md:h-[500px] overflow-hidden "
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
