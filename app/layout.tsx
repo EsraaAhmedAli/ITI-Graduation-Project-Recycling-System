@@ -9,6 +9,7 @@ import LayoutWrapper from "@/components/shared/layoutwrapper";
 import React from "react";
 import ReactQueryProvider from "@/components/providers/reactQueryProvider";
 import { Toaster } from "react-hot-toast";
+import { NotificationProvider } from "@/context/notificationContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,8 +47,12 @@ export default function RootLayout({
     <ReactQueryProvider>
           <CartProvider>
             <Toaster/>
+            <NotificationProvider>
+
             <ToastContainer />
             <LayoutWrapper>{children}</LayoutWrapper>
+                        </NotificationProvider>
+
           </CartProvider>
           </ReactQueryProvider>
         </UserAuthProvider>
