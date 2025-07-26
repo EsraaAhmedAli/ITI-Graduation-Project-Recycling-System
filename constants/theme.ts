@@ -13,7 +13,7 @@ export const CHART_COLORS = {
 export const MEDAL_COLORS = ['#FFD700', '#C0C0C0', '#CD7F32'] as const; // gold, silver, bronze
 
 export const STATUS_COLOR_MAP = {
-  Pending: '#f59e0b',
+  pending: '#f59e0b',
   accepted: '#34d399',
   completed: '#10b981',
   cancelled: '#ef4444',

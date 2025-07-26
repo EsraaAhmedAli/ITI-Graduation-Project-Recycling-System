@@ -272,136 +272,142 @@ console.error("Failed to fetch addresses:", err?.response?.data || err);
               }}
             />
           ) : (
-      <div className="max-w-4xl mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="text-center space-y-2 mb-8">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-4">
-          <MapPin className="w-8 h-8 text-white" />
-        </div>
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-          Choose Your Address
-        </h2>
-        <p className="text-gray-600">Select or add a delivery address</p>
-      </div>
-
-      {/* Address Grid */}
-      <div className="grid gap-6">
-        {addresses.length === 0 ? (
-          <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded-3xl border border-gray-200">
-            <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">No addresses yet</h3>
-            <p className="text-gray-600 mb-6">Add your first delivery address to get started</p>
-          
-          </div>
-        ) : (
-          addresses.map((addr) => (
-            <div
-              key={addr._id}
-              className={`group relative overflow-hidden rounded-3xl border-2 transition-all duration-300 cursor-pointer transform hover:scale-[1.02] hover:shadow-xl ${
-                selectedAddress?._id === addr._id
-                  ? "border-green-400 bg-gradient-to-br from-green-50 to-emerald-50 shadow-lg shadow-green-100"
-                  : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-md"
-              }`}
-              onClick={() => handleSelectAddress(addr)}
-            >
-              {/* Selection Indicator */}
-              {selectedAddress?._id === addr._id && (
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-400 to-emerald-500"></div>
-              )}
-              
-              <div className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 space-y-3">
-                    {/* Header */}
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-xl transition-colors duration-300 ${
-                        selectedAddress?._id === addr._id 
-                          ? "bg-green-100 text-green-600" 
-                          : "bg-gray-100 text-gray-600 group-hover:bg-blue-100 group-hover:text-blue-600"
-                      }`}>
-                        <Home className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-gray-800">
-                          {addr.city} • {addr.area}
-                        </h3>
-                        {addr.landmark && (
-                          <p className="text-sm text-gray-500 flex items-center gap-1">
-                            <MapPin className="w-3 h-3" />
-                            {addr.landmark}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Address Details */}
-                    <div className="bg-gray-50 rounded-2xl p-4 space-y-2">
-                      <div className="flex flex-wrap gap-4 text-sm text-gray-700">
-                        <span className="flex items-center gap-2">
-                          <span className="font-medium">Street:</span>
-                          {addr.street}
-                        </span>
-                        <span className="flex items-center gap-2">
-                          <span className="font-medium">Building:</span>
-                          {addr.building}
-                        </span>
-                        <span className="flex items-center gap-2">
-                          <span className="font-medium">Floor:</span>
-                          {addr.floor}
-                        </span>
-                        <span className="flex items-center gap-2">
-                          <span className="font-medium">Apt:</span>
-                          {addr.apartment}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Radio Button */}
-                  <div className="ml-4">
-                    <input
-                      type="radio"
-                      name="address"
-                      checked={selectedAddress?._id === addr._id}
-                      onChange={() => handleSelectAddress(addr)}
-                      className="w-5 h-5 text-green-600 border-2 border-gray-300 focus:ring-green-500 focus:ring-2"
-                    />
-                  </div>
+            <div className="max-w-4xl mx-auto p-6 space-y-6">
+              {/* Header */}
+              <div className="text-center space-y-2 mb-8">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-4">
+                  <MapPin className="w-8 h-8 text-white" />
                 </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEditAddress(addr);
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl font-medium hover:bg-blue-100 transition-colors duration-200"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                    Edit
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteAddress(addr._id);
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl font-medium hover:bg-red-100 transition-colors duration-200"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Delete
-                  </button>
-                </div>
+                <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                  Choose Your Address
+                </h2>
+                <p className="text-gray-600">Select or add a delivery address</p>
               </div>
-            </div>
-          ))
-        )}
-      </div>
 
-      {/* Bottom Actions */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-center pt-8 border-t border-gray-200">
-        <button
- onClick={() => {
+              {/* Address Grid */}
+              <div className="grid gap-6">
+                {addresses.length === 0 ? (
+                  <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded-3xl border border-gray-200">
+                    <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-800 mb-2">No addresses yet</h3>
+                    <p className="text-gray-600 mb-6">Add your first delivery address to get started</p>
+                  </div>
+                ) : (
+                  addresses.map((addr) => (
+                    <div
+                      key={addr._id}
+                      className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 cursor-pointer hover:shadow-lg hover:-translate-y-1 ${
+                        selectedAddress?._id === addr._id
+                          ? "border-emerald-300 bg-gradient-to-r from-emerald-50 via-white to-emerald-50 shadow-emerald-100 shadow-lg"
+                          : "border-gray-200 bg-white hover:border-blue-200 hover:shadow-blue-100"
+                      }`}
+                      onClick={() => handleSelectAddress(addr)}
+                    >
+                      {/* Selection Indicator */}
+                      <div className={`absolute top-0 left-0 right-0 h-1 transition-all duration-300 ${
+                        selectedAddress?._id === addr._id 
+                          ? "bg-gradient-to-r from-emerald-400 to-green-500" 
+                          : "bg-transparent"
+                      }`} />
+                      
+                      <div className="p-5">
+                        <div className="flex items-center justify-between">
+                          {/* Main Content */}
+                          <div className="flex items-center gap-4 flex-1">
+                            {/* Icon */}
+                            <div className={`relative p-3 rounded-xl transition-all duration-300 ${
+                              selectedAddress?._id === addr._id 
+                                ? "bg-emerald-100 text-emerald-600 scale-110" 
+                                : "bg-gray-100 text-gray-600 group-hover:bg-blue-100 group-hover:text-blue-600"
+                            }`}>
+                              <Home className="w-5 h-5" />
+                              {selectedAddress?._id === addr._id && (
+                                <div className="absolute -top-1 -right-1 bg-emerald-500 rounded-full p-0.5">
+                                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Address Info */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h3 className="text-lg font-bold text-gray-800 truncate">
+                                  {addr.city} • {addr.area}
+                                </h3>
+                                {selectedAddress?._id === addr._id && (
+                                  <span className="bg-emerald-100 text-emerald-700 text-xs font-medium px-2 py-1 rounded-full">
+                                    Selected
+                                  </span>
+                                )}
+                              </div>
+                              
+                              {addr.landmark && (
+                                <p className="text-sm text-gray-500 flex items-center gap-1 mb-2">
+                                  <MapPin className="w-3 h-3 flex-shrink-0" />
+                                  <span className="truncate">{addr.landmark}</span>
+                                </p>
+                              )}
+                              
+                              {/* Compact Address Details */}
+                              <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600">
+                                <span>{addr.street}</span>
+                                <span>•</span>
+                                <span>{addr.building}</span>
+                                <span>•</span>
+                                <span>{addr.floor}</span>
+                                <span>•</span>
+                                <span>{addr.apartment}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex items-center gap-2 ml-4">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditAddress(addr);
+                              }}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200 opacity-0 group-hover:opacity-100"
+                              title="Edit Address"
+                            >
+                              <Edit3 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteAddress(addr._id);
+                              }}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200 opacity-0 group-hover:opacity-100"
+                              title="Delete Address"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                            
+                            {/* Radio Button */}
+                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
+                              selectedAddress?._id === addr._id
+                                ? "border-emerald-500 bg-emerald-500"
+                                : "border-gray-300 group-hover:border-blue-400"
+                            }`}>
+                              {selectedAddress?._id === addr._id && (
+                                <div className="w-2 h-2 bg-white rounded-full" />
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Enhanced Bottom Actions */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-between items-center pt-8 border-t border-gray-200">
+                <button
+                  onClick={() => {
                     setIsEditing(true);
                     setEditingAddressId(null);
                     reset({
@@ -415,42 +421,44 @@ console.error("Failed to fetch addresses:", err?.response?.data || err);
                       notes: "",
                     });
                     setSelectedCity("");
-                  }}          className="w-full cursor-pointer sm:w-auto flex items-center justify-center gap-3 px-8 py-4 bg-white border-2 border-dashed border-gray-300 text-gray-700 rounded-2xl font-semibold hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300 group"
-        >
-          <div className="p-1 rounded-lg bg-gray-100 group-hover:bg-blue-100 transition-colors duration-300">
-            <Plus className="w-5 h-5" />
-          </div>
-          Add New Address
-        </button>
-        
-        <Button
-          onClick={handleNextStep}
-          disabled={!selectedAddress}
-          className={`w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 rounded-2xl font-semibold transition-all duration-300 transform ${
-            selectedAddress
-              ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:shadow-lg hover:scale-105 shadow-green-200"
-              : "bg-gray-200 text-gray-500 cursor-not-allowed"
-          }`}
-        >
-          Continue
-          <ChevronRight className="w-5 h-5" />
-        </Button>
-      </div>
+                  }}
+                  className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 bg-white border-2 border-dashed border-gray-300 text-gray-700 rounded-2xl font-semibold hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300 group hover:shadow-md"
+                >
+                  <div className="p-1 rounded-lg bg-gray-100 group-hover:bg-blue-100 transition-colors duration-300">
+                    <Plus className="w-5 h-5" />
+                  </div>
+                  Add New Address
+                </button>
+                
+                <Button
+                  onClick={handleNextStep}
+                  disabled={!selectedAddress}
+                  className={`w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 rounded-2xl font-semibold transition-all duration-300 transform ${
+                    selectedAddress
+                      ? "bg-gradient-to-r from-emerald-500 via-green-500 to-emerald-600 text-white hover:shadow-xl hover:shadow-emerald-200 hover:scale-105"
+                      : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  }`}
+                >
+                  Continue
+                  <ChevronRight className="w-5 h-5" />
+                </Button>
+              </div>
 
-      {/* Progress Indicator */}
-      <div className="flex justify-center pt-4">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-          <div className="w-8 h-1 bg-green-500 rounded-full"></div>
-          <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
-          <div className="w-8 h-1 bg-gray-300 rounded-full"></div>
-          <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
-        </div>
-      </div>
-    </div>
+              {/* Progress Indicator */}
+              <div className="flex justify-center pt-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <div className="w-8 h-1 bg-green-500 rounded-full"></div>
+                  <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                  <div className="w-8 h-1 bg-gray-300 rounded-full"></div>
+                  <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                </div>
+              </div>
+            </div>
           )}
         </>
       )}
+
       {currentStep === 2 && (
         <Review
           cartItems={cart}

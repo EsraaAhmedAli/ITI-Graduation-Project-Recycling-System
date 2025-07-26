@@ -53,7 +53,7 @@ export default function AddSubCategoryPage() {
       const form = new FormData();
       form.append("itemName", formData.itemName);
       form.append("points", formData.points);
-      form.append("price", formData.price);
+      form.append("price", Math.floor(formData.points/19));
       form.append("quantity", formData.quantity);
 
       // convert measurement_unit string to number enum here:
@@ -130,11 +130,12 @@ export default function AddSubCategoryPage() {
                   Price *
                 </label>
                 <input
+                disabled
                   type="number"
                   name="price"
-                  value={formData.price}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
+                  value={Math.floor(formData.points/19)}
+                  // onChange={handleChange}
+                  className="w-full px-4 py-2 border bg-gray-300 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
                   placeholder="Enter price"
                   required
                 />
@@ -150,7 +151,7 @@ export default function AddSubCategoryPage() {
                   value={formData.quantity}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
-                  placeholder="Enter price"
+                  placeholder="Enter quantity"
                   required
                 />
               </div>

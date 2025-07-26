@@ -121,7 +121,7 @@ const closeItemsModal = () => {
     const status = order.status
 
     if (activeTab === "incoming") {
-      return ["Pending", "assigntocourier"].includes(status);
+      return ["pending", "assigntocourier"].includes(status);
     }
     if (activeTab === "completed") {
       return status === "completed";
@@ -244,7 +244,7 @@ onClick={() => setIsRecyclingModalOpen(true)}
     <div className="flex justify-between items-center mb-2 text-sm text-gray-600">
       <span>Date: {new Date(order.createdAt).toLocaleDateString()}</span>
       <span className="flex items-center gap-1 font-semibold">
-        {["Pending", "assigntocourier"].includes(order.status) && (
+        {["pending", "assigntocourier"].includes(order.status) && (
           <>
             <Truck size={16} className="text-yellow-600" />
             <span className="text-yellow-700">In Transit</span>

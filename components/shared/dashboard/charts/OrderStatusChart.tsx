@@ -39,28 +39,34 @@ const LoadingDoughnut = () => (
 
 const OrderStatusChart = memo<OrderStatusChartProps>(({ orderStatus, loading }) => {
   // Memoize chart data
-  const chartData = useMemo(() => {
-    if (!orderStatus || Object.keys(orderStatus).length === 0) return null;
+const normalizedStatus = useMemo(() => {
+  const normalized: Record<string, number> = {};
+  Object.entries(orderStatus).forEach(([key, value]) => {
+    const lower = key.toLowerCase();
+    normalized[lower] = (normalized[lower] || 0) + value;
+  });
+  return normalized;
+}, [orderStatus]);
 
-    const statuses = Object.keys(orderStatus);
-    const counts = Object.values(orderStatus);
+const chartData = useMemo(() => {
+  const statuses = Object.keys(normalizedStatus);
+  const counts = Object.values(normalizedStatus);
 
-    return {
-      labels: statuses,
-      datasets: [{
-        data: counts,
-        backgroundColor: statuses.map(status => STATUS_COLOR_MAP[status] || '#d1d5db'),
-        borderWidth: 0,
-        hoverBackgroundColor: statuses.map(status => {
-          const color = STATUS_COLOR_MAP[status] || '#d1d5db';
-          // Darken the color on hover
-          return color + 'CC'; // Add alpha for darker effect
-        }),
-        hoverBorderWidth: 2,
-        hoverBorderColor: '#ffffff',
-      }]
-    };
-  }, [orderStatus]);
+  return {
+    labels: statuses,
+    datasets: [{
+      data: counts,
+      backgroundColor: statuses.map(status => STATUS_COLOR_MAP[status] || '#d1d5db'),
+      borderWidth: 0,
+      hoverBackgroundColor: statuses.map(status =>
+        (STATUS_COLOR_MAP[status] || '#09c') + 'CC'
+      ),
+      hoverBorderWidth: 2,
+      hoverBorderColor: '#ffffff',
+    }]
+  };
+}, [normalizedStatus]);
+
 
   // Calculate total orders
   const totalOrders = useMemo(() => {
@@ -132,14 +138,14 @@ const OrderStatusChart = memo<OrderStatusChartProps>(({ orderStatus, loading }) 
 
         {/* Legend */}
         <div className="mt-4 flex flex-col gap-2">
-          {Object.entries(orderStatus)
+          {Object.entries(normalizedStatus)
             .sort((a, b) => b[1] - a[1]) // Sort by count descending
             .map(([status, count]) => (
               <StatusLegendItem
                 key={status}
                 status={status}
                 count={count}
-                color={STATUS_COLOR_MAP[status] || '#d1d5db'}
+                color={STATUS_COLOR_MAP[status] || '#09c'}
               />
             ))}
         </div>

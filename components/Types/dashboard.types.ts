@@ -83,7 +83,7 @@ export interface ApiResponse<T = any> {
 }
 
 export enum OrderStatusEnum {
-  PENDING = 'Pending',
+   = '',
   ACCEPTED = 'accepted',
   COMPLETED = 'completed',
   CANCELLED = 'cancelled',
