@@ -1,8 +1,18 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Search, Star, ChevronRight, Filter, Frown, ChevronLeft, ChevronRight as ChevronRightIcon } from "lucide-react";
+import {
+  Search,
+  Star,
+  ChevronLeft,
+  ChevronRight,
+  Filter,
+  Frown,
+} from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/lib/axios";
 
 interface Item {
   _id: string;
@@ -24,63 +34,71 @@ interface Pagination {
 }
 
 export default function Marketplace() {
-  const [items, setItems] = useState<Item[]>([]);
   const [filteredItems, setFilteredItems] = useState<Item[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [isLoading, setIsLoading] = useState(true);
-  const [pagination, setPagination] = useState<Pagination>({
-    currentPage: 1,
-    itemsPerPage: 10,
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // 1. Fetch Function
+  const fetchItems = async () => {
+   const res= await api.get(
+      `/categories/get-items?page=${currentPage}&limit=${itemsPerPage}`
+    );
+
+    return res?.data
+
+  };
+
+  // 2. useQuery Hook
+  const {
+    data,
+    isLoading,
+    isError,
+    isFetching,
+  } = useQuery({
+    queryKey: ["items", currentPage],
+    queryFn: fetchItems,
+    keepPreviousData: true,
+  });
+
+  const items: Item[] = data?.data || [];
+  const pagination: Pagination = data?.pagination || {
+    currentPage,
+    itemsPerPage,
     totalItems: 0,
     totalPages: 1,
     hasNextPage: false,
     hasPreviousPage: false,
-  });
-
-  const getMeasurementText = (unit: number) => {
-    return unit === 1 ? 'kg' : 'pc';
   };
 
-  const fetchItems = async (page: number, limit: number) => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(
-        `http://localhost:5000/api/categories/get-items?page=${page}&limit=${limit}`
-      );
-      const data = await response.json();
-      setItems(data.data);
-      setFilteredItems(data.data);
-      setPagination(data.pagination);
-    } catch (error) {
-      console.error("Error fetching items:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchItems(1, pagination.itemsPerPage);
-  }, []);
-
+  // 3. Filtering
   useEffect(() => {
     const term = searchTerm.toLowerCase();
     const filtered = items.filter((item) => {
-      const matchesSearch = item.name.toLowerCase().includes(term) || 
-                          item.categoryName.toLowerCase().includes(term);
-      const matchesCategory = selectedCategory === "all" || 
-                            item.categoryName === selectedCategory;
+      const matchesSearch =
+        item.name.toLowerCase().includes(term) ||
+        item.categoryName.toLowerCase().includes(term);
+      const matchesCategory =
+        selectedCategory === "all" ||
+        item.categoryName === selectedCategory;
       return matchesSearch && matchesCategory;
     });
     setFilteredItems(filtered);
   }, [searchTerm, selectedCategory, items]);
 
   const uniqueCategories = Array.from(
-    new Set(items.map(item => item.categoryName))
+    new Set(items.map((item) => item.categoryName))
   ).sort();
 
   const handlePageChange = (page: number) => {
-    fetchItems(page, pagination.itemsPerPage);
+    if (page >= 1 && page <= pagination.totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const getMeasurementText = (unit: number) => {
+    return unit === 1 ? "kg" : "pc";
   };
 
   return (
@@ -142,16 +160,21 @@ export default function Marketplace() {
       </div>
 
       {/* Items Grid */}
-      {isLoading ? (
+      {isLoading || isFetching ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
           {[...Array(8)].map((_, i) => (
-            <div key={i} className="bg-gray-100 rounded-lg h-40 animate-pulse"></div>
+            <div
+              key={i}
+              className="bg-gray-100 rounded-lg h-40 animate-pulse"
+            ></div>
           ))}
         </div>
       ) : filteredItems.length === 0 ? (
         <div className="text-center py-12">
           <Frown className="mx-auto h-10 w-10 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No items found</h3>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">
+            No items found
+          </h3>
           <p className="mt-1 text-xs text-gray-500">
             {searchTerm || selectedCategory !== "all"
               ? "Try different search terms"
@@ -160,17 +183,20 @@ export default function Marketplace() {
         </div>
       ) : (
         <>
-
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
             {filteredItems.map((item) => (
-               <Link href={`/marketplace/${encodeURIComponent(item.name)}`} passHref>
+              <Link
+                key={item._id}
+                href={`/marketplace/${encodeURIComponent(item.name)}`}
+                passHref
+              >
                 <div className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-sm transition-all duration-150 h-full flex flex-col">
                   <div className="relative aspect-square">
                     <Image
                       src={item.image}
                       alt={item.name}
                       fill
-                      className="object-cover"
+                      className="object-contain"
                       sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
                     />
                     <div className="absolute bottom-1 left-1 bg-white/90 px-1.5 py-0.5 rounded text-xs font-medium">
@@ -206,16 +232,27 @@ export default function Marketplace() {
                 <button
                   onClick={() => handlePageChange(pagination.currentPage - 1)}
                   disabled={!pagination.hasPreviousPage}
-                  className={`p-1.5 rounded-md ${pagination.hasPreviousPage ? 'text-green-600 hover:bg-green-50' : 'text-gray-300 cursor-not-allowed'}`}
+                  className={`p-1.5 rounded-md ${
+                    pagination.hasPreviousPage
+                      ? "text-green-600 hover:bg-green-50"
+                      : "text-gray-300 cursor-not-allowed"
+                  }`}
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
 
-                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((page) => (
+                {Array.from(
+                  { length: pagination.totalPages },
+                  (_, i) => i + 1
+                ).map((page) => (
                   <button
                     key={page}
                     onClick={() => handlePageChange(page)}
-                    className={`w-8 h-8 flex items-center justify-center rounded-md text-sm ${pagination.currentPage === page ? 'bg-green-600 text-white' : 'text-green-600 hover:bg-green-50'}`}
+                    className={`w-8 h-8 flex items-center justify-center rounded-md text-sm ${
+                      pagination.currentPage === page
+                        ? "bg-green-600 text-white"
+                        : "text-green-600 hover:bg-green-50"
+                    }`}
                   >
                     {page}
                   </button>
@@ -224,9 +261,13 @@ export default function Marketplace() {
                 <button
                   onClick={() => handlePageChange(pagination.currentPage + 1)}
                   disabled={!pagination.hasNextPage}
-                  className={`p-1.5 rounded-md ${pagination.hasNextPage ? 'text-green-600 hover:bg-green-50' : 'text-gray-300 cursor-not-allowed'}`}
+                  className={`p-1.5 rounded-md ${
+                    pagination.hasNextPage
+                      ? "text-green-600 hover:bg-green-50"
+                      : "text-gray-300 cursor-not-allowed"
+                  }`}
                 >
-                  <ChevronRightIcon className="w-4 h-4" />
+                  <ChevronRight className="w-4 h-4" />
                 </button>
               </nav>
             </div>

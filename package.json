@@ -37,6 +37,7 @@
     "react-qr-code": "^2.0.18",
     "react-toastify": "^11.0.5",
     "recharts": "^3.1.0",
+    "socket.io-client": "^4.8.1",
     "stripe": "^18.3.0",
     "sweetalert2": "^11.22.2",
     "swiper": "^11.2.10",

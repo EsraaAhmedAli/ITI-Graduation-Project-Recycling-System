@@ -17,11 +17,9 @@ export const getAccessToken = () => accessToken;
 
 api.interceptors.request.use((config) => {
   const token = getAccessToken();
-  console.log(`📥 Sending request to ${config.url} with ${token}`);
 
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
-    console.log("📤 Sending request with token:", config.url);
   }
   return config;
 });
