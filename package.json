@@ -10,6 +10,7 @@
     "postinstall": "flowbite-react patch"
   },
   "dependencies": {
+    "@stripe/react-stripe-js": "^3.8.0",
     "@tanstack/react-query": "^5.83.0",
     "axios": "^1.10.0",
     "chart.js": "^4.5.0",
@@ -36,6 +37,7 @@
     "react-qr-code": "^2.0.18",
     "react-toastify": "^11.0.5",
     "recharts": "^3.1.0",
+    "stripe": "^18.3.0",
     "sweetalert2": "^11.22.2",
     "swiper": "^11.2.10",
     "uuid": "^11.1.0"
