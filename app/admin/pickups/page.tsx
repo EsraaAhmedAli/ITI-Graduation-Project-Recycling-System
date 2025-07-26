@@ -6,14 +6,12 @@ import api from '@/lib/axios';
 import Loader from '@/components/common/loader';
 import UserModal from '@/components/shared/userModal';
 import ItemsModal from '@/components/shared/itemsModal';
-import CourierSelectionModal from '../../../components/courierSelectionModal'; // You'll need to create this component
+import CourierSelectionModal from '../../../components/courierSelectionModal';
 import Swal from 'sweetalert2';
 import { toast } from 'react-toastify';
 import { useUsers } from '@/hooks/useGetUsers';
 
-
 export default function Page() {
-
   const [orders, setOrders] = useState([]);
   const [isItemsModalOpen, setIsItemsModalOpen] = useState<boolean>(false);
   const [selectedOrderItems, setSelectedOrderItems] = useState<null | any[]>(null);
@@ -26,8 +24,8 @@ export default function Page() {
   const [selectedUser, setSelectedUser] = useState<null | {
     name: string;
     phone: string;
-    imageUrl :string,
-    email:string;
+    imageUrl: string,
+    email: string;
     address: {
       city: string;
       area: string;
@@ -57,26 +55,13 @@ export default function Page() {
 
   const { data } = useUsers("delivery");
 
-  // const getCouriers = async () => {
-  //   try {
-  //     const res = await api.get('/users?role=delivery'); 
-  //     console.log(res);
-      
-  //     setCouriers(res.data.data || []);
-  //   } catch (err) {
-  //     console.error('Failed to fetch couriers:', err);
-  //     toast.error('Failed to fetch couriers');
-  //   }
-  // };
-
   const handleDeleteOrder = async (orderId: string) => {
-    
     const result = await Swal.fire({
       title: 'Are you sure?',
       text: 'This order will be permanently deleted.',
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#10B981', // green
+      confirmButtonColor: '#10B981',
       cancelButtonColor: '#d33',
       confirmButtonText: 'Yes, delete it!',
     });
@@ -85,7 +70,6 @@ export default function Page() {
       try {
         await api.delete(`/orders/${orderId.orderId}`);
         Swal.fire('Deleted!', 'The order has been deleted.', 'success');
-
         setOrders((prev) => prev.filter((order: any) => order._id !== orderId.orderId));
       } catch (err) {
         console.error(err);
@@ -110,64 +94,103 @@ export default function Page() {
     }
   };
 
+  // New function to handle cancellation with reason
+  const handleCancelOrder = async (orderId: string) => {
+    const { value: reason } = await Swal.fire({
+      title: 'Cancel Order',
+      input: 'text',
+      inputPlaceholder: 'Enter cancellation reason...',
+      showCancelButton: true,
+      confirmButtonText: 'Cancel Order',
+      cancelButtonText: 'Keep Order',
+      confirmButtonColor: '#EF4444',
+      cancelButtonColor: '#6B7280',
+      inputValidator: (value) => {
+        if (!value || value.trim() === '') {
+          return 'Cancellation reason is required';
+        }
+        if (value.trim().length < 5) {
+          return 'Please provide a reason (at least 5 characters)';
+        }
+        return null;
+      }
+    });
+
+    if (reason) {
+      try {
+        await api.put(`/admin/orders/${orderId}/status`, {
+          status: 'cancelled',
+          reason: reason.trim()
+        });
+        
+        toast.success('Order cancelled successfully');
+        await getOrdersByAdmin();
+      } catch (err) {
+        console.error('Failed to cancel order:', err);
+        toast.error('Failed to cancel order');
+      }
+    }
+  };
+
   useEffect(() => {
     getOrdersByAdmin();
   }, []);
 
-  const closingModalFn = ()=>{
+  const closingModalFn = () => {
     setIsModalOpen(false)
   }
  
-const getStatusBadge = (status: string) => {
-  const base = 'px-2 py-1 text-xs font-semibold rounded-full';
+  const getStatusBadge = (status: string) => {
+    const base = 'px-2 py-1 text-xs font-semibold rounded-full';
 
-  switch (status) {
-    case 'pending':
-      return <span className={`${base} bg-yellow-100 text-yellow-800`}>Pending</span>;
-    case 'assigntoCourier':
-      return <span className={`${base} bg-blue-100 text-blue-800`}>Assigned</span>;
-    case 'completed':
-      return <span className={`${base} bg-green-100 text-green-800`}>Completed</span>;
-    case 'cancelled':
-      return <span className={`${base} bg-red-100 text-red-800`}>Cancelled</span>;
-    default:
-      return <span className={`${base} bg-gray-100 text-gray-800`}>{status}</span>;
-  }
-};
-const STATUS = {
-  PENDING: 'pending',
-  ASSIGN_TO_COURIER: 'assignToCourier', 
-  COMPLETED: 'completed',
-  CANCELLED: 'cancelled'
-} as const;
-const normalizeStatus = (status: string): string => {
-  const normalized = status.toLowerCase().trim();
-  
-  // Handle common variations
-  switch (normalized) {
-    case 'pending':
-      return STATUS.PENDING;
-    case 'assigntocourier':
-    case 'assignedtocourier':
-    case 'assigned':
-      return STATUS.ASSIGN_TO_COURIER;
-    case 'completed':
-    case 'complete':
-      return STATUS.COMPLETED;
-    case 'cancelled':
-    case 'canceled':
-      return STATUS.CANCELLED;
-    default:
-      return status; // Return original if no match
-  }
-};
+    switch (status) {
+      case 'pending':
+        return <span className={`${base} bg-yellow-100 text-yellow-800`}>Pending</span>;
+      case 'assigntoCourier':
+        return <span className={`${base} bg-blue-100 text-blue-800`}>Assigned</span>;
+      case 'completed':
+        return <span className={`${base} bg-green-100 text-green-800`}>Completed</span>;
+      case 'cancelled':
+        return <span className={`${base} bg-red-100 text-red-800`}>Cancelled</span>;
+      default:
+        return <span className={`${base} bg-gray-100 text-gray-800`}>{status}</span>;
+    }
+  };
 
-const allowedStatusTransitions: Record<string, string[]> = {
-  [STATUS.PENDING]: [STATUS.ASSIGN_TO_COURIER, STATUS.CANCELLED],
-  [STATUS.ASSIGN_TO_COURIER]: [STATUS.COMPLETED, STATUS.CANCELLED],
-  [STATUS.COMPLETED]: [],
-  [STATUS.CANCELLED]: [],
-};
+  const STATUS = {
+    PENDING: 'pending',
+    ASSIGN_TO_COURIER: 'assignToCourier', 
+    COMPLETED: 'completed',
+    CANCELLED: 'cancelled'
+  } as const;
+
+  const normalizeStatus = (status: string): string => {
+    const normalized = status.toLowerCase().trim();
+    
+    switch (normalized) {
+      case 'pending':
+        return STATUS.PENDING;
+      case 'assigntocourier':
+      case 'assignedtocourier':
+      case 'assigned':
+        return STATUS.ASSIGN_TO_COURIER;
+      case 'completed':
+      case 'complete':
+        return STATUS.COMPLETED;
+      case 'cancelled':
+      case 'canceled':
+        return STATUS.CANCELLED;
+      default:
+        return status;
+    }
+  };
+
+  const allowedStatusTransitions: Record<string, string[]> = {
+    [STATUS.PENDING]: [STATUS.ASSIGN_TO_COURIER, STATUS.CANCELLED],
+    [STATUS.ASSIGN_TO_COURIER]: [STATUS.COMPLETED, STATUS.CANCELLED],
+    [STATUS.COMPLETED]: [],
+    [STATUS.CANCELLED]: [],
+  };
 
   // Show loading state
   if (loading) {
@@ -204,7 +227,6 @@ const allowedStatusTransitions: Record<string, string[]> = {
     return (
       <>
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          {/* Header */}
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold text-gray-800">Orders</h2>
@@ -217,7 +239,6 @@ const allowedStatusTransitions: Record<string, string[]> = {
             </div>
           </div>
           
-          {/* Empty State */}
           <div className="flex flex-col items-center justify-center min-h-96 p-8">
             <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
               <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -247,11 +268,10 @@ const allowedStatusTransitions: Record<string, string[]> = {
 
   const transformedData = orders.map((order: any) => ({
     orderId: order._id,
-    onClickItemsId:()=>{
+    onClickItemsId: () => {
       setSelectedOrderItems(order.items)
       console.log(order.items);
       setIsItemsModalOpen(true)
-      
     },
     status: order.status,
     createdAt: new Date(order.createdAt).toLocaleString(),
@@ -267,9 +287,7 @@ const allowedStatusTransitions: Record<string, string[]> = {
       });
       setIsModalOpen(true);
     },
-
     onDelete: () => handleDeleteOrder(order._id), 
-
   }));
 
   const columns = [
@@ -285,14 +303,18 @@ const allowedStatusTransitions: Record<string, string[]> = {
         </button>
       ),
     },
-    { key: 'orderId', label: 'Order ID',    render: (row: any) => (
+    { 
+      key: 'orderId', 
+      label: 'Order ID',    
+      render: (row: any) => (
         <button
           onClick={row.onClickItemsId}
           className="text-green-600 hover:underline font-medium"
         >
           {row.orderId}
         </button>
-      ), },
+      ), 
+    },
     {
       key: 'status',
       label: 'Status',
@@ -322,12 +344,16 @@ const allowedStatusTransitions: Record<string, string[]> = {
           if (newStatus === currentStatus) return;
           
           if (newStatus === 'assignToCourier') {
-            // Open courier selection modal instead of changing status directly
             setSelectedOrderForCourier(order.orderId);
-            // await getCouriers(); // Fetch available couriers
             setIsCourierModalOpen(true);
-            // Reset the select to current status
             e.target.value = currentStatus;
+            return;
+          }
+
+          // Handle cancellation with reason
+          if (newStatus === 'cancelled') {
+            e.target.value = currentStatus; // Reset select immediately
+            await handleCancelOrder(order.orderId);
             return;
           }
 
@@ -385,7 +411,7 @@ const allowedStatusTransitions: Record<string, string[]> = {
       />
 
       <UserModal selectedUser={selectedUser} show={isModalOpen} closingModalFn={closingModalFn}/>
-      <ItemsModal selectedOrderItems={selectedOrderItems} show={isItemsModalOpen} onclose={()=>setIsItemsModalOpen(false)} />
+      <ItemsModal selectedOrderItems={selectedOrderItems} show={isItemsModalOpen} onclose={() => setIsItemsModalOpen(false)} />
       <CourierSelectionModal 
         show={isCourierModalOpen}
         couriers={data}
