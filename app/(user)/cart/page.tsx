@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { X, Leaf, Recycle, Truck, Scale, Package } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "flowbite-react";
+import Image from "next/image";
 
 const itemVariants = {
   hidden: { opacity: 0, y: 10 },
@@ -120,10 +121,12 @@ export default function CartPage() {
                   <div className="p-4 flex flex-col sm:flex-row gap-4">
                     <div className="bg-green-50 rounded-lg w-full sm:w-24 h-24 flex-shrink-0 flex items-center justify-center relative">
                       {item.image ? (
-                        <img
+                        <Image
+                        width={100}
+                        height={100}
                           src={item.image}
                           alt={item.itemName}
-                          className="w-full h-full object-cover"
+                          className=" object-fit"
                         />
                       ) : (
                         <Package className="w-8 h-8 text-green-300" />
