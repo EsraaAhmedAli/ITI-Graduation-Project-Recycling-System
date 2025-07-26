@@ -87,7 +87,7 @@ export default function EditItemPage() {
       const data = new FormData();
       data.append("name", formData.name);
       data.append("points", formData.points);
-      data.append("price", formData.price);
+      data.append("price",Math.floor( formData.points/19));
       data.append("quantity", formData.quantity);
 
       data.append("measurement_unit", formData.measurement_unit);
@@ -177,11 +177,12 @@ export default function EditItemPage() {
                   Price *
                 </label>
                 <input
+                disabled
                   type="number"
                   name="price"
-                  value={formData.price}
+                  value={Math.floor(formData.points/19)}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
+                  className="w-full px-4 py-2 border bg-gray-200 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
                   placeholder="Enter price"
                   required
                 />
@@ -230,8 +231,8 @@ export default function EditItemPage() {
                   <p className="text-sm text-gray-500 mb-2">Current Image:</p>
                   <Image
                     src={formData.currentImage}
-                    width={30}
-                    height={30}
+                    width={100}
+                    height={100}
                     alt="Current item"
                     className=" object-cover rounded-lg border border-gray-200"
                   />

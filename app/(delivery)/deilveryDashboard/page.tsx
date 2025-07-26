@@ -137,13 +137,15 @@ export default function Page() {
       render: (row: any) => (
         <div className="flex items-center gap-3 py-2">
           <div className="relative">
-            <Image
-              src={row.user?.imageUrl || '/default-avatar.png'}
-              alt={row.user?.userName}
-              width={44}
-              height={44}
-              className="rounded-full border-2 border-white shadow-md ring-2 ring-gray-100"
-            />
+       
+      <Image
+  src={row.user?.image }
+  alt={row.user?.image}
+  width={100}
+  height={100}
+  className=" max-w-[50px] rounded-full border-2 border-white shadow-md ring-2 ring-gray-100"
+/>
+
             <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
           </div>
           <div className="flex flex-col">
