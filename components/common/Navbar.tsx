@@ -12,6 +12,7 @@ import {
   UserRoundPen,
   GalleryVerticalEnd,
   Recycle,
+  Store,
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { FaRecycle, FaRobot } from "react-icons/fa";
@@ -30,6 +31,7 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleMenu = () => setIsOpen(!isOpen);
+    const isBuyer = user?.role === "buyer";
 
   // Loading skeleton for auth buttons
   const AuthButtonsSkeleton = () => (
@@ -75,14 +77,16 @@ export default function Navbar() {
               <span className="hidden xl:inline">Home</span>
             </Link>
 
-            <Link
-              prefetch={true}
-              href="/category"
-              className="flex items-center text-gray-700 hover:text-success font-extrabold gap-1 px-2 py-1 rounded transition-colors"
-            >
-              <GalleryVerticalEnd className="w-4 h-4" />
-              <span className="hidden xl:inline">Categories</span>
-            </Link>
+           <Link
+          prefetch={true}
+          href={isBuyer ? "/marketplace" : "/category"}
+          className="flex items-center text-gray-700 hover:text-success font-extrabold gap-1 px-2 py-1 rounded transition-colors"
+        >
+          {isBuyer ? <Store className="w-4 h-4" /> : <GalleryVerticalEnd className="w-4 h-4" />}
+          <span className="hidden xl:inline">
+            {isBuyer ? "Marketplace" : "Categories"}
+          </span>
+        </Link>
 
             <Link
               prefetch={true}

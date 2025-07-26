@@ -2,229 +2,399 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import PromotionSlider from "@/components/buyer/PromotionSlider";
-import TopMaterial from "@/components/buyer/TopMaterial";
-import { Search, Star, ChevronRight } from "lucide-react";
-import RecycleSmartDoubt from "@/components/buyer/RecycleSmartDoubt";
-import { useGetItems } from "@/hooks/useGetItems";
+import { Search, ChevronRight, Filter, Frown, Leaf, Zap, Recycle, Star } from "lucide-react";
 
 interface Item {
   _id: string;
   name: string;
-  points: number;
   price: number;
-  measurement_unit: string;
+  measurement_unit: number;
   image: string;
-  quantity: number;
   categoryName: string;
-  categoryId: string;
+}
+
+interface Material {
+  name: string;
+  image: string;
+  totalRecycled: number;
+  totalPoints: number;
 }
 
 export default function BuyerHomePage() {
-  // const [items, setItems] = useState<Item[]>([]);
+  const [items, setItems] = useState<Item[]>([]);
   const [filteredItems, setFilteredItems] = useState<Item[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  // const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [materials, setMaterials] = useState<Material[]>([]);
+  const [materialsLoading, setMaterialsLoading] = useState(true);
 
-  // Fetch items from API
-  // useEffect(() => {
-  //   setIsLoading(true);
-  //   fetch("http://localhost:5000/api/categories/get-items")
-  //     .then((res) => res.json())
-  //     .then((data) => {
-  //       if (data.items) {
-  //         setItems(data.items);
-  //         setFilteredItems(data.items);
-  //       } else {
-  //         console.error("items not found in response");
-  //       }
-  //     })
-  //     .catch((err) => console.error("Fetch error:", err))
-  //     .finally(() => setIsLoading(false));
-  // }, []);
+  const getMeasurementText = (unit: number) => {
+    return unit === 1 ? 'kg' : 'pc';
+  };
 
-  const{data:items,isLoading}= useGetItems()
-  // Filter based on search and category
+  const fetchItems = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/categories/get-items?page=1&limit=8`
+      );
+      const data = await response.json();
+      setItems(data.data);
+      setFilteredItems(data.data);
+    } catch (error) {
+      console.error("Error fetching items:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchMaterials = async () => {
+    setMaterialsLoading(true);
+    try {
+      const response = await fetch(
+        "http://localhost:5000/api/top-materials-recycled"
+      );
+      const data = await response.json();
+      
+      // تحويل البيانات الواردة من API إلى الشكل المطلوب
+      const formattedMaterials = data.data.map((item: any) => ({
+        name: item._id.itemName,
+        image: item.image,
+        totalRecycled: item.totalQuantity,
+        totalPoints: item.totalPoints
+      }));
+      
+      setMaterials(formattedMaterials);
+    } catch (error) {
+      console.error("Error fetching materials:", error);
+    } finally {
+      setMaterialsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchItems();
+    fetchMaterials();
+  }, []);
+
   useEffect(() => {
     const term = searchTerm.toLowerCase();
-
-    const filtered = items?.filter((item) => {
-      const matchesSearch =
-        item.name.toLowerCase().includes(term) ||
-        item?.categoryName.toLowerCase().includes(term);
-
-      const matchesCategory =
-        selectedCategory === "all" || item?.categoryName === selectedCategory;
-
+    const filtered = items.filter((item) => {
+      const matchesSearch = item.name.toLowerCase().includes(term) || 
+                          item.categoryName.toLowerCase().includes(term);
+      const matchesCategory = selectedCategory === "all" || 
+                            item.categoryName === selectedCategory;
       return matchesSearch && matchesCategory;
     });
-
     setFilteredItems(filtered);
   }, [searchTerm, selectedCategory, items]);
 
   const uniqueCategories = Array.from(
-    new Set(items?.map((item) => item.categoryName))
-  );
+    new Set(items.map(item => item.categoryName))
+  ).sort();
 
   return (
     <div className="bg-gray-50 min-h-screen">
-      {/* Hero Section with Slider */}
-      <div className="relative">
-        <PromotionSlider />
-        <RecycleSmartDoubt/>
-      </div>
+      {/* Hero Slider */}
+      <PromotionSlider />
 
-      {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         {/* Page Header */}
         <header className="mb-8 text-center">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-3">
-            ♻️ Sustainable Marketplace
-          </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Discover recyclable items and earn rewards for your eco-friendly contributions
-          </p>
+          <motion.h1 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-2xl md:text-3xl font-bold text-gray-800 mb-2"
+          >
+            Sustainable Marketplace
+          </motion.h1>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="text-base text-gray-600 max-w-2xl mx-auto"
+          >
+            Discover items to recycle and earn rewards
+          </motion.p>
         </header>
 
-        {/* Search and Filter Section */}
-        <section className="mb-10 bg-white rounded-xl shadow-sm p-6 max-w-4xl mx-auto">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
+        {/* Search and Filter */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="mb-8 bg-white rounded-lg p-4 max-w-4xl mx-auto shadow-sm border border-gray-100"
+        >
+          <div className="flex flex-col md:flex-row gap-3">
+            <div className="relative flex-1">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-gray-400" />
+                <Search className="h-4 w-4 text-gray-400" />
               </div>
               <input
                 type="text"
-                placeholder="Search for items or categories..."
-                className="pl-10 pr-4 py-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="Search for items..."
+                className="pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-lg w-full focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
 
-            <div className="relative">
+            <div className="relative w-full md:w-48">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Filter className="h-4 w-4 text-gray-400" />
+              </div>
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="appearance-none pl-3 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white w-full"
+                className="pl-10 pr-8 py-2 text-sm border border-gray-200 rounded-lg w-full bg-white appearance-none"
               >
                 <option value="all">All Categories</option>
                 {uniqueCategories.map((category) => (
                   <option key={category} value={category}>
-                    {category[0].toUpperCase() + category.slice(1)}
+                    {category}
                   </option>
                 ))}
               </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                  <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                </svg>
+              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <ChevronRight className="h-3 w-3 text-gray-400 rotate-90" />
               </div>
             </div>
           </div>
-        </section>
+        </motion.div>
 
         {/* Items Grid Section */}
         <section className="mb-12">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-semibold text-gray-800">
+              {selectedCategory === "all" ? "Featured Items" : selectedCategory}
+            </h2>
+            <Link href="/marketplace" passHref>
+              <button className="text-emerald-600 hover:text-emerald-700 font-medium flex items-center text-sm transition-colors">
+                View All
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </button>
+            </Link>
+          </div>
+
           {isLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="bg-gray-100 rounded-xl h-44 animate-pulse"></div>
+              ))}
             </div>
-          ) : filteredItems?.length === 0 ? (
-            <div className="text-center py-16 bg-white rounded-xl shadow-sm max-w-2xl mx-auto">
-              <div className="mx-auto h-24 w-24 text-gray-400 mb-4">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-medium text-gray-900 mb-2">No items found</h3>
-              <p className="text-gray-500 mb-4">
-                {searchTerm || selectedCategory !== "all"
-                  ? "Try adjusting your search filters"
-                  : "Check back later for new recyclable items"}
-              </p>
+          ) : filteredItems.length === 0 ? (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-8 bg-white rounded-lg shadow-sm max-w-2xl mx-auto border border-gray-100"
+            >
+              <Frown className="mx-auto h-10 w-10 text-gray-400 mb-3" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No items found</h3>
+              <p className="text-gray-500 mb-4 text-sm">Try adjusting your search or filter</p>
               <button 
                 onClick={() => {
                   setSearchTerm("");
                   setSelectedCategory("all");
                 }}
-                className="px-4 py-2 text-sm font-medium text-green-600 hover:text-green-800"
+                className="px-5 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm transition-colors"
               >
                 Reset filters
               </button>
-            </div>
+            </motion.div>
           ) : (
-            <>
-              <h2 className="text-xl font-semibold text-gray-800 mb-6">
-                {selectedCategory === "all" ? "All Items" : selectedCategory} 
-                <span className="text-gray-500 ml-2">({filteredItems?.length})</span>
-              </h2>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredItems?.map((item) => (
-                  <Link key={item._id} href={`/home/items/${encodeURIComponent(item.name)}`} passHref>
-                    <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 cursor-pointer h-full flex flex-col border border-gray-100">
-                      <div className="relative aspect-square w-full">
-                        <Image
-                          src={item.image}
-                          alt={item.name}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                      <div className="p-4 flex-1 flex flex-col">
-                        <h3 className="font-medium text-gray-800 mb-1">{item.name}</h3>
-                        <span className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full mb-3 self-start">
-                          {item.categoryName}
-                        </span>
-                        
-                        <div className="mt-auto">
-                          <div className="flex justify-between items-center mb-3">
-                            <span className="flex items-center text-green-600 font-medium">
-                              <Star className="w-4 h-4 mr-1 fill-current" />
-                              {item.points} pts
-                            </span>
-                            <span className="font-bold text-gray-900">${item.price.toFixed(2)}</span>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
+              {filteredItems.map((item) => (
+                <motion.div
+                  key={item._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  whileHover={{ y: -5 }}
+                >
+                  <Link href={`/home/items/${encodeURIComponent(item.name)}`} passHref>
+                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-emerald-200 transition-all hover:shadow-sm h-full">
+                      <div className="relative aspect-square w-full mb-3 bg-white rounded-lg overflow-hidden flex items-center justify-center">
+                        {item.image ? (
+                          <Image
+                            src={item.image}
+                            alt={item.name}
+                            width={200}
+                            height={200}
+                            className="w-full h-full object-contain p-3"
+                          />
+                        ) : (
+                          <div className="text-gray-300">
+                            <Recycle className="h-10 w-10" />
                           </div>
-                          <button className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center">
-                            View Details <ChevronRight className="w-4 h-4 ml-1" />
-                          </button>
-                        </div>
+                        )}
+                      </div>
+                      <h3 className="text-base font-medium text-gray-800 truncate mb-1">
+                        {item.name}
+                      </h3>
+                      <div className="flex items-center">
+                        <span className="text-base font-bold text-emerald-600">
+                          ${item.price}
+                        </span>
+                        <span className="text-xs text-emerald-600">
+                          /{getMeasurementText(item.measurement_unit)}
+                        </span>
                       </div>
                     </div>
                   </Link>
-                ))}
-              </div>
-            </>
+                </motion.div>
+              ))}
+            </div>
           )}
         </section>
 
-        {/* Impact CTA Section */}
-        <section className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl p-8 md:p-12 text-white mb-12">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-2xl md:text-3xl font-bold mb-4">Your Recycling Makes a Difference</h2>
-            <p className="text-lg text-green-100 mb-6 max-w-2xl mx-auto">
-              Every item you recycle helps conserve resources and protect our planet
-            </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <Link href="/impact" passHref>
-                <button className="px-6 py-3 bg-white text-green-700 font-medium rounded-lg hover:bg-gray-100 transition-colors flex items-center">
-                  Learn About Our Impact <ChevronRight className="w-4 h-4 ml-1" />
-                </button>
-              </Link>
-              <Link href="/how-it-works" passHref>
-                <button className="px-6 py-3 border-2 border-white text-white font-medium rounded-lg hover:bg-white hover:bg-opacity-10 transition-colors flex items-center">
-                  How It Works <ChevronRight className="w-4 h-4 ml-1" />
-                </button>
-              </Link>
+        {/* Recycling Banner */}
+        <section className="relative bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl overflow-hidden mb-12">
+          <div className="absolute inset-0 overflow-hidden opacity-10">
+            {[...Array(6)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute text-white"
+                style={{
+                  top: `${Math.random() * 100}%`,
+                  left: `${Math.random() * 100}%`,
+                  fontSize: `${Math.random() * 12 + 4}px`,
+                }}
+                animate={{
+                  y: [0, -8, 0],
+                  rotate: [0, 360],
+                }}
+                transition={{
+                  duration: Math.random() * 6 + 6,
+                  repeat: Infinity,
+                  ease: "linear",
+                }}
+              >
+                <Recycle />
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="container mx-auto px-4 py-8 relative">
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+              <div className="text-center lg:text-left lg:w-1/2">
+                <h2 className="text-xl md:text-2xl font-bold text-white mb-3">
+                  <span className="inline-block bg-white/20 px-2 py-1 rounded-full text-emerald-100 text-xs mb-2">
+                    X Change
+                  </span>
+                  <br />
+                  Recycle Today for a <span className="text-yellow-300">Better</span> Tomorrow
+                </h2>
+                <p className="text-sm text-emerald-100 mb-4 max-w-md mx-auto lg:mx-0">
+                  Join our community making a difference. Every recycled item counts.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-2 justify-center lg:justify-start">
+                  <Link href="/start-recycling" passHref>
+                    <button className="px-4 py-2 bg-white text-emerald-700 font-medium rounded-lg hover:bg-emerald-50 flex items-center text-xs shadow-sm transition-all">
+                      Start Now <ChevronRight className="w-3 h-3 ml-1" />
+                    </button>
+                  </Link>
+                  <Link href="/learn-more" passHref>
+                    <button className="px-4 py-2 border border-white text-white font-medium rounded-lg hover:bg-white/10 flex items-center text-xs transition-all">
+                      How It Works <Leaf className="w-3 h-3 ml-1" />
+                    </button>
+                  </Link>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 lg:w-1/2 max-w-xs">
+                {[
+                  { icon: <Zap className="w-5 h-5 text-yellow-300" />, value: "1,250+", label: "Daily Recyclers" },
+                  { icon: <Recycle className="w-5 h-5 text-emerald-300" />, value: "5.2K", label: "Items Recycled" },
+                  { icon: <Leaf className="w-5 h-5 text-green-300" />, value: "28K+", label: "CO₂ Reduced" },
+                  { icon: <span className="text-base">♻️</span>, value: "100%", label: "Eco-Friendly" }
+                ].map((stat, i) => (
+                  <motion.div 
+                    key={i}
+                    whileHover={{ y: -2 }}
+                    className="bg-white/10 backdrop-blur-sm p-2 rounded-lg border border-white/20"
+                  >
+                    <div className="flex justify-center mb-1">{stat.icon}</div>
+                    <h3 className="text-lg font-bold text-white text-center">{stat.value}</h3>
+                    <p className="text-emerald-100 text-xs text-center">{stat.label}</p>
+                  </motion.div>
+                ))}
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Additional Components */}
-        <TopMaterial />
-     
+        {/* Top Materials Section */}
+        <section className="mb-12">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-semibold text-gray-800">Top Recycled Materials</h2>
+            <Link href="/materials" passHref>
+              <button className="text-emerald-600 hover:text-emerald-700 font-medium flex items-center text-sm transition-colors">
+                View All
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </button>
+            </Link>
+          </div>
+
+          {materialsLoading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="bg-gray-100 rounded-xl h-44 animate-pulse"></div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
+              {materials.map((material, index) => (
+                <Link key={index} href={`/home/items/${encodeURIComponent(material.name)}`} passHref>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    whileHover={{ y: -5 }}
+                  >
+                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-emerald-200 transition-all hover:shadow-sm">
+                      <div className="relative aspect-square w-full mb-3 bg-white rounded-lg overflow-hidden flex items-center justify-center">
+                        {material.image ? (
+                          <Image
+                            src={material.image}
+                            alt={material.name}
+                            width={200}
+                            height={200}
+                            className="w-full h-full object-contain p-3"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.onerror = null;
+                              target.src = '/fallback-recycle-icon.png';
+                            }}
+                          />
+                        ) : (
+                          <div className="text-gray-300">
+                            <Recycle className="h-10 w-10" />
+                          </div>
+                        )}
+                      </div>
+                      <h3 className="text-base font-medium text-gray-800 truncate mb-1">
+                        {material.name}
+                      </h3>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">
+                          {material.totalRecycled} kg
+                        </span>
+                        <span className="text-sm text-amber-600 flex items-center">
+                          <Star className="w-4 h-4 mr-1 fill-amber-300" />
+                          {material.totalPoints}
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );
