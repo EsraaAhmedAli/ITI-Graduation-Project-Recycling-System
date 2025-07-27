@@ -17,6 +17,7 @@ import PointsActivity from "@/components/accordion/accordion";
 import MembershipTier from "@/components/memberTireShip/memberTireShip";
 import { SocketTester } from "@/lib/socketTester";
 import { TokenDebugger } from "@/components/tokenDebugger";
+import { useLanguage } from "@/context/LanguageContext";
 
 
 
@@ -42,7 +43,7 @@ function ProfileContent() {
   const [activeTab, setActiveTab] = useState("incoming");
 const [isRecyclingModalOpen, setIsRecyclingModalOpen] = useState(false);
 const [isItemsModalOpen, setIsItemsModalOpen] = useState(false);
-
+const{t}=useLanguage()
   const getAllOrders = async (): Promise<void> => {
     try {
       setLoading(true);
@@ -148,8 +149,7 @@ const closeItemsModal = () => {
   return (
     <div className="h-auto bg-green-50 px-4">
       <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-xl p-6 space-y-6">
-        <SocketTester/>
-        <TokenDebugger/>
+
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap">
           <div className="flex items-center space-x-4">
@@ -180,7 +180,7 @@ onClick={() => setIsRecyclingModalOpen(true)}
         className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-700 text-white px-5 py-2 rounded-full shadow-md hover:scale-105 transition-transform duration-200"
       >
         <RefreshCcw size={18} />
-        Return & Earn
+  {t("profile.returnEarn")}
       </button>
 
       {/* Edit Profile Link */}
@@ -189,7 +189,7 @@ onClick={() => setIsRecyclingModalOpen(true)}
         className="flex items-center gap-2 bg-white border border-green-600 text-green-700 px-4 py-2 rounded-full hover:bg-green-100 transition-colors duration-200"
       >
         <Pencil size={16} />
-        Edit Profile
+  {t("profile.editProfile")}
       </Link>
     </div>
         </div>
@@ -203,12 +203,8 @@ onClick={() => setIsRecyclingModalOpen(true)}
 
         {/* Stats - Updated to show loading state for points */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
-          <StatBox label="Total Recycles" value={stats.totalRecycles} />
-          <StatBox 
-            label="Points Collected" 
-            value={stats.points} 
-            loading={pointsLoading}
-          />
+   <StatBox label={t("profile.stats.recycles")} value={stats.totalRecycles} />
+<StatBox label={t("profile.stats.points")} value={stats.points} loading={pointsLoading} />
 <MembershipTier totalPoints={userPoints?.totalPoints} />
         </div>
 
@@ -228,7 +224,7 @@ onClick={() => setIsRecyclingModalOpen(true)}
               }`}
               onClick={() => setActiveTab(tab)}
             >
-              {tab}
+    {t(`profile.tabs.${tab}`)}
             </button>
           ))}
         </div>
@@ -246,24 +242,24 @@ onClick={() => setIsRecyclingModalOpen(true)}
     className=" rounded-xl p-4 bg-green-50 shadow-sm flex flex-col justify-between"
   >
     <div className="flex justify-between items-center mb-2 text-sm text-gray-600">
-      <span>Date: {new Date(order.createdAt).toLocaleDateString()}</span>
+<span>{t("profile.orders.date")}: {new Date(order.createdAt).toLocaleDateString()}</span>
       <span className="flex items-center gap-1 font-semibold">
         {["pending", "assigntocourier"].includes(order.status) && (
           <>
             <Truck size={16} className="text-yellow-600" />
-            <span className="text-yellow-700">In Transit</span>
+    <span className="text-yellow-700">{t("profile.orders.status.inTransit")}</span>
           </>
         )}
         {order.status === "completed" && (
           <>
             <CheckCircle size={16} className="text-green-600" />
-            <span className="text-green-700">Completed</span>
+    <span className="text-green-700">{t("profile.orders.status.completed")}</span>
           </>
         )}
         {order.status === "cancelled" && (
           <>
             <XCircle size={16} className="text-red-600" />
-            <span className="text-red-700 capitalize">{order.status}</span>
+    <span className="text-red-700 capitalize">{t("profile.orders.status.cancelled")}</span>
           </>
         )}
       </span>
@@ -278,10 +274,10 @@ onClick={() => setIsRecyclingModalOpen(true)}
       onClick={() => openItemsModal(order.items)}
       className="self-start text-sm  text-green-500 rounded-md transition"
     >
-      View Details
+  {t("profile.orders.viewDetails")}
     </button>
   </div>
-))}
+))} 
 <ItemsModal
   show={isItemsModalOpen}
   onclose={closeItemsModal}

@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Recycle, Lightbulb, Trash2, Leaf } from 'lucide-react';
 import axios from 'axios';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface Message {
   id: number;
@@ -15,27 +16,42 @@ interface Message {
 }
 
 const RecyclingChatInterface = () => {
+  const { t } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Translated placeholders
   const placeholders = [
-    "What should I do with old electronics?",
-    "How to recycle plastic bottles?",
-    "Can I recycle pizza boxes?",
-    "Where to donate old clothes?",
-    "How to dispose of batteries safely?",
-    "What to do with expired medications?",
-    "Can broken glass be recycled?",
-    "How to recycle old furniture?"
+    t('ecoAssist.placeholders.electronics'),
+    t('ecoAssist.placeholders.plasticBottles'),
+    t('ecoAssist.placeholders.pizzaBoxes'),
+    t('ecoAssist.placeholders.oldClothes'),
+    t('ecoAssist.placeholders.batteries'),
+    t('ecoAssist.placeholders.medications'),
+    t('ecoAssist.placeholders.brokenGlass'),
+    t('ecoAssist.placeholders.oldFurniture')
   ];
   const [currentPlaceholder, setCurrentPlaceholder] = useState(0);
 
+  // Translated quick actions
   const quickActions = [
-    { icon: <Recycle className="w-4 h-4" />, text: "Electronics", query: "How to recycle old electronics?" },
-    { icon: <Trash2 className="w-4 h-4" />, text: "Household", query: "What to do with household items?" },
-    { icon: <Leaf className="w-4 h-4" />, text: "Organic", query: "How to compost organic waste?" }
+    { 
+      icon: <Recycle className="w-4 h-4" />, 
+      text: t('ecoAssist.quickActions.electronics.text'), 
+      query: t('ecoAssist.quickActions.electronics.query')
+    },
+    { 
+      icon: <Trash2 className="w-4 h-4" />, 
+      text: t('ecoAssist.quickActions.household.text'), 
+      query: t('ecoAssist.quickActions.household.query')
+    },
+    { 
+      icon: <Leaf className="w-4 h-4" />, 
+      text: t('ecoAssist.quickActions.organic.text'), 
+      query: t('ecoAssist.quickActions.organic.query')
+    }
   ];
 
   // Rotate placeholders
@@ -44,8 +60,7 @@ const RecyclingChatInterface = () => {
       setCurrentPlaceholder((prev) => (prev + 1) % placeholders.length);
     }, 3000);
     return () => clearInterval(interval);
-  }, []);
-
+  }, [placeholders.length]);
 
   function parseResponse(responseText: string) {
     // Clean Markdown formatting
@@ -99,7 +114,7 @@ const RecyclingChatInterface = () => {
         }
       );
 
-      const reply = response.data.choices?.[0]?.message?.content || 'Sorry, I couldn’t find an answer.';
+      const reply = response.data.choices?.[0]?.message?.content || t('ecoAssist.errors.noAnswer');
       const cleanReply = reply.replace(/\*\*/g, '').replace(/\*/g, '');
       const sections = parseResponse(cleanReply);
 
@@ -121,7 +136,7 @@ const RecyclingChatInterface = () => {
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
         type: 'ai',
-        content: 'Sorry, there was an error processing your request.',
+        content: t('ecoAssist.errors.requestError'),
         timestamp: new Date()
       }]);
     } finally {
@@ -153,10 +168,10 @@ const RecyclingChatInterface = () => {
                 <Lightbulb className="w-8 h-8 text-green-600" />
               </div>
               <h2 className="text-2xl font-semibold text-gray-800 mb-2">
-                How can I help you recycle today?
+                {t('ecoAssist.welcome.title')}
               </h2>
               <p className="text-gray-600 mb-6">
-                Ask me about recycling, donating, or properly disposing of your items
+                {t('ecoAssist.welcome.subtitle')}
               </p>
 
               <div className="flex flex-wrap justify-center gap-3 mb-6">
@@ -195,7 +210,7 @@ const RecyclingChatInterface = () => {
                     {msg.tips && msg.tips.length > 0 && (
                       <div className="mt-3 space-y-1">
                         <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">
-                          Quick Tips:
+                          {t('ecoAssist.quickTips')}:
                         </p>
                         <ul className="space-y-1">
                           {msg.tips.map((tip, index) => (
@@ -214,7 +229,7 @@ const RecyclingChatInterface = () => {
               </div>
             ))}
 
-            {/* Loading indicator - PRESERVED */}
+            {/* Loading indicator */}
             {isTyping && (
               <div className="flex justify-start">
                 <div className="bg-gray-50 border border-gray-100 rounded-2xl rounded-bl-md p-4">
@@ -254,7 +269,7 @@ const RecyclingChatInterface = () => {
             <div className="flex items-center gap-2 mt-3">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
               <span className="text-xs text-gray-500">
-                EcoAssist is ready to help with your recycling questions
+                {t('ecoAssist.statusMessage')}
               </span>
             </div>
           </div>
