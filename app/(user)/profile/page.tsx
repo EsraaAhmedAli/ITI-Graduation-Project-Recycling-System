@@ -122,13 +122,16 @@ const closeItemsModal = () => {
   const filteredOrders = allOrders.filter((order) => {
     const status = order.status
 
+    if ( user?.role === "buyer" && status === "cancelled") {
+      return false;
+    }
     if (activeTab === "incoming") {
-      return ["pending", "assigntocourier"].includes(status);
+     return ["pending", "assigntocourier"].includes(status);
     }
     if (activeTab === "completed") {
       return status === "completed";
     }
-    if (activeTab === "cancelled") {
+      if (activeTab === "cancelled") {
       return status === "cancelled";
     }
     return true;
@@ -175,6 +178,7 @@ const closeItemsModal = () => {
 
    <div className="flex gap-4 items-center mt-4">
       {/* Return & Earn Button */}
+      {user?.role !== "buyer" && (
       <button
 onClick={() => setIsRecyclingModalOpen(true)}
         className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-700 text-white px-5 py-2 rounded-full shadow-md hover:scale-105 transition-transform duration-200"
@@ -182,7 +186,8 @@ onClick={() => setIsRecyclingModalOpen(true)}
         <RefreshCcw size={18} />
         Return & Earn
       </button>
-
+      )}
+      
       {/* Edit Profile Link */}
       <Link
         href="/editprofile"
@@ -218,7 +223,8 @@ onClick={() => setIsRecyclingModalOpen(true)}
 
         {/* Tabs */}
         <div className="flex border-b gap-6">
-          {tabs.map((tab) => (
+          {tabs.filter((tab)=>!(tab === "cancelled"&& user?.role === "buyer"))
+          .map((tab) => (
             <button
               key={tab}
               className={`pb-2 capitalize font-semibold text-sm border-b-2 transition-colors duration-200 ${
