@@ -15,6 +15,7 @@ export const NotificationBell = () => {
     hasMore,
     loadingMore,
   } = useNotification();
+  
 
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);

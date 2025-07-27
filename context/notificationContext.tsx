@@ -48,7 +48,17 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
 
+  // Check if user is admin or delivery - with debug logging
+  const isAdmin = user?.role === "admin";
+  const isDelivery = user?.role === "delivery";
+  const shouldDisableNotifications = isAdmin || isDelivery;
+
+
   const markAsRead = (id: string) => {
+    if (shouldDisableNotifications) {
+      return;
+    }
+    
     setNotifications((prev) =>
       prev.map((notif) => (notif._id === id ? { ...notif, isRead: true } : notif))
     );
@@ -56,6 +66,11 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
   };
 
   const markAllAsRead = async () => {
+    if (shouldDisableNotifications) {
+      console.log('🚫 markAllAsRead blocked for admin/delivery user');
+      return;
+    }
+    
     try {
       const response = await api.patch('/notifications/mark-read', {
         notificationIds: [],
@@ -71,6 +86,11 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
   };
 
   const loadMoreNotifications = async () => {
+    if (shouldDisableNotifications) {
+      console.log('🚫 loadMoreNotifications blocked for admin/delivery user');
+      return;
+    }
+    
     if (!hasMore || loadingMore) return;
 
     setLoadingMore(true);
@@ -93,7 +113,11 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
   };
 
   useEffect(() => {
-    if (user && token) {
+
+    // Only fetch notifications and setup socket for non-admin, non-delivery users
+    if (user && token && !shouldDisableNotifications) {
+      console.log('✅ Setting up notifications for regular user');
+      
       const fetchInitialData = async () => {
         try {
           const [notifsRes, countRes] = await Promise.all([
@@ -109,6 +133,7 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
           setNotifications(normalizedNotifications);
           setCurrentPage(1);
           setHasMore(notifsRes.data.data.hasMore);
+          
           setUnreadCount(countRes.data.data.unreadCount || 0);
         } catch (error) {
           console.error('❌ Failed to fetch notifications:', error);
@@ -146,6 +171,7 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
       });
 
       return () => {
+        console.log('🧹 Cleaning up socket connections');
         const currentSocket = getSocket();
         if (currentSocket) {
           currentSocket.off('notification:new');
@@ -153,10 +179,23 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
           currentSocket.offAny();
         }
       };
+    } else if (shouldDisableNotifications) {
+      console.log('🚫 Disabling notifications for admin/delivery user');
+      // Clear notifications for admin/delivery users
+      setNotifications([]);
+      setUnreadCount(0);
+      setHasMore(false);
+      setCurrentPage(1);
     }
-  }, [user, token]);
+  }, [user, token, shouldDisableNotifications]);
 
   const handleNotificationClick = async (id: string) => {
+    console.log('📝 handleNotificationClick called:', { id, shouldDisableNotifications });
+    if (shouldDisableNotifications) {
+      console.log('🚫 handleNotificationClick blocked for admin/delivery user');
+      return;
+    }
+    
     try {
       const response = await api.patch(`/notifications/${id}/mark-read`);
 
@@ -177,19 +216,26 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
     }
   };
 
+  // Return empty/disabled state for admin/delivery users
+  const contextValue: NotificationContextType = {
+    notifications: shouldDisableNotifications ? [] : notifications,
+    unreadCount: shouldDisableNotifications ? 0 : unreadCount,
+    markAsRead,
+    markAllAsRead,
+    handleNotificationClick,
+    loadMoreNotifications,
+    hasMore: shouldDisableNotifications ? false : hasMore,
+    loadingMore: shouldDisableNotifications ? false : loadingMore,
+  };
+
+  console.log('📊 NotificationProvider context value:', {
+    notificationsCount: contextValue.notifications.length,
+    unreadCount: contextValue.unreadCount,
+    hasMore: contextValue.hasMore
+  });
+
   return (
-    <NotificationContext.Provider
-      value={{
-        notifications,
-        unreadCount,
-        markAsRead,
-        markAllAsRead,
-        handleNotificationClick,
-        loadMoreNotifications,
-        hasMore,
-        loadingMore,
-      }}
-    >
+    <NotificationContext.Provider value={contextValue}>
       {children}
     </NotificationContext.Provider>
   );
