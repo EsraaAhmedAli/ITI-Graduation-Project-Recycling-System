@@ -12,6 +12,7 @@ import { setAccessToken } from "@/lib/axios";
 import { useUserAuth } from "@/context/AuthFormContext";
 import Link from "next/link";
 import { toast } from "react-toastify";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function LoginPage(): React.JSX.Element {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -20,7 +21,7 @@ export default function LoginPage(): React.JSX.Element {
   const [isValid, setIsValid] = useState(false);
   const { setUser, setToken } = useUserAuth();
   const router = useRouter();
-
+const{t}=useLanguage()
   const validateEmail = (email: string): boolean => {
     const trimmed = email.trim();
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
@@ -60,7 +61,7 @@ export default function LoginPage(): React.JSX.Element {
       setAccessToken(res.accessToken);
       router.push("/");
     } catch (err) {
-      toast.success("Login failed. Please check your credentials.");
+      toast.error(t("auth.login.loginFailed")); // translated error
     } finally {
       setIsValid(false);
     }
@@ -69,27 +70,27 @@ export default function LoginPage(): React.JSX.Element {
   return (
     <Wrapper>
       <h2 className="text-2xl font-bold text-center text-green-800 mb-1">
-        Welcome back
+        {t("auth.login.title")}
       </h2>
-      <p className="text-center text-gray-600 mb-4">Log in to continue</p>
+      <p className="text-center text-gray-600 mb-4">{t("auth.login.subtitle")}</p>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <FloatingInput
           id="email"
           type="email"
-          label="Email"
+          label={t("auth.login.email")}
           value={form.email}
           maxLength={30}
           onChange={(e) => handleChange("email", e.target.value)}
           required
           color={errors.email ? "failure" : form.email ? "success" : undefined}
-          helperText={errors.email ? "Invalid email format" : undefined}
+          helperText={errors.email ? t("auth.login.emailError") : undefined}
         />
 
         <FloatingInput
           id="password"
           type={showPassword ? "text" : "password"}
-          label="Password"
+          label={t("auth.login.password")}
           value={form.password}
           maxLength={20}
           onChange={(e) => handleChange("password", e.target.value)}
@@ -98,9 +99,8 @@ export default function LoginPage(): React.JSX.Element {
             errors.password ? "failure" : form.password ? "success" : undefined
           }
           helperText={
-            errors.password
-              ? "8–20 characters, 1 uppercase, 1 number, 1 symbol"
-              : undefined
+                   errors.password ? t("auth.login.passwordError") : undefined
+
           }
           icon={
             showPassword ? (
@@ -123,7 +123,7 @@ export default function LoginPage(): React.JSX.Element {
           disabled={isValid}
           className="bg-primary text-white m-auto p-2 w-full rounded-lg hover:bg-secondary cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isValid ? "Signing in..." : "Sign in"}
+          {isValid ? t("auth.login.signingIn") : t("auth.login.signIn")}
         </Button>
       </form>
 
@@ -131,11 +131,11 @@ export default function LoginPage(): React.JSX.Element {
         href="/auth/forget-password"
         className="text-sm text-center flex flex-row justify-end ms-auto mt-5 text-blue-600 hover:underline cursor-pointer"
       >
-        Forgot your password?
+        {t("auth.login.forgotPassword")}
       </Link>
 
       <div className="mt-6 text-center text-xs text-gray-400">
-        Don’t worry, your information is 100% secure.
+        {t("auth.login.securityNote")}
       </div>
     </Wrapper>
   );

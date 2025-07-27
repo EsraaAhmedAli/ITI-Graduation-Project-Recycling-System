@@ -15,7 +15,7 @@ const AdminUsersPage = () => {
   const router = useRouter();
 const queryClient = useQueryClient();
 
-  const{data:users,isLoading,error}= useUsers()
+  const{data:users,isLoading,error}= useUsers('buyer')
   // const fetchUsers = async () => {
   //   try {
   //     const res = await api.get("/users"); // Your admin-protected endpoint

@@ -1,11 +1,12 @@
 "use client";
+import { useLanguage } from "@/context/LanguageContext";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function NavbarSearch() {
   const router = useRouter();
   const [typing, setTyping] = useState(false);
-
+const{t} = useLanguage()
   const handleFocus = () => {
     // Delay navigation to allow width animation to apply smoothly
     setTyping(true);
@@ -40,7 +41,7 @@ export default function NavbarSearch() {
         <input
           type="search"
           id="default-search"
-          placeholder="Search items..."
+          placeholder={t('navbar.searchplaceholder')}
           className="block w-full p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 transition-all"
           onFocus={handleFocus}
         />

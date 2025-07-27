@@ -1,0 +1,203 @@
+{
+  "indexPage": {
+    "title": {
+      "line1": "Recycle Today for a",
+      "line2": "Better Tomorrow"
+    },
+    "description": "Join our community-driven platform and make recycling simple, rewarding, and impactful",
+    "cta": {
+      "drop": "Drop Your Waste!",
+      "learn": "Learn More"
+    },
+    "features": {
+      "voice": "Record Your Items",
+      "schedule": "Choose a Date and Time",
+      "earn": "Get Paid or Donate",
+      "voiceInput": "Voice Input",
+      "pickupScheduling": "Pickup Scheduling",
+      "earnorshare": "Earn or Share"
+    },
+    "steps": {
+      "howItWorks": "How It Works",
+      "step1": {
+        "title": "Sign Up",
+        "desc": "Create your account in just 30 seconds"
+      },
+      "step2": {
+        "title": "Select Type of Waste",
+        "desc": "Choose from categories"
+      },
+      "step3": {
+        "title": "Connect & Recycle",
+        "desc": "Find nearby centers or schedule pickup"
+      }
+    },
+    "community": {
+      "title": "Join Our",
+      "highlight": "Eco Community",
+      "desc1": "Get exclusive recycling tips, sustainability insights, and special offers delivered straight to your inbox.",
+      "desc2": "Join <1>10,000+</1> eco-warriors making a difference"
+    },
+    "subscribe": {
+      "enter_email": "Enter your email address",
+      "subscribe_now": "Subscribe Now",
+      "invalid_email": "Please enter a valid email.",
+      "success_message": "Subscribed successfully! 🎉",
+      "error_message": "Something went wrong."
+    }
+  },
+  "navbar": {
+    "home": "Home",
+    "marketplace": "Marketplace",
+    "categories": "Categories",
+    "ecoAssist": "Eco-Assist",
+    "collection": "Collection",
+    "myCollection": "My Collection",
+    "items": "items",
+    "totalItems": "Total Items:",
+    "viewFullCollection": "View Full Collection",
+    "yourCollectionEmpty": "Your collection is empty",
+    "addItemsToStart": "Add recyclable items to get started",
+    "profile": "My Profile",
+    "settings": "Settings",
+    "myOrders": "My Orders",
+    "signOut": "Sign Out",
+    "login": "Login",
+    "startRecycling": "Start Recycling",
+    "logout": "Logout",
+    "title": "XChange",
+    "searchplaceholder": "Search items..."
+  },
+
+  "footer": {
+    "title": "XChange",
+
+    "slogan": "Recycle smarter, live cleaner.",
+    "quickLinks": "Quick Links",
+    "home": "Home",
+    "about": "About",
+    "cart": "Cart",
+    "contact": "Contact",
+    "email": "Email",
+    "phone": "Phone",
+    "rights": "All rights reserved."
+  },
+  "breadcrumbs": {
+    "home": "Home",
+    "marketplace": "Marketplace",
+    "categories": "Categories",
+    "category": "Category",
+    "ecoAssist": "Eco-Assist",
+    "collection": "Collection",
+    "cart": "Cart",
+    "profile": "Profile",
+    "settings": "Settings",
+    "orders": "Orders",
+    "about": "About",
+    "contact": "Contact",
+    "auth": "Authentication",
+    "login": "Login",
+    "signup": "Sign Up",
+    "dashboard": "Dashboard",
+    "editProfile": "Edit Profile"
+  },
+  "ecoAssist": {
+    "welcome": {
+      "title": "How can I help you recycle today?",
+      "subtitle": "Ask me about recycling, donating, or properly disposing of your items"
+    },
+    "placeholders": {
+      "electronics": "What should I do with old electronics?",
+      "plasticBottles": "How to recycle plastic bottles?",
+      "pizzaBoxes": "Can I recycle pizza boxes?",
+      "oldClothes": "Where to donate old clothes?",
+      "batteries": "How to dispose of batteries safely?",
+      "medications": "What to do with expired medications?",
+      "brokenGlass": "Can broken glass be recycled?",
+      "oldFurniture": "How to recycle old furniture?"
+    },
+    "quickActions": {
+      "electronics": {
+        "text": "Electronics",
+        "query": "How to recycle old electronics?"
+      },
+      "household": {
+        "text": "Household",
+        "query": "What to do with household items?"
+      },
+      "organic": {
+        "text": "Organic",
+        "query": "How to compost organic waste?"
+      }
+    },
+    "quickTips": "Quick Tips",
+    "statusMessage": "EcoAssist is ready to help with your recycling questions",
+    "errors": {
+      "noAnswer": "Sorry, I couldn't find an answer.",
+      "requestError": "Sorry, there was an error processing your request."
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Log in to continue",
+      "email": "Email",
+      "password": "Password",
+      "emailError": "Invalid email format",
+      "passwordError": "8–20 characters, 1 uppercase, 1 number, 1 symbol",
+      "signIn": "Sign in",
+      "signingIn": "Signing in...",
+      "forgotPassword": "Forgot your password?",
+      "securityNote": "Don’t worry, your information is 100% secure.",
+      "loginFailed": "Login failed. Please check your credentials."
+    }
+  },
+  "profile": {
+    "returnEarn": "Return & Earn",
+    "editProfile": "Edit Profile",
+    "stats": {
+      "recycles": "Total Recycles",
+      "points": "Points Collected"
+    },
+    "tabs": {
+      "incoming": "Incoming",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "orders": {
+      "loading": " orders...",
+      "empty": "No orders in this tab yet.",
+      "date": "Date",
+      "status": {
+        "inTransit": "In Transit",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "viewDetails": "View Details",
+      "cancelConfirm": "Are you sure you want to cancel this order?",
+      "confirmYes": "Yes",
+      "confirmNo": "No",
+      "cancelled": "Order cancelled",
+      "failed": "Failed to cancel order",
+      "safe": "Your order is safe"
+    },
+    "location": "Cairo, July 2025"
+  },
+  "itemsModal": {
+    "headerTitle": "Order Items",
+    "headerSubtitle": "A detailed list of the items in this order",
+    "quantity": "Quantity",
+    "unitPrice": "Unit Price",
+    "points": "Points",
+    "description": "Description",
+    "unnamedItem": "Unnamed Item",
+    "orderTotal": "Order Total",
+    "itemsCount": "{{count}} item{{count === '1' ? '' : 's'}}",
+    "totalPrice": "{{total}} EGP",
+    "currency": "EGP",
+
+    "totalPoints": "Total Points: {{points}}",
+    "noItemsTitle": "No Items Found",
+    "noItemsDesc": "This order doesn't contain any items."
+  }
+}
