@@ -1,6 +1,7 @@
 'use client';
 
-import React, {  useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import DynamicTable from '@/components/shared/dashboardTable';
 import api from '@/lib/axios';
 import Loader from '@/components/common/loader';
@@ -10,21 +11,46 @@ import CourierSelectionModal from '../../../components/courierSelectionModal';
 import Swal from 'sweetalert2';
 import { toast } from 'react-toastify';
 import { useUsers } from '@/hooks/useGetUsers';
+import { usePagination } from '@/hooks/usePagination';
+import { TablePagination } from '../../../components/tablePagination/tablePagination';
+
+const fetchOrders = async (page: number, limit: number) => {
+  const { data } = await api.get('/admin/orders', { params: { page, limit } });
+  return data;
+};
 
 export default function Page() {
-  const [orders, setOrders] = useState([]);
-  const [isItemsModalOpen, setIsItemsModalOpen] = useState<boolean>(false);
-  const [selectedOrderItems, setSelectedOrderItems] = useState<null | any[]>(null);
-  const [isCourierModalOpen, setIsCourierModalOpen] = useState<boolean>(false);
-  const [selectedOrderForCourier, setSelectedOrderForCourier] = useState<string | null>(null);
-  const [couriers, setCouriers] = useState([]);
+  const { currentPage, itemsPerPage, handlePageChange } = usePagination(1, 10);
+  const limit = 10;
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // React Query fetch with pagination
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
+    queryKey: ['adminOrders', currentPage],
+    queryFn: () => fetchOrders(currentPage, itemsPerPage),
+    keepPreviousData: true,
+  });
+
+   const orders = data?.data || [];
+  const totalItems = data?.totalOrders || 0;
+  const totalPages = data?.totalPages || 1;
+ const paginationProps = {
+    currentPage,
+    totalPages,
+    onPageChange: handlePageChange,
+    startIndex: (currentPage - 1) * itemsPerPage,
+    endIndex: currentPage * itemsPerPage,
+    totalItems,
+    isFetching
+  };
+  // Modal & selection states
+  const [isItemsModalOpen, setIsItemsModalOpen] = useState(false);
+  const [selectedOrderItems, setSelectedOrderItems] = useState<null | any[]>(null);
+  const [isCourierModalOpen, setIsCourierModalOpen] = useState(false);
+  const [selectedOrderForCourier, setSelectedOrderForCourier] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<null | {
     name: string;
     phone: string;
-    imageUrl: string,
+    imageUrl: string;
     email: string;
     address: {
       city: string;
@@ -37,24 +63,9 @@ export default function Page() {
   }>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const getOrdersByAdmin = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await api.get('/admin/orders');
-      setOrders(res.data.data || []);
-      console.log(res.data);
-      
-    } catch (err) {
-      console.error('Failed to fetch orders:', err);
-      setError('Failed to fetch orders. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: couriers } = useUsers("delivery");
 
-  const { data } = useUsers("delivery");
-
+  // Delete order handler
   const handleDeleteOrder = async (orderId: string) => {
     const result = await Swal.fire({
       title: 'Are you sure?',
@@ -68,9 +79,9 @@ export default function Page() {
 
     if (result.isConfirmed) {
       try {
-        await api.delete(`/orders/${orderId.orderId}`);
+        await api.delete(`/orders/${orderId}`);
         Swal.fire('Deleted!', 'The order has been deleted.', 'success');
-        setOrders((prev) => prev.filter((order: any) => order._id !== orderId.orderId));
+        refetch();
       } catch (err) {
         console.error(err);
         Swal.fire('Error', 'Failed to delete order. Try again.', 'error');
@@ -78,23 +89,24 @@ export default function Page() {
     }
   };
 
+  // Assign courier handler
   const handleAssignToCourier = async (orderId: string, courierId: string) => {
     try {
-      await api.put(`/orders/${orderId}/assign-courier`, { 
-        courierId: courierId,
-        status: 'assignToCourier' 
+      await api.put(`/orders/${orderId}/assign-courier`, {
+        courierId,
+        status: 'assignToCourier'
       });
       toast.success('Order assigned to courier successfully');
       setIsCourierModalOpen(false);
       setSelectedOrderForCourier(null);
-      await getOrdersByAdmin();
+      refetch();
     } catch (err) {
       console.error('Failed to assign courier:', err);
       toast.error('Failed to assign courier to order');
     }
   };
 
-  // New function to handle cancellation with reason
+  // Cancel order handler with reason
   const handleCancelOrder = async (orderId: string) => {
     const { value: reason } = await Swal.fire({
       title: 'Cancel Order',
@@ -122,9 +134,8 @@ export default function Page() {
           status: 'cancelled',
           reason: reason.trim()
         });
-        
         toast.success('Order cancelled successfully');
-        await getOrdersByAdmin();
+        refetch();
       } catch (err) {
         console.error('Failed to cancel order:', err);
         toast.error('Failed to cancel order');
@@ -132,14 +143,10 @@ export default function Page() {
     }
   };
 
-  useEffect(() => {
-    getOrdersByAdmin();
-  }, []);
-
   const closingModalFn = () => {
-    setIsModalOpen(false)
-  }
- 
+    setIsModalOpen(false);
+  };
+
   const getStatusBadge = (status: string) => {
     const base = 'px-2 py-1 text-xs font-semibold rounded-full';
 
@@ -159,14 +166,14 @@ export default function Page() {
 
   const STATUS = {
     PENDING: 'pending',
-    ASSIGN_TO_COURIER: 'assignToCourier', 
+    ASSIGN_TO_COURIER: 'assignToCourier',
     COMPLETED: 'completed',
     CANCELLED: 'cancelled'
   } as const;
 
   const normalizeStatus = (status: string): string => {
     const normalized = status.toLowerCase().trim();
-    
+
     switch (normalized) {
       case 'pending':
         return STATUS.PENDING;
@@ -192,86 +199,52 @@ export default function Page() {
     [STATUS.CANCELLED]: [],
   };
 
-  // Show loading state
-  if (loading) {
-    return (
-      <Loader title='orders'/>
-    );
+  if (isLoading) {
+    return <Loader title="orders" />;
   }
 
-  // Show error state
-  if (error) {
+  if (isError) {
     return (
-      <>
-        <div className="flex flex-col items-center justify-center min-h-96 bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">Error Loading Orders</h3>
-          <p className="text-gray-600 mb-4 text-center">{error}</p>
-          <button
-            onClick={getOrdersByAdmin}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
-          >
-            Try Again
-          </button>
+      <div className="flex flex-col items-center justify-center min-h-96 bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+          <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
         </div>
-      </>
+        <h3 className="text-xl font-semibold text-gray-800 mb-2">Error Loading Orders</h3>
+        <p className="text-gray-600 mb-4 text-center">{(error as any)?.message || "Failed to load orders."}</p>
+        <button
+          onClick={() => refetch()}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+        >
+          Try Again
+        </button>
+      </div>
     );
   }
 
-  // Show empty state
   if (!orders || orders.length === 0) {
     return (
-      <>
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-800">Orders</h2>
-              <button
-                onClick={getOrdersByAdmin}
-                className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors duration-200"
-              >
-                Refresh
-              </button>
-            </div>
-          </div>
-          
-          <div className="flex flex-col items-center justify-center min-h-96 p-8">
-            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
-              <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M8 11v6a2 2 0 002 2h4a2 2 0 002-2v-6M8 11h8" />
-              </svg>
-            </div>
-            <h3 className="text-2xl font-semibold text-gray-800 mb-2">No Orders Found</h3>
-            <p className="text-gray-600 text-center mb-6 max-w-md">
-              There are currently no orders in the system. Orders will appear here once customers start placing them.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={getOrdersByAdmin}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Refresh
-              </button>
-            </div>
-          </div>
-        </div>
-      </>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+        <h3 className="text-2xl font-semibold text-gray-800 mb-2">No Orders Found</h3>
+        <p className="text-gray-600 mb-6 max-w-md mx-auto">
+          There are currently no orders in the system. Orders will appear here once customers start placing them.
+        </p>
+        <button
+          onClick={() => refetch()}
+          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+        >
+          Refresh
+        </button>
+      </div>
     );
   }
 
   const transformedData = orders.map((order: any) => ({
     orderId: order._id,
     onClickItemsId: () => {
-      setSelectedOrderItems(order.items)
-      console.log(order.items);
-      setIsItemsModalOpen(true)
+      setSelectedOrderItems(order.items);
+      setIsItemsModalOpen(true);
     },
     status: order.status,
     createdAt: new Date(order.createdAt).toLocaleString(),
@@ -287,7 +260,7 @@ export default function Page() {
       });
       setIsModalOpen(true);
     },
-    onDelete: () => handleDeleteOrder(order._id), 
+    onDelete: () => handleDeleteOrder(order._id),
   }));
 
   const columns = [
@@ -303,9 +276,9 @@ export default function Page() {
         </button>
       ),
     },
-    { 
-      key: 'orderId', 
-      label: 'Order ID',    
+    {
+      key: 'orderId',
+      label: 'Order ID',
       render: (row: any) => (
         <button
           onClick={row.onClickItemsId}
@@ -313,13 +286,13 @@ export default function Page() {
         >
           {row.orderId}
         </button>
-      ), 
+      ),
     },
     {
       key: 'status',
       label: 'Status',
       sortable: false,
-      render: (order) => {
+      render: (order: any) => {
         const currentStatus = order.status.toLowerCase();
         const nextStatuses = allowedStatusTransitions[currentStatus] || [];
 
@@ -342,7 +315,7 @@ export default function Page() {
         const handleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
           const newStatus = e.target.value;
           if (newStatus === currentStatus) return;
-          
+
           if (newStatus === 'assignToCourier') {
             setSelectedOrderForCourier(order.orderId);
             setIsCourierModalOpen(true);
@@ -361,7 +334,7 @@ export default function Page() {
           try {
             await api.put(`/admin/orders/${order.orderId}/status`, { status: newStatus });
             toast.success(`Order status updated to ${newStatus}`);
-            await getOrdersByAdmin();
+            refetch();
           } catch {
             toast.error('Failed to update order status.');
           }
@@ -400,21 +373,25 @@ export default function Page() {
 
   return (
     <>
-      <DynamicTable
+       <DynamicTable
         data={transformedData}
         columns={columns}
         title="Orders"
-        itemsPerPage={5}
+        itemsPerPage={itemsPerPage}
         showAddButton={false}
         showFilter={false}
         onDelete={(id: string) => handleDeleteOrder(id)}
       />
+            {totalPages > 1 && <TablePagination {...paginationProps} />}
 
-      <UserModal selectedUser={selectedUser} show={isModalOpen} closingModalFn={closingModalFn}/>
+
+      
+
+      <UserModal selectedUser={selectedUser} show={isModalOpen} closingModalFn={closingModalFn} />
       <ItemsModal selectedOrderItems={selectedOrderItems} show={isItemsModalOpen} onclose={() => setIsItemsModalOpen(false)} />
-      <CourierSelectionModal 
+      <CourierSelectionModal
         show={isCourierModalOpen}
-        couriers={data}
+        couriers={couriers}
         onSelectCourier={(courierId: string) => handleAssignToCourier(selectedOrderForCourier!, courierId)}
         onClose={() => {
           setIsCourierModalOpen(false);

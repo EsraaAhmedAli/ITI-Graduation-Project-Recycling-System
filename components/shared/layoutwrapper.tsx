@@ -6,6 +6,7 @@ import Navbar from "@/components/common/Navbar";
 import { UserAuthContext } from "@/context/AuthFormContext";
 import { ToastContainer } from "react-toastify";
 import Footer from "../common/Footer";
+import { NotificationProvider } from "@/context/notificationContext";
 
 export default function LayoutWrapper({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -21,8 +22,8 @@ export default function LayoutWrapper({ children }: { children: ReactNode }) {
 
     if (isAdmin && !pathname.startsWith("/admin")) {
       router.push("/admin/dashboard");
-    } else if (isDelivery && !pathname.startsWith("/deilvery")) {
-      router.push("/deilveryDashboard");
+    } else if (isDelivery && !pathname.startsWith("/delivery")) {
+      router.push("/deliveryDashboard");
     }
   }, [isAdmin, isDelivery, isLoading, pathname, router]);
 
@@ -30,12 +31,19 @@ export default function LayoutWrapper({ children }: { children: ReactNode }) {
 
   const shouldHideLayout = isAdmin || isDelivery;
 
+  // Conditionally wrap children with NotificationProvider only if NOT admin
+  const content = !isAdmin ? (
+    <NotificationProvider>{children}</NotificationProvider>
+  ) : (
+    children
+  );
+
   return (
     <>
       {!shouldHideLayout && <Navbar />}
       <ToastContainer />
 
-      {children}
+      {content}
 
       {!shouldHideLayout && <Footer />}
     </>

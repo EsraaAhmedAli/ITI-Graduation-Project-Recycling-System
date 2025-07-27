@@ -99,15 +99,28 @@ export default function ItemsModal({show,onclose,selectedOrderItems}) {
               </div>
               <div>
                 <h4 className="text-lg font-semibold text-gray-800">Order Total</h4>
-                <p className="text-sm text-gray-600">
-                  {selectedOrderItems.reduce((sum, item) => sum + (item.quantity || 0), 0)} items
-                </p>
+  <p className="text-sm text-gray-600">
+  {selectedOrderItems
+    .reduce((sum, item) => sum + (item.quantity || 0), 0)
+    .toLocaleString()} items
+</p>
+
+
               </div>
             </div>
             <div className="text-right">
-              <p className="text-2xl font-bold text-green-600">
-                 {selectedOrderItems.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 0)), 0).toFixed(2)} EGP
-              </p>
+   <p className="text-2xl font-bold text-green-600">
+  {(() => {
+    const total = selectedOrderItems.reduce(
+      (sum, item) => sum + ((item.price || 0) * (item.quantity || 0)),
+      0
+    );
+    return total % 1 === 0
+      ? total.toLocaleString()
+      : total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  })()} EGP
+</p>
+
                 <p className="text-sm font-semibold text-green-700">
     Total Points: {selectedOrderItems.reduce((sum, item) => sum + ((item.points || 0) * (item.quantity || 0)), 0)}
   </p>

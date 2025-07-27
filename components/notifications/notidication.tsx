@@ -11,6 +11,9 @@ export const NotificationBell = () => {
     unreadCount,
     markAllAsRead,
     handleNotificationClick,
+    loadMoreNotifications,
+    hasMore,
+    loadingMore,
   } = useNotification();
 
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -18,18 +21,13 @@ export const NotificationBell = () => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        notificationRef.current &&
-        !notificationRef.current.contains(event.target as Node)
-      ) {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
         setIsNotificationOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
- 
 
   return (
     <div className="relative" ref={notificationRef}>
@@ -66,7 +64,7 @@ export const NotificationBell = () => {
                 const IconComponent = notification.icon || Bell;
                 return (
                   <div
-                    key={notification.id}
+                    key={notification._id}
                     onClick={() => handleNotificationClick(notification._id)}
                     className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors ${
                       !notification.isRead ? 'bg-blue-50' : ''
@@ -85,16 +83,14 @@ export const NotificationBell = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="font-medium text-gray-900 text-sm">
-                          {notification.title}
-                        </p>
-                        {!notification.read && (
+                        <p className="font-medium text-gray-900 text-sm">{notification.title}</p>
+                        {!notification.isRead && (
                           <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
                         )}
                       </div>
-                      <p className="text-gray-600 text-sm mt-1 line-clamp-2">
-                        {notification.message}
-                      </p>
+<p className="text-gray-600 text-sm mt-1 whitespace-pre-line">
+  {notification.body}
+</p>
                       <p className="text-gray-400 text-xs mt-1">
                         {new Date(notification.createdAt).toLocaleString()}
                       </p>
@@ -110,15 +106,15 @@ export const NotificationBell = () => {
             )}
           </div>
 
-          {notifications.length > 0 && (
+          {hasMore && (
             <div className="border-t border-gray-100 pt-2">
-              <Link
-                href="/notifications"
-                onClick={() => setIsNotificationOpen(false)}
-                className="block px-4 py-2 text-center text-sm text-blue-600 hover:text-blue-700 hover:bg-gray-50 font-medium transition-colors"
+              <button
+                onClick={loadMoreNotifications}
+                disabled={loadingMore}
+                className="block w-full px-4 py-2 text-center text-sm text-blue-600 hover:text-blue-700 hover:bg-gray-50 font-medium transition-colors"
               >
-                View all notifications
-              </Link>
+                {loadingMore ? 'Loading...' : 'See more'}
+              </button>
             </div>
           )}
         </div>
