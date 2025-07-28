@@ -5,21 +5,24 @@ import Image from "next/image";
 import { CartItem, useCart } from "@/context/CartContext";
 import { Recycle, Leaf, Package, Minus, Plus } from "lucide-react";
 import { useGetItems } from "@/hooks/useGetItems";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function ItemDetailsPage() {
   const { itemName } = useParams();
   const decodedName = typeof itemName === "string" ? decodeURIComponent(itemName) : "";
   const [selectedQuantity, setSelectedQuantity] = useState(1);
   const { addToCart } = useCart();
+const{t} = useLanguage()
 
   const { data: items } = useGetItems();
   const item = items?.find(
     (i) => i.name.toLowerCase() === decodedName.toLowerCase()
   ) ?? null;
 
-  const getMeasurementText = (unit: number) => {
-    return unit === 1 ? 'kg' : 'pieces';
-  };
+const getMeasurementText = (unit: 1 | 2): string => {
+  return unit === 1 ? t('common.unitKg', { defaultValue: ' kg' }) : t('common.unitPiece', { defaultValue: ' item' });
+};
+
 
   if (!item) {
     return (
@@ -52,7 +55,6 @@ export default function ItemDetailsPage() {
       addToCart(convertToCartItem(item, selectedQuantity));
     }
   };
-
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -64,7 +66,7 @@ export default function ItemDetailsPage() {
                 src={item?.image}
                 alt={item?.name}
                 fill
-                className="object-cover"
+                className="object-contain"
                 priority
               />
             </div>
@@ -75,9 +77,11 @@ export default function ItemDetailsPage() {
             {/* Category and Title */}
             <div>
               <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 mb-3">
-                {item?.categoryName}
+                {t(`categories.${item?.categoryName}`)}
               </span>
-              <h1 className="text-3xl font-bold text-gray-900">{item?.name}</h1>
+              <h1 className="text-3xl font-bold text-gray-900">                {t(`categories.subcategories.${decodedName.toLowerCase().replace(/\s+/g, "-")}`)}
+
+</h1>
               {item?.description && (
                 <p className="text-gray-600 mt-2">{item?.description}</p>
               )}
@@ -86,16 +90,13 @@ export default function ItemDetailsPage() {
             {/* Price and Points */}
             <div className="flex items-baseline space-x-4">
               <span className="text-3xl font-bold text-gray-900">${(item?.price * selectedQuantity).toFixed(2)}</span>
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                <Recycle className="w-4 h-4 mr-1" />
-                {item.points * selectedQuantity} points
-              </span>
+           
             </div>
 
             {/* Stock Status */}
             <div className="pt-4 border-t border-gray-200">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-700">Available Stock</span>
+                <span className="text-sm font-medium text-gray-700">{t('common.availableStock')}</span>
                 <span className={`text-sm font-medium ${
                   isOutOfStock ? 'text-red-600' : 
                   isLowStock ? 'text-amber-600' : 'text-green-600'
@@ -105,22 +106,26 @@ export default function ItemDetailsPage() {
               </div>
               
               {/* Dynamic Stock Indicator */}
-              <div className="mb-2">
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className={`h-2 rounded-full ${
-                      stockPercentage < 20 ? 'bg-red-500' : 
-                      stockPercentage < 50 ? 'bg-amber-400' : 'bg-green-500'
-                    }`}
-                    style={{ width: `${stockPercentage}%` }}
-                  ></div>
-                </div>
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>After purchase: {Math.max(0, remainingQuantity)} {getMeasurementText(item.measurement_unit)}</span>
-                  <span>{stockPercentage.toFixed(0)}% remaining</span>
-                </div>
-              </div>
-
+      <div className="mb-2">
+  <div className="w-full bg-gray-200 rounded-full h-2">
+    <div 
+      className={`h-2 rounded-full ${
+        stockPercentage < 20 ? 'bg-red-500' : 
+        stockPercentage < 50 ? 'bg-amber-400' : 'bg-green-500'
+      }`}
+      style={{ width: `${stockPercentage}%` }}
+    ></div>
+  </div>
+  <div className="flex justify-between text-xs text-gray-500 mt-1">
+    <span>
+      {t('common.afterPurchase', { 
+        quantity: Math.max(0, remainingQuantity), 
+        unit: getMeasurementText(item.measurement_unit) 
+      })}
+    </span>
+    <span>{t('common.percentageRemaining', { percentage: stockPercentage.toFixed(0) })}</span>
+  </div>
+</div>
               {isLowStock && !isOutOfStock && (
                 <p className="text-xs text-amber-600 flex items-center">
                   <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -133,7 +138,7 @@ export default function ItemDetailsPage() {
 
             {/* Quantity Selector */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Quantity</label>
+              <label className="block text-sm font-medium text-gray-700">{t('common.quantity')}</label>
               <div className="flex items-center space-x-3">
                 <button
                   onClick={() => setSelectedQuantity(prev => Math.max(1, prev - 1))}
@@ -165,30 +170,30 @@ export default function ItemDetailsPage() {
               }`}
             >
               <Package className="w-5 h-5" />
-              <span>{isOutOfStock ? 'Out of Stock' : 'Add to Recycling Cart'}</span>
+<span>{isOutOfStock ? t('common.outOfStock') : t('common.addToRecyclingCart')}</span>
             </button>
 
             {/* Environmental Benefits */}
-            <div className="bg-gray-50 rounded-xl p-5 space-y-3">
-              <h3 className="font-semibold text-gray-800 flex items-center">
-                <Leaf className="w-5 h-5 mr-2 text-green-600" />
-                Environmental Benefits
-              </h3>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li className="flex items-start">
-                  <span className="text-green-600 mr-2">•</span>
-                  Reduces {(selectedQuantity * 2.5).toFixed(1)}kg of CO₂ emissions
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-600 mr-2">•</span>
-                  Saves {selectedQuantity * 15} liters of water
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-600 mr-2">•</span>
-                  Conserves natural resources by recycling materials
-                </li>
-              </ul>
-            </div>
+         <div className="bg-gray-50 rounded-xl p-5 space-y-3">
+  <h3 className="font-semibold text-gray-800 flex items-center">
+    <Leaf className="w-5 h-5 mr-2 text-green-600" />
+    {t('environmentalBenefit.environmentalBenefits')}
+  </h3>
+  <ul className="space-y-2 text-sm text-gray-600">
+    <li className="flex items-start">
+      <span className="text-green-600 mr-2">•</span>
+      {t('environmentalBenefit.reducesCO2Emissions', { amount: (selectedQuantity * 2.5).toFixed(1) })}
+    </li>
+    <li className="flex items-start">
+      <span className="text-green-600 mr-2">•</span>
+      {t('environmentalBenefit.savesWater', { amount: selectedQuantity * 15 })}
+    </li>
+    <li className="flex items-start">
+      <span className="text-green-600 mr-2">•</span>
+      {t('environmentalBenefit.conservesNaturalResources')}
+    </li>
+  </ul>
+</div>
           </div>
         </div>
 
@@ -196,35 +201,35 @@ export default function ItemDetailsPage() {
         <div className="mt-16 space-y-8">
           {/* Recycling Process */}
           <div className="bg-gray-50 rounded-xl p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Our Recycling Process</h2>
-            <div className="grid md:grid-cols-3 gap-6">
-              {[
-                {
-                  icon: <Package className="w-6 h-6 text-green-600" />,
-                  title: "Collection",
-                  description: "We pick up your items at your convenience."
-                },
-                {
-                  icon: <Recycle className="w-6 h-6 text-green-600" />,
-                  title: "Processing",
-                  description: "Items are safely broken down into raw materials."
-                },
-                {
-                  icon: <Leaf className="w-6 h-6 text-green-600" />,
-                  title: "New Life",
-                  description: "Materials are reused in new products."
-                }
-              ].map((step, index) => (
-                <div key={index} className="space-y-3">
-                  <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center">
-                    {step.icon}
-                  </div>
-                  <h3 className="font-semibold text-lg">{step.title}</h3>
-                  <p className="text-gray-600">{step.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+  <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('recycleProcess.title')}</h2>
+  <div className="grid md:grid-cols-3 gap-6">
+    {[
+      {
+        icon: <Package className="w-6 h-6 text-green-600" />,
+        title: t('recycleProcess.collection.title'),
+        description: t('recycleProcess.collection.description')
+      },
+      {
+        icon: <Recycle className="w-6 h-6 text-green-600" />,
+        title: t('recycleProcess.processing.title'),
+        description: t('recycleProcess.processing.description')
+      },
+      {
+        icon: <Leaf className="w-6 h-6 text-green-600" />,
+        title: t('recycleProcess.newLife.title'),
+        description: t('recycleProcess.newLife.description')
+      }
+    ].map((step, index) => (
+      <div key={index} className="space-y-3">
+        <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center">
+          {step.icon}
+        </div>
+        <h3 className="font-semibold text-lg">{step.title}</h3>
+        <p className="text-gray-600">{step.description}</p>
+      </div>
+    ))}
+  </div>
+</div>
         </div>
       </div>
     </div>

@@ -9,12 +9,14 @@ import { useCategories } from "@/hooks/useGetCategories";
 import { Category } from "../Types/categories.type";
 
 import Marquee from "react-fast-marquee";
+import { useLanguage } from "@/context/LanguageContext";
 
 
 
 export default function CategoryList({  maxToShow,  horizontal = false,
  }: { basePath: string, maxToShow?: number , horizontal:boolean }) {
   const [showAll, setShowAll] = useState(false);
+  const { t } = useLanguage(); // ⬅️ use translation
 
     const { data, isLoading, error } = useCategories(); 
 
@@ -37,11 +39,11 @@ export default function CategoryList({  maxToShow,  horizontal = false,
         className="mb-16 px-2 sm:px-4"
       >
         <div className="pl-18 mb-8 mt-16">
-          <h2 className="text-3xl md:text-3xl font-bold text-left text-accent-content mb-2">
-            Recycling Categories
+          <h2 className="text-3xl md:text-3xl font-bold text-start text-accent-content mb-2">
+            {t("staticCategories.recyclingCategories")}
           </h2>
           <span className="text-green-700">
-            Having leftovers and want to earn money? Tell us what you have
+            {t("staticCategories.recyclingCategoriesSubtitle")}
           </span>
         </div>
 
@@ -76,7 +78,7 @@ export default function CategoryList({  maxToShow,  horizontal = false,
               onClick={() => setShowAll(true)}
               className="px-6 py-2 rounded-full bg-green-500 hover:bg-green-600 text-white font-semibold transition-all duration-300 shadow-md"
             >
-              See more
+              {t("staticCategories.seeMore")}
             </button>
           </div>
         )}
@@ -84,7 +86,7 @@ export default function CategoryList({  maxToShow,  horizontal = false,
 
       <div className="text-center mt-8">
         <span className="text-green-700">
-          For more detailed information on each category, click on the respective image
+          {t("staticCategories.clickImageForDetails")}
         </span>
       </div>
     </div>

@@ -9,7 +9,7 @@ import api from "@/lib/axios";
 import { ProtectedRoute } from "@/lib/userProtectedRoute";
 import Link from "next/link";
 import Swal from "sweetalert2";
-import { CheckCircle, Pencil, RefreshCcw, Truck, XCircle } from "lucide-react";
+import { CheckCircle, Clock, Clock1, Pencil, RefreshCcw, Truck, XCircle } from "lucide-react";
 import RecyclingModal from "@/components/eWalletModal/ewalletModal";
 import { useUserPoints } from "@/hooks/useGetUserPoints";
 import ItemsModal from "@/components/shared/itemsModal";
@@ -250,10 +250,16 @@ onClick={() => setIsRecyclingModalOpen(true)}
     <div className="flex justify-between items-center mb-2 text-sm text-gray-600">
 <span>{t("profile.orders.date")}: {new Date(order.createdAt).toLocaleDateString()}</span>
       <span className="flex items-center gap-1 font-semibold">
-        {["pending", "assigntocourier"].includes(order.status) && (
+        {[ "assigntocourier"].includes(order.status) && (
           <>
             <Truck size={16} className="text-yellow-600" />
     <span className="text-yellow-700">{t("profile.orders.status.inTransit")}</span>
+          </>
+        )}
+        {[ "pending"].includes(order.status) && (
+          <>
+            <Clock1 size={16} className="text-yellow-400" />
+    <span className="text-yellow-400">{t("profile.orders.status.pending")}</span>
           </>
         )}
         {order.status === "completed" && (

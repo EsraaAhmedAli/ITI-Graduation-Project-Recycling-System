@@ -8,6 +8,7 @@ import { X, Leaf, Recycle, Truck, Scale, Package } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "flowbite-react";
 import Image from "next/image";
+import { useUserAuth } from "@/context/AuthFormContext";
 
 const itemVariants = {
   hidden: { opacity: 0, y: 10 },
@@ -21,7 +22,8 @@ export default function CartPage() {
   const [totalItems, setTotalItems] = useState(0);
   const [totalPoints, setTotalPoints] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
-
+const {user} = useUserAuth()
+console.log(user);
 
 
   useEffect(() => {
@@ -82,7 +84,7 @@ export default function CartPage() {
       Start making a positive impact on the environment. Browse available recyclable items and add them to your bin!
     </p>
     <Button
-      onClick={() => router.push("/category")}
+      onClick={() => router.push(user?.role == 'buyer' ? "/marketplace" : "/category")}
       gradientDuoTone="greenToBlue"
       className="rounded-full px-6 py-3 shadow-lg hover:shadow-xl transition"
     >
