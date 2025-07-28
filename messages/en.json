@@ -198,9 +198,6 @@
     "currency": "EGP",
     "perKg": "per kg",
     "perItem": "per item",
-        "unitKg":"kg",
-        "unitPiece":"piece",
-
 
 
     "totalPoints": "Total Points: {{points}}",
@@ -237,13 +234,15 @@
     "showing": "Showing",
     "of": "of",
     "items": "items",
-    "page" :"Page",
-      "outOfStock": "Out of Stock",
-  "addToRecyclingCart": "Add to Recycling Cart",
-  "availableStock":"Available Stock",
-      "afterPurchase": "After purchase: {{quantity}} {{unit}}",
+    "page": "Page",
+    "outOfStock": "Out of Stock",
+    "addToRecyclingCart": "Add to Recycling Cart",
+    "availableStock": "Available Stock",
+    "afterPurchase": "After purchase: {{quantity}} {{unit}}",
     "percentageRemaining": "{{percentage}}% remaining",
-    "quantity":"Quantity"
+    "quantity": "Quantity",
+        "unitKg": "kg",
+    "unitPiece": "piece"
   },
   "marketPlace": {
     "sustainableMarketplace": "Sustainable Marketplace",
@@ -275,20 +274,20 @@
     "pointsRange": "Points Range",
     "estimatedImpact": "Estimated Environmental Impact"
   },
-  "environmentalBenefit":{
-  "environmentalBenefits": "Environmental Benefits",
-  "reducesCO2Emissions": "Reduces {{amount}}kg of CO₂ emissions",
-  "savesWater": "Saves {{amount}} liters of water", 
-  "conservesNaturalResources": "Conserves natural resources by recycling materials"
-},
- "recycleProcess": {
+  "environmentalBenefit": {
+    "environmentalBenefits": "Environmental Benefits",
+    "reducesCO2Emissions": "Reduces {{amount}}kg of CO₂ emissions",
+    "savesWater": "Saves {{amount}} liters of water",
+    "conservesNaturalResources": "Conserves natural resources by recycling materials"
+  },
+  "recycleProcess": {
     "title": "Our Recycling Process",
     "collection": {
       "title": "Collection",
       "description": "We pick up your items at your convenience."
     },
     "processing": {
-      "title": "Processing", 
+      "title": "Processing",
       "description": "Items are safely broken down into raw materials."
     },
     "newLife": {
