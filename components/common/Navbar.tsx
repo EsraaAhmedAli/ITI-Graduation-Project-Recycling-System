@@ -274,10 +274,10 @@ return (
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-gray-900 text-xs truncate"> {/* Smaller text */}
-                            {item.itemName || 'Recyclable Item'}
+                            {t(`categories.subcategories.${item.itemName.toLowerCase().replace(/\s+/g, "-")}`)}
                           </p>
                           <p className="text-gray-500 text-xs mt-0.5"> {/* Smaller spacing */}
-                            {item.categoryName || 'Recyclable Material'}
+                {t(`categories.${item?.categoryName}`)}
                           </p>
                           <div className="flex items-center gap-2 mt-0.5">
                             <p className="text-gray-400 text-xs">

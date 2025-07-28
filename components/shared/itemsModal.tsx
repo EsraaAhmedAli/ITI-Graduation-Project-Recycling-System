@@ -5,8 +5,8 @@ import React from 'react'
 
 export default function ItemsModal({show,onclose,selectedOrderItems}) {
   const{t,locale}=useLanguage()
-const count = selectedOrderItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
-const formatted = count.toLocaleString();
+const count = selectedOrderItems?.reduce((sum, item) => sum + (item.quantity || 0), 0);
+const formatted = count?.toLocaleString();
 const currencyLabel = t('itemsModal.currency');
   return<>
   

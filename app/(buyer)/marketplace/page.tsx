@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface Item {
   _id: string;
@@ -34,6 +35,7 @@ interface Pagination {
 }
 
 export default function Marketplace() {
+  const{t}=useLanguage()
   const [filteredItems, setFilteredItems] = useState<Item[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -97,20 +99,21 @@ export default function Marketplace() {
     }
   };
 
-  const getMeasurementText = (unit: number) => {
-    return unit === 1 ? "kg" : "pc";
-  };
+const getMeasurementText = (unit: 1 | 2): string => {
+  return unit === 1 ? t('itemsModal.perKg', { defaultValue: 'per kg' }) : t('itemsModal.perItem', { defaultValue: 'per item' });
+};
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
       {/* Header */}
       <div className="mb-6 text-center">
         <h1 className="text-2xl font-bold text-gray-800 mb-1">
-          ♻️ Sustainable Marketplace
+          ♻️ {t('marketPlace.sustainableMarketplace')}
         </h1>
         <p className="text-gray-600 text-sm">
-          Discover recyclable items and earn rewards
-        </p>
+{
+  t('marketPlace.marketPlaceDesc')
+}        </p>
       </div>
 
       {/* Search and Filter */}
@@ -122,7 +125,7 @@ export default function Marketplace() {
             </div>
             <input
               type="text"
-              placeholder="Search items..."
+              placeholder={t('navbar.searchplaceholder')}
               className="pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg w-full focus:ring-1 focus:ring-green-500"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -138,10 +141,11 @@ export default function Marketplace() {
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg w-full appearance-none bg-white"
             >
-              <option value="all">All Categories</option>
+              <option value="all">{t('common.allCategories')}</option>
               {uniqueCategories.map((category) => (
                 <option key={category} value={category}>
-                  {category}
+                  {   t(`categories.${category.toLowerCase().replace(/\s+/g, "-")}`)
+}
                 </option>
               ))}
             </select>
@@ -152,10 +156,10 @@ export default function Marketplace() {
       {/* Items Count */}
       <div className="flex justify-between items-center mb-3 px-1">
         <span className="text-xs text-gray-500">
-          Showing {filteredItems.length} of {pagination.totalItems} items
+          {t('common.showing')} {filteredItems.length} {t('common.of')} {pagination.totalItems} {t('common.items')}
         </span>
         <span className="text-xs text-gray-500">
-          Page {pagination.currentPage} of {pagination.totalPages}
+          {t('common.page')} {pagination.currentPage} {t('common.of')} {pagination.totalPages}
         </span>
       </div>
 
@@ -199,25 +203,23 @@ export default function Marketplace() {
                       className="object-contain"
                       sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
                     />
-                    <div className="absolute bottom-1 left-1 bg-white/90 px-1.5 py-0.5 rounded text-xs font-medium">
-                      {item.categoryName}
-                    </div>
+        
                   </div>
                   <div className="p-2 flex-1 flex flex-col">
-                    <h3 className="text-xs font-medium text-gray-900 line-clamp-2 mb-1">
-                      {item.name}
-                    </h3>
+                          <h3 className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide leading-tight">
+  {t(`categories.subcategories.${item.name.toLowerCase().replace(/\s+/g, "-")}`, { defaultValue: item.name })}
+</h3>
                     <div className="flex justify-between items-center mt-auto">
                       <span className="text-xs font-bold text-green-600">
-                        ${item.price}
+                        {item.price}
+                          <span className="text-sm mx-2  ml-1">{t('itemsModal.currency')}</span>
+
                       </span>
-                      <span className="flex items-center text-[0.65rem] text-amber-600 font-medium">
-                        <Star className="w-3 h-3 mr-0.5 fill-amber-400" />
-                        {item.points}
-                      </span>
+                      
+                    
                     </div>
                     <div className="text-[0.6rem] text-gray-500 mt-0.5 text-right">
-                      per {getMeasurementText(item.measurement_unit)}
+                    {getMeasurementText(item.measurement_unit)}
                     </div>
                   </div>
                 </div>

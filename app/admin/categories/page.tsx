@@ -104,9 +104,9 @@ await api.delete(`/categories/${encodeURIComponent(item.name)}`);
           itemsPerPage={5}
           addButtonText="Add New Category"
           onAdd={handleAddNewCategory}
-          onEdit={(item) => router.push(`/admin/categories/${item.name}/edit`)}
+onEdit={(item) => router.push(`/admin/categories/${encodeURIComponent(item.name)}/edit`)}
           onDelete={handleDelete}
-          onAddSubCategory={(item) => router.push(`/admin/categories/${item.name}/add-sub-category`)}
+onAddSubCategory={(item) => router.push(`/admin/categories/${encodeURIComponent(item.name)}/add-sub-category`)}
           onImageClick={(item) => router.push(`/admin/categories/${item.name}/get-sub-category`)}
         />
 
