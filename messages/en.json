@@ -201,12 +201,11 @@
     "description": "Description",
     "unnamedItem": "Unnamed Item",
     "orderTotal": "Order Total",
-    "itemsCount": "{{count}} item{{count === '1' ? '' : 's'}}",
+    "itemsCount": "{{count}} items",
     "totalPrice": "{{total}} EGP",
     "currency": "EGP",
     "perKg": "per kg",
     "perItem": "per item",
-
 
     "totalPoints": "Total Points: {{points}}",
     "noItemsTitle": "No Items Found",
@@ -219,6 +218,7 @@
     "metals": "Metals",
     "spare-parts": "Spare Parts",
     "plastic": "Plastic",
+    "home-appliances": "home appliances",
 
     "subcategories": {
       "shredded-paper": "Shredded Paper",
@@ -231,7 +231,13 @@
       "acrylic": "acryclic",
       "solid-plastic": "solid plastic",
       "water-colman": "Coleman Water",
-      "plastic-barrel": "plastic barrel"
+      "plastic-barrel": "plastic barrel",
+      "fan": "fan",
+      "mobile": "Mobile",
+      "laptop": "laptop",
+      "receiver": "receiver",
+      "powerbank":"powerbank",
+      "tea-pot" : "tea pot"
     }
   },
 
@@ -249,8 +255,9 @@
     "afterPurchase": "After purchase: {{quantity}} {{unit}}",
     "percentageRemaining": "{{percentage}}% remaining",
     "quantity": "Quantity",
-        "unitKg": "kg",
-    "unitPiece": "piece"
+    "unitKg": "kg",
+    "unitPiece": "piece",
+    "lowStockWarning" : "low stock"
   },
   "marketPlace": {
     "sustainableMarketplace": "Sustainable Marketplace",
