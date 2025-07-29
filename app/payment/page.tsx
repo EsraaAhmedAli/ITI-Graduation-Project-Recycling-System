@@ -6,6 +6,8 @@ import { loadStripe } from '@stripe/stripe-js'
 import convertToSubcurrency from '@/lib/converToSubCurrency'
 import CheckoutPage from '@/components/buyer/checkoutpage'
 import { useSearchParams } from 'next/navigation'
+import { priceWithMarkup } from '@/utils/priceUtils';
+
 
 if (process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY == undefined) {
   throw new Error('NEXT_PUBLIC_STRIPE_PUBLIC_KEY is undefined')
@@ -39,10 +41,20 @@ interface CheckoutData {
 export default function RecyclingPaymentPage() {
   const searchParams = useSearchParams()
   const amount = searchParams.get("total");
+
+  
   
   // State for checkout data
   const [checkoutData, setCheckoutData] = useState<CheckoutData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const rawAmount = searchParams.get("total");
+const basePrice = rawAmount ? parseFloat(rawAmount) : 0;
+
+// Only compute final amount after checkoutData is available
+const finalAmount = checkoutData
+  ? priceWithMarkup(basePrice, checkoutData.user?.role)
+  : basePrice;
+
 
   // Retrieve checkout data from sessionStorage
   useEffect(() => {
@@ -112,31 +124,32 @@ export default function RecyclingPaymentPage() {
 
           {/* Payment Section */}
           <div className="lg:col-span-2 order-1 lg:order-2">
-            <Elements
-              stripe={stripePromise}
-              options={{
-                mode: "payment",
-                amount: convertToSubcurrency(amount),
-                currency: "egp",
-                appearance: {
-                  theme: 'stripe',
-                  variables: {
-                    colorPrimary: '#059669',
-                    colorBackground: '#ffffff',
-                    colorText: '#1f2937',
-                    colorDanger: '#ef4444',
-                    fontFamily: 'system-ui, sans-serif',
-                    spacingUnit: '4px',
-                    borderRadius: '12px',
-                  }
-                }
-              }}
-            >
-              <CheckoutPage 
-                amount={amount} 
-                checkoutData={checkoutData}
-              />
-            </Elements>
+          <Elements
+  stripe={stripePromise}
+  options={{
+    mode: "payment",
+    amount: convertToSubcurrency(finalAmount),
+    currency: "egp",
+    appearance: {
+      theme: 'stripe',
+      variables: {
+        colorPrimary: '#059669',
+        colorBackground: '#ffffff',
+        colorText: '#1f2937',
+        colorDanger: '#ef4444',
+        fontFamily: 'system-ui, sans-serif',
+        spacingUnit: '4px',
+        borderRadius: '12px',
+      }
+    }
+  }}
+>
+  <CheckoutPage 
+    amount={finalAmount} 
+    checkoutData={checkoutData}
+  />
+</Elements>
+
           </div>
         </div>
 

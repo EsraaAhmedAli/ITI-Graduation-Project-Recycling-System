@@ -247,7 +247,8 @@
     "percentageRemaining": "{{percentage}}% متبقي",
     "unitKg": "كجم",
     "unitPiece": "قطعة",
-    "quantity": "الكمية"
+    "quantity": "الكمية",
+    "lowStockWarning": "مخزون منخفض"
   },
   "marketPlace": {
     "sustainableMarketplace": "الأسواق المستدامة",
