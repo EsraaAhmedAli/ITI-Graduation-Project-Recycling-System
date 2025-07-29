@@ -22,7 +22,7 @@ export default function LayoutWrapper({ children }: { children: ReactNode }) {
     if (isAdmin && !pathname.startsWith("/admin")) {
       router.push(`/admin/dashboard`);
     } else if (isDelivery && !pathname.startsWith("/delivery")) {
-      router.push(`/deliveryDashboard`);
+      router.push(`/deilveryDashboard`);
     }
   }, [isAdmin, isDelivery, isLoading, pathname, router]);
 
