@@ -5,6 +5,9 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import PromotionSlider from "@/components/buyer/PromotionSlider";
 import { Search, ChevronRight, Filter, Frown, Leaf, Zap, Recycle, Star } from "lucide-react";
+import { priceWithMarkup } from "@/utils/priceUtils";
+
+
 
 interface Item {
   _id: string;
@@ -74,6 +77,23 @@ export default function BuyerHomePage() {
       setMaterialsLoading(false);
     }
   };
+
+  const [userRole, setUserRole] = useState<string | undefined>(undefined);
+
+useEffect(() => {
+  const data = sessionStorage.getItem("checkoutData");
+  if (data) {
+    try {
+      const parsed = JSON.parse(data);
+      console.log("User Role:", parsed.user?.role);
+      setUserRole(parsed.user?.role || "buyer");
+    } catch (error) {
+      console.error("Error parsing checkoutData:", error);
+    }
+  }
+}, []);
+
+
 
   useEffect(() => {
     fetchItems();
@@ -237,7 +257,7 @@ export default function BuyerHomePage() {
                       </h3>
                       <div className="flex items-center">
                         <span className="text-base font-bold text-emerald-600">
-                          ${item.price}
+                        {priceWithMarkup(item.price, userRole)}
                         </span>
                         <span className="text-xs text-emerald-600">
                           /{getMeasurementText(item.measurement_unit)}

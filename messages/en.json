@@ -159,10 +159,18 @@
       "recycles": "Total Recycles",
       "points": "Points Collected"
     },
+    "method": {
+      "card": "Visa",
+      "link": "Visa",
+      "paypal": "PayPal",
+      "cash": "Cash",
+      "unknown": "Unknown"
+    },
     "tabs": {
       "incoming": "Incoming",
       "completed": "Completed",
-      "cancelled": "Cancelled"
+      "cancelled": "Cancelled",
+      "payments": "Payments"
     },
     "orders": {
       "loading": " orders...",

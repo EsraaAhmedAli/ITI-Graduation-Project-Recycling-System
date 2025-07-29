@@ -6,22 +6,28 @@ import { CartItem, useCart } from "@/context/CartContext";
 import { Recycle, Leaf, Package, Minus, Plus } from "lucide-react";
 import { useGetItems } from "@/hooks/useGetItems";
 import { useLanguage } from "@/context/LanguageContext";
+import { priceWithMarkup } from "@/utils/priceUtils";
+import { useUserAuth } from "@/context/AuthFormContext";
+
+
+
+
 
 export default function ItemDetailsPage() {
   const { itemName } = useParams();
   const decodedName = typeof itemName === "string" ? decodeURIComponent(itemName) : "";
   const [selectedQuantity, setSelectedQuantity] = useState(1);
   const { addToCart } = useCart();
-const{t} = useLanguage()
+  const { t } = useLanguage()
 
   const { data: items } = useGetItems();
   const item = items?.find(
     (i) => i.name.toLowerCase() === decodedName.toLowerCase()
   ) ?? null;
 
-const getMeasurementText = (unit: 1 | 2): string => {
-  return unit === 1 ? t('common.unitKg', { defaultValue: ' kg' }) : t('common.unitPiece', { defaultValue: ' item' });
-};
+  const getMeasurementText = (unit: 1 | 2): string => {
+    return unit === 1 ? t('common.unitKg', { defaultValue: ' kg' }) : t('common.unitPiece', { defaultValue: ' item' });
+  };
 
 
   if (!item) {
@@ -31,6 +37,10 @@ const getMeasurementText = (unit: 1 | 2): string => {
       </div>
     );
   }
+
+  const { user } = useUserAuth(); 
+const itemPrice = priceWithMarkup(item.price, user?.role); 
+
 
   function convertToCartItem(item: any, quantity: number): CartItem {
     return {
@@ -55,6 +65,8 @@ const getMeasurementText = (unit: 1 | 2): string => {
       addToCart(convertToCartItem(item, selectedQuantity));
     }
   };
+
+
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -81,51 +93,51 @@ const getMeasurementText = (unit: 1 | 2): string => {
               </span>
               <h1 className="text-3xl font-bold text-gray-900">                {t(`categories.subcategories.${decodedName.toLowerCase().replace(/\s+/g, "-")}`)}
 
-</h1>
+              </h1>
               {item?.description && (
                 <p className="text-gray-600 mt-2">{item?.description}</p>
               )}
             </div>
 
             {/* Price and Points */}
-            <div className="flex items-baseline space-x-4">
-              <span className="text-3xl font-bold text-gray-900">${(item?.price * selectedQuantity).toFixed(2)}</span>
-           
-            </div>
+       <div className="flex items-baseline space-x-4">
+  <span className="text-3xl font-bold text-gray-900">
+   {(itemPrice * selectedQuantity).toFixed(2)} EGP
+  </span>
+</div>
+
 
             {/* Stock Status */}
             <div className="pt-4 border-t border-gray-200">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-gray-700">{t('common.availableStock')}</span>
-                <span className={`text-sm font-medium ${
-                  isOutOfStock ? 'text-red-600' : 
-                  isLowStock ? 'text-amber-600' : 'text-green-600'
-                }`}>
+                <span className={`text-sm font-medium ${isOutOfStock ? 'text-red-600' :
+                    isLowStock ? 'text-amber-600' : 'text-green-600'
+                  }`}>
                   {isOutOfStock ? 'Out of Stock' : `${item?.quantity} ${getMeasurementText(item.measurement_unit)}`}
                 </span>
               </div>
-              
+
               {/* Dynamic Stock Indicator */}
-      <div className="mb-2">
-  <div className="w-full bg-gray-200 rounded-full h-2">
-    <div 
-      className={`h-2 rounded-full ${
-        stockPercentage < 20 ? 'bg-red-500' : 
-        stockPercentage < 50 ? 'bg-amber-400' : 'bg-green-500'
-      }`}
-      style={{ width: `${stockPercentage}%` }}
-    ></div>
-  </div>
-  <div className="flex justify-between text-xs text-gray-500 mt-1">
-    <span>
-      {t('common.afterPurchase', { 
-        quantity: Math.max(0, remainingQuantity), 
-        unit: getMeasurementText(item.measurement_unit) 
-      })}
-    </span>
-    <span>{t('common.percentageRemaining', { percentage: stockPercentage.toFixed(0) })}</span>
-  </div>
-</div>
+              <div className="mb-2">
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className={`h-2 rounded-full ${stockPercentage < 20 ? 'bg-red-500' :
+                        stockPercentage < 50 ? 'bg-amber-400' : 'bg-green-500'
+                      }`}
+                    style={{ width: `${stockPercentage}%` }}
+                  ></div>
+                </div>
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>
+                    {t('common.afterPurchase', {
+                      quantity: Math.max(0, remainingQuantity),
+                      unit: getMeasurementText(item.measurement_unit)
+                    })}
+                  </span>
+                  <span>{t('common.percentageRemaining', { percentage: stockPercentage.toFixed(0) })}</span>
+                </div>
+              </div>
               {isLowStock && !isOutOfStock && (
                 <p className="text-xs text-amber-600 flex items-center">
                   <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -163,37 +175,36 @@ const getMeasurementText = (unit: 1 | 2): string => {
             <button
               onClick={handleAddToCart}
               disabled={isOutOfStock}
-              className={`w-full py-3 px-6 rounded-lg font-medium flex items-center justify-center space-x-2 transition-colors ${
-                isOutOfStock 
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+              className={`w-full py-3 px-6 rounded-lg font-medium flex items-center justify-center space-x-2 transition-colors ${isOutOfStock
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   : 'bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg'
-              }`}
+                }`}
             >
               <Package className="w-5 h-5" />
-<span>{isOutOfStock ? t('common.outOfStock') : t('common.addToRecyclingCart')}</span>
+              <span>{isOutOfStock ? t('common.outOfStock') : t('common.addToRecyclingCart')}</span>
             </button>
 
             {/* Environmental Benefits */}
-         <div className="bg-gray-50 rounded-xl p-5 space-y-3">
-  <h3 className="font-semibold text-gray-800 flex items-center">
-    <Leaf className="w-5 h-5 mr-2 text-green-600" />
-    {t('environmentalBenefit.environmentalBenefits')}
-  </h3>
-  <ul className="space-y-2 text-sm text-gray-600">
-    <li className="flex items-start">
-      <span className="text-green-600 mr-2">•</span>
-      {t('environmentalBenefit.reducesCO2Emissions', { amount: (selectedQuantity * 2.5).toFixed(1) })}
-    </li>
-    <li className="flex items-start">
-      <span className="text-green-600 mr-2">•</span>
-      {t('environmentalBenefit.savesWater', { amount: selectedQuantity * 15 })}
-    </li>
-    <li className="flex items-start">
-      <span className="text-green-600 mr-2">•</span>
-      {t('environmentalBenefit.conservesNaturalResources')}
-    </li>
-  </ul>
-</div>
+            <div className="bg-gray-50 rounded-xl p-5 space-y-3">
+              <h3 className="font-semibold text-gray-800 flex items-center">
+                <Leaf className="w-5 h-5 mr-2 text-green-600" />
+                {t('environmentalBenefit.environmentalBenefits')}
+              </h3>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li className="flex items-start">
+                  <span className="text-green-600 mr-2">•</span>
+                  {t('environmentalBenefit.reducesCO2Emissions', { amount: (selectedQuantity * 2.5).toFixed(1) })}
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-600 mr-2">•</span>
+                  {t('environmentalBenefit.savesWater', { amount: selectedQuantity * 15 })}
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-600 mr-2">•</span>
+                  {t('environmentalBenefit.conservesNaturalResources')}
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
 
@@ -201,35 +212,35 @@ const getMeasurementText = (unit: 1 | 2): string => {
         <div className="mt-16 space-y-8">
           {/* Recycling Process */}
           <div className="bg-gray-50 rounded-xl p-8">
-  <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('recycleProcess.title')}</h2>
-  <div className="grid md:grid-cols-3 gap-6">
-    {[
-      {
-        icon: <Package className="w-6 h-6 text-green-600" />,
-        title: t('recycleProcess.collection.title'),
-        description: t('recycleProcess.collection.description')
-      },
-      {
-        icon: <Recycle className="w-6 h-6 text-green-600" />,
-        title: t('recycleProcess.processing.title'),
-        description: t('recycleProcess.processing.description')
-      },
-      {
-        icon: <Leaf className="w-6 h-6 text-green-600" />,
-        title: t('recycleProcess.newLife.title'),
-        description: t('recycleProcess.newLife.description')
-      }
-    ].map((step, index) => (
-      <div key={index} className="space-y-3">
-        <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center">
-          {step.icon}
-        </div>
-        <h3 className="font-semibold text-lg">{step.title}</h3>
-        <p className="text-gray-600">{step.description}</p>
-      </div>
-    ))}
-  </div>
-</div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('recycleProcess.title')}</h2>
+            <div className="grid md:grid-cols-3 gap-6">
+              {[
+                {
+                  icon: <Package className="w-6 h-6 text-green-600" />,
+                  title: t('recycleProcess.collection.title'),
+                  description: t('recycleProcess.collection.description')
+                },
+                {
+                  icon: <Recycle className="w-6 h-6 text-green-600" />,
+                  title: t('recycleProcess.processing.title'),
+                  description: t('recycleProcess.processing.description')
+                },
+                {
+                  icon: <Leaf className="w-6 h-6 text-green-600" />,
+                  title: t('recycleProcess.newLife.title'),
+                  description: t('recycleProcess.newLife.description')
+                }
+              ].map((step, index) => (
+                <div key={index} className="space-y-3">
+                  <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center">
+                    {step.icon}
+                  </div>
+                  <h3 className="font-semibold text-lg">{step.title}</h3>
+                  <p className="text-gray-600">{step.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
