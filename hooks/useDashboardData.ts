@@ -1,8 +1,9 @@
 // hooks/useDashboardData.ts
 import { useState, useEffect, useCallback } from 'react';
 import api from '@/lib/axios';
-import { DashboardData, LoadingState } from '../types/dashboard.types';
+
 import { normalizeApiResponse, transformUserGrowthData, transformCitiesData } from '../utils/dataTransformers';
+import { DashboardData, LoadingState } from '@/components/Types/dashboard.types';
 
 const initialLoadingState: LoadingState = {
   analytics: true,

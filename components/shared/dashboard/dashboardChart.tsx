@@ -98,66 +98,80 @@ export default function DashboardCharts() {
         />
       </div>
 
-      {/* Analytics Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-7">
-        <ErrorBoundary fallback={<div className="text-red-500">Error loading user growth chart</div>}>
-          <Suspense fallback={<Loader />}>
-            <UserGrowthChart 
-              userGrowth={data.userGrowth || []} 
-              loading={loading.userStats}
-            />
+      {/* Analytics Row - Fixed Height */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-7 h-80 lg:h-96">
+        <ErrorBoundary fallback={<div className="text-red-500 flex items-center justify-center h-full">Error loading user growth chart</div>}>
+          <Suspense fallback={<div className="h-full flex items-center justify-center"><Loader /></div>}>
+            <div className="h-full">
+              <UserGrowthChart 
+                userGrowth={data.userGrowth || []} 
+                loading={loading.userStats}
+              />
+            </div>
           </Suspense>
         </ErrorBoundary>
 
-        <ErrorBoundary fallback={<div className="text-red-500">Error loading order status chart</div>}>
-          <Suspense fallback={<Loader />}>
-            <OrderStatusChart 
-              orderStatus={data.orderStatus || {}} 
-              loading={loading.analytics}
-            />
+        <ErrorBoundary fallback={<div className="text-red-500 flex items-center justify-center h-full">Error loading order status chart</div>}>
+          <Suspense fallback={<div className="h-full flex items-center justify-center"><Loader /></div>}>
+            <div className="h-full">
+              <OrderStatusChart 
+                orderStatus={data.orderStatus || {}} 
+                loading={loading.analytics}
+              />
+            </div>
           </Suspense>
         </ErrorBoundary>
 
-        <ErrorBoundary fallback={<div className="text-red-500">Error loading top recyclers</div>}>
-          <Suspense fallback={<Loader />}>
-            <TopRecyclersCard 
-              topUsers={data.topUsers || []} 
-              loading={loading.users}
-            />
-          </Suspense>
-        </ErrorBoundary>
-      </div>
-
-      {/* Materials and Cities Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-7">
-        <ErrorBoundary fallback={<div className="text-red-500">Error loading materials chart</div>}>
-          <Suspense fallback={<Loader />}>
-            <MaterialsChart 
-              topMaterials={data.topMaterials || []} 
-              loading={loading.materials}
-            />
-          </Suspense>
-        </ErrorBoundary>
-
-        <ErrorBoundary fallback={<div className="text-red-500">Error loading cities chart</div>}>
-          <Suspense fallback={<Loader />}>
-            <CitiesChart 
-              chartData={data.citiesData || { labels: [], datasets: [] }} 
-              loading={loading.cities}
-            />
+        <ErrorBoundary fallback={<div className="text-red-500 flex items-center justify-center h-full">Error loading top recyclers</div>}>
+          <Suspense fallback={<div className="h-full flex items-center justify-center"><Loader /></div>}>
+            <div className="h-full">
+              <TopRecyclersCard 
+                topUsers={data.topUsers || []} 
+                loading={loading.users}
+              />
+            </div>
           </Suspense>
         </ErrorBoundary>
       </div>
 
-      {/* Weekly Orders Chart */}
-      <ErrorBoundary fallback={<div className="text-red-500">Error loading weekly orders chart</div>}>
-        <Suspense fallback={<Loader />}>
-          <WeeklyOrdersChart 
-            ordersPerDay={data.ordersPerDay || []} 
-            loading={loading.analytics}
-          />
-        </Suspense>
-      </ErrorBoundary>
+      {/* Materials and Cities Charts - Fixed Height */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-7 h-80 lg:h-96">
+        <ErrorBoundary fallback={<div className="text-red-500 flex items-center justify-center h-full">Error loading materials chart</div>}>
+          <Suspense fallback={<div className="h-full flex items-center justify-center"><Loader /></div>}>
+            <div className="h-full">
+              <MaterialsChart 
+                topMaterials={data.topMaterials || []} 
+                loading={loading.materials}
+              />
+            </div>
+          </Suspense>
+        </ErrorBoundary>
+
+        <ErrorBoundary fallback={<div className="text-red-500 flex items-center justify-center h-full">Error loading cities chart</div>}>
+          <Suspense fallback={<div className="h-full flex items-center justify-center"><Loader /></div>}>
+            <div className="h-full">
+              <CitiesChart 
+                chartData={data.citiesData || { labels: [], datasets: [] }} 
+                loading={loading.cities}
+              />
+            </div>
+          </Suspense>
+        </ErrorBoundary>
+      </div>
+
+      {/* Weekly Orders Chart - Fixed Height */}
+      <div className="h-80 lg:h-96">
+        <ErrorBoundary fallback={<div className="text-red-500 flex items-center justify-center h-full">Error loading weekly orders chart</div>}>
+          <Suspense fallback={<div className="h-full flex items-center justify-center"><Loader /></div>}>
+            <div className="h-full">
+              <WeeklyOrdersChart 
+                ordersPerDay={data.ordersPerDay || []} 
+                loading={loading.analytics}
+              />
+            </div>
+          </Suspense>
+        </ErrorBoundary>
+      </div>
     </div>
   );
 }

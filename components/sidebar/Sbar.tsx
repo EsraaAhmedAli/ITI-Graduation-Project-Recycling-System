@@ -6,18 +6,21 @@ import {
   Users,
   Layers,
   LogOutIcon,
+  
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import { useContext, useEffect, useState, useCallback, useMemo } from "react";
 import { UserAuthContext } from "@/context/AuthFormContext";
+import { FaMoneyBill } from "react-icons/fa";
 
 const menuItems = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/admin/dashboard" },
   { label: "Categories", icon: Layers, href: "/admin/categories" },
   { label: "Users", icon: Users, href: "/admin/users" },
   { label: "Orders", icon: ShoppingCart, href: "/admin/pickups" },
+  { label: "Transactions", icon: FaMoneyBill, href: "/admin/transactions" },
   { label: "Logout", icon: LogOutIcon },
 ];
 
