@@ -3,9 +3,9 @@
 import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import axios from "@/lib/axios";
-import Swal from "sweetalert2";
-import AdminLayout from "@/components/shared/adminLayout";
+
 import Image from "next/image";
+import toast from "react-hot-toast";
 const unitMap: Record<string, 1 | 2> = {
   kg: 1,
   g: 1,
@@ -76,6 +76,7 @@ export default function AddSubCategoryPage() {
       router.push("/admin/categories");
     } catch (error) {
       console.log(error);
+      toast.error(error?.response?.data?.message)
 
       // error toast...
     } finally {

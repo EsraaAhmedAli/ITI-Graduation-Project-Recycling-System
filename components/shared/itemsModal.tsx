@@ -45,7 +45,7 @@ return      <div key={index} className="bg-yellow-50 rounded-xl p-5 border borde
                 <div className="flex items-center gap-3 mb-3">
                
                   <div className='flex items-center gap-2'>
-                    <h4 className="text-lg font-semibold text-gray-800">{item.itemName || 'Unnamed Item'}</h4>
+  {t(`categories.subcategories.${item.itemName.toLowerCase().replace(/\s+/g, "-")}`, { defaultValue: item.itemName })}
                     <Image width={50} height={50} src={item.image} alt={item.itemName}/>
                   </div>
                 </div>
