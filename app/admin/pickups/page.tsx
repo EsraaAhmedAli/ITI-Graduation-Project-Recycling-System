@@ -13,6 +13,8 @@ import { toast } from 'react-toastify';
 import { useUsers } from '@/hooks/useGetUsers';
 import { usePagination } from '@/hooks/usePagination';
 import { TablePagination } from '../../../components/tablePagination/tablePagination';
+import { useUserAuth } from '@/context/AuthFormContext';
+
 
 const fetchOrders = async (page: number, limit: number) => {
   const { data } = await api.get('/admin/orders', { params: { page, limit } });
@@ -23,12 +25,16 @@ export default function Page() {
   const { currentPage, itemsPerPage, handlePageChange } = usePagination(1, 10);
   const limit = 10;
 
+  
   // React Query fetch with pagination
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
     queryKey: ['adminOrders', currentPage],
     queryFn: () => fetchOrders(currentPage, itemsPerPage),
     keepPreviousData: true,
   });
+
+  const { user } = useUserAuth();
+
 
    const orders = data?.data || [];
   const totalItems = data?.totalOrders || 0;
@@ -394,6 +400,7 @@ const transformedData = orders.map((order: any) => ({
       <CourierSelectionModal
         show={isCourierModalOpen}
         couriers={couriers}
+        userRole={user?.role}
         onSelectCourier={(courierId: string) => handleAssignToCourier(selectedOrderForCourier!, courierId)}
         onClose={() => {
           setIsCourierModalOpen(false);

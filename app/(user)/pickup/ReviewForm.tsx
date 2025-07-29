@@ -1,6 +1,10 @@
 import Button from "@/components/common/Button";
 import { FormInputs } from "@/components/Types/address.type";
 import Image from "next/image";
+import { priceWithMarkup } from "@/utils/priceUtils";
+
+
+
 
 type CartItem = {
   categoryId: string;
@@ -18,6 +22,7 @@ interface ReviewProps {
   formData?: FormInputs | null;
   loading: boolean;
   cartItems: CartItem[];
+  userRole?: string;
 }
 
 export default function Review({
@@ -25,11 +30,14 @@ export default function Review({
   onConfirm,
   loading,
   cartItems,
+  userRole,
 }: ReviewProps) {
-   const total = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+ const total = cartItems.reduce(
+  (sum, item) => sum + (priceWithMarkup(item.price, userRole) || 0) * item.quantity,
+  0
+);
+
+
  return (
     <div className="space-y-6">
       <h2 className="text-xl font-bold text-green-700">Review Your Order</h2>
@@ -61,7 +69,7 @@ export default function Review({
                   </p>
                   <p className="text-sm text-gray-600">
                     Price per unit:{" "}
-                    <span className="text-green-700">{item.price} EGP</span>
+                    <span className="text-green-700">{priceWithMarkup(item.price, userRole)} EGP</span>
                   </p>
                   <p className="text-sm text-gray-600">
                     Points:{" "}
@@ -72,9 +80,10 @@ export default function Review({
               </div>
             ))}
 
-            <div className="text-right mt-2 font-semibold text-green-900">
-              Total: {total} EGP
-            </div>
+          <div className="text-right mt-2 font-semibold text-green-900">
+  Total: {total.toFixed(2)} EGP
+</div>
+
           </>
         )}
       </div>

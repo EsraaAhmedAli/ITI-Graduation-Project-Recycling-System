@@ -9,6 +9,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "flowbite-react";
 import Image from "next/image";
 import { useUserAuth } from "@/context/AuthFormContext";
+import { priceWithMarkup } from "@/utils/priceUtils";
+
+
 
 const itemVariants = {
   hidden: { opacity: 0, y: 10 },
@@ -22,19 +25,23 @@ export default function CartPage() {
   const [totalItems, setTotalItems] = useState(0);
   const [totalPoints, setTotalPoints] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
-const {user} = useUserAuth()
-console.log(user);
+  const { user } = useUserAuth()
+  console.log(user);
 
 
   useEffect(() => {
     const total = cart.reduce((sum, item) => sum + item.quantity, 0);
     const points = cart.reduce((sum, item) => sum + (item.points || 0) * item.quantity, 0);
-    const price = cart.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
+    const price = cart.reduce((sum, item) => {
+  const itemPrice = priceWithMarkup(item.price, user?.role); // ✅ استخدم الدور
+  return sum + itemPrice * item.quantity;
+}, 0);
+
 
     setTotalItems(total);
     setTotalPoints(points);
     setTotalPrice(price);
-  }, [cart]);
+  }, [cart, user]);
 
 
   const confirmAction = async ({
@@ -69,6 +76,8 @@ console.log(user);
     }
   };
 
+
+
   return (
     <div className="p-4 sm:p-8 max-w-4xl mx-auto">
       <div className="flex items-center gap-3 mb-6">
@@ -77,20 +86,21 @@ console.log(user);
       </div>
 
       {cart.length === 0 ? (
-     <div className="flex flex-col items-center justify-center mt-24 bg-gradient-to-br from-green-50 to-blue-50 p-10 rounded-2xl shadow-md transition-all duration-300">
-    <Leaf className="w-16 h-16 text-green-500 mb-4 animate-bounce-slow" />
-    <h2 className="text-xl font-semibold text-gray-700 mb-2">Your recycling bin is empty</h2>
-    <p className="text-gray-500 text-sm mb-6 text-center max-w-md">
-      Start making a positive impact on the environment. Browse available recyclable items and add them to your bin!
-    </p>
-    <Button
-      onClick={() => router.push(user?.role == 'buyer' ? "/marketplace" : "/category")}
-      gradientDuoTone="greenToBlue"
-      className="rounded-full px-6 py-3 shadow-lg hover:shadow-xl transition"
-    >
-      Browse Recyclable Items
-    </Button>
-  </div>
+        <div className="flex flex-col items-center justify-center mt-24 bg-gradient-to-br from-green-50 to-blue-50 p-10 rounded-2xl shadow-md transition-all duration-300">
+          <Leaf className="w-16 h-16 text-green-500 mb-4 animate-bounce-slow" />
+          <h2 className="text-xl font-semibold text-gray-700 mb-2">Your recycling bin is empty</h2>
+          <p className="text-gray-500 text-sm mb-6 text-center max-w-md">
+            Start making a positive impact on the environment. Browse available recyclable items and add them to your bin!
+          </p>
+          {/* gradientDuoTone="greenToBlue" */}
+          <Button
+            onClick={() => router.push(user?.role == 'buyer' ? "/marketplace" : "/category")}
+
+            className="rounded-full px-6 py-3 shadow-lg hover:shadow-xl transition"
+          >
+            Browse Recyclable Items
+          </Button>
+        </div>
       ) : (
         <>
           <div className="bg-green-50 rounded-xl p-4 mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -104,7 +114,13 @@ console.log(user);
             </div>
             <div className="bg-white p-4 rounded-lg shadow-sm text-center">
               <div className="text-gray-500 text-sm">Earned Money</div>
-              <div className="text-2xl font-bold text-emerald-600">{totalPrice} EGP</div>
+             <div className="text-2xl font-bold text-emerald-600">
+  {totalPrice.toFixed(2)} EGP
+</div>
+
+              
+
+{/* <span>{priceWithMarkup(item.price)} EGP</span> */}
             </div>
           </div>
 
@@ -124,8 +140,8 @@ console.log(user);
                     <div className="bg-green-50 rounded-lg w-full sm:w-24 h-24 flex-shrink-0 flex items-center justify-center relative">
                       {item.image ? (
                         <Image
-                        width={100}
-                        height={100}
+                          width={100}
+                          height={100}
                           src={item.image}
                           alt={item.itemName}
                           className=" object-fit"
@@ -170,6 +186,14 @@ console.log(user);
                           Saves {item.co2_saved || 0} kg CO₂
                         </div>
                       </div>
+                      {user?.role === 'buyer' && (
+                        <div className="text-emerald-600 text-sm">
+                         <div className="text-emerald-600 text-sm">
+  Price : {priceWithMarkup(item.price, user?.role)} EGP
+</div>
+
+                        </div>
+                      )}
 
                       <div className="mt-4 flex items-center justify-between">
                         <div className="flex items-center border border-gray-200 rounded-full">
@@ -236,33 +260,33 @@ console.log(user);
 
               {/* الزرار الثاني - Schedule Pickup */}
               <div className="flex flex-col items-end">
-  {/* onClick={() => router.push("/pickup")}
+                {/* onClick={() => router.push("/pickup")}
   disabled={totalPrice < 100}
   className={`flex items-center gap-2 px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg
     ${totalPrice < 100
       ? 'bg-gray-300 text-white cursor-not-allowed pointer-events-none'
       : 'bg-green-500 hover:bg-green-600 text-white'}
   `} */}
-<div className={totalPrice < 100 ? "pointer-events-none" : ""}>
-  <Button
-    onClick={() => router.push("/pickup")}
-    disabled={totalPrice < 100}
-    className={`flex items-center gap-2 px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg
+                <div className={totalPrice < 100 ? "pointer-events-none" : ""}>
+                  <Button
+                    onClick={() => router.push("/pickup")}
+                    disabled={totalPrice < 100}
+                    className={`flex items-center gap-2 px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg
       ${totalPrice < 100
-        ? 'bg-gray-300 text-white cursor-not-allowed'
-        : 'bg-green-500 hover:bg-green-600 text-white'}
+                        ? 'bg-gray-300 text-white cursor-not-allowed'
+                        : 'bg-green-500 hover:bg-green-600 text-white'}
     `}
-  >
-    <Truck className="w-5 h-5" />
-    Schedule Pickup
-  </Button>
-</div>
+                  >
+                    <Truck className="w-5 h-5" />
+                    Schedule Pickup
+                  </Button>
+                </div>
 
-{totalPrice < 100 && (
-  <p className="text-xs text-red-600 mt-1 text-right">
-    You should reach at least 100 EGP
-  </p>
-)}
+                {totalPrice < 100 && (
+                  <p className="text-xs text-red-600 mt-1 text-right">
+                    You should reach at least 100 EGP
+                  </p>
+                )}
 
 
               </div>

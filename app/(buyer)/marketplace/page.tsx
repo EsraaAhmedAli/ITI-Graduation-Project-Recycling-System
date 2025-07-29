@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   Search,
-  Star,
   ChevronLeft,
   ChevronRight,
   Filter,
@@ -14,13 +13,15 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import { useLanguage } from "@/context/LanguageContext";
+import { priceWithMarkup } from "@/utils/priceUtils";
+import { useUserAuth } from "@/context/AuthFormContext"
 
 interface Item {
   _id: string;
   name: string;
   points: number;
   price: number;
-  measurement_unit: number;
+  measurement_unit: 1 | 2;
   image: string;
   categoryName: string;
 }
@@ -35,33 +36,31 @@ interface Pagination {
 }
 
 export default function Marketplace() {
-  const{t}=useLanguage()
+  const { t } = useLanguage();
+  const { user, isLoading: authLoading } = useUserAuth(); // Get user from auth context
   const [filteredItems, setFilteredItems] = useState<Item[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // 1. Fetch Function
   const fetchItems = async () => {
-   const res= await api.get(
+    const res = await api.get(
       `/categories/get-items?page=${currentPage}&limit=${itemsPerPage}`
     );
-
-    return res?.data
-
+    return res?.data;
   };
 
-  // 2. useQuery Hook
   const {
     data,
-    isLoading,
+    isLoading: dataLoading,
     isError,
     isFetching,
   } = useQuery({
     queryKey: ["items", currentPage],
     queryFn: fetchItems,
     keepPreviousData: true,
+    enabled: !authLoading, // Only fetch when auth is loaded
   });
 
   const items: Item[] = data?.data || [];
@@ -74,7 +73,6 @@ export default function Marketplace() {
     hasPreviousPage: false,
   };
 
-  // 3. Filtering
   useEffect(() => {
     const term = searchTerm.toLowerCase();
     const filtered = items.filter((item) => {
@@ -82,8 +80,7 @@ export default function Marketplace() {
         item.name.toLowerCase().includes(term) ||
         item.categoryName.toLowerCase().includes(term);
       const matchesCategory =
-        selectedCategory === "all" ||
-        item.categoryName === selectedCategory;
+        selectedCategory === "all" || item.categoryName === selectedCategory;
       return matchesSearch && matchesCategory;
     });
     setFilteredItems(filtered);
@@ -99,9 +96,14 @@ export default function Marketplace() {
     }
   };
 
-const getMeasurementText = (unit: 1 | 2): string => {
-  return unit === 1 ? t('itemsModal.perKg', { defaultValue: 'per kg' }) : t('itemsModal.perItem', { defaultValue: 'per item' });
-};
+  const getMeasurementText = (unit: 1 | 2): string => {
+    return unit === 1 
+      ? t('itemsModal.perKg', { defaultValue: 'per kg' }) 
+      : t('itemsModal.perItem', { defaultValue: 'per item' });
+  };
+
+  // Combined loading state
+  const isLoading = authLoading || dataLoading || isFetching;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
@@ -111,9 +113,8 @@ const getMeasurementText = (unit: 1 | 2): string => {
           ♻️ {t('marketPlace.sustainableMarketplace')}
         </h1>
         <p className="text-gray-600 text-sm">
-{
-  t('marketPlace.marketPlaceDesc')
-}        </p>
+          {t('marketPlace.marketPlaceDesc')}
+        </p>
       </div>
 
       {/* Search and Filter */}
@@ -144,8 +145,7 @@ const getMeasurementText = (unit: 1 | 2): string => {
               <option value="all">{t('common.allCategories')}</option>
               {uniqueCategories.map((category) => (
                 <option key={category} value={category}>
-                  {   t(`categories.${category.toLowerCase().replace(/\s+/g, "-")}`)
-}
+                  {t(`categories.${category.toLowerCase().replace(/\s+/g, "-")}`)}
                 </option>
               ))}
             </select>
@@ -164,7 +164,7 @@ const getMeasurementText = (unit: 1 | 2): string => {
       </div>
 
       {/* Items Grid */}
-      {isLoading || isFetching ? (
+      {isLoading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
           {[...Array(8)].map((_, i) => (
             <div
@@ -188,43 +188,42 @@ const getMeasurementText = (unit: 1 | 2): string => {
       ) : (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-            {filteredItems.map((item) => (
-              <Link
-                key={item._id}
-                href={`/marketplace/${encodeURIComponent(item.name)}`}
-                passHref
-              >
-                <div className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-sm transition-all duration-150 h-full flex flex-col">
-                  <div className="relative aspect-square">
-                    <Image
-                      src={item.image}
-                      alt={item.name}
-                      fill
-                      className="object-contain"
-                      sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
-                    />
-        
-                  </div>
-                  <div className="p-2 flex-1 flex flex-col">
-                          <h3 className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide leading-tight">
-  {t(`categories.subcategories.${item.name.toLowerCase().replace(/\s+/g, "-")}`, { defaultValue: item.name })}
-</h3>
-                    <div className="flex justify-between items-center mt-auto">
-                      <span className="text-xs font-bold text-green-600">
-                        {item.price}
-                          <span className="text-sm mx-2  ml-1">{t('itemsModal.currency')}</span>
-
-                      </span>
-                      
-                    
+            {filteredItems.map((item) => {
+              const itemPrice = priceWithMarkup(item.price, user?.role);
+              return (
+                <Link
+                  key={item._id}
+                  href={`/marketplace/${encodeURIComponent(item.name)}`}
+                  passHref
+                >
+                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-sm transition-all duration-150 h-full flex flex-col">
+                    <div className="relative aspect-square">
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        fill
+                        className="object-contain"
+                        sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
+                      />
                     </div>
-                    <div className="text-[0.6rem] text-gray-500 mt-0.5 text-right">
-                    {getMeasurementText(item.measurement_unit)}
+                    <div className="p-2 flex-1 flex flex-col">
+                      <h3 className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide leading-tight">
+                        {t(`categories.subcategories.${item.name.toLowerCase().replace(/\s+/g, "-")}`, { defaultValue: item.name })}
+                      </h3>
+                      <div className="flex justify-between items-center mt-auto">
+                        <span className="text-xs font-bold text-green-600">
+                          {itemPrice}
+                          <span className="text-sm mx-2 ml-1">{t('itemsModal.currency')}</span>
+                        </span>
+                      </div>
+                      <div className="text-[0.6rem] text-gray-500 mt-0.5 text-right">
+                        {getMeasurementText(item.measurement_unit)}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
 
           {/* Pagination */}

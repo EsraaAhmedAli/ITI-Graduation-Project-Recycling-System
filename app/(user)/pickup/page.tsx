@@ -467,6 +467,7 @@ console.error("Failed to fetch addresses:", err?.response?.data || err);
           onBack={() => setCurrentStep(1)}
           onConfirm={handleConfirm}
           loading={loadingBtn}
+          userRole={user?.role}
         />
       )}
 
