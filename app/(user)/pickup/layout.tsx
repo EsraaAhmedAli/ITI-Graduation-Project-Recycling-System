@@ -6,7 +6,7 @@ import { ProtectedRoute } from "@/lib/userProtectedRoute"; // Adjust the path as
 
 export default function PickupLayout({ children }: { children: ReactNode }) {
   return (
-    <ProtectedRoute allowedRoles={["customer"]}>
+    <ProtectedRoute allowedRoles={["customer", "buyer"]}>
       {children}
     </ProtectedRoute>
   );

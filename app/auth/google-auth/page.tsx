@@ -3,6 +3,7 @@
 
 import api from "@/lib/axios";
 import { GoogleLogin } from "@react-oauth/google";
+import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -22,11 +23,11 @@ export default function GoogleLoginPage() {
 
       if (exists) {
         // ✅ مستخدم قديم، دخله على طول
-        router.push("/");
+        router.push("/dashboard");
       } else {
         // 🔧 مستخدم جديد، وديه يكمل البيانات
         router.push(
-          `auth/complete-signup?email=${user.email}&name=${user.name}&image=${user.image}&provider=${user.provider}`
+          `/complete-signup?email=${user.email}&name=${user.name}&image=${user.image}&provider=${user.provider}`
         );
       }
     } catch (err: any) {

@@ -8,7 +8,6 @@ import { initiateSignup, verifyOtp } from "@/lib/auth";
 import { toast } from "react-toastify";
 import { Controller, useFormContext } from "react-hook-form";
 import { useAuthenticationContext } from "@/context/AuhenticationContext";
-import SmartNavigation from "@/app/newAuth/steps/SmartNavigation";
 
 type OTPInputProps = {
   comeFrom: "signup" | "forgot";

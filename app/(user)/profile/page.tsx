@@ -19,9 +19,6 @@ import { SocketTester } from "@/lib/socketTester";
 import { TokenDebugger } from "@/components/tokenDebugger";
 import { useLanguage } from "@/context/LanguageContext";
 
-
-
-
 export default function ProfilePage() {
   return (
     <ProtectedRoute>
@@ -33,7 +30,7 @@ export default function ProfilePage() {
 function ProfileContent() {
   const { user, token } = useUserAuth();
   console.log(user);
-    const { userPoints, pointsLoading, getUserPoints } = useUserPoints({
+  const { userPoints, pointsLoading, getUserPoints } = useUserPoints({
     userId: user?._id,
     name: user?.name,
     email: user?.email,
@@ -41,29 +38,28 @@ function ProfileContent() {
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState("incoming");
-const [isRecyclingModalOpen, setIsRecyclingModalOpen] = useState(false);
-const [isItemsModalOpen, setIsItemsModalOpen] = useState(false);
-const{t}=useLanguage()
+  const [isRecyclingModalOpen, setIsRecyclingModalOpen] = useState(false);
+  const [isItemsModalOpen, setIsItemsModalOpen] = useState(false);
+  const { t } = useLanguage();
   const getAllOrders = async (): Promise<void> => {
     try {
       setLoading(true);
       const res = await api.get<OrdersResponse>("/orders");
       setAllOrders(res.data.data);
       console.log(res.data.data);
-      
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
-const closeModal=()=>{
-  setModalOpen(false)
-}
+  const closeModal = () => {
+    setModalOpen(false);
+  };
 
   const refreshPoints = async () => {
-  await getUserPoints();
-};
+    await getUserPoints();
+  };
 
   const cancelOrder = async (orderId: string) => {
     try {
@@ -107,32 +103,31 @@ const closeModal=()=>{
       getUserPoints(); // Fetch user points
     }
   }, [user, token]);
-const [selectedOrderItems, setSelectedOrderItems] = useState<any[]>([]);
+  const [selectedOrderItems, setSelectedOrderItems] = useState<any[]>([]);
 
-const openItemsModal = (items: any[]) => {
-  setSelectedOrderItems(items);
-  setIsItemsModalOpen(true);
-};
+  const openItemsModal = (items: any[]) => {
+    setSelectedOrderItems(items);
+    setIsItemsModalOpen(true);
+  };
 
-const closeItemsModal = () => {
-  setSelectedOrderItems([]);
-  setIsItemsModalOpen(false);
-};
-
+  const closeItemsModal = () => {
+    setSelectedOrderItems([]);
+    setIsItemsModalOpen(false);
+  };
 
   const filteredOrders = allOrders.filter((order) => {
-    const status = order.status
+    const status = order.status;
 
-    if ( user?.role === "buyer" && status === "cancelled") {
+    if (user?.role === "buyer" && status === "cancelled") {
       return false;
     }
     if (activeTab === "incoming") {
-     return ["pending", "assigntocourier"].includes(status);
+      return ["pending", "assigntocourier"].includes(status);
     }
     if (activeTab === "completed") {
       return status === "completed";
     }
-      if (activeTab === "cancelled") {
+    if (activeTab === "cancelled") {
       return status === "cancelled";
     }
     return true;
@@ -152,7 +147,6 @@ const closeItemsModal = () => {
   return (
     <div className="h-auto bg-green-50 px-4">
       <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-xl p-6 space-y-6">
-
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap">
           <div className="flex items-center space-x-4">
@@ -176,120 +170,138 @@ const closeItemsModal = () => {
             </div>
           </div>
 
-   <div className="flex gap-4 items-center mt-4">
-      {/* Return & Earn Button */}
-      {user?.role !== "buyer" && (
-      <button
-onClick={() => setIsRecyclingModalOpen(true)}
-        className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-700 text-white px-5 py-2 rounded-full shadow-md hover:scale-105 transition-transform duration-200"
-      >
-        <RefreshCcw size={18} />
-  {t("profile.returnEarn")}
-      </button>
-      )}
-      
-      {/* Edit Profile Link */}
-      <Link
-        href="/editprofile"
-        className="flex items-center gap-2 bg-white border border-green-600 text-green-700 px-4 py-2 rounded-full hover:bg-green-100 transition-colors duration-200"
-      >
-        <Pencil size={16} />
-  {t("profile.editProfile")}
-      </Link>
-    </div>
-        </div>
- <RecyclingModal
-  onPointsUpdated={refreshPoints}
-  modalOpen={isRecyclingModalOpen}
-  closeModal={() => setIsRecyclingModalOpen(false)}
-  totalPoints={userPoints?.totalPoints}
-/>
+          <div className="flex gap-4 items-center mt-4">
+            {/* Return & Earn Button */}
+            {user?.role !== "buyer" && (
+              <button
+                onClick={() => setIsRecyclingModalOpen(true)}
+                className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-700 text-white px-5 py-2 rounded-full shadow-md hover:scale-105 transition-transform duration-200"
+              >
+                <RefreshCcw size={18} />
+                {t("profile.returnEarn")}
+              </button>
+            )}
 
+            {/* Edit Profile Link */}
+            <Link
+              href="/editprofile"
+              className="flex items-center gap-2 bg-white border border-green-600 text-green-700 px-4 py-2 rounded-full hover:bg-green-100 transition-colors duration-200"
+            >
+              <Pencil size={16} />
+              {t("profile.editProfile")}
+            </Link>
+          </div>
+        </div>
+        <RecyclingModal
+          onPointsUpdated={refreshPoints}
+          modalOpen={isRecyclingModalOpen}
+          closeModal={() => setIsRecyclingModalOpen(false)}
+          totalPoints={userPoints?.totalPoints}
+        />
 
         {/* Stats - Updated to show loading state for points */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
-   <StatBox label={t("profile.stats.recycles")} value={stats.totalRecycles} />
-<StatBox label={t("profile.stats.points")} value={stats.points} loading={pointsLoading} />
-<MembershipTier totalPoints={userPoints?.totalPoints} />
+          <StatBox
+            label={t("profile.stats.recycles")}
+            value={stats.totalRecycles}
+          />
+          <StatBox
+            label={t("profile.stats.points")}
+            value={stats.points}
+            loading={pointsLoading}
+          />
+          <MembershipTier totalPoints={userPoints?.totalPoints} />
         </div>
 
         {/* Points History Section - New addition */}
-       <PointsActivity userPoints={userPoints} />
-
+        <PointsActivity userPoints={userPoints} />
 
         {/* Tabs */}
         <div className="flex border-b gap-6">
-          {tabs.filter((tab)=>!(tab === "cancelled"&& user?.role === "buyer"))
-          .map((tab) => (
-            <button
-              key={tab}
-              className={`pb-2 capitalize font-semibold text-sm border-b-2 transition-colors duration-200 ${
-                activeTab === tab
-                  ? "border-green-600 text-green-800"
-                  : "border-transparent text-gray-500 hover:text-green-700"
-              }`}
-              onClick={() => setActiveTab(tab)}
-            >
-    {t(`profile.tabs.${tab}`)}
-            </button>
-          ))}
+          {tabs
+            .filter((tab) => !(tab === "cancelled" && user?.role === "buyer"))
+            .map((tab) => (
+              <button
+                key={tab}
+                className={`pb-2 capitalize font-semibold text-sm border-b-2 transition-colors duration-200 ${
+                  activeTab === tab
+                    ? "border-green-600 text-green-800"
+                    : "border-transparent text-gray-500 hover:text-green-700"
+                }`}
+                onClick={() => setActiveTab(tab)}
+              >
+                {t(`profile.tabs.${tab}`)}
+              </button>
+            ))}
         </div>
 
         {/* Orders */}
         {loading ? (
           <Loader title=" orders..." />
         ) : filteredOrders.length === 0 ? (
-          <p className="text-center text-gray-500">No orders in this tab yet.</p>
+          <p className="text-center text-gray-500">
+            No orders in this tab yet.
+          </p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-{filteredOrders.map((order) => (
-  <div
-    key={order._id}
-    className=" rounded-xl p-4 bg-green-50 shadow-sm flex flex-col justify-between"
-  >
-    <div className="flex justify-between items-center mb-2 text-sm text-gray-600">
-<span>{t("profile.orders.date")}: {new Date(order.createdAt).toLocaleDateString()}</span>
-      <span className="flex items-center gap-1 font-semibold">
-        {["pending", "assigntocourier"].includes(order.status) && (
-          <>
-            <Truck size={16} className="text-yellow-600" />
-    <span className="text-yellow-700">{t("profile.orders.status.inTransit")}</span>
-          </>
-        )}
-        {order.status === "completed" && (
-          <>
-            <CheckCircle size={16} className="text-green-600" />
-    <span className="text-green-700">{t("profile.orders.status.completed")}</span>
-          </>
-        )}
-        {order.status === "cancelled" && (
-          <>
-            <XCircle size={16} className="text-red-600" />
-    <span className="text-red-700 capitalize">{t("profile.orders.status.cancelled")}</span>
-          </>
-        )}
-      </span>
-    </div>
+            {filteredOrders.map((order) => (
+              <div
+                key={order._id}
+                className=" rounded-xl p-4 bg-green-50 shadow-sm flex flex-col justify-between"
+              >
+                <div className="flex justify-between items-center mb-2 text-sm text-gray-600">
+                  <span>
+                    {t("profile.orders.date")}:{" "}
+                    {new Date(order.createdAt).toLocaleDateString()}
+                  </span>
+                  <span className="flex items-center gap-1 font-semibold">
+                    {["pending", "assigntocourier"].includes(order.status) && (
+                      <>
+                        <Truck size={16} className="text-yellow-600" />
+                        <span className="text-yellow-700">
+                          {t("profile.orders.status.inTransit")}
+                        </span>
+                      </>
+                    )}
+                    {order.status === "completed" && (
+                      <>
+                        <CheckCircle size={16} className="text-green-600" />
+                        <span className="text-green-700">
+                          {t("profile.orders.status.completed")}
+                        </span>
+                      </>
+                    )}
+                    {order.status === "cancelled" && (
+                      <>
+                        <XCircle size={16} className="text-red-600" />
+                        <span className="text-red-700 capitalize">
+                          {t("profile.orders.status.cancelled")}
+                        </span>
+                      </>
+                    )}
+                  </span>
+                </div>
 
-    {/* Address summary */}
-    <div className="text-xs text-gray-500 mb-4">
-      {order.address.street}, Bldg {order.address.building}, Floor {order.address.floor}, {order.address.area}, {order.address.city}
-    </div>
+                {/* Address summary */}
+                <div className="text-xs text-gray-500 mb-4">
+                  {order.address.street}, Bldg {order.address.building}, Floor{" "}
+                  {order.address.floor}, {order.address.area},{" "}
+                  {order.address.city}
+                </div>
 
-    <button
-      onClick={() => openItemsModal(order.items)}
-      className="self-start text-sm  text-green-500 rounded-md transition"
-    >
-  {t("profile.orders.viewDetails")}
-    </button>
-  </div>
-))} 
-<ItemsModal
-  show={isItemsModalOpen}
-  onclose={closeItemsModal}
-  selectedOrderItems={selectedOrderItems}
-/>
-
+                <button
+                  onClick={() => openItemsModal(order.items)}
+                  className="self-start text-sm  text-green-500 rounded-md transition"
+                >
+                  {t("profile.orders.viewDetails")}
+                </button>
+              </div>
+            ))}
+            <ItemsModal
+              show={isItemsModalOpen}
+              onclose={closeItemsModal}
+              selectedOrderItems={selectedOrderItems}
+            />
           </div>
         )}
       </div>
@@ -298,7 +310,15 @@ onClick={() => setIsRecyclingModalOpen(true)}
 }
 
 // Updated StatBox to handle loading state
-function StatBox({ label, value, loading = false }: { label: string; value: number; loading?: boolean }) {
+function StatBox({
+  label,
+  value,
+  loading = false,
+}: {
+  label: string;
+  value: number;
+  loading?: boolean;
+}) {
   return (
     <div className="bg-green-100 text-green-800 p-4 rounded-xl shadow-sm">
       {loading ? (

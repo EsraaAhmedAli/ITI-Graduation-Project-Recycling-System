@@ -2,23 +2,57 @@
 import { User } from "@/components/Types/Auser.type";
 import api from "./axios";
 
-interface AuthResponse {
-  user: User;
-  accessToken: string;
-}
-
-interface VerifyData {
+// Payload when verifying OTP and completing signup
+export interface VerifyData {
   name: string;
   email: string;
   phoneNumber: string;
   otpCode: string;
   provider?: string;
   password: string;
+  role: "admin" | "customer" | "buyer" | "delivery";
 }
-export const verifyOtpAndRegister = async (
-  data: VerifyData
+
+// Response after successful auth
+export interface AuthResponse {
+  user: User;
+  accessToken: string;
+}
+
+// Request to start signup (OTP sent to email)
+export interface InitiateSignupRequest {
+  email: string;
+}
+
+// Request to verify OTP only
+export interface VerifyOtpOnlyRequest {
+  email: string;
+  otpCode: string;
+}
+
+// Register user directly (after verified)
+export interface RegisterUserRequest {
+  name: string;
+  email: string;
+  phoneNumber: string;
+  role: "admin" | "customer" | "buyer" | "delivery";
+  password?: string;
+  provider?: string;
+  imgUrl?: string;
+  attachments?: Record<string, any>;
+}
+
+export const verifyOtp = async (
+  data: VerifyOtpOnlyRequest
+): Promise<{ message: string }> => {
+  const res = await api.post("/auth/verifyOtp", data);
+  return res.data;
+};
+
+export const registerUser = async (
+  data: RegisterUserRequest
 ): Promise<AuthResponse> => {
-  const res = await api.post<AuthResponse>("/auth/verifyRegisterToken", data);
+  const res = await api.post<AuthResponse>("/auth/register", data);
   return res.data;
 };
 
