@@ -9,9 +9,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "flowbite-react";
 import Image from "next/image";
 import { useUserAuth } from "@/context/AuthFormContext";
-import { priceWithMarkup } from "@/utils/priceUtils";
-
-
 
 const itemVariants = {
   hidden: { opacity: 0, y: 10 },
@@ -25,24 +22,17 @@ export default function CartPage() {
   const [totalItems, setTotalItems] = useState(0);
   const [totalPoints, setTotalPoints] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
-  const { user } = useUserAuth()
-  console.log(user);
-
+  const { user } = useUserAuth();
 
   useEffect(() => {
     const total = cart.reduce((sum, item) => sum + item.quantity, 0);
     const points = cart.reduce((sum, item) => sum + (item.points || 0) * item.quantity, 0);
-    const price = cart.reduce((sum, item) => {
-  const itemPrice = priceWithMarkup(item.price, user?.role); // ✅ استخدم الدور
-  return sum + itemPrice * item.quantity;
-}, 0);
-
+    const price = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
     setTotalItems(total);
     setTotalPoints(points);
     setTotalPrice(price);
-  }, [cart, user]);
-
+  }, [cart]);
 
   const confirmAction = async ({
     title,
@@ -76,13 +66,11 @@ export default function CartPage() {
     }
   };
 
-
-
   return (
     <div className="p-4 sm:p-8 max-w-4xl mx-auto">
       <div className="flex items-center gap-3 mb-6">
         <Recycle className="w-8 h-8 text-green-600" />
-        <h1 className="text-2xl font-bold text-gray-800">Confrim items you wan to recycle </h1>
+        <h1 className="text-2xl font-bold text-gray-800">Confirm items you want to recycle</h1>
       </div>
 
       {cart.length === 0 ? (
@@ -92,10 +80,8 @@ export default function CartPage() {
           <p className="text-gray-500 text-sm mb-6 text-center max-w-md">
             Start making a positive impact on the environment. Browse available recyclable items and add them to your bin!
           </p>
-          {/* gradientDuoTone="greenToBlue" */}
           <Button
-            onClick={() => router.push(user?.role == 'buyer' ? "/marketplace" : "/category")}
-
+            onClick={() => router.push(user?.role === 'buyer' ? "/marketplace" : "/category")}
             className="rounded-full px-6 py-3 shadow-lg hover:shadow-xl transition"
           >
             Browse Recyclable Items
@@ -114,13 +100,7 @@ export default function CartPage() {
             </div>
             <div className="bg-white p-4 rounded-lg shadow-sm text-center">
               <div className="text-gray-500 text-sm">Earned Money</div>
-             <div className="text-2xl font-bold text-emerald-600">
-  {totalPrice.toFixed(2)} EGP
-</div>
-
-              
-
-{/* <span>{priceWithMarkup(item.price)} EGP</span> */}
+              <div className="text-2xl font-bold text-emerald-600">{totalPrice.toFixed(2)} EGP</div>
             </div>
           </div>
 
@@ -144,7 +124,7 @@ export default function CartPage() {
                           height={100}
                           src={item.image}
                           alt={item.itemName}
-                          className=" object-fit"
+                          className="object-contain"
                         />
                       ) : (
                         <Package className="w-8 h-8 text-green-300" />
@@ -153,13 +133,10 @@ export default function CartPage() {
 
                     <div className="flex-1">
                       <div className="flex justify-between items-start">
-                        <h3 className="text-lg font-medium text-gray-800">
-                          {item.itemName}
-                        </h3>
+                        <h3 className="text-lg font-medium text-gray-800">{item.itemName}</h3>
                         <p className="text-sm text-gray-500 mt-1">
                           Category: <span className="text-green-600">{item.categoryName}</span>
                         </p>
-
                         <button
                           onClick={() =>
                             confirmAction({
@@ -179,38 +156,34 @@ export default function CartPage() {
                           <Scale className="w-4 h-4 mr-1" />
                           {item.measurement_unit === 1 ? "By Kilo" : "By Piece"}
                         </div>
-                        <div className="text-green-600 font-medium">
-                          {item.points} points each
+                        <div className="text-green-600 font-medium">{item.points} points each</div>
+                        <div className="text-blue-600">Saves {item.co2_saved || 0} kg CO₂</div>
+                      </div>
+
+                      <div className="text-emerald-600 text-sm space-y-1 mt-2">
+                        <div>
+                          <span className="font-semibold">Price:</span> {item.price.toFixed(2)} EGP
                         </div>
-                        <div className="text-blue-600">
-                          Saves {item.co2_saved || 0} kg CO₂
+                        <div className="text-gray-600 text-sm">
+                          {item.quantity} × {item.price.toFixed(2)} ={" "}
+                          <span className="font-medium">{(item.quantity * item.price).toFixed(2)} EGP</span>
                         </div>
                       </div>
-                      {user?.role === 'buyer' && (
-                        <div className="text-emerald-600 text-sm">
-                         <div className="text-emerald-600 text-sm">
-  Price : {priceWithMarkup(item.price, user?.role)} EGP
-</div>
-
-                        </div>
-                      )}
 
                       <div className="mt-4 flex items-center justify-between">
                         <div className="flex items-center border border-gray-200 rounded-full">
                           <button
                             onClick={() => decreaseQty(item)}
-                            className={`w-8 h-8 flex items-center justify-center rounded-l-full transition-all 
-                              ${item.quantity <= 1
+                            className={`w-8 h-8 flex items-center justify-center rounded-l-full transition-all ${
+                              item.quantity <= 1
                                 ? "text-gray-300 bg-gray-100 cursor-not-allowed"
                                 : "text-gray-600 hover:bg-gray-50"
-                              }`}
+                            }`}
                             disabled={item.quantity <= 1}
                           >
                             -
                           </button>
-                          <span className="px-3 text-base font-medium">
-                            {item.quantity}
-                          </span>
+                          <span className="px-3 text-base font-medium">{item.quantity}</span>
                           <button
                             onClick={() => increaseQty(item)}
                             className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-50 rounded-r-full transition-all"
@@ -226,24 +199,8 @@ export default function CartPage() {
             </AnimatePresence>
           </div>
 
-
-          {/* <Button
-    color="light"
-    onClick={() =>
-      confirmAction({
-        title: "Clear All?",
-        text: "Are you sure you want to remove all items from your recycling collection?",
-        onConfirm: clearCart,
-      })
-    }
-    className="border border-gray-300 text-gray-700 hover:bg-gray-50"
-  >
-    Clear Collection
-  </Button> */}
-
           <div className="mt-8 bg-white rounded-xl shadow p-6">
             <div className="flex justify-between items-center gap-4">
-              {/* الزرار الأول - Clear Collection */}
               <Button
                 color="light"
                 onClick={() =>
@@ -258,45 +215,27 @@ export default function CartPage() {
                 Clear Collection
               </Button>
 
-              {/* الزرار الثاني - Schedule Pickup */}
               <div className="flex flex-col items-end">
-                {/* onClick={() => router.push("/pickup")}
-  disabled={totalPrice < 100}
-  className={`flex items-center gap-2 px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg
-    ${totalPrice < 100
-      ? 'bg-gray-300 text-white cursor-not-allowed pointer-events-none'
-      : 'bg-green-500 hover:bg-green-600 text-white'}
-  `} */}
                 <div className={totalPrice < 100 ? "pointer-events-none" : ""}>
                   <Button
                     onClick={() => router.push("/pickup")}
                     disabled={totalPrice < 100}
-                    className={`flex items-center gap-2 px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg
-      ${totalPrice < 100
-                        ? 'bg-gray-300 text-white cursor-not-allowed'
-                        : 'bg-green-500 hover:bg-green-600 text-white'}
-    `}
+                    className={`flex items-center gap-2 px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg ${
+                      totalPrice < 100
+                        ? "bg-gray-300 text-white cursor-not-allowed"
+                        : "bg-green-500 hover:bg-green-600 text-white"
+                    }`}
                   >
                     <Truck className="w-5 h-5" />
                     Schedule Pickup
                   </Button>
                 </div>
-
                 {totalPrice < 100 && (
-                  <p className="text-xs text-red-600 mt-1 text-right">
-                    You should reach at least 100 EGP
-                  </p>
+                  <p className="text-xs text-red-600 mt-1 text-right">You should reach at least 100 EGP</p>
                 )}
-
-
               </div>
             </div>
           </div>
-
-
-
-
-
         </>
       )}
     </div>

@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { useCart } from "@/context/CartContext";
 import Button from "../common/Button";
-import { priceWithMarkup } from "@/utils/priceUtils";
+
 
 
 
@@ -85,7 +85,7 @@ const CheckoutPage = ({ amount, checkoutData }: CheckoutPageProps) => {
 
    const role = localCheckoutData?.user?.role || "buyer";
 
-   const finalPrice = priceWithMarkup(localCheckoutData?.totalPrice || amount, role)
+   
   const { createOrder, isLoading: isCreatingOrder } = useCreateOrder({
     clearCart: () => {
       sessionStorage.removeItem('checkoutData');
@@ -128,7 +128,7 @@ const CheckoutPage = ({ amount, checkoutData }: CheckoutPageProps) => {
         const { data } = await api.post(
           `/users/${user._id}/create-payment-intent`,
           {
-           amount: convertToSubcurrency(finalPrice),
+           amount: convertToSubcurrency(amount),
           }
         );
 
@@ -195,9 +195,10 @@ const CheckoutPage = ({ amount, checkoutData }: CheckoutPageProps) => {
         
         sessionStorage.removeItem('checkoutData');
         
-      router.push(
-          `/payment/success?payment=completed&amount=${finalPrice}&base=${localCheckoutData.totalPrice}`
-        );
+    router.push(
+  `/payment/success?payment=completed&amount=${amount}&base=${localCheckoutData.totalPrice}`
+);
+
       } else {
         toast.error('Payment successful but failed to create order. Please contact support.');
         // Even if order creation fails, we should still redirect to a success page
@@ -327,7 +328,7 @@ const CheckoutPage = ({ amount, checkoutData }: CheckoutPageProps) => {
               <div className="mb-6">
             <div className="text-gray-600 text-sm mb-1">Total price</div>
             <div className="text-3xl font-bold text-teal-600">
-              EGP {finalPrice.toFixed(2)}
+             EGP {localCheckoutData?.totalPrice.toFixed(2)}
             </div>
             {role !== "buyer" && (
               <div className="text-xs text-gray-500 mt-1">
@@ -336,14 +337,7 @@ const CheckoutPage = ({ amount, checkoutData }: CheckoutPageProps) => {
             )}
           </div>
 
-          {finalPrice > localCheckoutData?.totalPrice && (
-    <div className="text-sm text-green-600 mt-2">
-      {/* <span>الربح: </span>
-      <span className="font-medium">
-        EGP {(finalPrice - localCheckoutData.totalPrice).toFixed(2)}
-      </span> */}
-    </div>
-  )}
+        
                 
                 {/* Payment Method */}
                 <div className="mb-4">

@@ -6,7 +6,6 @@ import { loadStripe } from '@stripe/stripe-js'
 import convertToSubcurrency from '@/lib/converToSubCurrency'
 import CheckoutPage from '@/components/buyer/checkoutpage'
 import { useSearchParams } from 'next/navigation'
-import { priceWithMarkup } from '@/utils/priceUtils';
 
 
 if (process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY == undefined) {
@@ -39,51 +38,45 @@ interface CheckoutData {
 }
 
 export default function RecyclingPaymentPage() {
-  const searchParams = useSearchParams()
-  const amount = searchParams.get("total");
+
+
+const searchParams = useSearchParams()
+  const rawAmount = searchParams.get("total")
+  const basePrice = rawAmount ? parseFloat(rawAmount) : 0
 
   
-  
-  // State for checkout data
-  const [checkoutData, setCheckoutData] = useState<CheckoutData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const rawAmount = searchParams.get("total");
-const basePrice = rawAmount ? parseFloat(rawAmount) : 0;
+  const finalAmount = basePrice
+  const [checkoutData, setCheckoutData] = useState<CheckoutData | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-// Only compute final amount after checkoutData is available
-const finalAmount = checkoutData
-  ? priceWithMarkup(basePrice, checkoutData.user?.role)
-  : basePrice;
-
-
-  // Retrieve checkout data from sessionStorage
+  // استرجاع بيانات الدفع من sessionStorage
   useEffect(() => {
     try {
-      const storedData = sessionStorage.getItem('checkoutData');
+      const storedData = sessionStorage.getItem('checkoutData')
       if (storedData) {
-        const parsedData: CheckoutData = JSON.parse(storedData);
-        setCheckoutData(parsedData);
-        console.log('Retrieved checkout data:', parsedData);
+        const parsedData: CheckoutData = JSON.parse(storedData)
+        setCheckoutData(parsedData)
+        console.log('Retrieved checkout data:', parsedData)
       } else {
-        console.warn('No checkout data found in sessionStorage');
+        console.warn('No checkout data found in sessionStorage')
       }
     } catch (error) {
-      console.error('Error parsing checkout data:', error);
+      console.error('Error parsing checkout data:', error)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  }, []);
+  }, [])
 
-  // Show loading state
+  
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <div className="animate-spin h-12 w-12 border-b-2 border-green-600 rounded-full mx-auto mb-4"></div>
           <p className="text-gray-600">Loading payment details...</p>
         </div>
       </div>
-    );
+    )
   }
 
   // Show error if no data found
@@ -109,8 +102,6 @@ const finalAmount = checkoutData
     );
   }
 
-  console.log('amount:', amount);
-  console.log('checkoutData:', checkoutData);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
@@ -128,7 +119,7 @@ const finalAmount = checkoutData
   stripe={stripePromise}
   options={{
     mode: "payment",
-    amount: convertToSubcurrency(finalAmount),
+   amount: convertToSubcurrency(finalAmount),
     currency: "egp",
     appearance: {
       theme: 'stripe',

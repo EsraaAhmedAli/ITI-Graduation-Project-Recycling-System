@@ -9,7 +9,8 @@ export default function PaymentSuccess() {
 
   const orderId = searchParams.get("orderId");
   const paidAmount = searchParams.get("amount"); 
-  const baseAmount = searchParams.get("total"); 
+  const baseAmount = searchParams.get("base");
+ 
 
   return (
     <main className="mx-auto px-6 py-8 w-1/2">
@@ -39,11 +40,12 @@ export default function PaymentSuccess() {
               </span>
             </div>
 
-            {baseAmount && (
+            {/* {baseAmount && (
               <p className="text-sm text-gray-500 mt-2">
-                Base price before markup: <strong>{baseAmount} EGP</strong>
-              </p>
-            )}
+  Original price before markup: <strong>{baseAmount} EGP</strong>
+</p>
+
+            )} */}
           </div>
 
           {/* Environmental Impact Section */}
