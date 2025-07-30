@@ -48,49 +48,40 @@ export default function Marketplace() {
     setCurrentPage(1);
   }, [searchTerm, selectedCategory]);
 
-  const fetchItems = async () => {
-    // Build query params for server-side filtering
-    const params = new URLSearchParams({
-      page: currentPage.toString(),
-      limit: itemsPerPage.toString(),
-    });
+const fetchItems = async () => {
+  const params = new URLSearchParams({
+    page: currentPage.toString(),
+    limit: itemsPerPage.toString(),
+  });
 
-    // Add user role for pricing
-    if (user?.role) {
-      params.append('userRole', user.role);
-    }
+  // Add user role for pricing
+  if (user?.role) {
+    params.append('role', user.role); // ← هنا "role" بدل "userRole"
+  }
 
-    // Add search term if exists
-    if (searchTerm.trim()) {
-      params.append('search', searchTerm.trim());
-    }
+  if (searchTerm.trim()) {
+    params.append('search', searchTerm.trim());
+  }
 
-    // Add category filter if not "all"
-    if (selectedCategory !== "all") {
-      params.append('category', selectedCategory);
-    }
+  if (selectedCategory !== "all") {
+    params.append('category', selectedCategory);
+  }
 
-    console.log('🔍 Fetching items with params:', params.toString());
-    
-    try {
-      // Use the enhanced endpoint that supports filtering
-      const res = await api.get(`/categories/get-items-filtered?${params.toString()}`);
-      console.log('✅ API Response:', res?.data);
-      return res?.data;
-    } catch (error) {
-      console.error('❌ API Error:', error);
-      
-      // Fallback to original endpoint without filters
-      try {
-        console.log('🔄 Falling back to original endpoint...');
-        const fallbackRes = await api.get(`/categories/get-items?page=${currentPage}&limit=${itemsPerPage}&userRole=${user?.role || ''}`);
-        return fallbackRes?.data;
-      } catch (fallbackError) {
-        console.error('❌ Fallback also failed:', fallbackError);
-        throw fallbackError;
-      }
-    }
-  };
+  console.log('🔍 Fetching items with params:', params.toString());
+
+  try {
+    const res = await api.get(`/categories/get-items-filtered?${params.toString()}`);
+    console.log('✅ API Response:', res?.data);
+    return res?.data;
+  } catch (error) {
+    console.error('❌ API Error:', error);
+
+    // ✅ أصلحي القوس هنا: كان فيه } زيادة
+    const fallbackRes = await api.get(`/categories/get-items?page=${currentPage}&limit=${itemsPerPage}&role=buyer`);
+    return fallbackRes?.data;
+  }
+};
+
 
   const {
     data,
@@ -240,75 +231,55 @@ export default function Marketplace() {
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
             {items.map((item) => {
-              // Check if backend already applied markup (if item has originalPrice field)
-              const shouldApplyMarkup = !item.originalPrice; // Only apply if backend didn't
-              const finalPrice = shouldApplyMarkup && user?.role 
-                ? priceWithMarkup(item.price, user.role)
-                : item.price;
-              
-              const itemLink = `/marketplace/${encodeURIComponent(item.name)}`;
-              
-              console.log('🔗 Item pricing in marketplace:', {
-                itemName: item.name,
-                rawPrice: item.price,
-                hasOriginalPrice: !!item.originalPrice,
-                shouldApplyMarkup,
-                userRole: user?.role,
-                finalPrice: finalPrice.toFixed(2),
-                calculation: shouldApplyMarkup ? `${item.price} * 1.20 = ${finalPrice.toFixed(2)}` : 'Using backend price'
-              });
-              
-              return (
-                <Link
-                  key={item._id}
-                  href={itemLink}
-                  passHref
-                  onClick={(e) => {
-                    console.log('🖱️ Item clicked:', {
-                      itemName: item.name,
-                      href: itemLink,
-                      finalPrice: finalPrice.toFixed(2)
-                    });
-                  }}
-                >
-                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-sm transition-all duration-150 h-full flex flex-col cursor-pointer">
-                    <div className="relative aspect-square">
-                      <Image
-                        src={item.image}
-                        alt={item.name}
-                        fill
-                        className="object-contain"
-                        sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
-                        priority={false}
-                        onError={(e) => {
-                          console.error('🖼️ Image load error:', item.image);
-                        }}
-                      />
-                    </div>
-                    <div className="p-2 flex-1 flex flex-col">
-                      <h3 className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide leading-tight">
-                        {t(`categories.subcategories.${item.name.toLowerCase().replace(/\s+/g, "-")}`, { defaultValue: item.name })}
-                      </h3>
-                      <div className="flex justify-between items-center mt-auto">
-                        <span className="text-xs font-bold text-green-600">
-                          {finalPrice.toFixed(2)}
-                          <span className="text-sm mx-2 ml-1">{t('itemsModal.currency')}</span>
-                        </span>
-                        {/* Show original price if available */}
-                        {item.originalPrice && (
-                          <span className="text-[0.5rem] text-gray-400 line-through">
-                            {item.originalPrice.toFixed(2)}
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-[0.6rem] text-gray-500 mt-0.5 text-right">
-                        {getMeasurementText(item.measurement_unit)}
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
+  const finalPrice = item.price; 
+  const itemLink = `/marketplace/${encodeURIComponent(item.name)}`;
+
+  return (
+    <Link
+      key={item._id}
+      href={itemLink}
+      passHref
+      onClick={(e) => {
+        console.log('🖱️ Item clicked:', {
+          itemName: item.name,
+          href: itemLink,
+          finalPrice: finalPrice.toFixed(2)
+        });
+      }}
+    >
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-sm transition-all duration-150 h-full flex flex-col cursor-pointer">
+        <div className="relative aspect-square">
+          <Image
+            src={item.image}
+            alt={item.name}
+            fill
+            className="object-contain"
+            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
+            priority={false}
+            onError={(e) => {
+              console.error('🖼️ Image load error:', item.image);
+            }}
+          />
+        </div>
+        <div className="p-2 flex-1 flex flex-col">
+          <h3 className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide leading-tight">
+            {t(`categories.subcategories.${item.name.toLowerCase().replace(/\s+/g, "-")}`, { defaultValue: item.name })}
+          </h3>
+          <div className="flex justify-between items-center mt-auto">
+            <span className="text-xs font-bold text-green-600">
+              {finalPrice.toFixed(2)}
+              <span className="text-sm mx-2 ml-1">{t('itemsModal.currency')}</span>
+            </span>
+          </div>
+          <div className="text-[0.6rem] text-gray-500 mt-0.5 text-right">
+            {getMeasurementText(item.measurement_unit)}
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+})}
+
           </div>
 
           {/* Pagination */}

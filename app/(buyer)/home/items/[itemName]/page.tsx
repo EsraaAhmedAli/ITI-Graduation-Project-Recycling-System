@@ -7,7 +7,6 @@ import api from "@/lib/axios";
 import { CartItem, useCart } from "@/context/CartContext";
 import { Recycle, Leaf, Package, Minus, Plus } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
-import { priceWithMarkup } from "@/utils/priceUtils";
 import { useUserAuth } from "@/context/AuthFormContext";
 import Loader from "@/components/common/loader";
 
@@ -43,7 +42,7 @@ export default function ItemDetailsPage() {
     console.log('🔍 Fetching item by name:', decodedName);
     try {
       // Get original prices (NO userRole parameter)
-      const res = await api.get('/categories/get-items?limit=10000');
+      const res = await api.get('/categories/get-items?limit=10000&role=buyer');
       console.log('✅ Got all items with original prices, searching for:', decodedName);
       
       const allItems = res.data?.data || [];
@@ -127,16 +126,9 @@ export default function ItemDetailsPage() {
     );
   }
 
-  // Always apply frontend markup to original prices
-  const itemPrice = priceWithMarkup(item.price, user?.role);
 
-  console.log('💰 Item details pricing:', {
-    itemName: item.name,
-    originalPrice: item.price,
-    finalPrice: itemPrice,
-    userRole: user?.role,
-    markup: user?.role === 'buyer' ? '20%' : '0%'
-  });
+
+
 
   function convertToCartItem(item: Item, quantity: number): CartItem {
     return {
@@ -201,7 +193,7 @@ export default function ItemDetailsPage() {
             {/* Price and Points */}
             <div className="flex items-baseline space-x-4">
               <span className="text-3xl font-bold text-gray-900">
-                {(itemPrice * selectedQuantity).toFixed(2)} EGP
+                {(item.price * selectedQuantity).toFixed(2)} EGP
               </span>
             </div>
 
