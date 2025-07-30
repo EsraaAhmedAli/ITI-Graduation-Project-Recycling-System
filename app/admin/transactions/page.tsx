@@ -21,6 +21,8 @@ import Loader from '@/components/common/loader';
 import { TablePagination } from '@/components/tablePagination/tablePagination';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from 'flowbite-react';
 import RefundModal from '@/components/shared/refundModal';
+import { priceWithMarkup } from "@/utils/priceUtils"; // عدلي المسار حسب مكان الملف
+
 
 interface PaymentFilters {
   page: number;
@@ -270,25 +272,30 @@ const Transactions: React.FC = () => {
         </div>
       ),
     },
-    {
-      key: 'amount',
-      label: 'Amount',
-      sortable: true,
-      type: 'price' as const,
-      priority: 3,
-      render: (payment: PaymentData) => (
-        <div >
-          <div className="text-sm font-semibold text-gray-900">
-            {formatAmount(payment.amount, payment.currency)}
-          </div>
-          {payment.amount_refunded > 0 && (
-            <div className="text-xs text-red-600">
-              -{formatAmount(payment.amount_refunded, payment.currency)} refunded
-            </div>
-          )}
+{
+  key: 'amount',
+  label: 'Amount',
+  sortable: true,
+  type: 'price' as const,
+  priority: 3,
+  render: (payment: PaymentData) => {
+    const baseAmount = payment.amount / 100;
+    return (
+      <div>
+        <div className="text-sm font-semibold text-gray-900">
+          {baseAmount} {payment.currency.toUpperCase()}
         </div>
-      ),
-    },
+        {payment.amount_refunded > 0 && (
+          <div className="text-xs text-red-600">
+            -{formatAmount(payment.amount_refunded, payment.currency)} refunded
+          </div>
+        )}
+      </div>
+    );
+  },
+}
+,
+
     {
       key: 'status',
       label: 'Status',
