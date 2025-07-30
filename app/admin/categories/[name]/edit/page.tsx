@@ -10,7 +10,8 @@ export default function EditCategoryPage() {
   const queryClient = useQueryClient();
 
   const router = useRouter();
-  const { name } = useParams();
+const params = useParams();
+const name = decodeURIComponent(params.name as string);
   const [category, setCategory] = useState({ 
     name: '', 
     description: '', 

@@ -10,10 +10,12 @@ import AddressStep from "./AddressStep";
 import { toast } from "react-toastify";
 import { UserAuthContext } from "@/context/AuthFormContext";
 import Loader from "@/components/common/loader";
-import { useCart } from "@/context/CartContext";
+import { CartItem, useCart } from "@/context/CartContext";
 import Link from "next/link";
 import api from "@/lib/axios";
 import { Building2, ChevronRight, Edit3, Home, MapPin, Plus, Trash2 } from "lucide-react";
+import { useCreateOrder } from "@/hooks/useCreateOrder";
+import { useRouter } from "next/navigation";
 
 export default function PickupConfirmation() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -21,7 +23,7 @@ export default function PickupConfirmation() {
   const [copied, setCopied] = useState(false);
   const [loadingBtn, setLoadingBtn] = useState<boolean>(false);
   const [direction, setDirection] = useState<"forward" | "backward">("forward");
-
+const router = useRouter()
   const [selectedCity, setSelectedCity] = useState<City | "">("");
   const [formData, setFormData] = useState<FormInputs | null>(null);
   const [addresses, setAddresses] = useState<FormInputs[]>([]);
@@ -36,13 +38,20 @@ export default function PickupConfirmation() {
   const [notLoggedIn, setNotLoggedIn] = useState(false);
 
   const { user } = useContext(UserAuthContext) ?? {};
-  
+  const getTotalCartPrice = (cart: CartItem[]) => {
+  return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+};
   const { cart, clearCart } = useCart();
-  console.log(cart);
-  
 
-console.log("🔍 user in PickupConfirmation:", user);
-  // Only fetch addresses if user exists
+const totalPrice = getTotalCartPrice(cart);
+
+  
+  const { createOrder} = useCreateOrder({
+    clearCart,
+    setCurrentStep,
+    setCreatedOrderId
+  });
+
   const fetchAddresses = async () => {
     try {
       setLoading(true);
@@ -95,39 +104,31 @@ console.error("Failed to fetch addresses:", err?.response?.data || err);
     setCurrentStep(step);
   };
 
-  const handleConfirm = () => {
-    if (!selectedAddress) {
-      toast.error("Please select an address");
-      return;
+ const handleConfirm = async () => {
+  if (user?.role === 'buyer') {
+    // Store cart and address data in sessionStorage
+    sessionStorage.setItem('checkoutData', JSON.stringify({
+      cart,
+      selectedAddress,
+      totalPrice,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phoneNumber: user.phoneNumber
+      }
+    }));
+    
+    // Navigate with just the total price
+    router.push(`/payment?total=${totalPrice}`);
+  } else {
+    const result = await createOrder(selectedAddress, cart, user);
+    
+    if (result.success) {
+      console.log('Order created successfully:', result.orderId);
     }
-
-  if (!cart || cart.length === 0) {
-    toast.error("Your cart is empty");
-    return;
   }
-    setLoadingBtn(true);
-    api
-      .post("orders", {
-        address: selectedAddress,
-        items: cart,
-        phoneNumber: user?.phoneNumber,
-        userName: user?.name,
-        email:user?.email,
-        imageUrl:user?.imgUrl
-
-      })
-      .then((res) => {
-        setCreatedOrderId(res.data.data._id);
-        clearCart(); // ✅ clear cart after successful order
-        setCurrentStep(3);
-      })
-      .catch((err) => {
-        toast.error(err?.message ?? "Failed to create order");
-      })
-      .finally(() => {
-        setLoadingBtn(false);
-      });
-  };
+};
 
   const handleSaveAddress = async (data: FormInputs) => {
     try {
@@ -466,6 +467,7 @@ console.error("Failed to fetch addresses:", err?.response?.data || err);
           onBack={() => setCurrentStep(1)}
           onConfirm={handleConfirm}
           loading={loadingBtn}
+          userRole={user?.role}
         />
       )}
 

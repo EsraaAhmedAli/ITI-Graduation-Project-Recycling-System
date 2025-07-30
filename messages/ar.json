@@ -66,7 +66,7 @@
     "startRecycling": "ابدأ التدوير",
     "logout": "تسجيل خروج",
     "title": "بدلها",
-    "searchplaceholder": "ابحث عن شيئ..."
+    "searchplaceholder": "ابحث عن شيء..."
   },
   "footer": {
     "title": "بدلها",
@@ -170,7 +170,8 @@
       "status": {
         "inTransit": "قيد التوصيل",
         "completed": "مكتملة",
-        "cancelled": "ملغاة"
+        "cancelled": "ملغاة",
+        "pending": "قيد الانتظار"
       },
       "viewDetails": "عرض التفاصيل",
       "cancelConfirm": "هل أنت متأكد من إلغاء هذا الطلب؟",
@@ -190,12 +191,113 @@
     "points": "النقاط",
     "description": "الوصف",
     "unnamedItem": "عنصر بدون اسم",
+    "perKg": "لكل كجم",
+    "perItem": "لكل قطعة",
     "orderTotal": "إجمالي الطلب",
     "totalPrice": "{{total}} جنيه",
     "currency": "جنيه",
     "itemsCount": "{{count}} عنصر",
     "totalPoints": "إجمالي النقاط: {{points}}",
     "noItemsTitle": "لم يتم العثور على عناصر",
-    "noItemsDesc": "لا يحتوي هذا الطلب على أي عناصر."
+    "noItemsDesc": "لا يحتوي هذا الطلب على أي عناصر.",
+    "addToCollection": "اضف لمجموعتك"
+  },
+  "categories": {
+    "paper": "الورق",
+    "e-wasted": "النفايات الإلكترونية",
+    "metals": "المعادن",
+    "spare-parts": "قطع غيار",
+    "plastic": "بلاستيك",
+    "home-appliances": "ادوات منزلية",
+
+    "subcategories": {
+      "shredded-paper": "ورق مقطع",
+      "books": "كتب",
+      "news-paper": "جرائد",
+      "router": "جهاز التوجيه",
+      "cooking-pan": "مقلاة الطبخ",
+      "hammer": "مطرقة",
+      "car-battery": "بطارية سيارة",
+      "solid-plastic": "البلاستيك الصلب",
+      "water-colman": "كولمان ",
+      "acrylic": "اكريليك",
+      "plastic-barrel": "برميل ",
+      "fan": "مروحة",
+      "mobile": "هاتف جوال",
+      "laptop": "كمبيوتر محمول",
+      "receiver": "جهاز استقبال",
+      "powerbank": "باور بانك",
+      "tea-pot": "براد"
+    }
+  },
+  "collectionsOfCategory": "{{collections}}  {{category}}",
+
+  "common": {
+    "collectionsPlural": "مجموعات",
+    "pointsAbbreviation": "نقاط",
+    "allCategories": "جميع الفئات",
+    "showing": "عرض",
+    "of": "من",
+    "items": "عنصر",
+    "page": "صفحة",
+    "outOfStock": "نفد من المخزون",
+    "addToRecyclingCart": "أضف إلى سلة إعادة التدوير",
+    "availableStock": "المخزون المتاح",
+    "afterPurchase": "بعد الشراء: {{quantity}} {{unit}}",
+    "percentageRemaining": "{{percentage}}% متبقي",
+    "unitKg": "كجم",
+    "unitPiece": "قطعة",
+    "quantity": "الكمية",
+    "lowStockWarning": "مخزون منخفض"
+  },
+  "marketPlace": {
+    "sustainableMarketplace": "الأسواق المستدامة",
+    "marketPlaceDesc": "اكتشف العناصر القابلة لإعادة التدوير واكسب المكافآت"
+  },
+  "staticCategories": {
+    "categories": "الفئات",
+    "recyclingCategories": "فئات إعادة التدوير",
+    "recyclingCategoriesSubtitle": "عندك بواقي وعايز تكسب فلوس؟ احكيلنا عندك إيه",
+    "seeMore": "عرض المزيد",
+    "clickImageForDetails": "لمزيد من التفاصيل حول كل فئة، اضغط على الصورة الخاصة بها",
+    "errorLoadingCategories": "حدث خطأ أثناء تحميل الفئات.",
+    "discoverMoreSub": "اكتشف العناصر القابلة لإعادة التدوير ذات التأثير البيئي"
+  },
+  "environmentalImpact": {
+    "plastic": "يقلل من تلوث المحيطات وينقذ الحياة البحرية",
+    "paper": "يحافظ على الأشجار ويقلل من إزالة الغابات",
+    "spare-parts": "يحافظ على الأشجار ويقلل من إزالة الغابات",
+    "metals": "يحافظ على الموارد الطبيعية ويقلل من التعدين",
+    "glass": "قابل لإعادة التدوير إلى ما لا نهاية بنسبة 100%",
+    "e-wasted": "يمنع النفايات السامة ويسترجع المعادن الثمينة",
+    "organic": "ينتج سمادًا ويقلل من انبعاثات الميثان",
+    "default": "يساهم في بيئة أنظف",
+    "environmentalImpact": "التأثير البيئي"
+  },
+  "categoryStats": {
+    "totalItems": "إجمالي العناصر",
+    "pointsRange": "نطاق النقاط",
+    "estimatedImpact": "الأثر البيئي المقدر"
+  },
+  "environmentalBenefit": {
+    "environmentalBenefits": "الفوائد البيئية",
+    "reducesCO2Emissions": "يقلل {{amount}} كيلوغرام من انبعاثات ثاني أكسيد الكربون",
+    "savesWater": "يوفر {{amount}} لتر من الماء",
+    "conservesNaturalResources": "يحافظ على الموارد الطبيعية من خلال إعادة تدوير المواد"
+  },
+  "recycleProcess": {
+    "title": "عملية إعادة التدوير الخاصة بنا",
+    "collection": {
+      "title": "التجميع",
+      "description": "نجمع عناصرك في الوقت الذي يناسبك."
+    },
+    "processing": {
+      "title": "المعالجة",
+      "description": "يتم تفكيك العناصر بأمان إلى مواد خام."
+    },
+    "newLife": {
+      "title": "حياة جديدة",
+      "description": "يتم إعادة استخدام المواد في منتجات جديدة."
+    }
   }
 }

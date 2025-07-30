@@ -159,10 +159,18 @@
       "recycles": "Total Recycles",
       "points": "Points Collected"
     },
+    "method": {
+      "card": "Visa",
+      "link": "Visa",
+      "paypal": "PayPal",
+      "cash": "Cash",
+      "unknown": "Unknown"
+    },
     "tabs": {
       "incoming": "Incoming",
       "completed": "Completed",
-      "cancelled": "Cancelled"
+      "cancelled": "Cancelled",
+      "payments": "Payments"
     },
     "orders": {
       "loading": " orders...",
@@ -171,7 +179,8 @@
       "status": {
         "inTransit": "In Transit",
         "completed": "Completed",
-        "cancelled": "Cancelled"
+        "cancelled": "Cancelled",
+        "pending": "Pending"
       },
       "viewDetails": "View Details",
       "cancelConfirm": "Are you sure you want to cancel this order?",
@@ -192,12 +201,113 @@
     "description": "Description",
     "unnamedItem": "Unnamed Item",
     "orderTotal": "Order Total",
-    "itemsCount": "{{count}} item{{count === '1' ? '' : 's'}}",
+    "itemsCount": "{{count}} items",
     "totalPrice": "{{total}} EGP",
     "currency": "EGP",
+    "perKg": "per kg",
+    "perItem": "per item",
 
     "totalPoints": "Total Points: {{points}}",
     "noItemsTitle": "No Items Found",
-    "noItemsDesc": "This order doesn't contain any items."
+    "noItemsDesc": "This order doesn't contain any items.",
+    "addToCollection": "Add to Collection"
+  },
+  "categories": {
+    "paper": "Paper",
+    "e-wasted": "E-Waste",
+    "metals": "Metals",
+    "spare-parts": "Spare Parts",
+    "plastic": "Plastic",
+    "home-appliances": "home appliances",
+
+    "subcategories": {
+      "shredded-paper": "Shredded Paper",
+      "books": "Books",
+      "news-paper": "Newspaper",
+      "router": "router",
+      "cooking-pan": "cooking pan",
+      "hammer": "hammer",
+      "car-battery": "cart battery",
+      "acrylic": "acryclic",
+      "solid-plastic": "solid plastic",
+      "water-colman": "Coleman Water",
+      "plastic-barrel": "plastic barrel",
+      "fan": "fan",
+      "mobile": "Mobile",
+      "laptop": "laptop",
+      "receiver": "receiver",
+      "powerbank":"powerbank",
+      "tea-pot" : "tea pot"
+    }
+  },
+
+  "common": {
+    "collectionsPlural": "Collection",
+    "pointsAbbreviation": "pts",
+    "allCategories": "All Categories",
+    "showing": "Showing",
+    "of": "of",
+    "items": "items",
+    "page": "Page",
+    "outOfStock": "Out of Stock",
+    "addToRecyclingCart": "Add to Recycling Cart",
+    "availableStock": "Available Stock",
+    "afterPurchase": "After purchase: {{quantity}} {{unit}}",
+    "percentageRemaining": "{{percentage}}% remaining",
+    "quantity": "Quantity",
+    "unitKg": "kg",
+    "unitPiece": "piece",
+    "lowStockWarning" : "low stock"
+  },
+  "marketPlace": {
+    "sustainableMarketplace": "Sustainable Marketplace",
+    "marketPlaceDesc": "Discover recyclable items and earn rewards"
+  },
+  "collectionsOfCategory": "{{category}} {{collections}}",
+  "staticCategories": {
+    "categories": "Categories",
+    "recyclingCategories": "Recycling Categories",
+    "recyclingCategoriesSubtitle": "Having leftovers and want to earn money? Tell us what you have",
+    "seeMore": "See more",
+    "clickImageForDetails": "For more detailed information on each category, click on the respective image",
+    "errorLoadingCategories": "Error loading categories.",
+    "discoverMoreSub": "Discover recyclable items with environmental impact"
+  },
+  "environmentalImpact": {
+    "plastic": "Reduces ocean pollution and saves marine life",
+    "paper": "Saves trees and reduces deforestation",
+    "metal": "Conserves natural resources and reduces mining",
+    "spare-parts": "Conserves natural resources and reduces mining",
+    "glass": "Infinitely recyclable with 100% material recovery",
+    "e-wasted": "Prevents toxic waste and recovers precious metals",
+    "organic": "Creates compost and reduces methane emissions",
+    "default": "Contributes to a cleaner environment",
+    "environmentalImpact": "Environmental Impact"
+  },
+  "categoryStats": {
+    "totalItems": "Total Items",
+    "pointsRange": "Points Range",
+    "estimatedImpact": "Estimated Environmental Impact"
+  },
+  "environmentalBenefit": {
+    "environmentalBenefits": "Environmental Benefits",
+    "reducesCO2Emissions": "Reduces {{amount}}kg of CO₂ emissions",
+    "savesWater": "Saves {{amount}} liters of water",
+    "conservesNaturalResources": "Conserves natural resources by recycling materials"
+  },
+  "recycleProcess": {
+    "title": "Our Recycling Process",
+    "collection": {
+      "title": "Collection",
+      "description": "We pick up your items at your convenience."
+    },
+    "processing": {
+      "title": "Processing",
+      "description": "Items are safely broken down into raw materials."
+    },
+    "newLife": {
+      "title": "New Life",
+      "description": "Materials are reused in new products."
+    }
   }
 }

@@ -31,13 +31,13 @@ export const roleConfig = {
     color: "bg-purple-500",
     steps: 4,
   },
-  admin: {
-    title: "Admin Registration",
-    description: "Administrative access registration",
-    icon: <Shield className="w-6 h-6" />,
-    color: "bg-red-500",
-    steps: 3,
-  },
+  // admin: {
+  //   title: "Admin Registration",
+  //   description: "Administrative access registration",
+  //   icon: <Shield className="w-6 h-6" />,
+  //   color: "bg-red-500",
+  //   steps: 3,
+  // },
 };
 
 export type Role = keyof typeof roleConfig;

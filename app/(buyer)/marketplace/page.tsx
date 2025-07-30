@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   Search,
-  Star,
   ChevronLeft,
   ChevronRight,
   Filter,
@@ -13,13 +12,16 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios";
+import { useLanguage } from "@/context/LanguageContext";
+import { priceWithMarkup } from "@/utils/priceUtils";
+import { useUserAuth } from "@/context/AuthFormContext"
 
 interface Item {
   _id: string;
   name: string;
   points: number;
   price: number;
-  measurement_unit: number;
+  measurement_unit: 1 | 2;
   image: string;
   categoryName: string;
 }
@@ -34,32 +36,73 @@ interface Pagination {
 }
 
 export default function Marketplace() {
-  const [filteredItems, setFilteredItems] = useState<Item[]>([]);
+  const { t } = useLanguage();
+  const { user, isLoading: authLoading } = useUserAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // 1. Fetch Function
+  // Reset to page 1 when search or filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedCategory]);
+
   const fetchItems = async () => {
-   const res= await api.get(
-      `/categories/get-items?page=${currentPage}&limit=${itemsPerPage}`
-    );
+    // Build query params for server-side filtering
+    const params = new URLSearchParams({
+      page: currentPage.toString(),
+      limit: itemsPerPage.toString(),
+    });
 
-    return res?.data
+    // Add user role for pricing
+    if (user?.role) {
+      params.append('userRole', user.role);
+    }
 
+    // Add search term if exists
+    if (searchTerm.trim()) {
+      params.append('search', searchTerm.trim());
+    }
+
+    // Add category filter if not "all"
+    if (selectedCategory !== "all") {
+      params.append('category', selectedCategory);
+    }
+
+    console.log('🔍 Fetching items with params:', params.toString());
+    
+    try {
+      // Use the enhanced endpoint that supports filtering
+      const res = await api.get(`/categories/get-items-filtered?${params.toString()}`);
+      console.log('✅ API Response:', res?.data);
+      return res?.data;
+    } catch (error) {
+      console.error('❌ API Error:', error);
+      
+      // Fallback to original endpoint without filters
+      try {
+        console.log('🔄 Falling back to original endpoint...');
+        const fallbackRes = await api.get(`/categories/get-items?page=${currentPage}&limit=${itemsPerPage}&userRole=${user?.role || ''}`);
+        return fallbackRes?.data;
+      } catch (fallbackError) {
+        console.error('❌ Fallback also failed:', fallbackError);
+        throw fallbackError;
+      }
+    }
   };
 
-  // 2. useQuery Hook
   const {
     data,
-    isLoading,
+    isLoading: dataLoading,
     isError,
     isFetching,
   } = useQuery({
-    queryKey: ["items", currentPage],
+    queryKey: ["items", currentPage, searchTerm, selectedCategory],
     queryFn: fetchItems,
     keepPreviousData: true,
+    enabled: !authLoading,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const items: Item[] = data?.data || [];
@@ -72,24 +115,22 @@ export default function Marketplace() {
     hasPreviousPage: false,
   };
 
-  // 3. Filtering
-  useEffect(() => {
-    const term = searchTerm.toLowerCase();
-    const filtered = items.filter((item) => {
-      const matchesSearch =
-        item.name.toLowerCase().includes(term) ||
-        item.categoryName.toLowerCase().includes(term);
-      const matchesCategory =
-        selectedCategory === "all" ||
-        item.categoryName === selectedCategory;
-      return matchesSearch && matchesCategory;
-    });
-    setFilteredItems(filtered);
-  }, [searchTerm, selectedCategory, items]);
+  
 
-  const uniqueCategories = Array.from(
-    new Set(items.map((item) => item.categoryName))
-  ).sort();
+  // Fetch all categories for the filter dropdown
+  const fetchCategories = async () => {
+    const res = await api.get('/categories');
+    return res?.data?.data || [];
+  };
+
+  const { data: categoriesData } = useQuery({
+    queryKey: ["categories"],
+    queryFn: fetchCategories,
+    enabled: !authLoading,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+  });
+
+  const uniqueCategories = categoriesData?.map((cat: any) => cat.name) || [];
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= pagination.totalPages) {
@@ -97,19 +138,23 @@ export default function Marketplace() {
     }
   };
 
-  const getMeasurementText = (unit: number) => {
-    return unit === 1 ? "kg" : "pc";
+  const getMeasurementText = (unit: 1 | 2): string => {
+    return unit === 1 
+      ? t('itemsModal.perKg', { defaultValue: 'per kg' }) 
+      : t('itemsModal.perItem', { defaultValue: 'per item' });
   };
+
+  // Combined loading state
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
       {/* Header */}
       <div className="mb-6 text-center">
         <h1 className="text-2xl font-bold text-gray-800 mb-1">
-          ♻️ Sustainable Marketplace
+          ♻️ {t('marketPlace.sustainableMarketplace')}
         </h1>
         <p className="text-gray-600 text-sm">
-          Discover recyclable items and earn rewards
+          {t('marketPlace.marketPlaceDesc')}
         </p>
       </div>
 
@@ -122,7 +167,7 @@ export default function Marketplace() {
             </div>
             <input
               type="text"
-              placeholder="Search items..."
+              placeholder={t('navbar.searchplaceholder')}
               className="pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg w-full focus:ring-1 focus:ring-green-500"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -138,10 +183,10 @@ export default function Marketplace() {
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg w-full appearance-none bg-white"
             >
-              <option value="all">All Categories</option>
-              {uniqueCategories.map((category) => (
+              <option value="all">{t('common.allCategories')}</option>
+              {uniqueCategories.map((category: string) => (
                 <option key={category} value={category}>
-                  {category}
+                  {t(`categories.${category.toLowerCase().replace(/\s+/g, "-")}`, { defaultValue: category })}
                 </option>
               ))}
             </select>
@@ -152,15 +197,15 @@ export default function Marketplace() {
       {/* Items Count */}
       <div className="flex justify-between items-center mb-3 px-1">
         <span className="text-xs text-gray-500">
-          Showing {filteredItems.length} of {pagination.totalItems} items
+          {t('common.showing')} {items.length} {t('common.of')} {pagination.totalItems} {t('common.items')}
         </span>
         <span className="text-xs text-gray-500">
-          Page {pagination.currentPage} of {pagination.totalPages}
+          {t('common.page')} {pagination.currentPage} {t('common.of')} {pagination.totalPages}
         </span>
       </div>
 
       {/* Items Grid */}
-      {isLoading || isFetching ? (
+      { dataLoading? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
           {[...Array(8)].map((_, i) => (
             <div
@@ -169,7 +214,17 @@ export default function Marketplace() {
             ></div>
           ))}
         </div>
-      ) : filteredItems.length === 0 ? (
+      ) : isError ? (
+        <div className="text-center py-12">
+          <Frown className="mx-auto h-10 w-10 text-gray-400" />
+          <h3 className="mt-2 text-sm font-medium text-gray-900">
+            Error loading items
+          </h3>
+          <p className="mt-1 text-xs text-gray-500">
+            Please try again later
+          </p>
+        </div>
+      ) : items.length === 0 ? (
         <div className="text-center py-12">
           <Frown className="mx-auto h-10 w-10 text-gray-400" />
           <h3 className="mt-2 text-sm font-medium text-gray-900">
@@ -184,45 +239,76 @@ export default function Marketplace() {
       ) : (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-            {filteredItems.map((item) => (
-              <Link
-                key={item._id}
-                href={`/marketplace/${encodeURIComponent(item.name)}`}
-                passHref
-              >
-                <div className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-sm transition-all duration-150 h-full flex flex-col">
-                  <div className="relative aspect-square">
-                    <Image
-                      src={item.image}
-                      alt={item.name}
-                      fill
-                      className="object-contain"
-                      sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
-                    />
-                    <div className="absolute bottom-1 left-1 bg-white/90 px-1.5 py-0.5 rounded text-xs font-medium">
-                      {item.categoryName}
+            {items.map((item) => {
+              // Check if backend already applied markup (if item has originalPrice field)
+              const shouldApplyMarkup = !item.originalPrice; // Only apply if backend didn't
+              const finalPrice = shouldApplyMarkup && user?.role 
+                ? priceWithMarkup(item.price, user.role)
+                : item.price;
+              
+              const itemLink = `/marketplace/${encodeURIComponent(item.name)}`;
+              
+              console.log('🔗 Item pricing in marketplace:', {
+                itemName: item.name,
+                rawPrice: item.price,
+                hasOriginalPrice: !!item.originalPrice,
+                shouldApplyMarkup,
+                userRole: user?.role,
+                finalPrice: finalPrice.toFixed(2),
+                calculation: shouldApplyMarkup ? `${item.price} * 1.20 = ${finalPrice.toFixed(2)}` : 'Using backend price'
+              });
+              
+              return (
+                <Link
+                  key={item._id}
+                  href={itemLink}
+                  passHref
+                  onClick={(e) => {
+                    console.log('🖱️ Item clicked:', {
+                      itemName: item.name,
+                      href: itemLink,
+                      finalPrice: finalPrice.toFixed(2)
+                    });
+                  }}
+                >
+                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-sm transition-all duration-150 h-full flex flex-col cursor-pointer">
+                    <div className="relative aspect-square">
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        fill
+                        className="object-contain"
+                        sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
+                        priority={false}
+                        onError={(e) => {
+                          console.error('🖼️ Image load error:', item.image);
+                        }}
+                      />
+                    </div>
+                    <div className="p-2 flex-1 flex flex-col">
+                      <h3 className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide leading-tight">
+                        {t(`categories.subcategories.${item.name.toLowerCase().replace(/\s+/g, "-")}`, { defaultValue: item.name })}
+                      </h3>
+                      <div className="flex justify-between items-center mt-auto">
+                        <span className="text-xs font-bold text-green-600">
+                          {finalPrice.toFixed(2)}
+                          <span className="text-sm mx-2 ml-1">{t('itemsModal.currency')}</span>
+                        </span>
+                        {/* Show original price if available */}
+                        {item.originalPrice && (
+                          <span className="text-[0.5rem] text-gray-400 line-through">
+                            {item.originalPrice.toFixed(2)}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[0.6rem] text-gray-500 mt-0.5 text-right">
+                        {getMeasurementText(item.measurement_unit)}
+                      </div>
                     </div>
                   </div>
-                  <div className="p-2 flex-1 flex flex-col">
-                    <h3 className="text-xs font-medium text-gray-900 line-clamp-2 mb-1">
-                      {item.name}
-                    </h3>
-                    <div className="flex justify-between items-center mt-auto">
-                      <span className="text-xs font-bold text-green-600">
-                        ${item.price}
-                      </span>
-                      <span className="flex items-center text-[0.65rem] text-amber-600 font-medium">
-                        <Star className="w-3 h-3 mr-0.5 fill-amber-400" />
-                        {item.points}
-                      </span>
-                    </div>
-                    <div className="text-[0.6rem] text-gray-500 mt-0.5 text-right">
-                      per {getMeasurementText(item.measurement_unit)}
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
 
           {/* Pagination */}
@@ -231,9 +317,9 @@ export default function Marketplace() {
               <nav className="flex items-center gap-1">
                 <button
                   onClick={() => handlePageChange(pagination.currentPage - 1)}
-                  disabled={!pagination.hasPreviousPage}
+                  disabled={!pagination.hasPreviousPage || isFetching}
                   className={`p-1.5 rounded-md ${
-                    pagination.hasPreviousPage
+                    pagination.hasPreviousPage && !isFetching
                       ? "text-green-600 hover:bg-green-50"
                       : "text-gray-300 cursor-not-allowed"
                   }`}
@@ -241,28 +327,54 @@ export default function Marketplace() {
                   <ChevronLeft className="w-4 h-4" />
                 </button>
 
-                {Array.from(
-                  { length: pagination.totalPages },
-                  (_, i) => i + 1
-                ).map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => handlePageChange(page)}
-                    className={`w-8 h-8 flex items-center justify-center rounded-md text-sm ${
-                      pagination.currentPage === page
-                        ? "bg-green-600 text-white"
-                        : "text-green-600 hover:bg-green-50"
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
+                {/* Smart pagination - show limited page numbers */}
+                {(() => {
+                  const { currentPage, totalPages } = pagination;
+                  const pages = [];
+                  
+                  if (totalPages <= 7) {
+                    // Show all pages if 7 or fewer
+                    for (let i = 1; i <= totalPages; i++) {
+                      pages.push(i);
+                    }
+                  } else {
+                    // Smart pagination for many pages
+                    if (currentPage <= 4) {
+                      pages.push(1, 2, 3, 4, 5, '...', totalPages);
+                    } else if (currentPage >= totalPages - 3) {
+                      pages.push(1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+                    } else {
+                      pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
+                    }
+                  }
+                  
+                  return pages.map((page, index) => (
+                    page === '...' ? (
+                      <span key={`ellipsis-${index}`} className="w-8 h-8 flex items-center justify-center text-gray-400">
+                        ...
+                      </span>
+                    ) : (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page as number)}
+                        disabled={isFetching}
+                        className={`w-8 h-8 flex items-center justify-center rounded-md text-sm ${
+                          pagination.currentPage === page
+                            ? "bg-green-600 text-white"
+                            : "text-green-600 hover:bg-green-50"
+                        } ${isFetching ? "opacity-50 cursor-not-allowed" : ""}`}
+                      >
+                        {page}
+                      </button>
+                    )
+                  ));
+                })()}
 
                 <button
                   onClick={() => handlePageChange(pagination.currentPage + 1)}
-                  disabled={!pagination.hasNextPage}
+                  disabled={!pagination.hasNextPage || isFetching}
                   className={`p-1.5 rounded-md ${
-                    pagination.hasNextPage
+                    pagination.hasNextPage && !isFetching
                       ? "text-green-600 hover:bg-green-50"
                       : "text-gray-300 cursor-not-allowed"
                   }`}

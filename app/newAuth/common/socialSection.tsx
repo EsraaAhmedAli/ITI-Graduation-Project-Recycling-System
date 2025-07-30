@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import { useAuthenticationContext } from "@/context/AuhenticationContext";
 import { useRouter } from "next/navigation";
@@ -9,7 +9,8 @@ import { useUserAuth } from "@/context/AuthFormContext";
 import { useFormContext } from "react-hook-form";
 
 const SocialButtons = () => {
-  const { setLoading, setMode, setGoogleUser } = useAuthenticationContext();
+  const { setMode, setGoogleUser } = useAuthenticationContext();
+  const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
   const { setUser, setToken } = useUserAuth();
   const { setValue } = useFormContext();
@@ -23,7 +24,7 @@ const SocialButtons = () => {
         idToken,
       });
 
-      const { exists, user } = res.data;
+      const { exists, user, accessToken } = res.data;
       console.log("GOOOOOOOOOOOOOOOOOOOOOOOGLE");
       console.log(user);
       console.log(idToken);
@@ -34,7 +35,7 @@ const SocialButtons = () => {
         // ✅ Existing user
 
         setUser(user);
-        setToken(idToken);
+        setToken(accessToken);
         router.push("/");
       } else {
         // 🔧 First time login → go to complete-signup

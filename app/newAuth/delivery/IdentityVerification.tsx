@@ -57,6 +57,7 @@ export const IdentityVerificationForm = () => {
     formData.append("password", password);
     formData.append("phoneNumber", phoneNumber);
     formData.append("role", role);
+    formData.append("provider", GoogleUser?.provider || "none");
 
     // Append files
     formData.append("deliveryImage", deliveryImage[0]);
@@ -79,7 +80,6 @@ export const IdentityVerificationForm = () => {
       if (!res.status) throw new Error(res.statusText || "Registration failed");
 
       toast.success("Delivery Registered. Awaiting Admin Approval");
-
       setUser(data.user);
       setToken(data.accessToken);
       setMode("login");

@@ -12,6 +12,7 @@ import {
   Eye,
   ChevronDown,
   ChevronUp,
+  RefreshCw,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -42,6 +43,16 @@ type DynamicTableProps<T> = {
   onViewDetails?: (item: T) => void;
   onAddSubCategory?: (item: T) => void;
   onImageClick?: (item: T) => void;
+  // New props for custom filter logic (optional)
+  filters?: any;
+  setFilters?: (filters: any) => void;
+  setShowFilters?: (show: boolean) => void;
+  activeFiltersCount?: number;
+  refetch?: () => void;
+  isFetching?: boolean;
+  // Search props to work with external search state
+  searchTerm?: string;
+  onSearchChange?: (searchTerm: string) => void;
 };
 
 function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
@@ -60,6 +71,15 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
   onDelete = () => {},
   onAddSubCategory,
   onImageClick,
+  // New props
+  filters,
+  setFilters,
+  setShowFilters,
+  activeFiltersCount = 0,
+  refetch,
+  isFetching = false,
+  searchTerm: externalSearchTerm,
+  onSearchChange,
 }: DynamicTableProps<T>) {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -68,14 +88,25 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
   const [openMenuId, setOpenMenuId] = useState<string | number | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string | number>>(new Set());
 
+  // Use external search term if provided, otherwise use internal state
+  const currentSearchTerm = externalSearchTerm !== undefined ? externalSearchTerm : searchTerm;
+
+  const handleSearchChange = (value: string) => {
+    if (onSearchChange) {
+      onSearchChange(value);
+    } else {
+      setSearchTerm(value);
+    }
+  };
+
   const filteredData = useMemo(() => {
-    if (!searchTerm) return data;
+    if (!currentSearchTerm) return data;
     return data.filter((item) =>
       Object.values(item).some((value) =>
-        value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
+        value?.toString().toLowerCase().includes(currentSearchTerm.toLowerCase())
       )
     );
-  }, [data, searchTerm]);
+  }, [data, currentSearchTerm]);
 
   const sortedData = useMemo(() => {
     if (!sortColumn) return filteredData;
@@ -307,7 +338,7 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
 
   const renderPagination = () => {
     const pages = [];
-    const pageGroupSize = window.innerWidth < 768 ? 3 : 5; // Fewer pages on mobile
+    const pageGroupSize = typeof window !== 'undefined' && window.innerWidth < 768 ? 3 : 5; // Fewer pages on mobile
     const currentGroup = Math.floor((currentPage - 1) / pageGroupSize);
     const startPage = currentGroup * pageGroupSize + 1;
     const endPage = Math.min(startPage + pageGroupSize - 1, totalPages);
@@ -372,6 +403,20 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
           </div>
 
           <div className="flex items-center gap-2 md:gap-3 overflow-x-auto">
+            {/* Page Size Selector - only show when custom filters are provided */}
+            {filters && setFilters && (
+              <select
+                value={filters.limit}
+                onChange={(e) => setFilters(prev => ({ ...prev, limit: parseInt(e.target.value), page: 1 }))}
+                className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              >
+                <option value={10}>10 per page</option>
+                <option value={25}>25 per page</option>
+                <option value={50}>50 per page</option>
+                <option value={100}>100 per page</option>
+              </select>
+            )}
+
             {showSearch && (
               <div className="relative min-w-0 flex-1 sm:flex-initial">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-green-400 w-4 h-4" />
@@ -379,16 +424,49 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
                   type="text"
                   placeholder="Search"
                   className="w-full pl-10 pr-4 py-2 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white text-sm"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  value={currentSearchTerm}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                 />
               </div>
             )}
 
-            {showFilter && (
+            {/* Custom Filter Button - only show when setShowFilters is provided */}
+            {showFilter && setShowFilters && (
+              <button
+                onClick={() => setShowFilters(true)}
+                className={`flex items-center gap-2 px-3 md:px-4 py-2 border rounded-lg transition-colors whitespace-nowrap text-sm ${
+                  activeFiltersCount > 0
+                    ? 'border-green-500 bg-green-50 text-green-700'
+                    : 'border-green-200 hover:bg-green-50 text-green-700'
+                }`}
+              >
+                <Filter className="w-4 h-4" />
+                <span className="hidden sm:inline">Filter</span>
+                {activeFiltersCount > 0 && (
+                  <span className="bg-green-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {activeFiltersCount}
+                  </span>
+                )}
+              </button>
+            )}
+
+            {/* Default Filter Button - only show when no custom filter is provided */}
+            {showFilter && !setShowFilters && (
               <button className="flex items-center gap-2 px-3 md:px-4 py-2 border border-green-200 rounded-lg hover:bg-green-50 text-green-700 transition-colors whitespace-nowrap text-sm">
                 <Filter className="w-4 h-4" />
                 <span className="hidden sm:inline">Filter</span>
+              </button>
+            )}
+
+            {/* Refresh Button - only show when refetch is provided */}
+            {refetch && (
+              <button
+                onClick={() => refetch()}
+                disabled={isFetching}
+                className="flex items-center gap-2 px-3 md:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors whitespace-nowrap text-sm"
+              >
+                <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">{isFetching ? 'Updating...' : 'Refresh'}</span>
               </button>
             )}
 

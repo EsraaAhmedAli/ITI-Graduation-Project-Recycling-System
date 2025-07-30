@@ -146,23 +146,11 @@ export default function Navbar() {
     return name.slice(0, 2).toUpperCase();
   };
 
-  const markAllAsRead = () => {
-    // Implement mark all as read functionality
-    console.log("Mark all as read");
-  };
-
   // Loading skeletons
   const AuthButtonsSkeleton = () => (
     <div className="hidden lg:flex items-center space-x-2">
       <div className="w-16 h-8 bg-gray-200 animate-pulse rounded-lg"></div>
       <div className="w-20 h-8 bg-gray-200 animate-pulse rounded-lg"></div>
-    </div>
-  );
-
-  const MobileAuthButtonsSkeleton = () => (
-    <div className="space-y-2">
-      <div className="w-full h-10 bg-gray-200 animate-pulse rounded"></div>
-      <div className="w-full h-10 bg-gray-200 animate-pulse rounded"></div>
     </div>
   );
 
@@ -184,8 +172,6 @@ export default function Navbar() {
               </div>
             </Link>
             <div className="hidden md:block flex-1 max-w-sm">
-              {" "}
-              {/* Reduced max width */}
               <NavbarSearch />
             </div>
           </div>
@@ -308,12 +294,16 @@ export default function Navbar() {
                               <p className="font-medium text-gray-900 text-xs truncate">
                                 {" "}
                                 {/* Smaller text */}
-                                {item.itemName || "Recyclable Item"}
+                                {t(
+                                  `categories.subcategories.${item.itemName
+                                    .toLowerCase()
+                                    .replace(/\s+/g, "-")}`
+                                )}
                               </p>
                               <p className="text-gray-500 text-xs mt-0.5">
                                 {" "}
                                 {/* Smaller spacing */}
-                                {item.categoryName || "Recyclable Material"}
+                                {t(`categories.${item?.categoryName}`)}
                               </p>
                               <div className="flex items-center gap-2 mt-0.5">
                                 <p className="text-gray-400 text-xs">
@@ -383,7 +373,8 @@ export default function Navbar() {
                 </div>
               )}
             </div>
-            <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors">
+            {/* Desktop Language Switcher - Only show on desktop */}
+            <div className="hidden lg:flex items-center gap-1.5 px-2 py-1 bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors">
               {" "}
               {/* Contained design */}
               <span
@@ -561,13 +552,6 @@ export default function Navbar() {
                   <KeyRound className="w-4 h-4 mr-1" />
                   {t("navbar.login")}
                 </Link>
-                {/* <Link
-                prefetch={true}
-                href="/auth/signup"
-                className="px-3 py-1.5 rounded-lg bg-green-500 hover:bg-green-600 text-white font-medium text-xs transition-all duration-200 shadow-sm" // Smaller padding and text
-              >
-                {t('navbar.startRecycling')}
-              </Link> */}
               </div>
             )}
             {/* Mobile menu button */}
@@ -593,8 +577,6 @@ export default function Navbar() {
         {/* Mobile Search Bar - More compact */}
         {!isOpen && (
           <div className="md:hidden px-4 pb-2">
-            {" "}
-            {/* Reduced padding */}
             <NavbarSearch />
           </div>
         )}

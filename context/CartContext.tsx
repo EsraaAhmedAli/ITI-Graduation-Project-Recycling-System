@@ -13,6 +13,7 @@ export interface CartItem {
   price: number;
   measurement_unit: number;
   quantity: number;
+  _id:string
 }
 
 
@@ -105,7 +106,7 @@ const addToCart = async (item: CartItem) => {
 
   const increaseQty = async (item: CartItem) => {
     try {
-      const increment = item.measurement_unit === 1 ? 0.25 : 1; // KG = 0.25, Piece = 1
+      const increment = item.measurement_unit === 1 ? 1 : 1; // KG = 0.25, Piece = 1
       const newQuantity = item.quantity + increment;
       
       await api.put(

@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { categoryIcons } from "@/utils/categoryIcons";
 import { Package } from "lucide-react"; 
 import Link from "next/link";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface Props {
   name: string;
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export default function CategoryCard({ name, image, onClick }: Props) {
+const { t, locale } = useLanguage();
   return (
     <Link href={`/category/${encodeURIComponent(name)}`}>
       <motion.div
@@ -48,8 +50,9 @@ export default function CategoryCard({ name, image, onClick }: Props) {
           </div>
 
           <div className="flex flex-col items-center mb-4">
-            <h4 className="font-extrabold text-2xl drop-shadow-lg text-center mb-1 text-[var(--color-primary)] group-hover:text-[var(--color-accent)] transition-colors duration-300">{name}</h4>
-            <span className="block w-12 h-1 rounded-full bg-gradient-to-r from-[var(--color-success-content)] to-[var(--color-accent)] mb-2 group-hover:from-[var(--color-primary)] group-hover:to-[var(--color-accent)] transition-all duration-300" />
+        <h4 className="font-extrabold text-2xl drop-shadow-lg text-center mb-1 text-[var(--color-primary)] group-hover:text-[var(--color-accent)] transition-colors duration-300">
+              {t(`categories.${name}`)}
+            </h4>            <span className="block w-12 h-1 rounded-full bg-gradient-to-r from-[var(--color-success-content)] to-[var(--color-accent)] mb-2 group-hover:from-[var(--color-primary)] group-hover:to-[var(--color-accent)] transition-all duration-300" />
           </div>
         </div>
       </motion.div>

@@ -13,6 +13,8 @@ import { toast } from 'react-toastify';
 import { useUsers } from '@/hooks/useGetUsers';
 import { usePagination } from '@/hooks/usePagination';
 import { TablePagination } from '../../../components/tablePagination/tablePagination';
+import { useUserAuth } from '@/context/AuthFormContext';
+
 
 const fetchOrders = async (page: number, limit: number) => {
   const { data } = await api.get('/admin/orders', { params: { page, limit } });
@@ -23,12 +25,16 @@ export default function Page() {
   const { currentPage, itemsPerPage, handlePageChange } = usePagination(1, 10);
   const limit = 10;
 
+  
   // React Query fetch with pagination
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
     queryKey: ['adminOrders', currentPage],
     queryFn: () => fetchOrders(currentPage, itemsPerPage),
     keepPreviousData: true,
   });
+
+  const { user } = useUserAuth();
+
 
    const orders = data?.data || [];
   const totalItems = data?.totalOrders || 0;
@@ -65,29 +71,31 @@ export default function Page() {
 
   const { data: couriers } = useUsers("delivery");
 
-  // Delete order handler
-  const handleDeleteOrder = async (orderId: string) => {
-    const result = await Swal.fire({
-      title: 'Are you sure?',
-      text: 'This order will be permanently deleted.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#10B981',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, delete it!',
-    });
+// Delete order handler - FIXED VERSION
+const handleDeleteOrder = async (orderId: string) => {
+  
+  const result = await Swal.fire({
+    title: 'Are you sure?',
+    text: 'This order will be permanently deleted.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#10B981',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Yes, delete it!',
+  });
 
-    if (result.isConfirmed) {
-      try {
-        await api.delete(`/orders/${orderId}`);
-        Swal.fire('Deleted!', 'The order has been deleted.', 'success');
-        refetch();
-      } catch (err) {
-        console.error(err);
-        Swal.fire('Error', 'Failed to delete order. Try again.', 'error');
-      }
+  if (result.isConfirmed) {
+    try {
+      // CHANGE THIS LINE - use admin endpoint instead
+      await api.delete(`/admin/orders/${orderId.orderId}`);
+      Swal.fire('Deleted!', 'The order has been deleted.', 'success');
+      refetch();
+    } catch (err) {
+      console.error(err);
+      Swal.fire('Error', 'Failed to delete order. Try again.', 'error');
     }
-  };
+  }
+};
 
   // Assign courier handler
   const handleAssignToCourier = async (orderId: string, courierId: string) => {
@@ -240,29 +248,29 @@ export default function Page() {
     );
   }
 
-  const transformedData = orders.map((order: any) => ({
-    orderId: order._id,
-    onClickItemsId: () => {
-      setSelectedOrderItems(order.items);
-      setIsItemsModalOpen(true);
-    },
-    status: order.status,
-    createdAt: new Date(order.createdAt).toLocaleString(),
-    userName: order.user?.userName || 'Unknown',
-    onClickUser: () => {
-      const user = order.user || {};
-      setSelectedUser({
-        name: user.userName || 'Unknown',
-        email: user.email ?? 'Not Provided',
-        phone: user.phoneNumber || 'N/A',
-        imageUrl: user.imageUrl || null,
-        address: order.address || {},
-      });
-      setIsModalOpen(true);
-    },
-    onDelete: () => handleDeleteOrder(order._id),
-  }));
-
+const transformedData = orders.map((order: any) => ({
+  orderId: order._id,
+  onClickItemsId: () => {
+    setSelectedOrderItems(order.items);
+    setIsItemsModalOpen(true);
+  },
+  status: order.status,
+  createdAt: new Date(order.createdAt).toLocaleString(),
+  userName: order.user?.userName || 'Unknown',
+  onClickUser: () => {
+    const user = order.user || {};
+    setSelectedUser({
+      name: user.userName || 'Unknown',
+      email: user.email ?? 'Not Provided',
+      phone: user.phoneNumber || 'N/A',
+      imageUrl: user.imageUrl || null,
+      address: order.address || {},
+    });
+    setIsModalOpen(true);
+  },
+  // MAKE SURE THIS ALSO USES THE UPDATED FUNCTION
+  onDelete: () => handleDeleteOrder(order._id),
+}));
   const columns = [
     {
       key: 'userName',
@@ -392,6 +400,7 @@ export default function Page() {
       <CourierSelectionModal
         show={isCourierModalOpen}
         couriers={couriers}
+        userRole={user?.role}
         onSelectCourier={(courierId: string) => handleAssignToCourier(selectedOrderForCourier!, courierId)}
         onClose={() => {
           setIsCourierModalOpen(false);
