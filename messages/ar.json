@@ -161,12 +161,15 @@
     "tabs": {
       "incoming": "قيد التنفيذ",
       "completed": "مكتملة",
-      "cancelled": "ملغاة"
+      "cancelled": "ملغاة",
+      "payments" : "عمليات الدفع"
     },
     "orders": {
       "loading": "جاري تحميل الطلبات...",
       "empty": "لا توجد طلبات في هذا التبويب بعد.",
       "date": "التاريخ",
+            "cancelOrder": "الغاء الطلب",
+
       "status": {
         "inTransit": "قيد التوصيل",
         "completed": "مكتملة",

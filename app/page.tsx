@@ -77,17 +77,23 @@ export default function Home() {
       <section className="flex flex-col md:flex-row justify-between items-stretch gap-6 px-4 py-10 text-2xl bg-base-100 text-center rounded-2xl mx-15">
         <div className="flex-1 flex flex-col items-center">
           <Mic className="w-10 h-10 text-green-600 mx-auto md:mx-0 mb-2" />
-          <h2 className="font-bold text-primary mb-2">{t('indexPage.features.voiceInput')}</h2>
+          <h2 className="font-bold text-primary mb-2">
+            {t("indexPage.features.voiceInput")}
+          </h2>
           <p>{t("indexPage.features.voice")}</p>
         </div>
         <div className="flex-1 flex flex-col items-center">
           <CalendarCheck className="w-10 h-10 text-blue-600 mx-auto md:mx-0 mb-2" />
-          <h2 className="font-bold text-info mb-2">{t('indexPage.features.pickupScheduling')}</h2>
+          <h2 className="font-bold text-info mb-2">
+            {t("indexPage.features.pickupScheduling")}
+          </h2>
           <p>{t("indexPage.features.schedule")}</p>
         </div>
         <div className="flex-1 flex flex-col items-center">
           <CircleDollarSign className="w-10 h-10 text-yellow-600 mx-auto md:mx-0 mb-2" />
-          <h2 className="font-bold text-yellow-600 mb-2">{t('indexPage.features.earnorshare')}</h2>
+          <h2 className="font-bold text-yellow-600 mb-2">
+            {t("indexPage.features.earnorshare")}
+          </h2>
           <p>{t("indexPage.features.earn")}</p>
         </div>
       </section>
@@ -106,8 +112,12 @@ export default function Home() {
               </div>
             </div>
             <div className="bg-base-200 rounded-2xl p-8 w-full text-center shadow-sm hover:shadow-md transition-all duration-300 h-full">
-              <h3 className="text-2xl font-semibold mb-4">{t("indexPage.steps.step1.title")}</h3>
-              <p className="text-lg opacity-90">{t("indexPage.steps.step1.desc")}</p>
+              <h3 className="text-2xl font-semibold mb-4">
+                {t("indexPage.steps.step1.title")}
+              </h3>
+              <p className="text-lg opacity-90">
+                {t("indexPage.steps.step1.desc")}
+              </p>
             </div>
           </div>
 
@@ -123,8 +133,12 @@ export default function Home() {
               </div>
             </div>
             <div className="bg-base-200 rounded-2xl p-8 w-full text-center shadow-sm hover:shadow-md transition-all duration-300 h-full">
-              <h3 className="text-2xl font-semibold mb-4">{t("indexPage.steps.step2.title")}</h3>
-              <p className="text-lg opacity-90">{t("indexPage.steps.step2.desc")}</p>
+              <h3 className="text-2xl font-semibold mb-4">
+                {t("indexPage.steps.step2.title")}
+              </h3>
+              <p className="text-lg opacity-90">
+                {t("indexPage.steps.step2.desc")}
+              </p>
             </div>
           </div>
 
@@ -140,8 +154,12 @@ export default function Home() {
               </div>
             </div>
             <div className="bg-base-200 rounded-2xl p-8 w-full text-center shadow-sm hover:shadow-md transition-all duration-300 h-full">
-              <h3 className="text-2xl font-semibold mb-4">{t("indexPage.steps.step3.title")}</h3>
-              <p className="text-lg opacity-90">{t("indexPage.steps.step3.desc")}</p>
+              <h3 className="text-2xl font-semibold mb-4">
+                {t("indexPage.steps.step3.title")}
+              </h3>
+              <p className="text-lg opacity-90">
+                {t("indexPage.steps.step3.desc")}
+              </p>
             </div>
           </div>
         </div>
@@ -171,7 +189,7 @@ export default function Home() {
             </p>
             <p className="text-sm sm:text-base text-gray-600 max-w-xl mx-auto">
               {/* For the embedded HTML like <1>10,000+</1>, we'll need to handle it specially */}
-              {t("indexPage.community.desc2").replace(/<1>(.*?)<\/1>/g, '$1')}
+              {t("indexPage.community.desc2").replace(/<1>(.*?)<\/1>/g, "$1")}
             </p>
           </div>
 

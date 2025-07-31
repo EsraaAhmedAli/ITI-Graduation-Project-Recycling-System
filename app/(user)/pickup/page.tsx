@@ -13,7 +13,15 @@ import Loader from "@/components/common/loader";
 import { CartItem, useCart } from "@/context/CartContext";
 import Link from "next/link";
 import api from "@/lib/axios";
-import { Building2, ChevronRight, Edit3, Home, MapPin, Plus, Trash2 } from "lucide-react";
+import {
+  Building2,
+  ChevronRight,
+  Edit3,
+  Home,
+  MapPin,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { useCreateOrder } from "@/hooks/useCreateOrder";
 import { useRouter } from "next/navigation";
 
@@ -23,7 +31,7 @@ export default function PickupConfirmation() {
   const [copied, setCopied] = useState(false);
   const [loadingBtn, setLoadingBtn] = useState<boolean>(false);
   const [direction, setDirection] = useState<"forward" | "backward">("forward");
-const router = useRouter()
+  const router = useRouter();
   const [selectedCity, setSelectedCity] = useState<City | "">("");
   const [formData, setFormData] = useState<FormInputs | null>(null);
   const [addresses, setAddresses] = useState<FormInputs[]>([]);
@@ -39,17 +47,16 @@ const router = useRouter()
 
   const { user } = useContext(UserAuthContext) ?? {};
   const getTotalCartPrice = (cart: CartItem[]) => {
-  return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-};
+    return cart.reduce((total, item) => total + item.price * item.quantity, 0);
+  };
   const { cart, clearCart } = useCart();
 
-const totalPrice = getTotalCartPrice(cart);
+  const totalPrice = getTotalCartPrice(cart);
 
-  
-  const { createOrder} = useCreateOrder({
+  const { createOrder } = useCreateOrder({
     clearCart,
     setCurrentStep,
-    setCreatedOrderId
+    setCreatedOrderId,
   });
 
   const fetchAddresses = async () => {
@@ -64,7 +71,7 @@ const totalPrice = getTotalCartPrice(cart);
         setFormData(fetchedAddresses[0]);
       }
     } catch (err) {
-console.error("Failed to fetch addresses:", err?.response?.data || err);
+      console.error("Failed to fetch addresses:", err?.response?.data || err);
     } finally {
       setLoading(false);
     }
@@ -104,31 +111,39 @@ console.error("Failed to fetch addresses:", err?.response?.data || err);
     setCurrentStep(step);
   };
 
- const handleConfirm = async () => {
-  if (user?.role === 'buyer') {
-    // Store cart and address data in sessionStorage
-    sessionStorage.setItem('checkoutData', JSON.stringify({
-      cart,
-      selectedAddress,
-      totalPrice,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        phoneNumber: user.phoneNumber
+  const handleConfirm = async () => {
+    if (user?.role === "buyer") {
+      // Store cart and address data in sessionStorage
+      sessionStorage.setItem(
+        "checkoutData",
+        JSON.stringify({
+          cart,
+          selectedAddress,
+          totalPrice,
+          user: {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            phoneNumber: user.phoneNumber,
+          },
+        })
+      );
+
+      // Navigate with just the total price
+      router.push(`/payment?total=${totalPrice}`);
+    } else {
+      console.log("----------------------------------");
+      console.log("USER CRETA ORDER");
+      console.log(cart);
+      console.log("----------------------------------");
+
+      const result = await createOrder(selectedAddress, cart, user);
+
+      if (result.success) {
+        console.log("Order created successfully:", result.orderId);
       }
-    }));
-    
-    // Navigate with just the total price
-    router.push(`/payment?total=${totalPrice}`);
-  } else {
-    const result = await createOrder(selectedAddress, cart, user);
-    
-    if (result.success) {
-      console.log('Order created successfully:', result.orderId);
     }
-  }
-};
+  };
 
   const handleSaveAddress = async (data: FormInputs) => {
     try {
@@ -282,7 +297,9 @@ console.error("Failed to fetch addresses:", err?.response?.data || err);
                 <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
                   Choose Your Address
                 </h2>
-                <p className="text-gray-600">Select or add a delivery address</p>
+                <p className="text-gray-600">
+                  Select or add a delivery address
+                </p>
               </div>
 
               {/* Address Grid */}
@@ -290,8 +307,12 @@ console.error("Failed to fetch addresses:", err?.response?.data || err);
                 {addresses.length === 0 ? (
                   <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded-3xl border border-gray-200">
                     <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-800 mb-2">No addresses yet</h3>
-                    <p className="text-gray-600 mb-6">Add your first delivery address to get started</p>
+                    <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                      No addresses yet
+                    </h3>
+                    <p className="text-gray-600 mb-6">
+                      Add your first delivery address to get started
+                    </p>
                   </div>
                 ) : (
                   addresses.map((addr) => (
@@ -305,27 +326,39 @@ console.error("Failed to fetch addresses:", err?.response?.data || err);
                       onClick={() => handleSelectAddress(addr)}
                     >
                       {/* Selection Indicator */}
-                      <div className={`absolute top-0 left-0 right-0 h-1 transition-all duration-300 ${
-                        selectedAddress?._id === addr._id 
-                          ? "bg-gradient-to-r from-emerald-400 to-green-500" 
-                          : "bg-transparent"
-                      }`} />
-                      
+                      <div
+                        className={`absolute top-0 left-0 right-0 h-1 transition-all duration-300 ${
+                          selectedAddress?._id === addr._id
+                            ? "bg-gradient-to-r from-emerald-400 to-green-500"
+                            : "bg-transparent"
+                        }`}
+                      />
+
                       <div className="p-5">
                         <div className="flex items-center justify-between">
                           {/* Main Content */}
                           <div className="flex items-center gap-4 flex-1">
                             {/* Icon */}
-                            <div className={`relative p-3 rounded-xl transition-all duration-300 ${
-                              selectedAddress?._id === addr._id 
-                                ? "bg-emerald-100 text-emerald-600 scale-110" 
-                                : "bg-gray-100 text-gray-600 group-hover:bg-blue-100 group-hover:text-blue-600"
-                            }`}>
+                            <div
+                              className={`relative p-3 rounded-xl transition-all duration-300 ${
+                                selectedAddress?._id === addr._id
+                                  ? "bg-emerald-100 text-emerald-600 scale-110"
+                                  : "bg-gray-100 text-gray-600 group-hover:bg-blue-100 group-hover:text-blue-600"
+                              }`}
+                            >
                               <Home className="w-5 h-5" />
                               {selectedAddress?._id === addr._id && (
                                 <div className="absolute -top-1 -right-1 bg-emerald-500 rounded-full p-0.5">
-                                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                  <svg
+                                    className="w-3 h-3 text-white"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                  >
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                      clipRule="evenodd"
+                                    />
                                   </svg>
                                 </div>
                               )}
@@ -343,14 +376,16 @@ console.error("Failed to fetch addresses:", err?.response?.data || err);
                                   </span>
                                 )}
                               </div>
-                              
+
                               {addr.landmark && (
                                 <p className="text-sm text-gray-500 flex items-center gap-1 mb-2">
                                   <MapPin className="w-3 h-3 flex-shrink-0" />
-                                  <span className="truncate">{addr.landmark}</span>
+                                  <span className="truncate">
+                                    {addr.landmark}
+                                  </span>
                                 </p>
                               )}
-                              
+
                               {/* Compact Address Details */}
                               <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600">
                                 <span>{addr.street}</span>
@@ -386,13 +421,15 @@ console.error("Failed to fetch addresses:", err?.response?.data || err);
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
-                            
+
                             {/* Radio Button */}
-                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
-                              selectedAddress?._id === addr._id
-                                ? "border-emerald-500 bg-emerald-500"
-                                : "border-gray-300 group-hover:border-blue-400"
-                            }`}>
+                            <div
+                              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
+                                selectedAddress?._id === addr._id
+                                  ? "border-emerald-500 bg-emerald-500"
+                                  : "border-gray-300 group-hover:border-blue-400"
+                              }`}
+                            >
                               {selectedAddress?._id === addr._id && (
                                 <div className="w-2 h-2 bg-white rounded-full" />
                               )}
@@ -430,7 +467,7 @@ console.error("Failed to fetch addresses:", err?.response?.data || err);
                   </div>
                   Add New Address
                 </button>
-                
+
                 <Button
                   onClick={handleNextStep}
                   disabled={!selectedAddress}

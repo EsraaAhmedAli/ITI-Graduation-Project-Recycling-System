@@ -170,7 +170,7 @@
       "incoming": "Incoming",
       "completed": "Completed",
       "cancelled": "Cancelled",
-      "payments": "Payments"
+      "payments": "Payment"
     },
     "orders": {
       "loading": " orders...",
@@ -182,6 +182,7 @@
         "cancelled": "Cancelled",
         "pending": "Pending"
       },
+      "cancelOrder": "cancel order",
       "viewDetails": "View Details",
       "cancelConfirm": "Are you sure you want to cancel this order?",
       "confirmYes": "Yes",

@@ -2,23 +2,24 @@
 
 import { useParams } from "next/navigation";
 import { useState, useMemo } from "react";
-import { useCart } from "@/context/CartContext";
+import { CartItem, useCart } from "@/context/CartContext";
 import Loader from "@/components/common/loader";
 import { Recycle, Plus, Sparkles } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import Image from "next/image";
 import { useLanguage } from "@/context/LanguageContext";
+import { useCategories } from "@/hooks/useGetCategories";
 
-interface Item {
-  _id: string;
-  name: string;
-  image: string;
-  points: number;
-  price: number;
-  categoryName: string;
-  measurement_unit: 1 | 2;
-}
+// interface Item {
+//   _id: string;
+//   name: string;
+//   image: string;
+//   points: number;
+//   price: number;
+//   categoryName: string;
+//   measurement_unit: 1 | 2;
+// }
 
 export default function UserCategoryPage() {
   const { t } = useLanguage();
@@ -26,13 +27,17 @@ export default function UserCategoryPage() {
   const params = useParams();
   const categoryName = decodeURIComponent(params.name as string);
   const { addToCart, loadingItemId } = useCart();
+  const { getCategoryIdByItemName } = useCategories();
 
-  const { data, isLoading, error } = useQuery<Item[]>({
+  const { data, isLoading, error } = useQuery<CartItem[]>({
     queryKey: ["subcategory", categoryName],
     queryFn: async () => {
-      const res = await api.get(`/categories/get-items/${encodeURIComponent(categoryName)}`);
+      const res = await api.get(
+        `/categories/get-items/${encodeURIComponent(categoryName)}`
+      );
       const normalizedItems = res.data.data.map((item: any) => ({
         ...item,
+        itemName: item.name,
         categoryName: item.categoryName || categoryName,
         measurement_unit: Number(item.measurement_unit) as 1 | 2,
       }));
@@ -42,45 +47,76 @@ export default function UserCategoryPage() {
     refetchOnMount: false,
   });
 
-
   const getPointsRange = (points: number[]) => {
     const min = Math.min(...points);
     const max = Math.max(...points);
     return min === max ? `${min} pts` : `${min}-${max} pts`;
   };
 
-const categoryStats = useMemo(() => {
-  if (!data || data.length === 0) return null;
-  const points = data.map((item) => item.points);
-  const impactKey = `environmentalImpact.${categoryName.toLowerCase()}`;
-  return {
-    totalItems: data.length,
-    estimatedImpact: t(impactKey, { defaultValue: t("environmentalImpact.default") }),
-    pointsRange: getPointsRange(points),
-  };
-}, [data, categoryName, t]);
+  const categoryStats = useMemo(() => {
+    if (!data || data.length === 0) return null;
+    const points = data.map((item) => item.points);
+    const impactKey = `environmentalImpact.${categoryName.toLowerCase()}`;
+    return {
+      totalItems: data.length,
+      estimatedImpact: t(impactKey, {
+        defaultValue: t("environmentalImpact.default"),
+      }),
+      pointsRange: getPointsRange(points),
+    };
+  }, [data, categoryName, t]);
 
-  const handleAddToCollection = async (item: Item) => {
+  // const handleAddToCollection = async (item: CartItem) => {
+  //   try {
+  //     // const cartItem = {
+  //     //   categoryId: item._id,
+  //     //   categoryName: item.categoryName,
+  //     //   itemName: item.name,
+  //     //   image: item.image,
+  //     //   points: item.points,
+  //     //   price: item.price,
+  //     //   measurement_unit: item.measurement_unit,
+  //     //   quantity: item.measurement_unit === 1 ? 0.25 : 1,
+  //     // };
+  //     const tmp = item._id;
+  //     item.categoryId = tmp;
+  //     item._id = getCategoryIdByItemName(item.itemName);
+  //     console.log("ADDDDDDDDDDDDDDDDDDDDD");
+  //     console.log(item);
+  //     console.log("------------------------------------");
+  //     await addToCart(item);
+  //   } catch (error) {
+  //     console.error("Add to cart failed:", error);
+  //   }
+  // };
+  const handleAddToCollection = async (item: CartItem) => {
     try {
-      const cartItem = {
+      const categoryId = getCategoryIdByItemName(item.itemName);
+
+      const cartItem: CartItem = {
+        originalCategoryId: categoryId,
+        _id: item._id,
         categoryId: item._id,
         categoryName: item.categoryName,
-        itemName: item.name,
+        itemName: item.itemName,
         image: item.image,
         points: item.points,
         price: item.price,
         measurement_unit: item.measurement_unit,
-        quantity: item.measurement_unit === 1 ? 0.25 : 1,
+        quantity: item.measurement_unit === 1 ? 0.25 : 1, // set correct initial quantity
       };
+
       await addToCart(cartItem);
     } catch (error) {
       console.error("Add to cart failed:", error);
     }
   };
 
-const getMeasurementText = (unit: 1 | 2): string => {
-  return unit === 1 ? t('itemsModal.perKg', { defaultValue: 'per kg' }) : t('itemsModal.perItem', { defaultValue: 'per item' });
-};
+  const getMeasurementText = (unit: 1 | 2): string => {
+    return unit === 1
+      ? t("itemsModal.perKg", { defaultValue: "per kg" })
+      : t("itemsModal.perItem", { defaultValue: "per item" });
+  };
   if (isLoading) return <Loader title="recyclable items" />;
   if (error) {
     console.error("❌ Query Error:", error);
@@ -97,15 +133,18 @@ const getMeasurementText = (unit: 1 | 2): string => {
               <Recycle className="w-6 h-6 text-emerald-600" />
             </div>
             <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
-  {t('collectionsOfCategory', {
-    collections: t('common.collectionsPlural'),
-    category: t(`categories.${categoryName.toLowerCase().replace(/\s+/g, "-")}`)
-  })}</h1>
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+                {t("collectionsOfCategory", {
+                  collections: t("common.collectionsPlural"),
+                  category: t(
+                    `categories.${categoryName
+                      .toLowerCase()
+                      .replace(/\s+/g, "-")}`
+                  ),
+                })}
+              </h1>
               <p className="text-slate-600 mt-1 text-sm md:text-base">
-                {
-                  t('staticCategories.discoverMoreSub')
-                }
+                {t("staticCategories.discoverMoreSub")}
               </p>
             </div>
           </div>
@@ -114,18 +153,25 @@ const getMeasurementText = (unit: 1 | 2): string => {
             <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-4 border border-slate-200/50 shadow-sm">
               <div className="flex items-center gap-1.5 mb-2">
                 <Sparkles className="w-4 h-4 text-emerald-500" />
-                <span className="font-semibold text-slate-700 text-sm">{t('environmentalImpact.environmentalImpact')}</span>
+                <span className="font-semibold text-slate-700 text-sm">
+                  {t("environmentalImpact.environmentalImpact")}
+                </span>
               </div>
-       <p className="text-slate-600 mb-3 text-sm">{t("categoryStats.estimatedImpact")}: {categoryStats.estimatedImpact}</p>
+              <p className="text-slate-600 mb-3 text-sm">
+                {t("categoryStats.estimatedImpact")}:{" "}
+                {categoryStats.estimatedImpact}
+              </p>
 
-<div className="flex flex-wrap gap-3 text-xs">
-  <div className="flex items-center gap-2">
-    <span className="text-slate-500">{t("categoryStats.totalItems")}:</span>
-    <span className="font-semibold text-slate-700">{categoryStats.totalItems}</span>
-  </div>
-
-
-</div>
+              <div className="flex flex-wrap gap-3 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-500">
+                    {t("categoryStats.totalItems")}:
+                  </span>
+                  <span className="font-semibold text-slate-700">
+                    {categoryStats.totalItems}
+                  </span>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -142,7 +188,7 @@ const getMeasurementText = (unit: 1 | 2): string => {
                 <div className="relative w-full h-40">
                   <Image
                     src={item.image}
-                    alt={item.name}
+                    alt={item.itemName}
                     fill
                     className="object-contain group-hover:scale-105 transition-transform duration-300"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
@@ -156,19 +202,28 @@ const getMeasurementText = (unit: 1 | 2): string => {
 
               {/* Content */}
               <div className="p-4">
-          <h3 className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide leading-tight">
-  {t(`categories.subcategories.${item.name.toLowerCase().replace(/\s+/g, "-")}`, { defaultValue: item.name })}
-</h3>
+                <h3 className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide leading-tight">
+                  {t(
+                    `categories.subcategories.${item.itemName
+                      .toLowerCase()
+                      .replace(/\s+/g, "-")}`,
+                    { defaultValue: item.itemName }
+                  )}
+                </h3>
 
                 {/* Price and Unit Info */}
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs text-slate-500 font-medium bg-slate-100 px-2 py-0.5 rounded-lg">
                     {getMeasurementText(item.measurement_unit)}
                   </span>
-              <div className="text-end">
-  <span className="text-base font-bold text-slate-900">{item.price}</span>
-  <span className="text-xs text-slate-500 ml-1">{t('itemsModal.currency')}</span>
-</div>
+                  <div className="text-end">
+                    <span className="text-base font-bold text-slate-900">
+                      {item.price}
+                    </span>
+                    <span className="text-xs text-slate-500 ml-1">
+                      {t("itemsModal.currency")}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Add to Collection Button */}
@@ -182,7 +237,9 @@ const getMeasurementText = (unit: 1 | 2): string => {
                   ) : (
                     <>
                       <Plus className="w-4 h-4 group-hover/button:rotate-90 transition-transform duration-200" />
-                      <span className="text-sm">{t('itemsModal.addToCollection')}</span>
+                      <span className="text-sm">
+                        {t("itemsModal.addToCollection")}
+                      </span>
                     </>
                   )}
                 </button>
@@ -197,9 +254,13 @@ const getMeasurementText = (unit: 1 | 2): string => {
             <div className="w-20 h-20 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
               <Recycle className="w-10 h-10 text-slate-400" />
             </div>
-            <h3 className="text-xl font-semibold text-slate-600 mb-2">No items available</h3>
+            <h3 className="text-xl font-semibold text-slate-600 mb-2">
+              No items available
+            </h3>
             <p className="text-slate-500 max-w-md mx-auto">
-              We're working on adding more recyclable {categoryName.toLowerCase()} items. Check back soon for new additions!
+              We're working on adding more recyclable{" "}
+              {categoryName.toLowerCase()} items. Check back soon for new
+              additions!
             </p>
           </div>
         )}

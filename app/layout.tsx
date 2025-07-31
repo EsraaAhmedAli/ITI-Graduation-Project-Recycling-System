@@ -11,6 +11,8 @@ import ReactQueryProvider from "@/components/providers/reactQueryProvider";
 import { Toaster } from "react-hot-toast";
 import { NotificationProvider } from "@/context/notificationContext";
 import { LanguageProvider } from "@/context/LanguageContext"; // Add this
+import GuestSessionProvider from "@/lib/GuestSessionProvider";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,14 +39,22 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <LanguageProvider> {/* Add this wrapper */}
+        <LanguageProvider>
+          {" "}
+          {/* Add this wrapper */}
           <UserAuthProvider>
             <ReactQueryProvider>
               <CartProvider>
-                <Toaster/>
+                <Toaster />
                 <NotificationProvider>
                   <ToastContainer />
-                  <LayoutWrapper>{children}</LayoutWrapper>
+                  <GuestSessionProvider>
+                    <GoogleOAuthProvider
+                      clientId={process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID!}
+                    >
+                      <LayoutWrapper>{children}</LayoutWrapper>
+                    </GoogleOAuthProvider>
+                  </GuestSessionProvider>
                 </NotificationProvider>
               </CartProvider>
             </ReactQueryProvider>

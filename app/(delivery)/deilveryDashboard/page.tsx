@@ -14,7 +14,7 @@ export default function Page() {
   const [orders, setOrders] = useState([])
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedOrderDetails, setSelectedOrderDetails] = useState<any>(null);
-  
+  const{user} = useUserAuth()
   // Photo proof modal states
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
@@ -133,7 +133,7 @@ export default function Page() {
   const columns = [
     {
       key: 'userName',
-      label: 'Customer',
+      label: 'customer',
       render: (row: any) => (
         <div className="flex items-center gap-3 py-2">
           <div className="relative">
@@ -152,7 +152,7 @@ export default function Page() {
             <span className="font-semibold text-gray-900">{row.user?.userName}</span>
             <span className="text-xs text-gray-500 flex items-center gap-1">
               <User className="w-3 h-3" />
-              Customer
+              {row?.user?.role}
             </span>
           </div>
         </div>

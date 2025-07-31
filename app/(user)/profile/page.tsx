@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { Avatar } from "flowbite-react";
+import { Order, OrdersResponse } from "@/components/Types/orders.type";
 import Loader from "@/components/common/loader";
+import api from "@/lib/axios";
 import { ProtectedRoute } from "@/lib/userProtectedRoute";
 import Link from "next/link";
+import Swal from "sweetalert2";
 import { CheckCircle, Clock1, Pencil, RefreshCcw, Truck, XCircle } from "lucide-react";
 import RecyclingModal from "@/components/eWalletModal/ewalletModal";
 import { useUserPoints } from "@/hooks/useGetUserPoints";
@@ -13,7 +16,6 @@ import ItemsModal from "@/components/shared/itemsModal";
 import PointsActivity from "@/components/accordion/accordion";
 import MembershipTier from "@/components/memberTireShip/memberTireShip";
 import { useLanguage } from "@/context/LanguageContext";
-import useOrders from "@/hooks/useGetOrders";
 
 export default function ProfilePage() {
   return (
@@ -24,38 +26,84 @@ export default function ProfilePage() {
 }
 
 function ProfileContent() {
-  const { user } = useUserAuth();
-  const { t } = useLanguage();
-  
-  // Hooks
+  const { user, token } = useUserAuth();
+  console.log(user?.role);
   const { userPoints, pointsLoading, getUserPoints } = useUserPoints({
     userId: user?._id,
     name: user?.name,
     email: user?.email,
   });
-
-  const {
-    allOrders,
-    totalOrders,
-    isLoading,
-    isFetchingNextPage,
-    hasNextPage,
-    fetchNextPage,
-    handleCancelOrder,
-    getOrdersByTab,
-    isCancellingOrder,
-  } = useOrders({ limit: 4 });
-
-  // Local state
+  const [allOrders, setAllOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState("incoming");
   const [isRecyclingModalOpen, setIsRecyclingModalOpen] = useState(false);
   const [isItemsModalOpen, setIsItemsModalOpen] = useState(false);
-  const [selectedOrderItems, setSelectedOrderItems] = useState<any[]>([]);
+  const { t } = useLanguage();
 
-  // Handlers
+  const getAllOrders = async (): Promise<void> => {
+    try {
+      setLoading(true);
+      const res = await api.get<OrdersResponse>("/orders");
+      setAllOrders(res.data.data);
+      console.log(res.data.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   const refreshPoints = async () => {
     await getUserPoints();
   };
+
+  const cancelOrder = async (orderId: string) => {
+    try {
+      const res = await api.put(`/orders/${orderId}/status`, {
+        status: "cancelled",
+      });
+      return res.data;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const handleCancelOrder = (orderId: string) => {
+    Swal.fire({
+      title: "Are you sure you want to cancel this order?",
+      showCancelButton: true,
+      confirmButtonText: "Yes",
+      cancelButtonText: "No",
+      icon: "warning",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await cancelOrder(orderId);
+          setAllOrders((prev) =>
+            prev.map((order) =>
+              order._id === orderId ? { ...order, status: "cancelled" } : order
+            )
+          );
+          Swal.fire("Order cancelled", "", "success");
+        } catch (error) {
+          console.error("Failed to cancel order:", error);
+          Swal.fire("Failed to cancel order", "", "error");
+        }
+      } else {
+        Swal.fire("Your order is safe", "", "info");
+      }
+    });
+  };
+
+  useEffect(() => {
+    if (user && token) {
+      getAllOrders();
+      getUserPoints(); // Fetch user points
+    }
+  }, [user, token]);
+
+  const [selectedOrderItems, setSelectedOrderItems] = useState<any[]>([]);
 
   const openItemsModal = (items: any[]) => {
     setSelectedOrderItems(items);
@@ -67,22 +115,51 @@ function ProfileContent() {
     setIsItemsModalOpen(false);
   };
 
-  // Get filtered orders for current tab
-  const filteredOrders = getOrdersByTab(activeTab, user?.role);
+  const filteredOrders = allOrders.filter((order) => {
+    const status = order.status;
 
-  // Stats
+    if (user?.role === "buyer" && status === "cancelled") {
+      return false;
+    }
+    if (activeTab === "incoming") {
+      return ["pending", "assigntocourier"].includes(status);
+    }
+    if (activeTab === "completed") {
+      return status === "completed";
+    }
+    if (activeTab === "cancelled") {
+      return status === "cancelled";
+    }
+    return true;
+  });
+
+  // Updated stats to use stored points instead of calculated points
   const stats = {
-    totalRecycles: allOrders.filter((order) => order.status === "completed")?.length,
-    points: userPoints?.totalPoints || 0,
+    totalRecycles: allOrders.filter((or) => or.status == "completed")?.length,
+    points: userPoints?.totalPoints || 0, // Use stored points
     categories: 4,
     tier: 50,
   };
 
-  const tabs = ["incoming", "completed", "cancelled"];
+  // Update tabs array to include payment for buyers
+  const getTabsForUser = () => {
+    const baseTabs = ["incoming", "completed"];
+    
+    if (user?.role === "buyer") {
+      baseTabs.push("payments");
+    } else {
+      baseTabs.push("cancelled");
+    }
+    
+    return baseTabs;
+  };
+
+  const tabs = getTabsForUser();
 
   return (
     <div className="h-auto bg-green-50 px-4">
       <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-xl p-6 space-y-6">
+
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap">
           <div className="flex items-center space-x-4">
@@ -100,13 +177,14 @@ function ProfileContent() {
               </h2>
               <p className="text-sm text-gray-500">{user?.email}</p>
               <p className="text-sm text-gray-500">
-                {user?.phoneNumber?.padStart(11, "0")}
+                {user?.phoneNumber.padStart(11, "0")}
               </p>
               <p className="text-xs text-gray-400">Cairo, July 2025</p>
             </div>
           </div>
 
           <div className="flex gap-4 items-center mt-4">
+            {/* Return & Earn Button */}
             {user?.role !== "buyer" && (
               <button
                 onClick={() => setIsRecyclingModalOpen(true)}
@@ -117,6 +195,7 @@ function ProfileContent() {
               </button>
             )}
 
+            {/* Edit Profile Link */}
             <Link
               href="/editprofile"
               className="flex items-center gap-2 bg-white border border-green-600 text-green-700 px-4 py-2 rounded-full hover:bg-green-100 transition-colors duration-200"
@@ -134,168 +213,133 @@ function ProfileContent() {
           totalPoints={userPoints?.totalPoints}
         />
 
-        {/* Stats */}
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
+        {/* Stats - Updated to show loading state for points */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
           <StatBox label={t("profile.stats.recycles")} value={stats.totalRecycles} />
-          <StatBox label={t("profile.stats.points")} value={stats.points} loading={pointsLoading} />
-          {/* Your existing MembershipTier component */}
+          {user?.role !== "buyer" && (
+            <StatBox
+              label={t("profile.stats.points")}
+              value={stats.points}
+              loading={pointsLoading}
+            />
+          )}
           <MembershipTier totalPoints={userPoints?.totalPoints} />
         </div>
-        {/* Points History Section */}
-        <PointsActivity userPoints={userPoints} />
+
+        {user?.role == "customer" && <PointsActivity userPoints={userPoints} />}
 
         {/* Tabs */}
         <div className="flex border-b gap-6">
-          {tabs
-            .filter((tab) => !(tab === "cancelled" && user?.role === "buyer"))
-            .map((tab) => (
-              <button
-                key={tab}
-                className={`pb-2 capitalize font-semibold text-sm border-b-2 transition-colors duration-200 ${
-                  activeTab === tab
-                    ? "border-green-600 text-green-800"
-                    : "border-transparent text-gray-500 hover:text-green-700"
-                }`}
-                onClick={() => setActiveTab(tab)}
-              >
-                {t(`profile.tabs.${tab}`)}
-              </button>
-            ))}
+          {tabs.map((tab) => (
+            <button
+              key={tab}
+              className={`pb-2 capitalize font-semibold text-sm border-b-2 transition-colors duration-200 ${
+                activeTab === tab
+                  ? "border-green-600 text-green-800"
+                  : "border-transparent text-gray-500 hover:text-green-700"
+              }`}
+              onClick={() => setActiveTab(tab)}
+            >
+              {t(`profile.tabs.${tab}`) || tab}
+            </button>
+          ))}
         </div>
 
-        {/* Orders */}
-        {isLoading ? (
-          <Loader title="Loading orders..." />
+        {/* Orders or Payments */}
+        {activeTab === "payments" ? (
+          <PaymentsHistory />
+        ) : loading ? (
+          <Loader title=" orders..." />
         ) : filteredOrders.length === 0 ? (
           <p className="text-center text-gray-500">No orders in this tab yet.</p>
         ) : (
-          <div className="space-y-4">
-            {/* Orders Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredOrders.map((order) => (
-                <div
-                  key={order._id}
-                  className="rounded-xl p-4 bg-green-50 shadow-sm flex flex-col justify-between"
-                >
-                  <div className="flex justify-between items-center mb-2 text-sm text-gray-600">
-                    <span>
-                      {t("profile.orders.date")}: {new Date(order.createdAt).toLocaleDateString()}
-                    </span>
-                    <span className="flex items-center gap-1 font-semibold">
-                      {["assigntocourier"].includes(order.status) && (
-                        <>
-                          <Truck size={16} className="text-yellow-600" />
-                          <span className="text-yellow-700">
-                            {t("profile.orders.status.inTransit")}
-                          </span>
-                        </>
-                      )}
-                      {["pending"].includes(order.status) && (
-                        <>
-                          <Clock1 size={16} className="text-yellow-400" />
-                          <span className="text-yellow-400">
-                            {t("profile.orders.status.pending")}
-                          </span>
-                        </>
-                      )}
-                      {order.status === "completed" && (
-                        <>
-                          <CheckCircle size={16} className="text-green-600" />
-                          <span className="text-green-700">
-                            {t("profile.orders.status.completed")}
-                          </span>
-                        </>
-                      )}
-                      {order.status === "cancelled" && (
-                        <>
-                          <XCircle size={16} className="text-red-600" />
-                          <span className="text-red-700 capitalize">
-                            {t("profile.orders.status.cancelled")}
-                          </span>
-                        </>
-                      )}
-                    </span>
-                  </div>
-
-                  <div className="text-xs text-gray-500 mb-4">
-                    {order.address.street}, Bldg {order.address.building}, Floor{" "}
-                    {order.address.floor}, {order.address.area}, {order.address.city}
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <button
-                      onClick={() => openItemsModal(order.items)}
-                      className="text-sm text-green-500 hover:text-green-700 transition"
-                    >
-                      {t("profile.orders.viewDetails")}
-                    </button>
-
-                    {/* Cancel button for pending orders */}
-                {order.status === "pending" && user?.role !== "buyer" && (
-                      <button
-                        onClick={() => handleCancelOrder(order._id)}
-                        disabled={isCancellingOrder}
-                        className="text-sm text-red-500 hover:text-red-700 transition disabled:opacity-50"
-                      >
-                        {isCancellingOrder ? "Cancelling..." : "Cancel Order"}
-                      </button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredOrders.map((order) => (
+              <div
+                key={order._id}
+                className=" rounded-xl p-4 bg-green-50 shadow-sm flex flex-col justify-between"
+              >
+                <div className="flex justify-between items-center mb-2 text-sm text-gray-600">
+                  <span>
+                    {t("profile.orders.date")}: {new Date(order.createdAt).toLocaleDateString()}
+                  </span>
+                  <span className="flex items-center gap-1 font-semibold">
+                    {["assigntocourier"].includes(order.status) && (
+                      <>
+                        <Truck size={16} className="text-yellow-600" />
+                        <span className="text-yellow-700">
+                          {t("profile.orders.status.inTransit")}
+                        </span>
+                      </>
                     )}
-                  </div>
+                    {["pending"].includes(order.status) && (
+                      <>
+                        <Clock1 size={16} className="text-yellow-400" />
+                        <span className="text-yellow-400">
+                          {t("profile.orders.status.pending")}
+                        </span>
+                      </>
+                    )}
+                    {order.status === "completed" && (
+                      <>
+                        <CheckCircle size={16} className="text-green-600" />
+                        <span className="text-green-700">
+                          {t("profile.orders.status.completed")}
+                        </span>
+                      </>
+                    )}
+                    {order.status === "cancelled" && (
+                      <>
+                        <XCircle size={16} className="text-red-600" />
+                        <span className="text-red-700 capitalize">
+                          {t("profile.orders.status.cancelled")}
+                        </span>
+                      </>
+                    )}
+                  </span>
                 </div>
-              ))}
-            </div>
 
-            {/* See More Button */}
-            {hasNextPage && (
-              <div className="flex justify-center mt-6">
-                <button
-                  onClick={() => fetchNextPage()}
-                  disabled={isFetchingNextPage}
-                  className="bg-gradient-to-r from-green-500 to-green-700 text-white px-6 py-2 rounded-full shadow-md hover:scale-105 transition-transform duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {isFetchingNextPage ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Loading...
-                    </>
+                {/* Address summary */}
+                <div className="text-xs text-gray-500 mb-4">
+                  {order.address.street}, Bldg {order.address.building}, Floor{" "}
+                  {order.address.floor}, {order.address.area}, {order.address.city}
+                </div>
+
+                <div className="flex justify-between">
+                  <button
+                    onClick={() => openItemsModal(order.items)}
+                    className="self-start text-sm  text-green-500 rounded-md transition"
+                  >
+                    {t("profile.orders.viewDetails")}
+                  </button>
+                  {order.status == "pending" && user?.role == "customer" ? (
+                    <button
+                      onClick={() => handleCancelOrder(order._id)}
+                      className="self-start text-sm  text-red-500 rounded-md transition"
+                    >
+                      {t("profile.orders.cancelOrder")}
+                    </button>
                   ) : (
-                    <>
-                      <RefreshCcw size={16} />
-                      See More Orders
-                    </>
+                    ""
                   )}
-                </button>
+                </div>
               </div>
-            )}
-
-            {/* Orders Count Info */}
-            {totalOrders > 0 && (
-              <div className="text-center text-sm text-gray-500 mt-4">
-                Showing {allOrders.length} of {totalOrders} orders
-              </div>
-            )}
+            ))}
+            <ItemsModal
+              userRole={user?.role}
+              show={isItemsModalOpen}
+              onclose={closeItemsModal}
+              selectedOrderItems={selectedOrderItems}
+            />
           </div>
         )}
-
-        <ItemsModal
-          show={isItemsModalOpen}
-          onclose={closeItemsModal}
-          selectedOrderItems={selectedOrderItems}
-        />
       </div>
     </div>
   );
 }
 
-function StatBox({ 
-  label, 
-  value, 
-  loading = false 
-}: { 
-  label: string; 
-  value: number; 
-  loading?: boolean 
-}) {
+// Updated StatBox to handle loading state
+function StatBox({ label, value, loading = false }: { label: string; value: number; loading?: boolean }) {
   return (
     <div className="bg-green-100 text-green-800 p-4 rounded-xl shadow-sm">
       {loading ? (
@@ -309,6 +353,79 @@ function StatBox({
           <p className="text-sm">{label}</p>
         </>
       )}
+    </div>
+  );
+}
+
+
+
+function PaymentsHistory() {
+  const { user } = useUserAuth();
+  const [payments, setPayments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user?._id) {
+      api
+        .get(`/users/${user._id}/payments`)
+        .then((res) => {
+          setPayments(res.data);
+        })
+        .catch((err) => {
+          console.error("Failed to load payment history", err);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }
+  }, [user]);
+
+  if (loading) return <Loader title=" payments..." />;
+
+  if (!payments.length)
+    return <p className="text-center text-gray-500">No payments found.</p>;
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {Array.isArray(payments) &&
+        payments.map((payment, index) => (
+          <div
+            key={payment._id || index}
+            className="rounded-xl p-4 bg-green-50 shadow-sm flex flex-col justify-between"
+          >
+            <div className="flex justify-between items-center mb-2 text-sm text-gray-600">
+              <span>
+                Date:{" "}
+                {payment.created
+                  ? new Date(payment.created * 1000).toLocaleDateString()
+                  : "Unknown Date"}
+              </span>
+              <div className="text-right">
+                <div className="font-bold text-green-600">
+                  {(payment.amount / 100).toFixed(2)} EGP
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-1 text-sm text-gray-600">
+              Status:{" "}
+              <span className="capitalize text-green-700 font-medium">
+                {payment.status}
+              </span>
+            </div>
+
+            {payment.receipt_url && (
+              <a
+                href={payment.receipt_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 inline-block text-sm text-green-600 hover:underline"
+              >
+                View Receipt
+              </a>
+            )}
+          </div>
+        ))}
     </div>
   );
 }
