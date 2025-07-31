@@ -290,7 +290,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import PromotionSlider from "@/components/buyer/PromotionSlider";
 import { Search, ChevronRight, Filter, Frown, Leaf, Zap, Recycle, Star } from "lucide-react";
-import { priceWithMarkup } from "@/utils/priceUtils";
+
 
 interface Item {
   _id: string;
@@ -325,7 +325,7 @@ export default function BuyerHomePage() {
   const fetchItems = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/categories/get-items?page=1&limit=8`);
+      const response = await fetch(`http://localhost:5000/api/categories/get-items?page=1&limit=8&role=buyer`);
       const data = await response.json();
       setItems(data.data);
       setFilteredItems(data.data);
@@ -469,7 +469,7 @@ export default function BuyerHomePage() {
                       <h3 className="text-base font-medium text-gray-800 truncate mb-1">{item.name}</h3>
                       <div className="flex items-center">
                         <span className="text-base font-bold text-emerald-600">
-                          {priceWithMarkup(item.price, userRole)}{" "}
+                          {item.price}{" "}
                         </span>
                         <span className="text-xs text-emerald-600">/{getMeasurementText(item.measurement_unit)}</span>
                       </div>

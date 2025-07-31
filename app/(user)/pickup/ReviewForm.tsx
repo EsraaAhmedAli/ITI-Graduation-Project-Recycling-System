@@ -32,13 +32,14 @@ export default function Review({
   cartItems,
   userRole,
 }: ReviewProps) {
- const total = cartItems.reduce(
-  (sum, item) => sum + (priceWithMarkup(item.price, userRole) || 0) * item.quantity,
+  const total = cartItems.reduce(
+  (sum, item) => sum + item.price * item.quantity,
   0
 );
 
 
- return (
+
+  return (
     <div className="space-y-6">
       <h2 className="text-xl font-bold text-green-700">Review Your Order</h2>
 
@@ -53,8 +54,8 @@ export default function Review({
                 className="flex items-center gap-4 border-b pb-4 border-green-200"
               >
                 <Image
-                width={64}
-                height={64}
+                  width={64}
+                  height={64}
                   src={item.image}
                   alt={item.itemName}
                   className=" object-cover rounded-md border"
@@ -69,20 +70,21 @@ export default function Review({
                   </p>
                   <p className="text-sm text-gray-600">
                     Price per unit:{" "}
-                    <span className="text-green-700">{priceWithMarkup(item.price, userRole)} EGP</span>
+                    <span className="text-green-700">{item.price.toFixed(2)} EGP</span>
                   </p>
+
                   <p className="text-sm text-gray-600">
                     Points:{" "}
                     <span className="text-green-700">{item.points}</span>
                   </p>
-            
+
                 </div>
               </div>
             ))}
 
-          <div className="text-right mt-2 font-semibold text-green-900">
-  Total: {total.toFixed(2)} EGP
-</div>
+            <div className="text-right mt-2 font-semibold text-green-900">
+              Total: {total.toFixed(2)} EGP
+            </div>
 
           </>
         )}

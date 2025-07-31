@@ -48,7 +48,6 @@ export default function Page() {
     totalItems,
     isFetching
   };
-  // Modal & selection states
   const [isItemsModalOpen, setIsItemsModalOpen] = useState(false);
   const [selectedOrderItems, setSelectedOrderItems] = useState<null | any[]>(null);
   const [isCourierModalOpen, setIsCourierModalOpen] = useState(false);
@@ -71,7 +70,6 @@ export default function Page() {
 
   const { data: couriers } = useUsers("delivery");
 
-// Delete order handler - FIXED VERSION
 const handleDeleteOrder = async (orderId: string) => {
   
   const result = await Swal.fire({
@@ -86,7 +84,6 @@ const handleDeleteOrder = async (orderId: string) => {
 
   if (result.isConfirmed) {
     try {
-      // CHANGE THIS LINE - use admin endpoint instead
       await api.delete(`/admin/orders/${orderId.orderId}`);
       Swal.fire('Deleted!', 'The order has been deleted.', 'success');
       refetch();
@@ -97,7 +94,6 @@ const handleDeleteOrder = async (orderId: string) => {
   }
 };
 
-  // Assign courier handler
   const handleAssignToCourier = async (orderId: string, courierId: string) => {
     try {
       await api.put(`/orders/${orderId}/assign-courier`, {
@@ -114,7 +110,6 @@ const handleDeleteOrder = async (orderId: string) => {
     }
   };
 
-  // Cancel order handler with reason
   const handleCancelOrder = async (orderId: string) => {
     const { value: reason } = await Swal.fire({
       title: 'Cancel Order',

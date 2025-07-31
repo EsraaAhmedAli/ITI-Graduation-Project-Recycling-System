@@ -67,8 +67,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addToCart = async (item: CartItem) => {
-    setLoadingItemId(item.categoryId);
+    setLoadingItemId(item._id); // ✅ Use _id for loading state
     try {
+      // Ensure minimum quantity for KG items is 1
+      if (item.measurement_unit === 1 && item.quantity < 1) {
+        item.quantity = 1; // ✅ Set minimum to 1 KG
+      }
+
       // Validate quantity based on measurement unit
       const isValidQuantity = validateQuantity(
         item.quantity,
@@ -77,7 +82,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (!isValidQuantity) {
         const message =
           item.measurement_unit === 1
-            ? "For KG items, quantity must be in 0.25 increments"
+            ? "For KG items, minimum quantity is 1 KG and must be in 0.25 increments"
             : "For Piece items, quantity must be whole numbers ≥ 1";
         toast.error(message);
         return;
@@ -102,17 +107,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setLoadingItemId(null);
     }
   };
-
-  // Function to validate quantities based on measurement unit
   const validateQuantity = (
     quantity: number,
     measurementUnit: number
   ): boolean => {
     if (measurementUnit === 1) {
       // KG items
-      // Check for 0.25 increments
+      // Must be >= 1 KG and in 0.25 increments
+      if (quantity < 1) return false; // ✅ Minimum 1 KG
       const multiplied = Math.round(quantity * 4);
-      return multiplied >= 1 && Math.abs(quantity * 4 - multiplied) < 0.0001;
+      return Math.abs(quantity * 4 - multiplied) < 0.0001;
     } else {
       // Piece items
       return Number.isInteger(quantity) && quantity >= 1;
@@ -121,13 +125,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const increaseQty = async (item: CartItem) => {
     try {
-      const increment = item.measurement_unit === 1 ? 1 : 1; // KG = 0.25, Piece = 1
+      const increment = item.measurement_unit === 1 ? 0.25 : 1; // ✅ KG = 0.25, Piece = 1
       const newQuantity = item.quantity + increment;
-      // const maxQuantityIfByuer = (user?.role==="buyer")?item:1;
 
       await api.put(
         "/cart",
-        { categoryId: item.categoryId, quantity: newQuantity },
+        { categoryId: item.categoryId, quantity: newQuantity }, // Keep using categoryId since backend expects it
         { withCredentials: true }
       );
       await loadCart();
@@ -141,10 +144,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
     }
   };
-
   const decreaseQty = async (item: CartItem) => {
-    const decrement = item.measurement_unit === 1 ? 0.25 : 1; // KG = 0.25, Piece = 1
-    const minValue = item.measurement_unit === 1 ? 0.25 : 1;
+    const decrement = item.measurement_unit === 1 ? 0.25 : 1; // ✅ KG = 0.25, Piece = 1
+    const minValue = item.measurement_unit === 1 ? 1 : 1; // ✅ Minimum 1 KG or 1 Piece
 
     if (item.quantity <= minValue) return;
 
@@ -153,7 +155,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       await api.put(
         "/cart",
-        { categoryId: item.categoryId, quantity: newQuantity },
+        { categoryId: item.categoryId, quantity: newQuantity }, // Keep using categoryId
         { withCredentials: true }
       );
       await loadCart();
@@ -167,7 +169,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
     }
   };
-
   const removeFromCart = async (item: CartItem) => {
     setLoadingItemId(item.categoryId);
     try {
