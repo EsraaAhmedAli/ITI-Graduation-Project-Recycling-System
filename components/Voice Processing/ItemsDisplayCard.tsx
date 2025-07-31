@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useCart } from "@/context/CartContext";
+import { CartItem, useCart } from "@/context/CartContext";
 import api from "@/lib/axios";
 import Image from "next/image";
 import { toast } from "react-toastify";
+import { useCategories } from "@/hooks/useGetCategories";
 
 type ValidatedItem = {
   material: string;
@@ -41,37 +42,46 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
   const { addToCart } = useCart();
+  const { getCategoryIdByItemName } = useCategories();
   const router = useRouter();
 
   // Function to fetch item details from database
-  const fetchItemDetails = async (itemName: string): Promise<DatabaseItem | null> => {
+  const fetchItemDetails = async (
+    itemName: string
+  ): Promise<DatabaseItem | null> => {
     try {
       // First, try to get all categories to find which one contains our item
-      const categoriesResponse = await api.get('/categories');
+      const categoriesResponse = await api.get("/categories");
       const categories = categoriesResponse.data;
-      
+
       for (const category of categories) {
         try {
-          const itemsResponse = await api.get(`/categories/get-items/${category.name}`);
-          const categoryItems = itemsResponse.data;
-          
-          // Look for exact match or close match
-          const foundItem = categoryItems.find((item: DatabaseItem) => 
-            item.name.toLowerCase() === itemName.toLowerCase() ||
-            item.name.toLowerCase().includes(itemName.toLowerCase()) ||
-            itemName.toLowerCase().includes(item.name.toLowerCase())
+          const itemsResponse = await api.get(
+            `/categories/get-items/${category.name}`
           );
-          
+          const categoryItems = itemsResponse.data;
+
+          // Look for exact match or close match
+          const foundItem = categoryItems.find(
+            (item: DatabaseItem) =>
+              item.name.toLowerCase() === itemName.toLowerCase() ||
+              item.name.toLowerCase().includes(itemName.toLowerCase()) ||
+              itemName.toLowerCase().includes(item.name.toLowerCase())
+          );
+
           if (foundItem) {
             return foundItem;
           }
         } catch (error) {
-          console.error(`Error fetching items for category ${category.name}:`, error);
+          console.error(
+            `Error fetching items for category ${category.name}:`,
+            error
+          );
         }
       }
       return null;
     } catch (error) {
-      console.error('Error fetching item details:', error);
+      console.error("Error fetching item details:", error);
       return null;
     }
   };
@@ -80,10 +90,10 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
   const enrichItems = useCallback(async () => {
     setIsLoading(true);
     const enrichedItems: EnrichedItem[] = [];
-    
+
     for (const item of items) {
       const dbItem = await fetchItemDetails(item.material);
-      
+
       if (dbItem) {
         enrichedItems.push({
           ...item,
@@ -92,7 +102,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
           points: dbItem.points,
           price: dbItem.price,
           measurement_unit: dbItem.measurement_unit,
-          found: true
+          found: true,
         });
       } else {
         // If not found in database, create with default values
@@ -102,11 +112,11 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
           price: item.unit === "KG" ? 1.5 : 0.5, // Default price
           measurement_unit: item.unit === "KG" ? 1 : 2,
           image: "/placeholder-item.jpg", // Default image
-          found: false
+          found: false,
         });
       }
     }
-    
+
     setLocalItems(enrichedItems);
     setIsLoading(false);
   }, [items]);
@@ -119,7 +129,8 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
     setLocalItems((prev) =>
       prev.map((item, i) => {
         if (i === index) {
-          const increment = (item.unit === "pieces" || item.unit === "piece") ? 1 : 0.25;
+          const increment =
+            item.unit === "pieces" || item.unit === "piece" ? 1 : 0.25;
           return { ...item, quantity: item.quantity + increment };
         }
         return item;
@@ -134,7 +145,10 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
           const isPiece = item.unit === "pieces" || item.unit === "piece";
           const decrement = isPiece ? 1 : 0.25;
           const minValue = isPiece ? 1 : 0.25;
-          return { ...item, quantity: Math.max(item.quantity - decrement, minValue) };
+          return {
+            ...item,
+            quantity: Math.max(item.quantity - decrement, minValue),
+          };
         }
         return item;
       })
@@ -147,16 +161,14 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
 
   const handleQuantityChange = (index: number, value: string) => {
     const item = localItems[index];
-    
-    if (value === '') {
+
+    if (value === "") {
       setLocalItems((prev) =>
-        prev.map((item, i) =>
-          i === index ? { ...item, quantity: 0 } : item
-        )
+        prev.map((item, i) => (i === index ? { ...item, quantity: 0 } : item))
       );
       return;
     }
-    
+
     if (item.unit === "pieces" || item.unit === "piece") {
       const numValue = parseInt(value);
       if (!isNaN(numValue) && numValue > 0) {
@@ -181,13 +193,13 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
   const handleQuantityBlur = (index: number) => {
     const item = localItems[index];
     const isKG = item.unit === "KG";
-    
+
     if (isKG) {
       // For KG items, round to nearest 0.25
       const rounded = Math.round(item.quantity * 4) / 4;
       const minValue = 0.25;
       const finalValue = Math.max(rounded, minValue);
-      
+
       setLocalItems((prev) =>
         prev.map((item, i) =>
           i === index ? { ...item, quantity: finalValue } : item
@@ -197,7 +209,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
       // For pieces, round to nearest integer
       const minValue = 1;
       const finalValue = Math.max(Math.round(item.quantity || 0), minValue);
-      
+
       setLocalItems((prev) =>
         prev.map((item, i) =>
           i === index ? { ...item, quantity: finalValue } : item
@@ -218,43 +230,101 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
     }
   };
 
+  // const addAllToCart = async () => {
+  //   for (const item of localItems) {
+  //     // Validate quantity before adding
+  //     if (!validateQuantityForCart(item.quantity, item.unit)) {
+  //       const message = item.unit === "KG"
+  //         ? `${item.material}: For KG items, quantity must be in 0.25 increments`
+  //         : `${item.material}: For Piece items, quantity must be whole numbers ≥ 1`;
+  //       toast.error(message);
+  //       return;
+  //     }
+
+  //     if (item.found && item._id) {
+  //       // For items found in database, use their actual data
+  //       const cartItem:CartItem = {
+  //         categoryId: item._id,
+  //         itemName: item.material,
+  //         image: item.image || "/placeholder-item.jpg",
+  //         points: item.points || 0,
+  //         price: item.price || 0,
+  //         measurement_unit: item.measurement_unit || (item.unit === "KG" ? 1 : 2),
+  //         quantity: item.quantity,
+  //         _id:item._id,
+  //         categoryName:item.material,
+  //         originalCategoryId:getCategoryIdByItemName(item.)
+
+  //       };
+  //       await addToCart(cartItem);
+  //     } else {
+  //       // For items not found in database, use default values but still add to cart
+  //       const cartItem = {
+  //         categoryId: `voice-order-${item.material.toLowerCase().replace(/\s+/g, '-')}`,
+  //         itemName: item.material,
+  //         image: "/placeholder-item.jpg",
+  //         points: item.points || (item.unit === "KG" ? 5 : 2),
+  //         price: item.price || (item.unit === "KG" ? 1.5 : 0.5),
+  //         measurement_unit: item.unit === "KG" ? 1 : 2,
+  //         quantity: item.quantity,
+  //       };
+  //       await addToCart(cartItem);
+  //     }
+  //   }
+  //   setShowSuccess(true);
+  //   setTimeout(() => setShowSuccess(false), 3000);
+  // };
   const addAllToCart = async () => {
     for (const item of localItems) {
       // Validate quantity before adding
       if (!validateQuantityForCart(item.quantity, item.unit)) {
-        const message = item.unit === "KG" 
-          ? `${item.material}: For KG items, quantity must be in 0.25 increments`
-          : `${item.material}: For Piece items, quantity must be whole numbers ≥ 1`;
+        const message =
+          item.unit === "KG"
+            ? `${item.material}: For KG items, quantity must be in 0.25 increments`
+            : `${item.material}: For Piece items, quantity must be whole numbers ≥ 1`;
         toast.error(message);
         return;
       }
 
+      const measurement_unit = item.unit === "KG" ? 1 : 2;
+
+      const baseCartItem = {
+        itemName: item.material,
+        image: item.image || "/placeholder-item.jpg",
+        points: item.points ?? (measurement_unit === 1 ? 5 : 2),
+        price: item.price ?? (measurement_unit === 1 ? 1.5 : 0.5),
+        measurement_unit,
+        quantity: item.quantity,
+        categoryName: item.material,
+      };
+
       if (item.found && item._id) {
-        // For items found in database, use their actual data
-        const cartItem = {
+        const originalCategoryId = getCategoryIdByItemName(item.material);
+
+        const cartItem: CartItem = {
+          ...baseCartItem,
+          _id: item._id,
           categoryId: item._id,
-          itemName: item.material,
-          image: item.image || "/placeholder-item.jpg",
-          points: item.points || 0,
-          price: item.price || 0,
-          measurement_unit: item.measurement_unit || (item.unit === "KG" ? 1 : 2),
-          quantity: item.quantity,
+          originalCategoryId,
         };
+
         await addToCart(cartItem);
       } else {
-        // For items not found in database, use default values but still add to cart
-        const cartItem = {
-          categoryId: `voice-order-${item.material.toLowerCase().replace(/\s+/g, '-')}`,
-          itemName: item.material,
-          image: "/placeholder-item.jpg",
-          points: item.points || (item.unit === "KG" ? 5 : 2),
-          price: item.price || (item.unit === "KG" ? 1.5 : 0.5),
-          measurement_unit: item.unit === "KG" ? 1 : 2,
-          quantity: item.quantity,
+        // fallback for unknown items
+        const fallbackId = `voice-order-${item.material
+          .toLowerCase()
+          .replace(/\s+/g, "-")}`;
+        const cartItem: CartItem = {
+          ...baseCartItem,
+          _id: fallbackId,
+          categoryId: fallbackId,
+          originalCategoryId: fallbackId,
         };
+
         await addToCart(cartItem);
       }
     }
+
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 3000);
   };
@@ -283,7 +353,10 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-4" onClick={handleBackdropClick}>
+      <div
+        className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-4"
+        onClick={handleBackdropClick}
+      >
         <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-md p-6">
           <div className="text-center">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -298,7 +371,10 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
 
   if (localItems.length === 0) {
     return (
-      <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-4" onClick={handleBackdropClick}>
+      <div
+        className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-4"
+        onClick={handleBackdropClick}
+      >
         <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-md p-6">
           <div className="text-center">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -330,7 +406,10 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-4" onClick={handleBackdropClick}>
+    <div
+      className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-4"
+      onClick={handleBackdropClick}
+    >
       <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden">
         {showSuccess && (
           <div className="absolute top-4 left-4 right-4 bg-success text-white px-4 py-2 rounded-lg flex items-center space-x-2 z-10">
@@ -350,7 +429,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
             <span>Items added to cart successfully!</span>
           </div>
         )}
-        
+
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <h3 className="text-2xl font-bold text-gray-800 flex items-center">
@@ -393,9 +472,13 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
 
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {localItems.map((item, index) => {
-              const calculatedPoints = Math.floor(item.quantity * (item.points || (item.unit === "KG" ? 5 : 2)));
-              const calculatedPrice = (item.quantity * (item.price || (item.unit === "KG" ? 1.5 : 0.5))).toFixed(2);
-              
+              const calculatedPoints = Math.floor(
+                item.quantity * (item.points || (item.unit === "KG" ? 5 : 2))
+              );
+              const calculatedPrice = (
+                item.quantity * (item.price || (item.unit === "KG" ? 1.5 : 0.5))
+              ).toFixed(2);
+
               return (
                 <div
                   key={index}
@@ -405,21 +488,30 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                     <div className="flex items-start space-x-4 flex-1">
                       {/* Item Image */}
                       <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        {item.image && item.image !== "/placeholder-item.jpg" ? (
-                          <Image 
-                            src={item.image} 
+                        {item.image &&
+                        item.image !== "/placeholder-item.jpg" ? (
+                          <Image
+                            src={item.image}
                             alt={item.material}
                             width={64}
                             height={64}
                             className="w-full h-full object-cover rounded-lg"
                             onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                              const nextSibling = e.currentTarget.nextElementSibling as HTMLElement;
-                              if (nextSibling) nextSibling.classList.remove('hidden');
+                              e.currentTarget.style.display = "none";
+                              const nextSibling = e.currentTarget
+                                .nextElementSibling as HTMLElement;
+                              if (nextSibling)
+                                nextSibling.classList.remove("hidden");
                             }}
                           />
                         ) : null}
-                        <div className={`${item.image && item.image !== "/placeholder-item.jpg" ? 'hidden' : ''} text-gray-400`}>
+                        <div
+                          className={`${
+                            item.image && item.image !== "/placeholder-item.jpg"
+                              ? "hidden"
+                              : ""
+                          } text-gray-400`}
+                        >
                           <svg
                             className="w-8 h-8"
                             fill="none"
@@ -435,7 +527,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                           </svg>
                         </div>
                       </div>
-                      
+
                       <div className="flex-1">
                         <div className="flex items-start justify-between">
                           <h4 className="font-semibold text-gray-800 text-xl mb-2">
@@ -450,7 +542,9 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                         <div className="flex items-center space-x-6 mb-2">
                           <p className="text-sm text-gray-600 flex items-center space-x-1">
                             <span>Unit:</span>
-                            <span className="font-medium">{item.unit === "KG" ? "Kilograms" : "Pieces"}</span>
+                            <span className="font-medium">
+                              {item.unit === "KG" ? "Kilograms" : "Pieces"}
+                            </span>
                           </p>
                           <div className="flex items-center space-x-1">
                             <span className="text-sm text-success font-semibold">
@@ -518,7 +612,11 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                       <button
                         onClick={() => decreaseQuantity(index)}
                         className="w-10 h-10 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={item.unit === "pieces" ? item.quantity <= 1 : item.quantity <= 0.25}
+                        disabled={
+                          item.unit === "pieces"
+                            ? item.quantity <= 1
+                            : item.quantity <= 0.25
+                        }
                       >
                         <svg
                           className="w-5 h-5 text-gray-700"
@@ -539,11 +637,21 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                         <input
                           type="number"
                           value={item.quantity}
-                          onChange={(e) => handleQuantityChange(index, e.target.value)}
+                          onChange={(e) =>
+                            handleQuantityChange(index, e.target.value)
+                          }
                           onBlur={() => handleQuantityBlur(index)}
                           className="w-full text-center font-semibold text-gray-800 text-lg bg-transparent border-none outline-none"
-                          min={(item.unit === "pieces" || item.unit === "piece") ? "1" : "0.25"}
-                          step={(item.unit === "pieces" || item.unit === "piece") ? "1" : "0.25"}
+                          min={
+                            item.unit === "pieces" || item.unit === "piece"
+                              ? "1"
+                              : "0.25"
+                          }
+                          step={
+                            item.unit === "pieces" || item.unit === "piece"
+                              ? "1"
+                              : "0.25"
+                          }
                         />
                       </div>
 
@@ -626,7 +734,9 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
               <div className="grid grid-cols-4 gap-4 text-center">
                 <div>
                   <div className="text-sm text-gray-600">Total Items</div>
-                  <div className="text-xl font-semibold text-gray-800">{localItems.length}</div>
+                  <div className="text-xl font-semibold text-gray-800">
+                    {localItems.length}
+                  </div>
                 </div>
                 <div>
                   <div className="text-sm text-gray-600">Total Quantity</div>
@@ -637,7 +747,17 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                 <div>
                   <div className="text-sm text-gray-600">Total Points</div>
                   <div className="text-xl font-semibold text-success flex items-center justify-center space-x-1">
-                    <span>{localItems.reduce((sum, item) => sum + Math.floor(item.quantity * (item.points || (item.unit === "KG" ? 5 : 2))), 0)}</span>
+                    <span>
+                      {localItems.reduce(
+                        (sum, item) =>
+                          sum +
+                          Math.floor(
+                            item.quantity *
+                              (item.points || (item.unit === "KG" ? 5 : 2))
+                          ),
+                        0
+                      )}
+                    </span>
                     <svg
                       className="w-5 h-5"
                       fill="none"
@@ -656,7 +776,18 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                 <div>
                   <div className="text-sm text-gray-600">Total Price</div>
                   <div className="text-xl font-semibold text-blue-600 flex items-center justify-center space-x-1">
-                    <span>{localItems.reduce((sum, item) => sum + (item.quantity * (item.price || (item.unit === "KG" ? 1.5 : 0.5))), 0).toFixed(2)} EGP</span>
+                    <span>
+                      {localItems
+                        .reduce(
+                          (sum, item) =>
+                            sum +
+                            item.quantity *
+                              (item.price || (item.unit === "KG" ? 1.5 : 0.5)),
+                          0
+                        )
+                        .toFixed(2)}{" "}
+                      EGP
+                    </span>
                     <svg
                       className="w-5 h-5"
                       fill="none"
