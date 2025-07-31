@@ -2,23 +2,24 @@
 
 import { useParams } from "next/navigation";
 import { useState, useMemo } from "react";
-import { useCart } from "@/context/CartContext";
+import { CartItem, useCart } from "@/context/CartContext";
 import Loader from "@/components/common/loader";
 import { Recycle, Plus, Sparkles } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import Image from "next/image";
 import { useLanguage } from "@/context/LanguageContext";
+import { useCategories } from "@/hooks/useGetCategories";
 
-interface Item {
-  _id: string;
-  name: string;
-  image: string;
-  points: number;
-  price: number;
-  categoryName: string;
-  measurement_unit: 1 | 2;
-}
+// interface Item {
+//   _id: string;
+//   name: string;
+//   image: string;
+//   points: number;
+//   price: number;
+//   categoryName: string;
+//   measurement_unit: 1 | 2;
+// }
 
 export default function UserCategoryPage() {
   const { t } = useLanguage();
@@ -26,8 +27,9 @@ export default function UserCategoryPage() {
   const params = useParams();
   const categoryName = decodeURIComponent(params.name as string);
   const { addToCart, loadingItemId } = useCart();
+  const { getCategoryIdByItemName } = useCategories();
 
-  const { data, isLoading, error } = useQuery<Item[]>({
+  const { data, isLoading, error } = useQuery<CartItem[]>({
     queryKey: ["subcategory", categoryName],
     queryFn: async () => {
       const res = await api.get(
@@ -35,6 +37,7 @@ export default function UserCategoryPage() {
       );
       const normalizedItems = res.data.data.map((item: any) => ({
         ...item,
+        itemName: item.name,
         categoryName: item.categoryName || categoryName,
         measurement_unit: Number(item.measurement_unit) as 1 | 2,
       }));
@@ -63,18 +66,46 @@ export default function UserCategoryPage() {
     };
   }, [data, categoryName, t]);
 
-  const handleAddToCollection = async (item: Item) => {
+  // const handleAddToCollection = async (item: CartItem) => {
+  //   try {
+  //     // const cartItem = {
+  //     //   categoryId: item._id,
+  //     //   categoryName: item.categoryName,
+  //     //   itemName: item.name,
+  //     //   image: item.image,
+  //     //   points: item.points,
+  //     //   price: item.price,
+  //     //   measurement_unit: item.measurement_unit,
+  //     //   quantity: item.measurement_unit === 1 ? 0.25 : 1,
+  //     // };
+  //     const tmp = item._id;
+  //     item.categoryId = tmp;
+  //     item._id = getCategoryIdByItemName(item.itemName);
+  //     console.log("ADDDDDDDDDDDDDDDDDDDDD");
+  //     console.log(item);
+  //     console.log("------------------------------------");
+  //     await addToCart(item);
+  //   } catch (error) {
+  //     console.error("Add to cart failed:", error);
+  //   }
+  // };
+  const handleAddToCollection = async (item: CartItem) => {
     try {
-      const cartItem = {
+      const categoryId = getCategoryIdByItemName(item.itemName);
+
+      const cartItem: CartItem = {
+        originalCategoryId: categoryId,
+        _id: item._id,
         categoryId: item._id,
         categoryName: item.categoryName,
-        itemName: item.name,
+        itemName: item.itemName,
         image: item.image,
         points: item.points,
         price: item.price,
         measurement_unit: item.measurement_unit,
-        quantity: item.measurement_unit === 1 ? 0.25 : 1,
+        quantity: item.measurement_unit === 1 ? 0.25 : 1, // set correct initial quantity
       };
+
       await addToCart(cartItem);
     } catch (error) {
       console.error("Add to cart failed:", error);
@@ -157,7 +188,7 @@ export default function UserCategoryPage() {
                 <div className="relative w-full h-40">
                   <Image
                     src={item.image}
-                    alt={item.name}
+                    alt={item.itemName}
                     fill
                     className="object-contain group-hover:scale-105 transition-transform duration-300"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
@@ -173,10 +204,10 @@ export default function UserCategoryPage() {
               <div className="p-4">
                 <h3 className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide leading-tight">
                   {t(
-                    `categories.subcategories.${item.name
+                    `categories.subcategories.${item.itemName
                       .toLowerCase()
                       .replace(/\s+/g, "-")}`,
-                    { defaultValue: item.name }
+                    { defaultValue: item.itemName }
                   )}
                 </h3>
 

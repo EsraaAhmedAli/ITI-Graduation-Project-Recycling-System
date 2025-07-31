@@ -11,10 +11,10 @@ import {
 } from "react";
 import api from "@/lib/axios";
 import { toast } from "react-hot-toast";
-import { useUserAuth } from "./AuthFormContext";
 
 export interface CartItem {
   _id: string;
+  originalCategoryId: string;
   categoryId: string;
   categoryName: string;
   itemName: string;
@@ -49,7 +49,7 @@ export const useCart = () => {
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loadingItemId, setLoadingItemId] = useState<string | null>(null);
-  const { user } = useUserAuth();
+
   const loadCart = async () => {
     try {
       const res = await api.get("/cart", {

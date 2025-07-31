@@ -1,38 +1,41 @@
 // hooks/useCreateOrder.ts - Version that saves debug info to localStorage
-import { useState } from 'react';
-import { toast } from 'react-toastify';
-import api from '@/lib/axios';
+import { useState } from "react";
+import { toast } from "react-toastify";
+import api from "@/lib/axios";
+import { CartItem } from "@/context/CartContext";
 
 // Save debug info that persists through redirects
 const saveDebugInfo = (info: any) => {
   try {
-    const existingDebug = JSON.parse(localStorage.getItem('orderDebug') || '[]');
+    const existingDebug = JSON.parse(
+      localStorage.getItem("orderDebug") || "[]"
+    );
     existingDebug.push({
       timestamp: new Date().toISOString(),
-      ...info
+      ...info,
     });
-    localStorage.setItem('orderDebug', JSON.stringify(existingDebug));
+    localStorage.setItem("orderDebug", JSON.stringify(existingDebug));
   } catch (error) {
-    console.error('Failed to save debug info:', error);
+    console.error("Failed to save debug info:", error);
   }
 };
 
 export const getDebugInfo = () => {
   try {
-    const debug = localStorage.getItem('orderDebug');
+    const debug = localStorage.getItem("orderDebug");
     if (debug) {
-      console.log('🔍 ORDER DEBUG HISTORY:', JSON.parse(debug));
+      console.log("🔍 ORDER DEBUG HISTORY:", JSON.parse(debug));
       return JSON.parse(debug);
     }
   } catch (error) {
-    console.error('Failed to get debug info:', error);
+    console.error("Failed to get debug info:", error);
   }
   return [];
 };
 
 // Clear debug info
 export const clearDebugInfo = () => {
-  localStorage.removeItem('orderDebug');
+  localStorage.removeItem("orderDebug");
 };
 
 interface User {
@@ -42,17 +45,17 @@ interface User {
   imgUrl?: string;
 }
 
-interface CartItem {
-  id: string;
-  quantity: number;
-  price: number;
-  categoryId: string;
-  itemName: string;
-  image: string;
-  points: number;
-  categoryName: string;
-  measurement_unit: number;
-}
+// interface CartItem {
+//   id: string;
+//   quantity: number;
+//   price: number;
+//   categoryId: string;
+//   itemName: string;
+//   image: string;
+//   points: number;
+//   categoryName: string;
+//   measurement_unit: number;
+// }
 
 interface Address {
   _id: string;
@@ -97,7 +100,7 @@ interface UseCreateOrderReturn {
 export const useCreateOrder = ({
   clearCart,
   setCurrentStep,
-  setCreatedOrderId
+  setCreatedOrderId,
 }: UseCreateOrderParams): UseCreateOrderReturn => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -106,30 +109,29 @@ export const useCreateOrder = ({
     cart: CartItem[],
     user: User | null
   ): Promise<CreateOrderResult> => {
-    
     saveDebugInfo({
-      action: 'ORDER_START',
+      action: "ORDER_START",
       cartLength: cart?.length || 0,
       cartItems: cart,
       hasAddress: !!selectedAddress,
-      hasUser: !!user
+      hasUser: !!user,
     });
 
     // Validation
     if (!selectedAddress) {
-      saveDebugInfo({ action: 'VALIDATION_FAILED', reason: 'No address' });
+      saveDebugInfo({ action: "VALIDATION_FAILED", reason: "No address" });
       toast.error("Please select an address");
       return { success: false };
     }
 
     if (!cart || cart.length === 0) {
-      saveDebugInfo({ action: 'VALIDATION_FAILED', reason: 'Empty cart' });
+      saveDebugInfo({ action: "VALIDATION_FAILED", reason: "Empty cart" });
       toast.error("Your cart is empty");
       return { success: false };
     }
 
     setIsLoading(true);
-    saveDebugInfo({ action: 'API_CALL_START' });
+    saveDebugInfo({ action: "API_CALL_START" });
 
     try {
       const response = await api.post<OrderResponse>("orders", {
@@ -138,70 +140,72 @@ export const useCreateOrder = ({
         phoneNumber: user?.phoneNumber,
         userName: user?.name,
         email: user?.email,
-        imageUrl: user?.imgUrl
+        imageUrl: user?.imgUrl,
       });
 
       const orderId = response.data.data._id;
-      
+
       saveDebugInfo({
-        action: 'ORDER_SUCCESS',
+        action: "ORDER_SUCCESS",
         orderId: orderId,
-        responseStatus: response.status
+        responseStatus: response.status,
       });
-      
+
       // Success side effects
       setCreatedOrderId(orderId);
-      
+
       // Debug cart clearing
       saveDebugInfo({
-        action: 'CART_CLEAR_START',
-        cartBeforeClear: cart.length
+        action: "CART_CLEAR_START",
+        cartBeforeClear: cart.length,
       });
-      
+
       try {
         clearCart();
-        saveDebugInfo({ action: 'CART_CLEAR_SUCCESS' });
+        saveDebugInfo({ action: "CART_CLEAR_SUCCESS" });
       } catch (clearError) {
         saveDebugInfo({
-          action: 'CART_CLEAR_FAILED',
-          error: clearError.message
+          action: "CART_CLEAR_FAILED",
+          error: clearError.message,
         });
       }
-      
+
       setCurrentStep(3);
-      saveDebugInfo({ action: 'STEP_SET_TO_3' });
+      saveDebugInfo({ action: "STEP_SET_TO_3" });
 
       toast.success("Order created successfully!");
-      
-      return { 
-        success: true, 
-        orderId,
-        data: response.data 
-      };
 
+      return {
+        success: true,
+        orderId,
+        data: response.data,
+      };
     } catch (err: any) {
       saveDebugInfo({
-        action: 'ORDER_FAILED',
+        action: "ORDER_FAILED",
         error: err?.message,
         status: err?.response?.status,
-        responseData: err?.response?.data
+        responseData: err?.response?.data,
       });
-      
-      const errorMessage = err?.response?.data?.message || err?.message || "Failed to create order";
+
+      const errorMessage =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to create order";
       toast.error(errorMessage);
-      
-      return { 
-        success: false, 
-        error: err 
+
+      return {
+        success: false,
+        error: err,
       };
     } finally {
       setIsLoading(false);
-      saveDebugInfo({ action: 'ORDER_COMPLETE' });
+      saveDebugInfo({ action: "ORDER_COMPLETE" });
     }
   };
 
   return {
     createOrder,
-    isLoading
+    isLoading,
   };
 };

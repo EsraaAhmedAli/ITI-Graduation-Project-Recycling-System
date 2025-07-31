@@ -9,6 +9,7 @@ import { Recycle, Leaf, Package, Minus, Plus } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useUserAuth } from "@/context/AuthFormContext";
 import Loader from "@/components/common/loader";
+import { useCategories } from "@/hooks/useGetCategories";
 
 interface Item {
   _id: string;
@@ -31,6 +32,7 @@ export default function ItemDetailsPage() {
   const { addToCart } = useCart();
   const { t } = useLanguage();
   const { user } = useUserAuth();
+  const { getCategoryIdByItemName } = useCategories();
 
   console.log("🔍 Item Details Page loaded:", {
     itemName,
@@ -143,6 +145,7 @@ export default function ItemDetailsPage() {
       price: item.price,
       measurement_unit: item.measurement_unit,
       quantity,
+      originalCategoryId: getCategoryIdByItemName(item.name),
     };
   }
 
