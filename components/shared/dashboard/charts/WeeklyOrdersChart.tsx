@@ -17,27 +17,35 @@ type TimePeriod = 'thisWeek' | 'lastWeek' | 'last4Weeks';
 const WeeklyOrdersChart = memo<WeeklyOrdersChartProps>(({ ordersPerDay, loading }) => {
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('thisWeek');
   
-  // Get current day labels
+  // Get current day labels (this should return current week days starting from Monday)
   const dayLabels = useMemo(() => getCurrentDayLabels(), []);
   
-  // Get current day in Egypt timezone
-  const getEgyptCurrentDay = useMemo(() => {
+  // Get current day info for Egypt timezone
+  const currentDayInfo = useMemo(() => {
     const now = new Date();
     // Convert to Egypt timezone (Africa/Cairo)
     const egyptTime = new Date(now.toLocaleString("en-US", {timeZone: "Africa/Cairo"}));
-    const jsDay = egyptTime.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
     
-    // Convert JS day to match dayLabels array (assuming it starts with Monday)
-    // Monday should be index 0, Tuesday index 1, etc.
-    return jsDay === 0 ? 6 : jsDay - 1; // Sunday becomes 6, Monday becomes 0, etc.
-  }, []);
-  
-  // Get current day name for Egypt timezone
-  const currentDayName = useMemo(() => {
-    const now = new Date();
-    const egyptTime = new Date(now.toLocaleString("en-US", {timeZone: "Africa/Cairo"}));
-    return egyptTime.toLocaleDateString('en-US', { weekday: 'short' });
-  }, []);
+    // Get the current day name
+    const currentDayName = egyptTime.toLocaleDateString('en-US', { weekday: 'short' });
+    
+    // Find the index of current day in dayLabels array
+    const currentDayIndex = dayLabels.findIndex(label => {
+      // Extract day name from label (assuming format like "Mon 28" or just "Mon")
+      const labelDay = label.split(' ')[0];
+      return labelDay === currentDayName;
+    });
+    
+    console.log('Egypt Time:', egyptTime);
+    console.log('Current Day Name:', currentDayName);
+    console.log('Day Labels:', dayLabels);
+    console.log('Current Day Index:', currentDayIndex);
+    
+    return {
+      name: currentDayName,
+      index: currentDayIndex >= 0 ? currentDayIndex : -1 // -1 if not found
+    };
+  }, [dayLabels]);
   
   // Generate mock data for different periods
   const generateMockData = useMemo(() => {
@@ -63,12 +71,12 @@ const WeeklyOrdersChart = memo<WeeklyOrdersChartProps>(({ ordersPerDay, loading 
         label: 'Orders',
         data: data,
         backgroundColor: dayLabels.map((_, index) => {
-          return index === getEgyptCurrentDay 
+          return index === currentDayInfo.index 
             ? CHART_COLORS.accent 
             : CHART_COLORS.primary;
         }),
         hoverBackgroundColor: dayLabels.map((_, index) => {
-          return index === getEgyptCurrentDay 
+          return index === currentDayInfo.index 
             ? '#f59e0b' 
             : CHART_COLORS.secondary;
         }),
@@ -78,7 +86,7 @@ const WeeklyOrdersChart = memo<WeeklyOrdersChartProps>(({ ordersPerDay, loading 
         maxBarThickness: 60,
       }]
     };
-  }, [dayLabels, generateMockData, getEgyptCurrentDay]);
+  }, [dayLabels, generateMockData, currentDayInfo.index]);
 
   // Enhanced chart options
   const chartOptions = useMemo(() => ({
@@ -95,8 +103,10 @@ const WeeklyOrdersChart = memo<WeeklyOrdersChartProps>(({ ordersPerDay, loading 
         displayColors: false,
         callbacks: {
           title: function(context: any) {
-            const dayName = context[0].label;
-            return `${dayName}${dayName === currentDayName ? ' (Today)' : ''}`;
+            const dayLabel = context[0].label;
+            const dayName = dayLabel.split(' ')[0]; // Extract day name from label
+            const isToday = context[0].dataIndex === currentDayInfo.index;
+            return `${dayLabel}${isToday ? ' (Today)' : ''}`;
           },
           label: function(context: any) {
             return `Orders: ${context.parsed.y.toLocaleString()}`;
@@ -122,12 +132,12 @@ const WeeklyOrdersChart = memo<WeeklyOrdersChartProps>(({ ordersPerDay, loading 
         ticks: {
           ...BAR_CHART_OPTIONS.scales.x.ticks,
           color: (context: any) => {
-            return context.index === getEgyptCurrentDay ? '#f59e0b' : '#047857';
+            return context.index === currentDayInfo.index ? '#f59e0b' : '#047857';
           },
           font: {
             ...BAR_CHART_OPTIONS.scales.x.ticks.font,
             weight: (context: any) => {
-              return context.index === getEgyptCurrentDay ? 'bold' : 'normal';
+              return context.index === currentDayInfo.index ? 'bold' : 'normal';
             }
           }
         }
@@ -142,7 +152,7 @@ const WeeklyOrdersChart = memo<WeeklyOrdersChartProps>(({ ordersPerDay, loading 
         event.native.target.style.cursor = elements.length > 0 ? 'pointer' : 'default';
       }
     }
-  }), [getEgyptCurrentDay, currentDayName]);
+  }), [currentDayInfo.index]);
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -214,12 +224,12 @@ const WeeklyOrdersChart = memo<WeeklyOrdersChartProps>(({ ordersPerDay, loading 
         {renderContent()}
       </div>
       
-      {/* Current day indicator */}
+      {/* Current day indicator with debug info */}
       <div className="mt-2 text-xs text-gray-500">
         <div className="flex items-center justify-between">
           <span>
             Current day: <span className="font-medium text-amber-600">
-              {currentDayName}
+              {currentDayInfo.name} {currentDayInfo.index >= 0 ? `(Index: ${currentDayInfo.index})` : '(Not found in current week)'}
             </span>
           </span>
           <span>Period: {getPeriodLabel(selectedPeriod)}</span>

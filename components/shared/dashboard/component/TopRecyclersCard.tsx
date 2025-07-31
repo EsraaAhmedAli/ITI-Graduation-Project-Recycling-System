@@ -87,7 +87,7 @@ const TopRecyclersCard = memo<TopRecyclersCardProps>(({ topUsers, loading }) => 
 
     return (
       <ul className="mt-3 space-y-2">
-        {topUsers.map((user, idx) => (
+        {topUsers.slice(0,3).map((user, idx) => (
           <li
             key={user._id}
             className={`flex items-center gap-2 md:gap-3 py-2 md:py-3 px-2 rounded-lg transition-all duration-200 hover:shadow-md transform hover:scale-[1.02] ${getBackgroundClass(idx)}`}
@@ -153,18 +153,7 @@ const TopRecyclersCard = memo<TopRecyclersCardProps>(({ topUsers, loading }) => 
       </div>
       
       {renderContent()}
-      
-      {/* Summary */}
-      {!loading && topUsers.length > 0 && (
-        <div className="mt-4 pt-3 border-t border-green-100 text-xs text-gray-600">
-          <div className="flex justify-between">
-            <span>Total Users: {topUsers.length}</span>
-            <span>
-              Total Points: {topUsers.reduce((sum, user) => sum + user.totalPoints, 0).toLocaleString()}
-            </span>
-          </div>
-        </div>
-      )}
+  
     </div>
   );
 });

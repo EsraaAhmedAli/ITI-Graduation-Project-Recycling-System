@@ -73,23 +73,28 @@ export const useDashboardData = () => {
     }
   }, [updateLoading]);
 
-  const fetchTopMaterials = useCallback(async (category = 'All') => {
-    try {
-      updateLoading('materials', true);
-      const params = category !== 'All' ? { category } : {};
-      const res = await api.get("/top-materials-recycled", { params });
-      const json = normalizeApiResponse(res.data);
-      
-      if (json.success) {
-        setData(prev => ({ ...prev, topMaterials: json.data }));
-      }
-    } catch (error) {
-      console.error("Error fetching top materials:", error);
-      setError("Failed to fetch materials data");
-    } finally {
-      updateLoading('materials', false);
+const fetchTopMaterials = useCallback(async (category = 'All') => {
+  try {
+    updateLoading('materials', true);
+    const params = category !== 'All' ? { category } : {};
+    
+    // Add timestamp to prevent caching
+    const res = await api.get("/top-materials-recycled", { 
+      params: { ...params, _t: Date.now() } 
+    });
+    
+    const json = normalizeApiResponse(res.data);
+    
+    if (json.success) {
+      setData(prev => ({ ...prev, topMaterials: json.data }));
     }
-  }, [updateLoading]);
+  } catch (error) {
+    console.error("Error fetching top materials:", error);
+    setError("Failed to fetch materials data");
+  } finally {
+    updateLoading('materials', false);
+  }
+}, [updateLoading]);
 
   const fetchUserStats = useCallback(async () => {
     try {
@@ -126,7 +131,7 @@ export const useDashboardData = () => {
   const fetchCategories = useCallback(async () => {
     try {
       updateLoading('categories', true);
-      const res = await api.get("categories/category-names");
+      const res = await api.get("categories/get-items");
       const json = normalizeApiResponse(res.data);
       
       if (json.success) {

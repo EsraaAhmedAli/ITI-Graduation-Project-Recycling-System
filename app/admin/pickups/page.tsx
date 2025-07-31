@@ -15,31 +15,35 @@ import { usePagination } from '@/hooks/usePagination';
 import { TablePagination } from '../../../components/tablePagination/tablePagination';
 import { useUserAuth } from '@/context/AuthFormContext';
 
+type UserRole = 'customer' | 'buyer';
 
-const fetchOrders = async (page: number, limit: number) => {
-  const { data } = await api.get('/admin/orders', { params: { page, limit } });
+const fetchOrders = async (page: number, limit: number, userRole?: UserRole) => {
+  const params: any = { page, limit };
+  if (userRole) {
+    params.userRole = userRole;
+  }
+  const { data } = await api.get('/admin/orders', { params });
   return data;
 };
 
 export default function Page() {
+  const [activeTab, setActiveTab] = useState<UserRole>('customer');
   const { currentPage, itemsPerPage, handlePageChange } = usePagination(1, 10);
-  const limit = 10;
-
   
-  // React Query fetch with pagination
+  // React Query fetch with pagination and role filter
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
-    queryKey: ['adminOrders', currentPage],
-    queryFn: () => fetchOrders(currentPage, itemsPerPage),
+    queryKey: ['adminOrders', currentPage, activeTab],
+    queryFn: () => fetchOrders(currentPage, itemsPerPage, activeTab),
     keepPreviousData: true,
   });
 
   const { user } = useUserAuth();
 
-
-   const orders = data?.data || [];
+  const orders = data?.data || [];
   const totalItems = data?.totalOrders || 0;
   const totalPages = data?.totalPages || 1;
- const paginationProps = {
+  
+  const paginationProps = {
     currentPage,
     totalPages,
     onPageChange: handlePageChange,
@@ -48,6 +52,7 @@ export default function Page() {
     totalItems,
     isFetching
   };
+
   const [isItemsModalOpen, setIsItemsModalOpen] = useState(false);
   const [selectedOrderItems, setSelectedOrderItems] = useState<null | any[]>(null);
   const [isCourierModalOpen, setIsCourierModalOpen] = useState(false);
@@ -70,29 +75,33 @@ export default function Page() {
 
   const { data: couriers } = useUsers("delivery");
 
-const handleDeleteOrder = async (orderId: string) => {
-  
-  const result = await Swal.fire({
-    title: 'Are you sure?',
-    text: 'This order will be permanently deleted.',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#10B981',
-    cancelButtonColor: '#d33',
-    confirmButtonText: 'Yes, delete it!',
-  });
+  const handleTabChange = (tab: UserRole) => {
+    setActiveTab(tab);
+    handlePageChange(1); // Reset to first page when changing tabs
+  };
 
-  if (result.isConfirmed) {
-    try {
-      await api.delete(`/admin/orders/${orderId.orderId}`);
-      Swal.fire('Deleted!', 'The order has been deleted.', 'success');
-      refetch();
-    } catch (err) {
-      console.error(err);
-      Swal.fire('Error', 'Failed to delete order. Try again.', 'error');
+  const handleDeleteOrder = async (orderId: string) => {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'This order will be permanently deleted.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#10B981',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!',
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await api.delete(`/admin/orders/${orderId.orderId}`);
+        Swal.fire('Deleted!', 'The order has been deleted.', 'success');
+        refetch();
+      } catch (err) {
+        console.error(err);
+        Swal.fire('Error', 'Failed to delete order. Try again.', 'error');
+      }
     }
-  }
-};
+  };
 
   const handleAssignToCourier = async (orderId: string, courierId: string) => {
     try {
@@ -148,23 +157,6 @@ const handleDeleteOrder = async (orderId: string) => {
 
   const closingModalFn = () => {
     setIsModalOpen(false);
-  };
-
-  const getStatusBadge = (status: string) => {
-    const base = 'px-2 py-1 text-xs font-semibold rounded-full';
-
-    switch (status) {
-      case 'pending':
-        return <span className={`${base} bg-yellow-100 text-yellow-800`}>Pending</span>;
-      case 'assigntoCourier':
-        return <span className={`${base} bg-blue-100 text-blue-800`}>Assigned</span>;
-      case 'completed':
-        return <span className={`${base} bg-green-100 text-green-800`}>Completed</span>;
-      case 'cancelled':
-        return <span className={`${base} bg-red-100 text-red-800`}>Cancelled</span>;
-      default:
-        return <span className={`${base} bg-gray-100 text-gray-800`}>{status}</span>;
-    }
   };
 
   const STATUS = {
@@ -226,57 +218,46 @@ const handleDeleteOrder = async (orderId: string) => {
     );
   }
 
-  if (!orders || orders.length === 0) {
-    return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-        <h3 className="text-2xl font-semibold text-gray-800 mb-2">No Orders Found</h3>
-        <p className="text-gray-600 mb-6 max-w-md mx-auto">
-          There are currently no orders in the system. Orders will appear here once customers start placing them.
-        </p>
-        <button
-          onClick={() => refetch()}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
-        >
-          Refresh
-        </button>
-      </div>
-    );
-  }
+  const transformedData = orders.map((order: any) => ({
+    orderId: order._id,
+    onClickItemsId: () => {
+      setSelectedOrderItems(order.items);
+      setIsItemsModalOpen(true);
+    },
+    status: order.status,
+    createdAt: new Date(order.createdAt).toLocaleString(),
+    userName: order.user?.userName || 'Unknown',
+    userRole: order.user?.role || 'Unknown',
+    onClickUser: () => {
+      const user = order.user || {};
+      setSelectedUser({
+        name: user.userName || 'Unknown',
+        email: user.email ?? 'Not Provided',
+        phone: user.phoneNumber || 'N/A',
+        imageUrl: user.imageUrl || null,
+        address: order.address || {},
+      });
+      setIsModalOpen(true);
+    },
+    onDelete: () => handleDeleteOrder(order._id),
+  }));
 
-const transformedData = orders.map((order: any) => ({
-  orderId: order._id,
-  onClickItemsId: () => {
-    setSelectedOrderItems(order.items);
-    setIsItemsModalOpen(true);
-  },
-  status: order.status,
-  createdAt: new Date(order.createdAt).toLocaleString(),
-  userName: order.user?.userName || 'Unknown',
-  onClickUser: () => {
-    const user = order.user || {};
-    setSelectedUser({
-      name: user.userName || 'Unknown',
-      email: user.email ?? 'Not Provided',
-      phone: user.phoneNumber || 'N/A',
-      imageUrl: user.imageUrl || null,
-      address: order.address || {},
-    });
-    setIsModalOpen(true);
-  },
-  // MAKE SURE THIS ALSO USES THE UPDATED FUNCTION
-  onDelete: () => handleDeleteOrder(order._id),
-}));
   const columns = [
     {
       key: 'userName',
       label: 'User',
       render: (row: any) => (
-        <button
-          onClick={row.onClickUser}
-          className="text-green-600 hover:underline font-medium"
-        >
-          {row.userName}
-        </button>
+        <div className="flex flex-col">
+          <button
+            onClick={row.onClickUser}
+            className="text-green-600 hover:underline font-medium text-left"
+          >
+            {row.userName}
+          </button>
+          <span className="text-xs text-gray-500 capitalize">
+            {row.userRole}
+          </span>
+        </div>
       ),
     },
     {
@@ -297,7 +278,11 @@ const transformedData = orders.map((order: any) => ({
       sortable: false,
       render: (order: any) => {
         const currentStatus = order.status.toLowerCase();
-        const nextStatuses = allowedStatusTransitions[currentStatus] || [];
+let nextStatuses = allowedStatusTransitions[currentStatus] || [];
+
+if (order.userRole === 'buyer') {
+  nextStatuses = nextStatuses.filter(status => status !== STATUS.CANCELLED);
+}
 
         if (currentStatus === 'cancelled') {
           return (
@@ -326,14 +311,12 @@ const transformedData = orders.map((order: any) => ({
             return;
           }
 
-          // Handle cancellation with reason
           if (newStatus === 'cancelled') {
-            e.target.value = currentStatus; // Reset select immediately
+            e.target.value = currentStatus;
             await handleCancelOrder(order.orderId);
             return;
           }
 
-          // Handle other status changes normally
           try {
             await api.put(`/admin/orders/${order.orderId}/status`, { status: newStatus });
             toast.success(`Order status updated to ${newStatus}`);
@@ -346,6 +329,7 @@ const transformedData = orders.map((order: any) => ({
         return (
           <select
             value={currentStatus}
+
             onChange={handleChange}
             disabled={nextStatuses.length === 0}
             className={`px-2 py-1 rounded border ${
@@ -375,21 +359,78 @@ const transformedData = orders.map((order: any) => ({
   ];
 
   return (
-    <>
-       <DynamicTable
-        data={transformedData}
-        columns={columns}
-        title="Orders"
-        itemsPerPage={itemsPerPage}
-        showAddButton={false}
-        showFilter={false}
-        onDelete={(id: string) => handleDeleteOrder(id)}
-      />
-            {totalPages > 1 && <TablePagination {...paginationProps} />}
+    <div className="space-y-6">
+      {/* Tab Navigation */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+            <button
+              onClick={() => handleTabChange('customer')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'customer'
+                  ? 'border-green-500 text-green-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Customer Orders
+              {activeTab === 'customer' && (
+                <span className="ml-2 bg-green-100 text-green-600 py-0.5 px-2.5 rounded-full text-xs font-medium">
+                  {totalItems}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => handleTabChange('buyer')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'buyer'
+                  ? 'border-green-500 text-green-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Buyer Orders
+              {activeTab === 'buyer' && (
+                <span className="ml-2 bg-green-100 text-green-600 py-0.5 px-2.5 rounded-full text-xs font-medium">
+                  {totalItems}
+                </span>
+              )}
+            </button>
+          </nav>
+        </div>
+      </div>
 
+      {/* Orders Content */}
+      {!orders || orders.length === 0 ? (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+          <h3 className="text-2xl font-semibold text-gray-800 mb-2">
+            No {activeTab} Orders Found
+          </h3>
+          <p className="text-gray-600 mb-6 max-w-md mx-auto">
+            There are currently no {activeTab} orders in the system. Orders will appear here once {activeTab}s start placing them.
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+          >
+            Refresh
+          </button>
+        </div>
+      ) : (
+        <>
+          <DynamicTable
+            data={transformedData}
+            columns={columns}
+            title={`${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Orders`}
+            itemsPerPage={itemsPerPage}
+            showAddButton={false}
+            // showActions={user?.role =='buyer'}
+            showFilter={false}
+            onDelete={(id: string) => handleDeleteOrder(id)}
+          />
+          {totalPages > 1 && <TablePagination {...paginationProps} />}
+        </>
+      )}
 
-      
-
+      {/* Modals */}
       <UserModal selectedUser={selectedUser} show={isModalOpen} closingModalFn={closingModalFn} />
       <ItemsModal selectedOrderItems={selectedOrderItems} show={isItemsModalOpen} onclose={() => setIsItemsModalOpen(false)} />
       <CourierSelectionModal
@@ -402,6 +443,6 @@ const transformedData = orders.map((order: any) => ({
           setSelectedOrderForCourier(null);
         }}
       />
-    </>
+    </div>
   );
 }
