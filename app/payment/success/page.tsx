@@ -76,7 +76,7 @@ export default function PaymentSuccess() {
             <div className="mx-auto w-1/4 my-2">
               <Link
                 className="text-center block bg-green-500 text-white rounded-md py-1"
-                href="/buyer/orders"
+                href="/profile"
               >
                 See your orders
               </Link>

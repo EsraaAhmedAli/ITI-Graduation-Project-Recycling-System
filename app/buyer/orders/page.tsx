@@ -7,13 +7,11 @@ import Loader from "@/components/common/loader";
 import api from "@/lib/axios";
 import { ProtectedRoute } from "@/lib/userProtectedRoute";
 import { CheckCircle, Clock1, Truck, XCircle } from "lucide-react";
-import RecyclingModal from "@/components/eWalletModal/ewalletModal";
 import { useUserPoints } from "@/hooks/useGetUserPoints";
 import ItemsModal from "@/components/shared/itemsModal";
 import PointsActivity from "@/components/accordion/accordion";
 import MembershipTier from "@/components/memberTireShip/memberTireShip";
 import { useLanguage } from "@/context/LanguageContext";
-import { priceWithMarkup } from "@/utils/priceUtils";
 
 export default function ProfilePage() {
   return (
