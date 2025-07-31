@@ -62,7 +62,19 @@ const MaterialsChart = memo<MaterialsChartProps>(({ topMaterials, loading }) => 
       },
     },
   }), []);
-
+// Add this useEffect to debug the data
+React.useEffect(() => {
+  if (topMaterials && topMaterials.length > 0) {
+    console.log('MaterialsChart received data:', topMaterials);
+    const cookingPan = topMaterials.find(m => 
+      m._id.itemName.toLowerCase().includes('cooking') || 
+      m._id.itemName.toLowerCase().includes('pan')
+    );
+    if (cookingPan) {
+      console.log('Cooking pan data:', cookingPan);
+    }
+  }
+}, [topMaterials]);
   const renderContent = () => {
     if (loading) {
       return (
