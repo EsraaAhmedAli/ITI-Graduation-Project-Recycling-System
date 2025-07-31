@@ -7,6 +7,8 @@ export function useCategories() {
     queryKey: ['categories list'],
     queryFn: async () => {
       const res = await api.get("/categories");
+      console.log(res.data.data);
+      
       return res.data;
     },
     staleTime: 1000 * 60, // 1 minute

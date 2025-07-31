@@ -142,10 +142,6 @@ export default function Navbar() {
     return name.slice(0, 2).toUpperCase();
   };
 
-  const markAllAsRead = () => {
-    // Implement mark all as read functionality
-    console.log("Mark all as read");
-  };
 
   // Loading skeletons
   const AuthButtonsSkeleton = () => (
@@ -155,12 +151,6 @@ export default function Navbar() {
     </div>
   );
 
-  const MobileAuthButtonsSkeleton = () => (
-    <div className="space-y-2">
-      <div className="w-full h-10 bg-gray-200 animate-pulse rounded"></div>
-      <div className="w-full h-10 bg-gray-200 animate-pulse rounded"></div>
-    </div>
-  );
 
 
 return (
@@ -185,7 +175,7 @@ return (
         <div className="hidden lg:flex items-center space-x-1">
           <Link
             prefetch={true}
-            href="/"
+            href={user?.role == 'buyer' ? "/home":"/"}
             className="flex items-center text-gray-600 hover:text-gray-900 hover:bg-gray-50 font-medium gap-1.5 px-2.5 py-1.5 rounded-md transition-all duration-200 text-sm" // Reduced padding and font size
           >
             <HousePlus className="w-4 h-4" />
@@ -218,8 +208,6 @@ return (
         {/* Right side: Actions (More compact and better organized) */}
         <div className="flex items-center gap-1 flex-shrink-0"> {/* Reduced spacing */}
           
-     
-
           {/* Collection Cart - More compact */}
           <div className="relative" ref={cartRef}>
             <button
@@ -335,7 +323,9 @@ return (
               </div>
             )}
           </div>
-               <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors"> {/* Contained design */}
+
+          {/* Desktop Language Switcher - Only show on desktop */}
+          <div className="hidden lg:flex items-center gap-1.5 px-2 py-1 bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors"> {/* Contained design */}
             <span className={`text-xs font-medium ${locale === 'en' ? 'text-blue-600' : 'text-gray-400'}`}>
               EN
             </span>
@@ -474,13 +464,6 @@ return (
                 <KeyRound className="w-4 h-4 mr-1" />
                 {t('navbar.login')}
               </Link>
-              {/* <Link
-                prefetch={true}
-                href="/auth/signup"
-                className="px-3 py-1.5 rounded-lg bg-green-500 hover:bg-green-600 text-white font-medium text-xs transition-all duration-200 shadow-sm" // Smaller padding and text
-              >
-                {t('navbar.startRecycling')}
-              </Link> */}
             </div>
           )}
 

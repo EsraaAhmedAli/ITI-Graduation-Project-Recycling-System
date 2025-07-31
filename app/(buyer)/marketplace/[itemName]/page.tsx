@@ -80,8 +80,10 @@ export default function ItemDetailsPage() {
     queryFn: fetchItemByName,
     enabled: !!decodedName,
     retry: 3,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+   staleTime: 30 * 1000, // Reduced from 5 minutes to 30 seconds
+    refetchOnWindowFocus: true, // Refetch when user returns to tab
+    refetchInterval: 60 * 1000, // Refetch every 60 seconds
+    refetchIntervalInBackground: false,  });
 
   console.log('📊 Item Details Query State:', {
     item,
