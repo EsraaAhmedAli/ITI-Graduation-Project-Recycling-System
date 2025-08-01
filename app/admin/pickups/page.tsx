@@ -74,6 +74,8 @@ export default function Page() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { data: couriers } = useUsers("delivery");
+  console.log(couriers);
+  
 
   const handleTabChange = (tab: UserRole) => {
     setActiveTab(tab);

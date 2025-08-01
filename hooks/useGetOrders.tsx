@@ -26,8 +26,14 @@ export const useOrders = (params: Omit<GetOrdersParams, 'page'> = {}) => {
         ? lastPage.pagination.currentPage + 1 
         : undefined;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+    staleTime: 1* 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount:true
+    ,
+    refetchOnWindowFocus:true
+    
+    
+    // 10 minutes (formerly cacheTime)
   });
 
   // Flatten all orders from all pages
