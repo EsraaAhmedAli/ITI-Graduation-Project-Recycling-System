@@ -28,11 +28,17 @@ export default function ItemDetailsPage() {
   const { itemName } = useParams();
   const decodedName =
     typeof itemName === "string" ? decodeURIComponent(itemName) : "";
-  const [selectedQuantity, setSelectedQuantity] = useState(1);
   const { addToCart } = useCart();
   const { t } = useLanguage();
-  const { user } = useUserAuth();
   const { getCategoryIdByItemName } = useCategories();
+  const { cart, increaseQty, decreaseQty } = useCart();
+  const itemInCart = cart.find(
+    (ci) => ci.name.toLowerCase() === itemName?.toString().toLowerCase()
+  );
+  const intialSelectedQuantity = itemInCart?.quantity ?? 1;
+  const [selectedQuantity, setSelectedQuantity] = useState(
+    intialSelectedQuantity
+  );
 
   console.log("🔍 Item Details Page loaded:", {
     itemName,
@@ -106,6 +112,17 @@ export default function ItemDetailsPage() {
       : t("common.unitPiece", { defaultValue: " item" });
   };
 
+  const handleOperation = async (item: CartItem, op: "+" | "-") => {
+    const margin = item.measurement_unit === 1 ? 0.25 : 1;
+    if (op === "+") {
+      await increaseQty(item);
+      setSelectedQuantity((prev) => prev + margin);
+    } else {
+      await decreaseQty(item);
+      setSelectedQuantity((prev) => prev - margin);
+    }
+  };
+
   // Show loading state
   if (isLoading) {
     return <Loader title="items" />;
@@ -139,16 +156,15 @@ export default function ItemDetailsPage() {
 
   function convertToCartItem(item: Item, quantity: number): CartItem {
     return {
-      categoryId: item._id,
       _id: item._id,
+      categoryId: getCategoryIdByItemName(item.name),
       categoryName: item.categoryName,
-      itemName: item.name,
+      name: item.name,
       image: item.image,
       points: item.points,
       price: item.price,
       measurement_unit: item.measurement_unit,
       quantity,
-      originalCategoryId: getCategoryIdByItemName(item.name),
     };
   }
 
@@ -215,7 +231,8 @@ export default function ItemDetailsPage() {
             {/* Price and Points */}
             <div className="flex items-baseline space-x-4">
               <span className="text-3xl font-bold text-gray-900">
-                {(item.price * selectedQuantity).toFixed(2)} {t('itemsModal.currency')}
+                {(item.price * selectedQuantity).toFixed(2)}{" "}
+                {t("itemsModal.currency")}
               </span>
             </div>
 
@@ -310,9 +327,10 @@ export default function ItemDetailsPage() {
               </label>
               <div className="flex items-center space-x-3">
                 <button
-                  onClick={() =>
-                    setSelectedQuantity((prev) => Math.max(1, prev - 1))
-                  }
+                  // onClick={() =>
+                  //   setSelectedQuantity((prev) => Math.max(1, prev - 1))
+                  // }
+                  onClick={() => handleOperation(item, "-")}
                   disabled={selectedQuantity <= 1}
                   className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -322,7 +340,8 @@ export default function ItemDetailsPage() {
                   {selectedQuantity}
                 </span>
                 <button
-                  onClick={() => setSelectedQuantity((prev) => prev + 1)}
+                  // onClick={() => setSelectedQuantity((prev) => prev + 1)}
+                  onClick={() => handleOperation(item, "+")}
                   disabled={selectedQuantity >= item.quantity}
                   className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >

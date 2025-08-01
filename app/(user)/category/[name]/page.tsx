@@ -91,14 +91,13 @@ export default function UserCategoryPage() {
   // };
   const handleAddToCollection = async (item: CartItem) => {
     try {
-      const categoryId = getCategoryIdByItemName(item.itemName);
+      const categoryId = getCategoryIdByItemName(item.name);
 
       const cartItem: CartItem = {
-        originalCategoryId: categoryId,
         _id: item._id,
-        categoryId: item._id,
+        categoryId: categoryId,
         categoryName: item.categoryName,
-        itemName: item.itemName,
+        name: item.name,
         image: item.image,
         points: item.points,
         price: item.price,
@@ -112,7 +111,7 @@ export default function UserCategoryPage() {
     }
   };
 
-  const getMeasurementText = (unit: 1 | 2): string => {
+  const getMeasurementText = (unit: number) => {
     return unit === 1
       ? t("itemsModal.perKg", { defaultValue: "per kg" })
       : t("itemsModal.perItem", { defaultValue: "per item" });
@@ -188,7 +187,7 @@ export default function UserCategoryPage() {
                 <div className="relative w-full h-40">
                   <Image
                     src={item.image}
-                    alt={item.itemName}
+                    alt={item.name}
                     fill
                     className="object-contain group-hover:scale-105 transition-transform duration-300"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
@@ -204,10 +203,10 @@ export default function UserCategoryPage() {
               <div className="p-4">
                 <h3 className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide leading-tight">
                   {t(
-                    `categories.subcategories.${item.itemName
+                    `categories.subcategories.${item.name
                       .toLowerCase()
                       .replace(/\s+/g, "-")}`,
-                    { defaultValue: item.itemName }
+                    { defaultValue: item.name }
                   )}
                 </h3>
 

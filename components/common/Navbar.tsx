@@ -265,7 +265,7 @@ export default function Navbar() {
                           index // Show fewer items
                         ) => (
                           <div
-                            key={item.categoryId || index}
+                            key={item._id || index}
                             className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors" // Reduced padding
                           >
                             <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-lg overflow-hidden">
@@ -282,7 +282,7 @@ export default function Navbar() {
                                     height={24}
                                     width={24}
                                     src={item.image}
-                                    alt={item.itemName || "Item"}
+                                    alt={item.name || "Item"}
                                     className="w-full h-full object-contain"
                                   />
                                 </Link>
@@ -297,7 +297,7 @@ export default function Navbar() {
                                 {" "}
                                 {/* Smaller text */}
                                 {t(
-                                  `categories.subcategories.${item.itemName
+                                  `categories.subcategories.${item.name
                                     .toLowerCase()
                                     .replace(/\s+/g, "-")}`
                                 )}
@@ -515,7 +515,6 @@ export default function Navbar() {
                           {t("navbar.settings")}
                         </span>
                       </Link>
-                    
                       <div className="border-t border-gray-100 my-1"></div>{" "}
                       {/* Reduced margin */}
                       <button

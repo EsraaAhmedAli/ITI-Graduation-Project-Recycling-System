@@ -6,19 +6,31 @@ import {
   useEffect,
   useState,
   ReactNode,
-  Dispatch,
-  SetStateAction,
 } from "react";
 import api from "@/lib/axios";
 import { toast } from "react-hot-toast";
+import { useUserAuth } from "./AuthFormContext";
+import { useCategories } from "@/hooks/useGetCategories";
+
+// export interface CartItem {
+//   _id: string;
+//   originalCategoryId: string;
+//   categoryId: string;
+//   categoryName: string;
+//   itemName: string;
+//   image?: string;
+//   points: number;
+//   price: number;
+//   measurement_unit: number;
+//   quantity: number;
+// }
 
 export interface CartItem {
   _id: string;
-  originalCategoryId: string;
   categoryId: string;
   categoryName: string;
-  itemName: string;
-  image?: string;
+  name: string;
+  image: string;
   points: number;
   price: number;
   measurement_unit: number;
@@ -49,6 +61,8 @@ export const useCart = () => {
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loadingItemId, setLoadingItemId] = useState<string | null>(null);
+  const { user } = useUserAuth();
+  const { geItemQuantityInStock } = useCategories();
 
   const loadCart = async () => {
     try {
@@ -56,7 +70,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         withCredentials: true,
       });
       setCart(res.data.items || []);
-      console.log(res);
+      // console.log("------------LOADING CART RESPONSE--------------------");
+      // console.log(res);
     } catch (err) {
       console.error("Failed to load cart", err);
     }
@@ -125,12 +140,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const increaseQty = async (item: CartItem) => {
     try {
+      console.log("------------INCRASING QUANTITY---------------------");
+      console.log(item);
+      console.log("--------------------------------------");
       const increment = item.measurement_unit === 1 ? 0.25 : 1; // ✅ KG = 0.25, Piece = 1
+      const stock = geItemQuantityInStock(item.categoryId, item._id);
       const newQuantity = item.quantity + increment;
+      const isBuyer = user?.role === "buyer"; // <-- get this from context or prop
+      if (isBuyer && newQuantity > stock) {
+        toast.error("You've reached the available stock for this item.");
+        return;
+      }
 
       await api.put(
         "/cart",
-        { categoryId: item.categoryId, quantity: newQuantity }, // Keep using categoryId since backend expects it
+        { _id: item._id, quantity: newQuantity }, // Keep using categoryId since backend expects it
         { withCredentials: true }
       );
       await loadCart();
@@ -155,7 +179,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       await api.put(
         "/cart",
-        { categoryId: item.categoryId, quantity: newQuantity }, // Keep using categoryId
+        { _id: item._id, quantity: newQuantity }, // Keep using categoryId
         { withCredentials: true }
       );
       await loadCart();
@@ -172,7 +196,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const removeFromCart = async (item: CartItem) => {
     setLoadingItemId(item.categoryId);
     try {
-      await api.delete(`/cart/${item.categoryId}`, {
+      await api.delete(`/cart/${item._id}`, {
         withCredentials: true,
       });
       toast.success("Item removed from your cart");

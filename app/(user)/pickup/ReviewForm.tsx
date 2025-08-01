@@ -2,19 +2,17 @@ import Button from "@/components/common/Button";
 import { FormInputs } from "@/components/Types/address.type";
 import Image from "next/image";
 import { priceWithMarkup } from "@/utils/priceUtils";
+import { CartItem } from "@/context/CartContext";
 
-
-
-
-type CartItem = {
-  categoryId: string;
-  image: string;
-  itemName: string;
-  measurement_unit: 1 | 2;
-  points: number;
-  price: number;
-  quantity: number;
-};
+// type CartItem = {
+//   categoryId: string;
+//   image: string;
+//   itemName: string;
+//   measurement_unit: 1 | 2;
+//   points: number;
+//   price: number;
+//   quantity: number;
+// };
 
 interface ReviewProps {
   onBack: () => void;
@@ -33,11 +31,9 @@ export default function Review({
   userRole,
 }: ReviewProps) {
   const total = cartItems.reduce(
-  (sum, item) => sum + item.price * item.quantity,
-  0
-);
-
-
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
 
   return (
     <div className="space-y-6">
@@ -57,27 +53,26 @@ export default function Review({
                   width={64}
                   height={64}
                   src={item.image}
-                  alt={item.itemName}
+                  alt={item.name}
                   className=" object-cover rounded-md border"
                 />
                 <div className="flex-1">
-                  <h3 className="font-semibold text-green-800">
-                    {item.itemName}
-                  </h3>
+                  <h3 className="font-semibold text-green-800">{item.name}</h3>
                   <p className="text-sm text-gray-600">
                     Quantity:{" "}
                     <span className="text-green-700">{item.quantity}</span>
                   </p>
                   <p className="text-sm text-gray-600">
                     Price per unit:{" "}
-                    <span className="text-green-700">{item.price.toFixed(2)} EGP</span>
+                    <span className="text-green-700">
+                      {item.price.toFixed(2)} EGP
+                    </span>
                   </p>
 
                   <p className="text-sm text-gray-600">
                     Points:{" "}
                     <span className="text-green-700">{item.points}</span>
                   </p>
-
                 </div>
               </div>
             ))}
@@ -85,7 +80,6 @@ export default function Review({
             <div className="text-right mt-2 font-semibold text-green-900">
               Total: {total.toFixed(2)} EGP
             </div>
-
           </>
         )}
       </div>

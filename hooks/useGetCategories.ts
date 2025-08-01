@@ -37,6 +37,17 @@ export function useCategories() {
 
     return "";
   };
+  const geItemQuantityInStock = (itemId: string, categoryId: string) => {
+    const categories = query.data?.data;
+    console.log("CATGEORIES");
+    console.log(categories);
+    if (!Array.isArray(categories)) return -1;
+    const category = categories.find((cat) => cat._id == categoryId);
+    if (!category) return -1;
+    const targetItem = category.items.find((item) => item._id === itemId);
+    if (!targetItem) return -1;
+    return targetItem.quantity;
+  };
 
-  return { ...query, getCategoryIdByItemName };
+  return { ...query, getCategoryIdByItemName, geItemQuantityInStock };
 }
