@@ -4,7 +4,7 @@ import api from "@/lib/axios";
 import Button from "@/components/common/Button";
 import DynamicTable from "@/components/shared/dashboardTable";
 import DeliveryAttachments from "@/components/shared/DeliveryAttachements";
-import { toast } from "react-hot-toast"; // Make sure to install: npm install react-hot-toast
+import { toast } from "react-hot-toast";
 import { Label, Modal, ModalBody, ModalHeader, Textarea, TextInput } from "flowbite-react";
 
 // Compact Decline Modal Component
@@ -88,6 +88,7 @@ const DeclineModal = ({
     </Modal>
   );
 };
+
 export default function Page() {
   const [deliveryData, setDeliveryData] = useState([]);
   const [activeAttachments, setActiveAttachments] = useState<any | null>(null);
@@ -105,11 +106,24 @@ export default function Page() {
     try {
       const response = await api.patch(`/delivery/approve/${userId}`);
       
-      // Update the local state to reflect the approval
+      // ✅ FIX: Update the local state with proper currentStatus
       setDeliveryData(prevData => 
         prevData.map(user => 
           user.userId === userId 
-            ? { ...user, isApproved: true }
+            ? { 
+                ...user, 
+                isApproved: true,
+                currentStatus: "approved", // ✅ Update currentStatus
+                // Clear any previous decline information
+                attachments: {
+                  ...user.attachments,
+                  status: "approved",
+                  approvedAt: new Date().toISOString(),
+                  // Remove decline fields if they exist
+                  declineReason: undefined,
+                  declinedAt: undefined
+                }
+              }
             : user
         )
       );
@@ -153,11 +167,23 @@ export default function Page() {
         reason: reason || undefined
       });
       
-      // Update the local state to reflect the decline
+      // ✅ FIX: Update the local state with proper currentStatus and decline info
       setDeliveryData(prevData => 
         prevData.map(user => 
           user.userId === userId 
-            ? { ...user, isApproved: false }
+            ? { 
+                ...user, 
+                isApproved: false,
+                currentStatus: "declined", // ✅ Update currentStatus
+                attachments: {
+                  ...user.attachments,
+                  status: "declined",
+                  declineReason: reason || "Application declined",
+                  declinedAt: new Date().toISOString(),
+                  // Remove approval fields if they exist
+                  approvedAt: undefined
+                }
+              }
             : user
         )
       );
@@ -198,6 +224,7 @@ export default function Page() {
     setLoading(true);
     try {
       const res = await api.get("/delivery-attachments");
+      console.log("📊 Delivery data received:", res.data.data);
       setDeliveryData(res.data.data);
     } catch (err) {
       console.error("Error fetching delivery attachments:", err);
@@ -234,73 +261,95 @@ export default function Page() {
       priority: 3,
     },
     {
-      key: "isApproved",
+      key: "currentStatus", // ✅ FIX: Use currentStatus instead of isApproved
       label: "Status",
-      render: (item: any) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${
-            item.isApproved === true
-              ? "bg-green-100 text-green-800"
-              : item.isApproved === false
-              ? "bg-red-100 text-red-800"
-              : "bg-yellow-100 text-yellow-800"
-          }`}
-        >
-          {item.isApproved === true
-            ? "Approved"
-            : item.isApproved === false
-            ? "Declined"
-            : "Pending"}
-        </span>
-      ),
+      render: (item: any) => {
+        // ✅ FIX: Use currentStatus from backend which has proper logic
+        const status = item.currentStatus || "pending";
+        
+        return (
+          <span
+            className={`px-2 py-1 rounded-full text-xs font-medium ${
+              status === "approved"
+                ? "bg-green-100 text-green-800"
+                : status === "declined"
+                ? "bg-red-100 text-red-800"
+                : "bg-yellow-100 text-yellow-800"
+            }`}
+          >
+            {status === "approved"
+              ? "Approved"
+              : status === "declined"
+              ? "Declined"
+              : "Pending"}
+          </span>
+        );
+      },
     },
- {
-  key: "statusAction",
-  label: "Action",
-  render: (item: any) => {
-    const isProcessing = actionLoading === item.userId;
+    {
+      key: "statusAction",
+      label: "Action",
+      render: (item: any) => {
+        const isProcessing = actionLoading === item.userId;
+        // ✅ FIX: Use currentStatus to determine available actions
+        const currentStatus = item.currentStatus || "pending";
 
-    // Disable select if pending (isApproved is null or undefined)
-    const isPending = item.isApproved === null || item.isApproved === undefined;
-
-    return (
-      <select
-        defaultValue=""
-        disabled={isProcessing || isPending}
-        onChange={(e) => {
-          const value = e.target.value;
-          if (value === "approve") handleApprove(item);
-          else if (value === "decline") handleDeclineClick(item);
-          // Reset select after action
-          e.target.value = "";
-        }}
-        className={`border border-gray-300 rounded-md px-3 py-1.5 text-sm text-gray-700 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-          isProcessing || isPending ? "opacity-50 cursor-not-allowed" : ""
-        }`}
-      >
-        <option value="" disabled>
-          {isProcessing ? "Processing..." : isPending ? "Pending" : "Action"}
-        </option>
-        {/* Only show Approve if not approved and not pending */}
-        {!isPending && item.isApproved !== true && (
-          <option value="approve">Approve</option>
-        )}
-        {/* Only show Decline if not declined and not pending */}
-        {!isPending && item.isApproved !== false && (
-          <option value="decline">Decline</option>
-        )}
-      </select>
-    );
-  },
-}
-,
+        return (
+          <select
+            defaultValue=""
+            disabled={isProcessing}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === "approve") handleApprove(item);
+              else if (value === "decline") handleDeclineClick(item);
+              // Reset select after action
+              e.target.value = "";
+            }}
+            className={`border border-gray-300 rounded-md px-3 py-1.5 text-sm text-gray-700 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
+              isProcessing ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+          >
+            <option value="" disabled>
+              {isProcessing ? "Processing..." : "Select Action"}
+            </option>
+            
+            {/* ✅ FIX: Show Approve option if not currently approved */}
+            {currentStatus !== "approved" && (
+              <option value="approve">
+                {currentStatus === "declined" ? "Re-approve" : "Approve"}
+              </option>
+            )}
+            
+            {/* ✅ FIX: Show Decline option if not currently declined */}
+            {currentStatus !== "declined" && (
+              <option value="decline">
+                {currentStatus === "approved" ? "Revoke Approval" : "Decline"}
+              </option>
+            )}
+          </select>
+        );
+      },
+    },
+    {
+      key: "createdAt", // ✅ ADD: Show when application was submitted
+      label: "Applied Date",
+      sortable: true,
+      render: (item: any) => {
+        const date = new Date(item.createdAt);
+        return (
+          <span className="text-sm text-gray-600">
+            {date.toLocaleDateString()}
+          </span>
+        );
+      },
+    },
     {
       key: "userId",
       label: "User ID",
       sortable: false,
       render: (item: any) => (
         <span className="text-xs text-gray-500 font-mono">
-          {item.userId}
+          {item.userId.slice(-8)} {/* Show last 8 characters */}
         </span>
       ),
     },
@@ -309,10 +358,10 @@ export default function Page() {
       label: "Attachments",
       render: (item: any) => (
         <button
-          className="text-green-500 hover:text-green-700 underline"
+          className="text-green-500 hover:text-green-700 underline text-sm"
           onClick={() => setActiveAttachments(item.attachments)}
         >
-          View Attachments
+          View Documents
         </button>
       ),
     },
@@ -320,18 +369,47 @@ export default function Page() {
 
   return (
     <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Delivery Applications</h1>
+        <p className="text-gray-600 mt-1">
+          Manage delivery driver applications and approvals
+        </p>
+      </div>
+
       {loading ? (
         <div className="flex justify-center items-center h-64">
           <div className="text-lg">Loading delivery data...</div>
         </div>
       ) : (
         <>
+          {/* ✅ ADD: Summary stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div className="text-sm font-medium text-yellow-800">Pending</div>
+              <div className="text-2xl font-bold text-yellow-900">
+                {deliveryData.filter(item => (item.currentStatus || "pending") === "pending").length}
+              </div>
+            </div>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="text-sm font-medium text-green-800">Approved</div>
+              <div className="text-2xl font-bold text-green-900">
+                {deliveryData.filter(item => item.currentStatus === "approved").length}
+              </div>
+            </div>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="text-sm font-medium text-red-800">Declined</div>
+              <div className="text-2xl font-bold text-red-900">
+                {deliveryData.filter(item => item.currentStatus === "declined").length}
+              </div>
+            </div>
+          </div>
+
           <DynamicTable
-            title="Delivery Attachments"
+            title="Delivery Applications"
             data={deliveryData}
             columns={columns}
             showAddButton={false}
-            showFilter={false}
+            showFilter={true} // ✅ Enable filtering
             showActions={false}
           />
 
