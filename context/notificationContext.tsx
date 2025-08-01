@@ -116,7 +116,6 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
 
     // Only fetch notifications and setup socket for non-admin, non-delivery users
     if (user && token && !shouldDisableNotifications) {
-      console.log('✅ Setting up notifications for regular user');
       
       const fetchInitialData = async () => {
         try {
@@ -171,7 +170,6 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
       });
 
       return () => {
-        console.log('🧹 Cleaning up socket connections');
         const currentSocket = getSocket();
         if (currentSocket) {
           currentSocket.off('notification:new');
@@ -180,7 +178,6 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
         }
       };
     } else if (shouldDisableNotifications) {
-      console.log('🚫 Disabling notifications for admin/delivery user');
       // Clear notifications for admin/delivery users
       setNotifications([]);
       setUnreadCount(0);
@@ -228,11 +225,7 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
     loadingMore: shouldDisableNotifications ? false : loadingMore,
   };
 
-  console.log('📊 NotificationProvider context value:', {
-    notificationsCount: contextValue.notifications.length,
-    unreadCount: contextValue.unreadCount,
-    hasMore: contextValue.hasMore
-  });
+ 
 
   return (
     <NotificationContext.Provider value={contextValue}>

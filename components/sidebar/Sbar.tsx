@@ -6,6 +6,7 @@ import {
   Users,
   Layers,
   LogOutIcon,
+  Check,
   
 } from "lucide-react";
 import Link from "next/link";
@@ -21,6 +22,7 @@ const menuItems = [
   { label: "Users", icon: Users, href: "/admin/users" },
   { label: "Orders", icon: ShoppingCart, href: "/admin/pickups" },
   { label: "Transactions", icon: FaMoneyBill, href: "/admin/transactions" },
+  { label: "approve", icon: Check, href: "/admin/deliveryapprove" },
   { label: "Logout", icon: LogOutIcon },
 ];
 

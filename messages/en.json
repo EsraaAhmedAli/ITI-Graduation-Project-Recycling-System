@@ -149,7 +149,8 @@
       "signingIn": "Signing in...",
       "forgotPassword": "Forgot your password?",
       "securityNote": "Don’t worry, your information is 100% secure.",
-      "loginFailed": "Login failed. Please check your credentials."
+      "loginFailed": "Login failed. Please check your credentials.",
+      "loginSuccess": "welcome back !"
     }
   },
   "profile": {

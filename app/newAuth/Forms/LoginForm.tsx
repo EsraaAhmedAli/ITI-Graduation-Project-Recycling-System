@@ -25,20 +25,130 @@ const LoginForm = () => {
     useAuthenticationContext();
   const { setToken, setUser } = useUserAuth();
 
-  const onSubmit = async () => {
-    setLoading(true);
-    try {
-      const { email, password } = getValues();
-      const res = await loginUser({ email, password }); // Expects { email, password }
-      setUser(res.user);
-      setToken(res.accessToken);
-      router.push("/");
-    } catch (err) {
-      toast.error(t("auth.login.loginFailed"));
-    } finally {
-      setLoading(false);
+const onSubmit = async () => {
+  setLoading(true);
+  try {
+    const { email, password } = getValues();
+    const res = await loginUser({ email, password });
+
+    // Check if user is a delivery user
+    if (res.user.role === "delivery") {
+      let deliveryUserData = {
+        user: res.user,
+        deliveryStatus: "pending",
+        declineReason: "",
+        declinedAt: "",
+        canReapply: false,
+        message: ""
+      };
+
+      // ✅ ONLY approved users get tokens and context
+      if (res.user.isApproved === true) {
+        console.log("✅ Approved delivery user - setting token and user");
+        deliveryUserData.deliveryStatus = "approved";
+        
+        // Set user and token for approved users only
+        setUser(res.user);
+        setToken(res.accessToken);
+        
+        sessionStorage.setItem("deliveryUserData", JSON.stringify(deliveryUserData));
+        router.push("/deliverydashboard");
+        return;
+      }
+
+      // ✅ For declined/pending users - NO tokens, just localStorage
+      console.log("❌ Declined/pending delivery user - no token, using localStorage only");
+
+      // Check for decline data from response first
+      if (res.deliveryStatus === "declined") {
+        deliveryUserData = {
+          user: {
+            ...res.user,
+            declineReason: res.declineReason,
+            declinedAt: res.declinedAt
+          },
+          deliveryStatus: res.deliveryStatus,
+          declineReason: res.declineReason || "",
+          declinedAt: res.declinedAt || "",
+          canReapply: res.canReapply !== undefined ? res.canReapply : true,
+          message: res.message || ""
+        };
+      } 
+      // Check user object for decline data if not in response
+      else if (res.user.isApproved === false) {
+        if (res.user.declineReason || res.user.attachments?.declineReason) {
+          deliveryUserData.deliveryStatus = "declined";
+          deliveryUserData.declineReason = res.user.declineReason || res.user.attachments?.declineReason || "";
+          deliveryUserData.declinedAt = res.user.declinedAt || res.user.attachments?.declinedAt || "";
+          deliveryUserData.canReapply = true;
+          
+          // Add decline data to user object
+          deliveryUserData.user = {
+            ...res.user,
+            declineReason: deliveryUserData.declineReason,
+            declinedAt: deliveryUserData.declinedAt
+          };
+        } else {
+          // No decline reason means still pending
+          deliveryUserData.deliveryStatus = "pending";
+        }
+      }
+
+      console.log("🚚 Saving declined/pending delivery data:", deliveryUserData);
+      
+      // ✅ For declined/pending users: Set user in context but NO token
+      setUser(deliveryUserData.user);
+      // Don't call setToken() for declined/pending users!
+      
+      sessionStorage.setItem("deliveryUserData", JSON.stringify(deliveryUserData));
+      router.push("/waiting-for-approval");
+      return;
     }
-  };
+
+    // Regular user or admin
+    setUser(res.user);
+    setToken(res.accessToken);
+    router.push("/");
+    toast.success(t("auth.login.loginSuccess") || "Login successful!");
+
+  } catch (err) {
+    console.error("Login error:", err);
+
+    if (err.response?.data?.deliveryStatus === "declined") {
+      const errorData = err.response.data;
+      const declineData = {
+        user: {
+          ...errorData.user,
+          declineReason: errorData.declineReason,
+          declinedAt: errorData.declinedAt,
+          _id: errorData.user?.userId || errorData.user?._id || "",
+          email: errorData.user?.email || email,
+          role: "delivery"
+        },
+        deliveryStatus: errorData.deliveryStatus,
+        declineReason: errorData.declineReason || "",
+        declinedAt: errorData.declinedAt || "",
+        canReapply: errorData.canReapply !== undefined ? errorData.canReapply : true,
+        message: errorData.message || ""
+      };
+
+      console.log("🚚 Saving decline data from error:", declineData);
+      
+      // ✅ Set user but NO token for declined users
+      setUser(declineData.user);
+      // Don't call setToken() for declined users!
+      
+      sessionStorage.setItem("deliveryUserData", JSON.stringify(declineData));
+      router.push("/waiting-for-approval");
+      return;
+    }
+
+    toast.error(t("auth.login.loginFailed"));
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const navigateToSignUp = () => {
     setMode("role-select");
@@ -98,8 +208,8 @@ const LoginForm = () => {
           }
         />
       </div>
+      
       {/* Submit */}
-
       <button
         type="submit"
         disabled={loading}
@@ -116,7 +226,7 @@ const LoginForm = () => {
             xmlns="http://www.w3.org/2000/svg"
           >
             <path
-              d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+              d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C0 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
               fill="#E5E7EB"
             />
             <path
@@ -130,6 +240,7 @@ const LoginForm = () => {
 
       {/* Social */}
       <SocialButtons />
+      
       {/* Switch Mode */}
       <div className="text-center mt-4">
         <button

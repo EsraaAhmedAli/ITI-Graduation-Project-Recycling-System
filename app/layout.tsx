@@ -13,6 +13,7 @@ import { NotificationProvider } from "@/context/notificationContext";
 import { LanguageProvider } from "@/context/LanguageContext"; // Add this
 import GuestSessionProvider from "@/lib/GuestSessionProvider";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import AuthRedirectHandler from "@/components/shared/AuthRedirectHandler";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
