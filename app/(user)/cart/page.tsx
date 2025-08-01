@@ -9,6 +9,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "flowbite-react";
 import Image from "next/image";
 import { useUserAuth } from "@/context/AuthFormContext";
+import { useCategories } from "@/hooks/useGetCategories";
+import toast from "react-hot-toast";
 
 const itemVariants = {
   hidden: { opacity: 0, y: 10 },
@@ -24,6 +26,7 @@ export default function CartPage() {
   const [totalPoints, setTotalPoints] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
   const { user } = useUserAuth();
+  const { geItemQuantityInStock, refetch } = useCategories();
 
   useEffect(() => {
     const total = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -205,7 +208,10 @@ export default function CartPage() {
                       <div className="mt-4 flex items-center justify-between">
                         <div className="flex items-center border border-gray-200 rounded-full">
                           <button
-                            onClick={() => decreaseQty(item)}
+                            onClick={() => {
+                              decreaseQty(item);
+                              refetch();
+                            }}
                             className={`w-8 h-8 flex items-center justify-center rounded-l-full transition-all ${
                               item.quantity <= 1
                                 ? "text-gray-300 bg-gray-100 cursor-not-allowed"
@@ -219,8 +225,38 @@ export default function CartPage() {
                             {item.quantity}
                           </span>
                           <button
-                            onClick={() => increaseQty(item)}
-                            className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-50 rounded-r-full transition-all"
+                            onClick={() => {
+                              const maxStock = geItemQuantityInStock(
+                                item._id,
+                                item.categoryId
+                              );
+                              if (
+                                user?.role === "buyer" &&
+                                item.quantity >= maxStock
+                              ) {
+                                return toast.error(
+                                  "You’ve reached the max stock available."
+                                );
+                              }
+                              increaseQty(item);
+                              refetch();
+                            }}
+                            className={`w-8 h-8 flex items-center justify-center rounded-r-full transition-all ${
+                              user?.role === "buyer" &&
+                              geItemQuantityInStock(
+                                item._id,
+                                item.categoryId
+                              ) <= item.quantity
+                                ? "text-gray-300 bg-gray-100 cursor-not-allowed"
+                                : "text-gray-600 hover:bg-gray-50"
+                            }`}
+                            disabled={
+                              user?.role === "buyer" &&
+                              geItemQuantityInStock(
+                                item._id,
+                                item.categoryId
+                              ) <= item.quantity
+                            }
                           >
                             +
                           </button>

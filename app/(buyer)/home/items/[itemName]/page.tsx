@@ -32,7 +32,7 @@ export default function ItemDetailsPage() {
   const { addToCart } = useCart();
   const { t } = useLanguage();
   const { user } = useUserAuth();
-  const { getCategoryIdByItemName } = useCategories();
+  const { getCategoryIdByItemName, refetch } = useCategories();
 
   console.log("🔍 Item Details Page loaded:", {
     itemName,

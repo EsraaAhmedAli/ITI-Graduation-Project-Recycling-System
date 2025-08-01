@@ -46,6 +46,11 @@ interface CartContextType {
   clearCart: () => Promise<void>;
   loadCart: () => Promise<void>;
   loadingItemId: string | null;
+  // // selectedQuantities: Record<string, number>;
+  // // updateSelectedQuantity: (itemId: string, value: number) => void;
+  // // setSelectedQuantities: React.Dispatch<
+  // //   React.SetStateAction<Record<string, number>>
+  // >;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -61,8 +66,6 @@ export const useCart = () => {
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loadingItemId, setLoadingItemId] = useState<string | null>(null);
-  const { user } = useUserAuth();
-  const { geItemQuantityInStock } = useCategories();
 
   const loadCart = async () => {
     try {
@@ -140,17 +143,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const increaseQty = async (item: CartItem) => {
     try {
-      console.log("------------INCRASING QUANTITY---------------------");
-      console.log(item);
-      console.log("--------------------------------------");
       const increment = item.measurement_unit === 1 ? 0.25 : 1; // ✅ KG = 0.25, Piece = 1
-      const stock = geItemQuantityInStock(item.categoryId, item._id);
       const newQuantity = item.quantity + increment;
-      const isBuyer = user?.role === "buyer"; // <-- get this from context or prop
-      if (isBuyer && newQuantity > stock) {
-        toast.error("You've reached the available stock for this item.");
-        return;
-      }
 
       await api.put(
         "/cart",
@@ -196,6 +190,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const removeFromCart = async (item: CartItem) => {
     setLoadingItemId(item.categoryId);
     try {
+      console.log("DELEITIIIIIIIIIIIIIIIIIIIIIIIIIIIING");
+      console.log("--------------------------------");
+      console.log(item._id);
+      console.log("----------------------------------");
       await api.delete(`/cart/${item._id}`, {
         withCredentials: true,
       });

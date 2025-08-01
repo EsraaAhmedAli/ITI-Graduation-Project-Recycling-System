@@ -10,6 +10,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useUserAuth } from "@/context/AuthFormContext";
 import Loader from "@/components/common/loader";
 import { useCategories } from "@/hooks/useGetCategories";
+import toast from "react-hot-toast";
 
 interface Item {
   _id: string;
@@ -28,18 +29,20 @@ export default function ItemDetailsPage() {
   const { itemName } = useParams();
   const decodedName =
     typeof itemName === "string" ? decodeURIComponent(itemName) : "";
-  const { addToCart } = useCart();
+  const { addToCart, removeFromCart, cart, increaseQty, decreaseQty } =
+    useCart();
   const { t } = useLanguage();
   const { getCategoryIdByItemName } = useCategories();
-  const { cart, increaseQty, decreaseQty } = useCart();
-  const itemInCart = cart.find(
-    (ci) => ci.name.toLowerCase() === itemName?.toString().toLowerCase()
-  );
-  const intialSelectedQuantity = itemInCart?.quantity ?? 1;
-  const [selectedQuantity, setSelectedQuantity] = useState(
-    intialSelectedQuantity
-  );
+  const [selectedQuantity, setSelectedQuantity] = useState(1); // Default is 1
 
+  useEffect(() => {
+    const existing = cart.find(
+      (item) => item.name.toLowerCase() === itemName?.toString().toLowerCase()
+    );
+    if (existing) {
+      setSelectedQuantity(existing.quantity);
+    }
+  }, [cart, itemName]);
   console.log("🔍 Item Details Page loaded:", {
     itemName,
     decodedName,
@@ -112,17 +115,6 @@ export default function ItemDetailsPage() {
       : t("common.unitPiece", { defaultValue: " item" });
   };
 
-  const handleOperation = async (item: CartItem, op: "+" | "-") => {
-    const margin = item.measurement_unit === 1 ? 0.25 : 1;
-    if (op === "+") {
-      await increaseQty(item);
-      setSelectedQuantity((prev) => prev + margin);
-    } else {
-      await decreaseQty(item);
-      setSelectedQuantity((prev) => prev - margin);
-    }
-  };
-
   // Show loading state
   if (isLoading) {
     return <Loader title="items" />;
@@ -154,7 +146,7 @@ export default function ItemDetailsPage() {
     );
   }
 
-  function convertToCartItem(item: Item, quantity: number): CartItem {
+  function convertToCartItem(item: Item, quantity?: number): CartItem {
     return {
       _id: item._id,
       categoryId: getCategoryIdByItemName(item.name),
@@ -164,16 +156,17 @@ export default function ItemDetailsPage() {
       points: item.points,
       price: item.price,
       measurement_unit: item.measurement_unit,
-      quantity,
+      quantity: quantity ?? item.quantity,
     };
   }
 
   const remainingQuantity = item?.quantity - selectedQuantity;
   const isLowStock = item?.quantity <= 5;
   const isOutOfStock = item?.quantity <= 0;
-  const stockPercentage = Math.min(
-    100,
-    (remainingQuantity / item?.quantity) * 100
+  const isInCart = cart.some((cartItem) => cartItem._id === item._id);
+  const stockPercentage = Math.max(
+    0,
+    Math.min(100, (remainingQuantity / item.quantity) * 100)
   );
 
   const handleAddToCart = () => {
@@ -182,10 +175,27 @@ export default function ItemDetailsPage() {
         item: item.name,
         quantity: selectedQuantity,
       });
+
       addToCart(convertToCartItem(item, selectedQuantity));
     }
   };
-
+  const handleOperation = (op: "+" | "-", item: CartItem) => {
+    const step = item.measurement_unit == 1 ? 0.25 : 1;
+    const appliedStep = op === "+" ? step : -step;
+    const newQuantity = selectedQuantity + appliedStep;
+    if (cart.find((im) => im._id === item._id)) {
+      if (op == "+") increaseQty({ ...item, quantity: newQuantity });
+      else decreaseQty({ ...item, quantity: newQuantity });
+    }
+    setSelectedQuantity(newQuantity);
+  };
+  const handleToggleCart = () => {
+    if (isInCart) {
+      removeFromCart(convertToCartItem(item));
+    } else if (!isOutOfStock) {
+      handleAddToCart(); // existing function to add item
+    }
+  };
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -327,10 +337,7 @@ export default function ItemDetailsPage() {
               </label>
               <div className="flex items-center space-x-3">
                 <button
-                  // onClick={() =>
-                  //   setSelectedQuantity((prev) => Math.max(1, prev - 1))
-                  // }
-                  onClick={() => handleOperation(item, "-")}
+                  onClick={() => handleOperation("-", item)}
                   disabled={selectedQuantity <= 1}
                   className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -340,8 +347,7 @@ export default function ItemDetailsPage() {
                   {selectedQuantity}
                 </span>
                 <button
-                  // onClick={() => setSelectedQuantity((prev) => prev + 1)}
-                  onClick={() => handleOperation(item, "+")}
+                  onClick={() => handleOperation("+", item)}
                   disabled={selectedQuantity >= item.quantity}
                   className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -355,18 +361,24 @@ export default function ItemDetailsPage() {
 
             {/* Add to Cart Button */}
             <button
-              onClick={handleAddToCart}
-              disabled={isOutOfStock}
+              onClick={handleToggleCart}
+              disabled={isOutOfStock && !isInCart}
               className={`w-full py-3 px-6 rounded-lg font-medium flex items-center justify-center space-x-2 transition-colors ${
-                isOutOfStock
+                isOutOfStock && !isInCart
                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : isInCart
+                  ? "bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg"
                   : "bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg"
               }`}
             >
               <Package className="w-5 h-5" />
               <span>
-                {isOutOfStock
+                {isOutOfStock && !isInCart
                   ? t("common.outOfStock", { defaultValue: "Out of Stock" })
+                  : isInCart
+                  ? t("common.removeFromCart", {
+                      defaultValue: "Remove from Cart",
+                    })
                   : t("common.addToRecyclingCart", {
                       defaultValue: "Add to Cart",
                     })}

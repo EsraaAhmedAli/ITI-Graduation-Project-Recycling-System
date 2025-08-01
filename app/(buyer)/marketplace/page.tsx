@@ -36,18 +36,20 @@ interface Pagination {
 }
 
 export default function Marketplace() {
-  const{t}=useLanguage()
+  const { t } = useLanguage();
   const [filteredItems, setFilteredItems] = useState<Item[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  const {user} = useUserAuth()
+  const { user } = useUserAuth();
 
   // 1. Fetch Function for Items
   const fetchItems = async () => {
-    const res = await api.get(`/categories/get-items?page=${currentPage}&limit=${itemsPerPage}&role=${user?.role}`);
-    
+    const res = await api.get(
+      `/categories/get-items?page=${currentPage}&limit=${itemsPerPage}&role=${user?.role}`
+    );
+
     return res?.data;
   };
 
@@ -55,23 +57,20 @@ export default function Marketplace() {
   const fetchAllCategories = async () => {
     try {
       // Fetch items with a high limit to get all items and extract categories
-      const res = await api.get(`/categories/get-items?page=1&limit=50&role=${user?.role}`);
-          console.log(res.data.data);
+      const res = await api.get(
+        `/categories/get-items?page=1&limit=50&role=${user?.role}`
+      );
+      console.log(res.data.data);
 
       return res?.data.data;
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      console.error("Error fetching categories:", error);
       return { data: [] };
     }
   };
 
   // 3. useQuery Hook for Items
-  const {
-    data,
-    isLoading,
-    isError,
-    isFetching,
-  } = useQuery({
+  const { data, isLoading, isError, isFetching } = useQuery({
     queryKey: ["items", currentPage],
     queryFn: fetchItems,
     keepPreviousData: true,
@@ -101,12 +100,11 @@ export default function Marketplace() {
   // Extract unique categories from all items
   const allItems: Item[] = categoriesData || [];
   console.log(allItems);
-  
+
   const uniqueCategories = Array.from(
     new Set(allItems.map((item) => item.categoryName))
   ).sort();
   // console.log(uniqueCategories);
-  
 
   // 5. Filtering
   useEffect(() => {
@@ -116,8 +114,7 @@ export default function Marketplace() {
         item.name.toLowerCase().includes(term) ||
         item.categoryName.toLowerCase().includes(term);
       const matchesCategory =
-        selectedCategory === "all" ||
-        item.categoryName === selectedCategory;
+        selectedCategory === "all" || item.categoryName === selectedCategory;
       return matchesSearch && matchesCategory;
     });
     setFilteredItems(filtered);
@@ -129,92 +126,122 @@ export default function Marketplace() {
     }
   };
 
-const getMeasurementText = (unit: 1 | 2): string => {
-  return unit === 1 ? t('itemsModal.perKg', { defaultValue: 'per kg' }) : t('itemsModal.perItem', { defaultValue: 'per item' });
-};
+  const getMeasurementText = (unit: 1 | 2): string => {
+    return unit === 1
+      ? t("itemsModal.perKg", { defaultValue: "per kg" })
+      : t("itemsModal.perItem", { defaultValue: "per item" });
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
       {/* Header */}
       <div className="mb-6 text-center">
         <h1 className="text-2xl font-bold text-gray-800 mb-1">
-          ♻️ {t('marketPlace.sustainableMarketplace')}
+          ♻️ {t("marketPlace.sustainableMarketplace")}
         </h1>
         <p className="text-gray-600 text-sm">
-{
-  t('marketPlace.marketPlaceDesc')
-}        </p>
+          {t("marketPlace.marketPlaceDesc")}{" "}
+        </p>
       </div>
 
       {/* Search and Filter */}
-      <div className="mb-4 bg-white rounded-lg shadow-sm p-3 sticky top-0 z-10">
-        <div className="flex flex-col sm:flex-row gap-2">
-          <div className="relative flex-1">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center">
+      <div className="mb-4 bg-white rounded-lg shadow-sm p-4 sticky top-0 z-10">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          {/* Search Input */}
+          <div className="relative flex-1 min-w-0">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search className="h-4 w-4 text-gray-400" />
             </div>
             <input
               type="text"
-              placeholder={t('navbar.searchplaceholder')}
-              className="pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg w-full focus:ring-1 focus:ring-green-500"
+              placeholder={t("navbar.searchplaceholder")}
+              className="pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg w-full focus:ring-1 focus:ring-green-500 h-9"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
 
-          <div className="relative w-full sm:w-40">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center">
+          {/* Category Select */}
+          <div className="relative w-full sm:w-64">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
               <Filter className="h-4 w-4 text-gray-400" />
             </div>
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg w-full appearance-none bg-white"
+              className="pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg w-full appearance-none bg-white focus:ring-1 focus:ring-green-500 h-9 leading-tight"
               disabled={categoriesLoading}
             >
-              <option value="all">{t('common.allCategories')}</option>
-              {Array.isArray(uniqueCategories) && uniqueCategories.map((category: any) => {
-                // Handle if category is an object with name property or just a string
-                const categoryName = typeof category === 'string' ? category : category?.name || category?.categoryName;
-                return (
-                  <option key={categoryName} value={categoryName}>
-                    {t(`categories.${categoryName?.toLowerCase().replace(/\s+/g, "-")}`, { defaultValue: categoryName })}
-                  </option>
-                );
-              })}
+              <option value="all">{t("common.allCategories")}</option>
+              {Array.isArray(uniqueCategories) &&
+                uniqueCategories.map((category: any) => {
+                  const categoryName =
+                    typeof category === "string"
+                      ? category
+                      : category?.name || category?.categoryName;
+                  return (
+                    <option key={categoryName} value={categoryName}>
+                      {t(
+                        `categories.${categoryName
+                          ?.toLowerCase()
+                          .replace(/\s+/g, "-")}`,
+                        {
+                          defaultValue: categoryName,
+                        }
+                      )}
+                    </option>
+                  );
+                })}
             </select>
+
+            {/* Custom dropdown arrow */}
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+              <svg
+                className="h-4 w-4 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </div>
+          </div>
+
+          {/* Loading/Error State */}
+          <div className="w-full sm:w-auto">
             {categoriesLoading && (
-              <div className="text-xs text-gray-500 mt-1">
-                Loading categories...
-              </div>
+              <div className="text-xs text-gray-500">Loading categories...</div>
             )}
             {categoriesError && (
-              <div className="text-xs text-red-500 mt-1">
+              <div className="text-xs text-red-500">
                 Error loading categories
               </div>
             )}
-            {/* Debug info - remove this after fixing */}
-            {process.env.NODE_ENV === 'development' && (
-              <div className="text-xs text-blue-500 mt-1">
-                Categories count: {Array.isArray(uniqueCategories) ? uniqueCategories.length : 'Not an array'}
-              </div>
-            )}
-            {categoriesError && (
-              <div className="text-xs text-red-500 mt-1">
-                Error loading categories
+            {process.env.NODE_ENV === "development" && (
+              <div className="text-xs text-blue-500">
+                Categories count:{" "}
+                {Array.isArray(uniqueCategories)
+                  ? uniqueCategories.length
+                  : "Not an array"}
               </div>
             )}
           </div>
         </div>
       </div>
-
       {/* Items Count */}
       <div className="flex justify-between items-center mb-3 px-1">
         <span className="text-xs text-gray-500">
-          {t('common.showing')} {filteredItems.length} {t('common.of')} {pagination.totalItems} {t('common.items')}
+          {t("common.showing")} {filteredItems.length} {t("common.of")}{" "}
+          {pagination.totalItems} {t("common.items")}
         </span>
         <span className="text-xs text-gray-500">
-          {t('common.page')} {pagination.currentPage} {t('common.of')} {pagination.totalPages}
+          {t("common.page")} {pagination.currentPage} {t("common.of")}{" "}
+          {pagination.totalPages}
         </span>
       </div>
 
@@ -258,23 +285,26 @@ const getMeasurementText = (unit: 1 | 2): string => {
                       className="object-contain"
                       sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
                     />
-        
                   </div>
                   <div className="p-2 flex-1 flex flex-col">
-                          <h3 className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide leading-tight">
-  {t(`categories.subcategories.${item.name.toLowerCase().replace(/\s+/g, "-")}`, { defaultValue: item.name })}
-</h3>
+                    <h3 className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide leading-tight">
+                      {t(
+                        `categories.subcategories.${item.name
+                          .toLowerCase()
+                          .replace(/\s+/g, "-")}`,
+                        { defaultValue: item.name }
+                      )}
+                    </h3>
                     <div className="flex justify-between items-center mt-auto">
                       <span className="text-xs font-bold text-green-600">
                         {item.price}
-                          <span className="text-sm mx-2  ml-1">{t('itemsModal.currency')}</span>
-
+                        <span className="text-sm mx-2  ml-1">
+                          {t("itemsModal.currency")}
+                        </span>
                       </span>
-                      
-                    
                     </div>
                     <div className="text-[0.6rem] text-gray-500 mt-0.5 text-right">
-                    {getMeasurementText(item.measurement_unit)}
+                      {getMeasurementText(item.measurement_unit)}
                     </div>
                   </div>
                 </div>
