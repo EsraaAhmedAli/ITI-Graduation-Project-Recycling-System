@@ -188,12 +188,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   };
   const removeFromCart = async (item: CartItem) => {
-    setLoadingItemId(item.categoryId);
+    setLoadingItemId(item._id);
     try {
-      console.log("DELEITIIIIIIIIIIIIIIIIIIIIIIIIIIIING");
-      console.log("--------------------------------");
-      console.log(item._id);
-      console.log("----------------------------------");
+      // console.log("DELEITIIIIIIIIIIIIIIIIIIIIIIIIIIIING");
+      // console.log("--------------------------------");
+      // console.log(item._id);
+      // console.log("----------------------------------");
       await api.delete(`/cart/${item._id}`, {
         withCredentials: true,
       });
