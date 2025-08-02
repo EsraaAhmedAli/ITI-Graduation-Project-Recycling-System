@@ -29,7 +29,7 @@ export default function ItemDetailsPage() {
   const decodedName =
     typeof itemName === "string" ? decodeURIComponent(itemName) : "";
   const [selectedQuantity, setSelectedQuantity] = useState(1);
-  const { addToCart } = useCart();
+  const { addToCart, loadingItemId } = useCart();
   const { t } = useLanguage();
   const { user } = useUserAuth();
   const { getCategoryIdByItemName } = useCategories();
@@ -158,13 +158,11 @@ export default function ItemDetailsPage() {
   );
 
   const handleAddToCart = () => {
-    if (!isOutOfStock && remainingQuantity >= 0) {
-      console.log("🛒 Adding to cart:", {
-        item: item.name,
-        quantity: selectedQuantity,
-      });
-      addToCart(convertToCartItem(item, selectedQuantity));
-    }
+    console.log("🛒 Adding to cart:", {
+      item: item.name,
+      quantity: selectedQuantity,
+    });
+    addToCart(convertToCartItem(item, selectedQuantity));
   };
 
   return (
@@ -331,20 +329,26 @@ export default function ItemDetailsPage() {
               </div>
             </div>
 
-            {/* Add to Cart Button */}
+            {/* Add to Cart Button with Inventory Check */}
             <button
               onClick={handleAddToCart}
-              disabled={isOutOfStock}
+              disabled={isOutOfStock || loadingItemId === item._id}
               className={`w-full py-3 px-6 rounded-lg font-medium flex items-center justify-center space-x-2 transition-colors ${
-                isOutOfStock
+                isOutOfStock || loadingItemId === item._id
                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                   : "bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg"
               }`}
             >
-              <Package className="w-5 h-5" />
+              {loadingItemId === item._id ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              ) : (
+                <Package className="w-5 h-5" />
+              )}
               <span>
                 {isOutOfStock
                   ? t("common.outOfStock", { defaultValue: "Out of Stock" })
+                  : loadingItemId === item._id
+                  ? "جاري الإضافة..."
                   : t("common.addToRecyclingCart", {
                       defaultValue: "Add to Cart",
                     })}
