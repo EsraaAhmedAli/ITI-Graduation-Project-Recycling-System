@@ -8,9 +8,7 @@ import {
   CheckCircle, 
   Clock, 
   XCircle, 
-  RefreshCw, 
 
-  Filter,
   Search,
   X,
   Calendar,
@@ -21,7 +19,6 @@ import Loader from '@/components/common/loader';
 import { TablePagination } from '@/components/tablePagination/tablePagination';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from 'flowbite-react';
 import RefundModal from '@/components/shared/refundModal';
-import { priceWithMarkup } from "@/utils/priceUtils"; // عدلي المسار حسب مكان الملف
 
 
 interface PaymentFilters {
@@ -40,7 +37,7 @@ interface PaymentFilters {
 const Transactions: React.FC = () => {
   const [filters, setFilters] = useState<PaymentFilters>({
     page: 1,
-    limit: 25,
+    limit: 5,
     status: '',
     startDate: '',
     endDate: '',
@@ -71,7 +68,6 @@ const Transactions: React.FC = () => {
     isRefunding,
     refundError,
     isFetching,
-    isPreviousData,
   } = usePayments(filters);
 
   const prefetchPayments = usePrefetchPayments();
@@ -283,7 +279,7 @@ const Transactions: React.FC = () => {
     return (
       <div>
         <div className="text-sm font-semibold text-gray-900">
-          {baseAmount} {payment.currency.toUpperCase()}
+          {baseAmount} {payment?.currency?.toUpperCase()}
         </div>
         {payment.amount_refunded > 0 && (
           <div className="text-xs text-red-600">
@@ -463,6 +459,7 @@ const Transactions: React.FC = () => {
 
   {/* NEW: Custom TablePagination component */}
   <TablePagination
+  isFetching={isFetching}
     currentPage={pagination.page}
     totalPages={pagination.totalPages}
     onPageChange={handlePageChange}

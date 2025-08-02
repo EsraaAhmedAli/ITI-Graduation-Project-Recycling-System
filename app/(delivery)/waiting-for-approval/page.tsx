@@ -99,7 +99,7 @@ const WaitingForApprovalPage = () => {
           statusData = await refreshDeliveryStatus();
           console.log("✅ Auth API success:", statusData);
         } catch (authError) {
-          console.warn("⚠️ Auth API failed, using public API");
+          console.warn("⚠️ Auth API failed, using public API",authError);
           statusData = await checkPublicDeliveryStatus(user.email);
         }
       } else {

@@ -3,9 +3,7 @@
 import Link from "next/link";
 import React, { useContext, useState, useMemo, useRef, useEffect } from "react";
 import {
-  ShoppingCart,
   HousePlus,
-  BadgeInfo,
   KeyRound,
   X,
   Menu,
@@ -13,11 +11,7 @@ import {
   GalleryVerticalEnd,
   Recycle,
   Store,
-  Bell,
-  Check,
-  Clock,
-  Package,
-  MessageCircle,
+
   Settings,
   LogOut,
   User,
@@ -32,7 +26,6 @@ import NavbarSearch from "./search";
 import Image from "next/image";
 import { NotificationBell } from "../notifications/notidication";
 import { useLanguage } from "@/context/LanguageContext";
-import LanguageSwitcherExamples from "./languageSwitcher";
 
 export default function Navbar() {
   const authContext = useContext(UserAuthContext);
@@ -50,38 +43,7 @@ export default function Navbar() {
   const isBuyer = user?.role === "buyer";
   const { locale, setLocale } = useLanguage();
 
-  // Sample notifications data - replace with your actual notifications
-  const notifications = [
-    {
-      id: 1,
-      type: "order",
-      title: "Order Confirmed",
-      message: "Your recycling collection has been scheduled",
-      time: "2 minutes ago",
-      read: false,
-      icon: Package,
-    },
-    {
-      id: 2,
-      type: "message",
-      title: "New Message",
-      message: "You have a message from EcoCollector Inc.",
-      time: "1 hour ago",
-      read: false,
-      icon: MessageCircle,
-    },
-    {
-      id: 3,
-      type: "reminder",
-      title: "Collection Reminder",
-      message: "Your next collection is tomorrow at 10 AM",
-      time: "3 hours ago",
-      read: true,
-      icon: Clock,
-    },
-  ];
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
   const { t } = useLanguage();
 
   // Close notification dropdown when clicking outside
@@ -105,17 +67,6 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleNotificationClick = (notificationId) => {
-    // Handle notification click - mark as read, navigate, etc.
-    console.log("Notification clicked:", notificationId);
-    setIsNotificationOpen(false);
-  };
-
-  const handleCartItemClick = (itemId) => {
-    // Handle cart item click - navigate to item details, etc.
-    console.log("Cart item clicked:", itemId);
-    setIsCartOpen(false);
-  };
 
   const handleRemoveFromCart = async (item) => {
     try {
@@ -127,7 +78,7 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     try {
-      await logout();
+       logout();
       setIsProfileOpen(false);
     } catch (error) {
       console.error("Error logging out:", error);
@@ -180,6 +131,7 @@ export default function Navbar() {
           {/* Center: Navigation Links - Desktop (More compact) */}
           <div className="hidden lg:flex items-center space-x-1">
             <Link
+        
               prefetch={true}
               href={user?.role == "buyer" ? "/home" : "/"}
               className="flex items-center text-gray-600 hover:text-gray-900 hover:bg-gray-50 font-medium gap-1.5 px-2.5 py-1.5 rounded-md transition-all duration-200 text-sm" // Reduced padding and font size
@@ -221,7 +173,7 @@ export default function Navbar() {
               <button
                 onClick={() => setIsCartOpen(!isCartOpen)}
                 className="relative flex items-center gap-1 text-gray-600 hover:text-gray-900 hover:bg-gray-50 font-medium px-2 py-1.5 rounded-lg transition-all duration-200 border border-transparent hover:border-gray-200" // Reduced padding
-                title={t("navbar.myCollection")}
+                title={isBuyer ? t("navbar.myCart"):t("navbar.myCollection")}
               >
                 <div className="relative">
                   <Recycle className="w-5 h-5" />
@@ -234,7 +186,8 @@ export default function Navbar() {
                   )}
                 </div>
                 <span className="hidden sm:inline font-medium text-sm">
-                  {t("navbar.collection")}
+                {isBuyer ? t("navbar.myCart"):t("navbar.myCollection")
+}
                 </span>{" "}
                 {/* Smaller text */}
               </button>
@@ -246,7 +199,8 @@ export default function Navbar() {
                   {/* Slightly smaller width */}
                   <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100">
                     <h3 className="font-semibold text-gray-900 text-sm">
-                      {t("navbar.myCollection")}
+                     {isBuyer ? t("navbar.myCart"):t("navbar.myCollection")}
+
                     </h3>{" "}
                     {/* Smaller text */}
                     <span className="text-xs text-gray-500">
@@ -338,8 +292,10 @@ export default function Navbar() {
                         {/* Smaller icon */}
                         <p className="text-xs font-medium mb-1">
                           {t("navbar.yourCollectionEmpty")}
+
                         </p>
                         <p className="text-xs">{t("navbar.addItemsToStart")}</p>
+                        <Link onClick={()=>setIsCartOpen(false)} href={'/category'} className="text-xs text-primary">{t('common.startAdding')}</Link>
                       </div>
                     )}
                     {cart &&
@@ -448,7 +404,7 @@ export default function Navbar() {
 
                 {/* Profile Dropdown - Same structure but slightly more compact */}
                 {isProfileOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                  <div className="absolute right-[-20px] mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                     {" "}
                     {/* Smaller width */}
                     <div className="px-4 py-2.5 border-b border-gray-100">

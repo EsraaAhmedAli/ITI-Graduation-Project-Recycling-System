@@ -51,7 +51,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setCart(res.data.items || []);
     } catch (err) {
       console.error("Failed to load cart", err);
-      toast.error("Failed to load cart items");
     }
   }, []);
 
@@ -143,7 +142,7 @@ const increaseQty = async (item: ICartItem) => {
       withCredentials: true 
     });
     
-    await loadCart(); // تأكد أن هذه الوظيفة لا تسبب إعادة تحميل
+    await loadCart(); 
   } catch (err) {
     console.error("Failed to increase quantity", err);
     toast.error("Failed to increase item quantity");
@@ -187,7 +186,6 @@ const increaseQty = async (item: ICartItem) => {
     try {
       await api.delete("/cart", { withCredentials: true });
       setCart([]);
-      toast.success("Cart cleared successfully");
     } catch (err) {
       console.error("Failed to clear cart", err);
       toast.error("Failed to clear cart");

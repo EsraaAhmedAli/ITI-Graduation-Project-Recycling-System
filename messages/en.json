@@ -66,7 +66,8 @@
     "startRecycling": "Start Recycling",
     "logout": "Logout",
     "title": "XChange",
-    "searchplaceholder": "Search items..."
+    "searchplaceholder": "Search items...",
+    "myCart": "Cart"
   },
 
   "footer": {
@@ -80,7 +81,10 @@
     "contact": "Contact",
     "email": "Email",
     "phone": "Phone",
-    "rights": "All rights reserved."
+    "rights": "All rights reserved.",
+    "ContactUs": "Contact Us",
+    "Eco-Friendly Platform": "Eco-Friendly Platform",
+    "support": "Support"
   },
   "breadcrumbs": {
     "home": "Home",
@@ -238,8 +242,8 @@
       "mobile": "Mobile",
       "laptop": "laptop",
       "receiver": "receiver",
-      "powerbank":"powerbank",
-      "tea-pot" : "tea pot"
+      "powerbank": "powerbank",
+      "tea-pot": "tea pot"
     }
   },
 
@@ -259,7 +263,8 @@
     "quantity": "Quantity",
     "unitKg": "kg",
     "unitPiece": "piece",
-    "lowStockWarning" : "low stock"
+    "lowStockWarning": "low stock",
+    "startAdding": "start adding"
   },
   "marketPlace": {
     "sustainableMarketplace": "Sustainable Marketplace",

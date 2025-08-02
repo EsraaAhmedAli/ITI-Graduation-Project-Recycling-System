@@ -35,6 +35,8 @@ export default function Page() {
     queryKey: ['adminOrders', currentPage, activeTab],
     queryFn: () => fetchOrders(currentPage, itemsPerPage, activeTab),
     keepPreviousData: true,
+    refetchOnMount:true,
+    staleTime:1
   });
 
   const { user } = useUserAuth();

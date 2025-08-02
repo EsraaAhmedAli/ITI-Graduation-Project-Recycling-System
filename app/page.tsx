@@ -4,9 +4,24 @@ import Image from "next/image";
 import Link from "next/link";
 import { CircleDollarSign, Mic, CalendarCheck } from "lucide-react";
 import { motion } from "framer-motion";
-import CategoryList from "@/components/shared/CategoryList";
-import SubscriptionForm from "@/components/common/subscriptionForm/subscriptionForm";
+import { lazy, Suspense } from "react";
 import { useLanguage } from "@/context/LanguageContext";
+
+// Lazy load components that are below the fold
+const CategoryList = lazy(() => import("@/components/shared/CategoryList"));
+const SubscriptionForm = lazy(() => import("@/components/common/subscriptionForm/subscriptionForm"));
+
+// Loading fallback components
+const CategoryListSkeleton = () => (
+  <div className="w-full h-32 bg-gray-200 animate-pulse rounded-lg" />
+);
+
+const SubscriptionFormSkeleton = () => (
+  <div className="w-full max-w-md mx-auto">
+    <div className="h-12 bg-gray-200 animate-pulse rounded-lg mb-4" />
+    <div className="h-10 bg-gray-200 animate-pulse rounded-lg" />
+  </div>
+);
 
 export default function Home() {
   const { t } = useLanguage();
@@ -20,6 +35,9 @@ export default function Home() {
             alt={t("indexPage.title.line1") + " " + t("indexPage.title.line2")}
             fill
             className="object-cover object-center scale-105"
+            priority // Keep priority for above-the-fold hero image
+            placeholder="blur"
+            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaeCCS3Yxu5VCfI7D9VpbGghcC0DlF0fkZZyrlstuDzM"
           />
           <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/40 to-transparent" />
         </div>
@@ -165,7 +183,10 @@ export default function Home() {
         </div>
       </section>
 
-      <CategoryList basePath="/category" maxToShow={5} horizontal />
+      {/* Lazy loaded CategoryList with fallback */}
+      <Suspense fallback={<CategoryListSkeleton />}>
+        <CategoryList maxToShow={20} basePath="/category" horizontal />
+      </Suspense>
 
       <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/10 py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-8 rounded-3xl mx-4 sm:mx-8 lg:mx-16 my-12 sm:my-16 lg:my-20">
         {/* Background decorative elements */}
@@ -193,7 +214,10 @@ export default function Home() {
             </p>
           </div>
 
-          <SubscriptionForm />
+          {/* Lazy loaded SubscriptionForm with fallback */}
+          <Suspense fallback={<SubscriptionFormSkeleton />}>
+            <SubscriptionForm />
+          </Suspense>
         </div>
       </section>
     </>

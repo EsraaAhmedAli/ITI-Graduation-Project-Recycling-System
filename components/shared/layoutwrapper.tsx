@@ -16,6 +16,24 @@ export default function LayoutWrapper({ children }: { children: ReactNode }) {
   // === Computed Roles ===
   const isAdmin = user?.role === "admin";
   const isDelivery = user?.role === "delivery";
+  const isBuyer = user?.role === 'buyer';
+
+  // Define restricted routes for buyers (routes they should NOT access)
+  const buyerRestrictedRoutes = [
+    "/admin",
+    "/deilveryDashboard", 
+    "/waiting-for-approval"
+    // Add any specific routes that buyers should NOT access
+  ];
+
+  // Check if current path is restricted for buyers
+  const isBuyerRestrictedRoute = useMemo(() => {
+    if (!isBuyer) return false; // Not a buyer, so no restrictions
+    
+    return buyerRestrictedRoutes.some(route => 
+      pathname.startsWith(route)
+    );
+  }, [isBuyer, pathname, buyerRestrictedRoutes]);
 
   // ✅ Use fallback to isApproved if deliveryStatus is not yet set
   const isPendingOrDeclined = useMemo(() => {
@@ -37,11 +55,19 @@ export default function LayoutWrapper({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (isLoading || !user) return;
 
+    // Handle buyer routing - only restrict specific routes
+    if (isBuyer && isBuyerRestrictedRoute) {
+      router.push("/home");
+      return;
+    }
+
+    // Handle admin routing
     if (isAdmin && !pathname.startsWith("/admin")) {
       router.push("/admin/dashboard");
       return;
     }
 
+    // Handle delivery routing
     if (isDelivery) {
       if (isPendingOrDeclined && !pathname.startsWith("/waiting-for-approval")) {
         router.push("/waiting-for-approval");
@@ -53,6 +79,7 @@ export default function LayoutWrapper({ children }: { children: ReactNode }) {
         return;
       }
     }
+    
   }, [
     user,
     isAdmin,
@@ -62,6 +89,8 @@ export default function LayoutWrapper({ children }: { children: ReactNode }) {
     pathname,
     router,
     isLoading,
+    isBuyer,
+    isBuyerRestrictedRoute
   ]);
 
   if (isLoading) return null;

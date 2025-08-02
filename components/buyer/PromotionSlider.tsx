@@ -21,7 +21,7 @@ const PromotionSlider: React.FC = () => {
       id: '1',
       title: '20% Discount on Phone Recycling',
       description: 'Trade in your old device and save on your next purchase while helping the planet',
-      image: '/images/image2.jpg',
+      image: '/images/slide1.jpg',
       ctaText: 'Recycle Now',
       ctaLink: '/recycle-electronics',
       learnMoreLink: './about/about-phone-recycling',
@@ -31,7 +31,7 @@ const PromotionSlider: React.FC = () => {
       id: '2',
       title: 'Join Our 10K Device Challenge',
       description: 'We\'re aiming to responsibly recycle 10,000 devices this month - be part of the solution!',
-      image: '/images/image3.jpg',
+      image: '/images/slide2.webp',
       ctaText: 'Participate',
       ctaLink: '/community-challenge',
       learnMoreLink: 'about/about-community-challenge',
@@ -42,7 +42,7 @@ const PromotionSlider: React.FC = () => {
       id: '3',
       title: 'Fashion Recycling Program',
       description: 'Get 30% off when you bring in used clothing for recycling',
-      image: '/images/fashion.jpg',
+      image: '/images/green.webp',
       ctaText: 'Get Offer',
       ctaLink: '/fashion-recycling',
       learnMoreLink: '/about/about-fashion-recycling',
@@ -74,7 +74,7 @@ const PromotionSlider: React.FC = () => {
     }, 5000);
     
     return () => clearInterval(interval);
-  }, [isHovered]);
+  }, [isHovered,nextSlide]);
 
   return (
     <div 
