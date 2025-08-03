@@ -58,6 +58,9 @@ export default function ItemDetailsPage() {
     params: useParams(),
   });
 
+  useEffect(() => {
+    console.log("🛒 Updated cart:", cart);
+  }, [cart]);
   // Fetch specific item by name using existing API (original prices only)
   const fetchItemByName = async () => {
     try {
@@ -162,10 +165,23 @@ export default function ItemDetailsPage() {
         quantity: selectedQuantity,
       });
       const newItem = convertToCartItem(item, selectedQuantity);
-      updateCartState([...cart, newItem]);
+
+      const existingIndex = cart.findIndex((ci) => ci._id === newItem._id);
+
+      let updatedCart;
+      if (existingIndex !== -1) {
+        updatedCart = cart.map((ci, idx) =>
+          idx === existingIndex ? newItem : ci
+        );
+      } else {
+        updatedCart = [...cart, newItem];
+      }
+
+      updateCartState(updatedCart);
       // addToCart(convertToCartItem(item, selectedQuantity));
     }
   };
+
   const handleOperation = (op: "+" | "-", item: CartItem) => {
     const step = item.measurement_unit == 1 ? 0.25 : 1;
     const appliedStep = op === "+" ? step : -step;

@@ -124,18 +124,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
         const allItems = res.data?.data || [];
 
         const foundItem = allItems.find(
-          (apiItem: any) =>
-            apiItem._id === item._id ||
-            apiItem.categoryId === item.categoryId ||
-            apiItem.name?.toLowerCase() === item.name?.toLowerCase()
+          (apiItem: any) => apiItem._id === item._id
         );
 
-        if (!foundItem) {
-          console.warn("Item not found in inventory:", item);
+        if (!foundItem || typeof foundItem.quantity !== "number") {
+          console.warn("Item not found or has invalid quantity:", item);
           return false;
         }
 
         const availableQuantity = foundItem.quantity;
+        console.log(
+          `Available: ${availableQuantity} vs Requested: ${quantity}`
+        );
         return availableQuantity >= quantity;
       } catch (err) {
         console.error("Failed to check inventory:", err);
@@ -267,9 +267,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     async (item: CartItem) => {
       setLoadingItemId(item._id);
       try {
-        await api.delete(`/cart/${item._id}`, { withCredentials: true });
+        updateCartState(cart.filter((ci) => ci._id !== item._id));
+        // await api.delete(`/cart/${item._id}`, { withCredentials: true });
         toast.success("Item removed from cart");
-        await loadCart();
+        // await loadCart();
       } catch (err) {
         console.error("Failed to remove from cart", err);
         toast.error("Failed to remove item from cart");
@@ -277,7 +278,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setLoadingItemId(null);
       }
     },
-    [loadCart]
+    [cart]
   );
 
   const clearCart = useCallback(async () => {
