@@ -1,4 +1,3 @@
-// app/marketplace/components/MarketplaceClient.tsx (Client Component)
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";

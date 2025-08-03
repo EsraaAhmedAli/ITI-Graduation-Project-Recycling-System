@@ -107,7 +107,19 @@ const handleSaveRole = async (id: string, newRole: User["role"]) => {
           className=" rounded-full object-cover"
         />
       );
-    } else {
+    } 
+    else if(user.role == 'delivery') {
+         return (
+        <Image
+        width={30}
+        height={30}
+          src={user.attachments.deliveryImage}
+          alt={user.name}
+          className=" rounded-full object-cover"
+        />
+      );
+    }
+    {
       return (
         <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-semibold uppercase">
           {user.name?.charAt(0) || "?"}
@@ -175,7 +187,7 @@ const handleSaveRole = async (id: string, newRole: User["role"]) => {
           data={users}
           columns={columns}
           title="Users"
-          itemsPerPage={8}
+          itemsPerPage={5}
           addButtonText="Add User"
           showAddButton={false}
           onDelete={handleDelete}

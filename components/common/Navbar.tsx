@@ -194,7 +194,7 @@ export default function Navbar() {
 
               {/* Cart Dropdown - Same as before but can be optimized if needed */}
               {isCartOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                <div className="absolute right-[-70px] mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                   {" "}
                   {/* Slightly smaller width */}
                   <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100">

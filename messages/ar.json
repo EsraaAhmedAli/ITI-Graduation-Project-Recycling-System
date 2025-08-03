@@ -83,7 +83,7 @@
     "rights": "جميع الحقوق محفوظة.",
     "ContactUs": "تحدث معنا",
     "Eco-Friendly Platform": "تطبيق مساعد للحفاظ على البيئة",
-    "support" : "مساعدة"
+    "support": "مساعدة"
   },
   "breadcrumbs": {
     "home": "الرئيسية",
@@ -153,7 +153,12 @@
       "forgotPassword": "هل نسيت كلمة المرور؟",
       "securityNote": "لا تقلق، معلوماتك آمنة 100٪.",
       "loginFailed": "فشل تسجيل الدخول. يرجى التحقق من بياناتك.",
-      "loginSuccess": "مرحبا بك!"
+      "loginSuccess": "مرحبا بك!",
+      "emailrequired": "يجب ادخال البريد الالكتروني",
+      "passwordrequired": "يجب ادخال كلمة المرور",
+      "dontHaveAccount": "ليس لديك حساب؟ قم بالتسجيل",
+      "ChooseYourRole": "اختر دورك",
+      "typeOfAccount": "حدد نوع الحساب الذي ترغب في إنشائه."
     }
   },
   "profile": {
@@ -307,6 +312,20 @@
     "newLife": {
       "title": "حياة جديدة",
       "description": "يتم إعادة استخدام المواد في منتجات جديدة."
+    }
+  },
+  "registration": {
+    "customer": {
+      "title": "تسجيل العميل",
+      "description": "انضم إلى مجتمع إعادة التدوير الخاص بنا"
+    },
+    "delivery": {
+      "title": "تسجيل شريك التوصيل",
+      "description": "كن شريك توصيل معتمد"
+    },
+    "buyer": {
+      "title": "تسجيل المشتري التجاري",
+      "description": "سجل عملك لشراء المواد المعاد تدويرها"
     }
   }
 }

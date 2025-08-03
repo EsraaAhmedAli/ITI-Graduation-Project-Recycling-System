@@ -148,13 +148,18 @@
       "email": "Email",
       "password": "Password",
       "emailError": "Invalid email format",
+      "emailrequired" : "Email is required",
+      "passwordrequired" : "password is required",
       "passwordError": "8–20 characters, 1 uppercase, 1 number, 1 symbol",
       "signIn": "Sign in",
       "signingIn": "Signing in...",
       "forgotPassword": "Forgot your password?",
       "securityNote": "Don’t worry, your information is 100% secure.",
       "loginFailed": "Login failed. Please check your credentials.",
-      "loginSuccess": "welcome back !"
+      "loginSuccess": "welcome back !",
+      "dontHaveAccount" : "Don't have an account? Sign up",
+      "ChooseYourRole": "Choose Your Role",
+      "typeOfAccount" : "Select the type of account you'd like to create."
     }
   },
   "profile": {
@@ -315,6 +320,20 @@
     "newLife": {
       "title": "New Life",
       "description": "Materials are reused in new products."
+    }
+  },
+    "registration": {
+    "customer": {
+      "title": "Customer Registration",
+      "description": "Join our recycling community"
+    },
+    "delivery": {
+      "title": "Delivery Partner Registration",
+      "description": "Become a verified delivery partner"
+    },
+    "buyer": {
+      "title": "Business Buyer Registration",
+      "description": "Register your business to purchase recycled materials"
     }
   }
 }

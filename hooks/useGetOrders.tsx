@@ -33,7 +33,6 @@ export const useOrders = (params: Omit<GetOrdersParams, 'page'> = {}) => {
     refetchOnWindowFocus:true
     
     
-    // 10 minutes (formerly cacheTime)
   });
 
   // Flatten all orders from all pages

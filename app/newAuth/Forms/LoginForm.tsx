@@ -161,18 +161,18 @@ const onSubmit = async () => {
         {/* Email */}
         <FloatingInput
           id="email"
-          label="Email"
+          label={t('auth.login.email')}
           type="email"
           error={errors.email?.message}
           {...register("email", {
-            required: "Email is required",
+            required: t('auth.login.emailrequired'),
             maxLength: {
               value: 30,
               message: "Email must be at most 30 characters",
             },
             pattern: {
               value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-              message: "Invalid email format",
+              message: t('auth.login.emailError'),
             },
           })}
           maxLength={30}
@@ -181,14 +181,14 @@ const onSubmit = async () => {
         {/* Password */}
         <FloatingInput
           id="password"
-          label="Password"
+          label={t('auth.login.password')}
           type={showPassword ? "text" : "password"}
           {...register("password", {
-            required: "Password is required",
+            required: t('auth.login.passwordrequired'),
             pattern: {
               value:
                 /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,20}$/,
-              message: "8–20 chars, 1 uppercase, 1 number, 1 special character",
+              message: t('auth.login.passwordError'),
             },
           })}
           maxLength={20}
@@ -248,7 +248,7 @@ const onSubmit = async () => {
           onClick={navigateToSignUp}
           className="text-sm text-[var(--color-primary)] hover:underline"
         >
-          Don't have an account? Sign up
+        {t('auth.login.dontHaveAccount')}
         </button>
       </div>
     </div>

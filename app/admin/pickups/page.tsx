@@ -28,7 +28,7 @@ const fetchOrders = async (page: number, limit: number, userRole?: UserRole) => 
 
 export default function Page() {
   const [activeTab, setActiveTab] = useState<UserRole>('customer');
-  const { currentPage, itemsPerPage, handlePageChange } = usePagination(1, 10);
+  const { currentPage, itemsPerPage, handlePageChange } = usePagination(1, 5);
   
   // React Query fetch with pagination and role filter
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
@@ -426,7 +426,6 @@ if (order.userRole === 'buyer') {
             title={`${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Orders`}
             itemsPerPage={itemsPerPage}
             showAddButton={false}
-            // showActions={user?.role =='buyer'}
             showFilter={false}
             onDelete={(id: string) => handleDeleteOrder(id)}
           />
@@ -436,7 +435,7 @@ if (order.userRole === 'buyer') {
 
       {/* Modals */}
       <UserModal selectedUser={selectedUser} show={isModalOpen} closingModalFn={closingModalFn} />
-      <ItemsModal selectedOrderItems={selectedOrderItems} show={isItemsModalOpen} onclose={() => setIsItemsModalOpen(false)} />
+      <ItemsModal userRole={user?.role} selectedOrderItems={selectedOrderItems} show={isItemsModalOpen} onclose={() => setIsItemsModalOpen(false)} />
       <CourierSelectionModal
         show={isCourierModalOpen}
         couriers={couriers}
