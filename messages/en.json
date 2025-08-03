@@ -255,7 +255,13 @@
 
   "common": {
     "adding": "adding",
-
+    "invalidQuantity": "Please enter a valid quantity",
+    "exceedsMaxQuantity": "Maximum available quantity is {{max}}",
+    "wholeNumbersOnly": "Only whole numbers are allowed for this item",
+    "minimumQuantity": "Minimum quantity is {{min}} kg",
+    "invalidIncrement": "Quantity must be in increments of {{increment}} kg",
+    "kgIncrement": "Minimum 0.25 kg, increments of 0.25 kg",
+    "wholeNumbers": "Whole numbers only",
     "collectionsPlural": "Collection",
     "pointsAbbreviation": "pts",
     "allCategories": "All Categories",

@@ -246,6 +246,13 @@
   "collectionsOfCategory": "{{collections}}  {{category}}",
 
   "common": {
+       "invalidQuantity": "يرجى إدخال كمية صحيحة",
+    "exceedsMaxQuantity": "الحد الأقصى المتاح هو {{max}}",
+    "wholeNumbersOnly": "يُسمح بالأرقام الصحيحة فقط لهذا المنتج",
+    "minimumQuantity": "الحد الأدنى للكمية هو {{min}} كيلو",
+    "invalidIncrement": "يجب أن تكون الكمية بزيادات {{increment}} كيلو",
+    "kgIncrement": "الحد الأدنى 0.25 كيلو، بزيادات 0.25 كيلو",
+    "wholeNumbers": "أرقام صحيحة فقط",
     "collectionsPlural": "مجموعات",
     "adding" : "اضافة",
     "pointsAbbreviation": "نقاط",

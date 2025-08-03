@@ -295,7 +295,7 @@ export default function Navbar() {
 
                         </p>
                         <p className="text-xs">{t("navbar.addItemsToStart")}</p>
-                        <Link onClick={()=>setIsCartOpen(false)} href={'/category'} className="text-xs text-primary">{t('common.startAdding')}</Link>
+                        <Link onClick={()=>setIsCartOpen(false)} href={isBuyer ?'/marketplace' :'/category'} className="text-xs text-primary">{t('common.startAdding')}</Link>
                       </div>
                     )}
                     {cart &&

@@ -9,6 +9,7 @@ import api from "@/lib/axios";
 import { useLanguage } from "@/context/LanguageContext";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { Badge } from "flowbite-react";
+import { useGetItems } from "@/hooks/useGetItems";
 
 interface Item {
   _id: string;
@@ -96,16 +97,7 @@ const OptimizedItemImage = ({
         blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
         onLoad={() => setImageLoaded(true)}
         onError={() => setImageError(true)}
-        onLoadingComplete={() => {
-          if (priority && index < 2) {
-            requestAnimationFrame(() => {
-              document.documentElement.style.transform = "translateZ(0)";
-              requestAnimationFrame(() => {
-                document.documentElement.style.transform = "";
-              });
-            });
-          }
-        }}
+     
       />
     </div>
   );
@@ -123,7 +115,6 @@ export default function MarketplaceClient({
   const [currentPage, setCurrentPage] = useState(1);
   const [isClient, setIsClient] = useState(false);
   const [items, setItems] = useState(initialData.items);
-const [loading, setLoading] = useState(false);
 const [pagination, setPagination] = useState(initialData.pagination);
   const itemsPerPage = 10;
 
@@ -153,21 +144,33 @@ const [pagination, setPagination] = useState(initialData.pagination);
   }, [initialData, queryClient]);
 
   // Client-side fetch functions
-const fetchItems = useCallback(async () => {
-  setLoading(true);
-  try {
-    const res = await api.get(
-      `/categories/get-items?page=${currentPage}&limit=${itemsPerPage}&role=${user?.role || ""}`
-    );
-    setItems(res?.data.data || []);
-    setPagination(res?.data.pagination || initialData.pagination);
-  } catch (error) {
-    console.error('Error fetching items:', error);
-  } finally {
-    setLoading(false);
-  }
-}, [currentPage, itemsPerPage, user?.role]);
+// const fetchItems = useCallback(async () => {
+//   setLoading(true);
+//   try {
+//     const res = await api.get(
+//       `/categories/get-items?page=${currentPage}&limit=${itemsPerPage}&role=${user?.role || ""}`
+//     );
+//     setItems(res?.data.data || []);
+//     setPagination(res?.data.pagination || initialData.pagination);
+//   } catch (error) {
+//     console.error('Error fetching items:', error);
+//   } finally {
+//     setLoading(false);
+//   }
+// }, [currentPage, itemsPerPage, user?.role]);
 
+
+const { data, isLoading, error } = useGetItems({
+  currentPage,
+  itemsPerPage,
+  userRole: user?.role,
+});
+useEffect(() => {
+  if (data) {
+    setItems(data?.data);
+    setPagination(data.pagination);
+  }
+}, [data]);
   const fetchAllCategories = useCallback(async () => {
     if (!isClient) return initialData.categories;
 
@@ -200,8 +203,7 @@ const fetchItems = useCallback(async () => {
     enabled: isClient,
   });
 
-  const items: Item[] = itemsData?.data || initialData.items;
-  const pagination = itemsData?.pagination || initialData.pagination;
+
   const uniqueCategories = categoriesData || initialData.categories;
 
   // Memoized filtered items
@@ -247,6 +249,11 @@ const fetchItems = useCallback(async () => {
     }, 300);
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
+//   useEffect(() => {
+//   if (isClient) {
+//     fetchItems();
+//   }
+// }, [fetchItems, isClient]);
 
   return (
     <>
@@ -323,7 +330,7 @@ const fetchItems = useCallback(async () => {
 
       {/* Main Content */}
       <main>
-        {(isLoading && !items.length) || isFetching ? (
+        {(isLoading && !items.length) ? (
           <div
             className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"
             role="status"
