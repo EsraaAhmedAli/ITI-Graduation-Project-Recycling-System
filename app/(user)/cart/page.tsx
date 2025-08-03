@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "flowbite-react";
 import Image from "next/image";
 import { useUserAuth } from "@/context/AuthFormContext";
+import { CartItem } from "@/models/cart";
 
 const itemVariants = {
   hidden: { opacity: 0, y: 10 },
@@ -24,6 +25,7 @@ export default function CartPage() {
     decreaseQty,
     checkInventoryEnhanced,
     userRole,
+    updateCartState,
   } = useCart();
   const router = useRouter();
   const [totalItems, setTotalItems] = useState(0);
@@ -109,14 +111,24 @@ export default function CartPage() {
     }
   };
 
-  const handleIncrease = async (e: React.MouseEvent, item: any) => {
-    e.preventDefault();
-    increaseQty(item);
+  const handleIncrease = (item: CartItem) => {
+    const increment = item.measurement_unit === 1 ? 0.25 : 1;
+
+    const updatedCart = cart.map((ci) =>
+      ci._id === item._id ? { ...ci, quantity: ci.quantity + increment } : ci
+    );
+
+    updateCartState(updatedCart);
   };
 
-  const handleDecrease = async (e: React.MouseEvent, item: any) => {
-    e.preventDefault();
-    decreaseQty(item);
+  const handleDecrease = (item: CartItem) => {
+    const decrement = item.measurement_unit === 1 ? 0.25 : 1;
+
+    const updatedCart = cart.map((ci) =>
+      ci._id === item._id ? { ...ci, quantity: ci.quantity - decrement } : ci
+    );
+
+    updateCartState(updatedCart);
   };
 
   return (
@@ -180,7 +192,7 @@ export default function CartPage() {
             <AnimatePresence>
               {cart.map((item, idx) => (
                 <motion.div
-                  key={`${item.categoryId}-${idx}`}
+                  key={item._id}
                   variants={itemVariants}
                   initial="hidden"
                   animate="visible"
@@ -265,7 +277,7 @@ export default function CartPage() {
                         <div className="flex items-center border border-gray-200 rounded-full">
                           <button
                             type="button"
-                            onClick={(e) => handleDecrease(e, item)}
+                            onClick={(e) => handleDecrease(item)}
                             className={`w-8 h-8 flex items-center justify-center rounded-l-full transition-all ${
                               item.quantity <= 1
                                 ? "text-gray-300 bg-gray-100 cursor-not-allowed"
@@ -280,7 +292,7 @@ export default function CartPage() {
                           </span>
                           <button
                             type="button"
-                            onClick={(e) => handleIncrease(e, item)}
+                            onClick={(e) => handleIncrease(item)}
                             disabled={
                               userRole === "buyer" && !canIncrease[item._id]
                             }
