@@ -1,40 +1,114 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import DynamicTable from '@/components/shared/dashboardTable';
-import api from '@/lib/axios';
-import Loader from '@/components/common/loader';
-import UserModal from '@/components/shared/userModal';
-import ItemsModal from '@/components/shared/itemsModal';
-import CourierSelectionModal from '../../../components/courierSelectionModal';
-import Swal from 'sweetalert2';
-import { toast } from 'react-toastify';
-import { useUsers } from '@/hooks/useGetUsers';
-import { usePagination } from '@/hooks/usePagination';
-import { TablePagination } from '../../../components/tablePagination/tablePagination';
-import { useUserAuth } from '@/context/AuthFormContext';
+import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import DynamicTable from "@/components/shared/dashboardTable";
+import api from "@/lib/axios";
+import Loader from "@/components/common/loader";
+import UserModal from "@/components/shared/userModal";
+import ItemsModal from "@/components/shared/itemsModal";
+import CourierSelectionModal from "../../../components/courierSelectionModal";
+import Swal from "sweetalert2";
+import { toast } from "react-toastify";
+import { useUsers } from "@/hooks/useGetUsers";
+import { usePagination } from "@/hooks/usePagination";
+import { TablePagination } from "../../../components/tablePagination/tablePagination";
+import { useUserAuth } from "@/context/AuthFormContext";
 
-type UserRole = 'customer' | 'buyer';
+type UserRole = "customer" | "buyer";
+const STATUS = {
+  PENDING: "pending",
+  ASSIGN_TO_COURIER: "assignToCourier",
+  COMPLETED: "completed",
+  CANCELLED: "cancelled",
+} as const;
+const normalizeStatus = (status: string): string => {
+  const normalized = status.toLowerCase().trim();
 
-const fetchOrders = async (page: number, limit: number, userRole?: UserRole) => {
-  const params: any = { page, limit };
-  if (userRole) {
-    params.userRole = userRole;
+  switch (normalized) {
+    case "pending":
+      return STATUS.PENDING;
+    case "assigntocourier":
+    case "assignedtocourier":
+    case "assigned":
+      return STATUS.ASSIGN_TO_COURIER;
+    case "completed":
+    case "complete":
+      return STATUS.COMPLETED;
+    case "cancelled":
+    case "canceled":
+      return STATUS.CANCELLED;
+    default:
+      return status;
   }
-  const { data } = await api.get('/admin/orders', { params });
+};
+// const fetchOrders = async (
+//   page: number,
+//   limit: number,
+//   userRole?: UserRole
+// ) => {
+//   const params: any = { page, limit };
+//   if (userRole) {
+//     params.userRole = userRole;
+//   }
+//   const { data } = await api.get("/admin/orders", { params });
+//   return data;
+// };
+
+const fetchOrders = async (
+  page: number,
+  limit: number,
+  userRole?: UserRole,
+  filters?: Record<string, any>
+) => {
+  const params: any = { page, limit };
+  if (userRole) params.userRole = userRole;
+  if (filters?.status?.length) params.status = filters.status.join(","); // convert to comma-separated string
+  if (filters?.date?.[0]) params.date = filters.date[0];
+
+  const { data } = await api.get("/admin/orders", { params });
   return data;
 };
 
 export default function Page() {
-  const [activeTab, setActiveTab] = useState<UserRole>('customer');
+  const [activeTab, setActiveTab] = useState<UserRole>("customer");
   const { currentPage, itemsPerPage, handlePageChange } = usePagination(1, 10);
-  
+  const getActiveFilters = () => {
+    const status = filters.find((f) => f.name === "status")?.active || [];
+    const date = filters.find((f) => f.name === "date")?.active || [];
+
+    return { status, date };
+  };
+  const [filters, setFilters] = useState([
+    {
+      name: "status",
+      title: "Status",
+      type: "multi-select" as const,
+      options: [
+        { label: "Pending", value: "pending" },
+        { label: "Assign To Courier", value: "assigntocourier" },
+        { label: "Completed", value: "completed" },
+        { label: "Cancelled", value: "cancelled" },
+      ],
+      active: [],
+    },
+    {
+      name: "date",
+      title: "Order Date",
+      type: "date", // Simple string search
+      options: [],
+      active: [],
+    },
+  ]);
+
   // React Query fetch with pagination and role filter
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
-    queryKey: ['adminOrders', currentPage, activeTab],
-    queryFn: () => fetchOrders(currentPage, itemsPerPage, activeTab),
+    queryKey: ["adminOrders", currentPage, activeTab, filters],
+    queryFn: () =>
+      fetchOrders(currentPage, itemsPerPage, activeTab, getActiveFilters()),
     keepPreviousData: true,
+    refetchOnMount:true,
+    staleTime:1
   });
 
   const { user } = useUserAuth();
@@ -42,7 +116,7 @@ export default function Page() {
   const orders = data?.data || [];
   const totalItems = data?.totalOrders || 0;
   const totalPages = data?.totalPages || 1;
-  
+
   const paginationProps = {
     currentPage,
     totalPages,
@@ -50,13 +124,17 @@ export default function Page() {
     startIndex: (currentPage - 1) * itemsPerPage,
     endIndex: currentPage * itemsPerPage,
     totalItems,
-    isFetching
+    isFetching,
   };
 
   const [isItemsModalOpen, setIsItemsModalOpen] = useState(false);
-  const [selectedOrderItems, setSelectedOrderItems] = useState<null | any[]>(null);
+  const [selectedOrderItems, setSelectedOrderItems] = useState<null | any[]>(
+    null
+  );
   const [isCourierModalOpen, setIsCourierModalOpen] = useState(false);
-  const [selectedOrderForCourier, setSelectedOrderForCourier] = useState<string | null>(null);
+  const [selectedOrderForCourier, setSelectedOrderForCourier] = useState<
+    string | null
+  >(null);
   const [selectedUser, setSelectedUser] = useState<null | {
     name: string;
     phone: string;
@@ -75,7 +153,6 @@ export default function Page() {
 
   const { data: couriers } = useUsers("delivery");
   console.log(couriers);
-  
 
   const handleTabChange = (tab: UserRole) => {
     setActiveTab(tab);
@@ -84,23 +161,23 @@ export default function Page() {
 
   const handleDeleteOrder = async (orderId: string) => {
     const result = await Swal.fire({
-      title: 'Are you sure?',
-      text: 'This order will be permanently deleted.',
-      icon: 'warning',
+      title: "Are you sure?",
+      text: "This order will be permanently deleted.",
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: '#10B981',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, delete it!',
+      confirmButtonColor: "#10B981",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
     });
 
     if (result.isConfirmed) {
       try {
         await api.delete(`/admin/orders/${orderId.orderId}`);
-        Swal.fire('Deleted!', 'The order has been deleted.', 'success');
+        Swal.fire("Deleted!", "The order has been deleted.", "success");
         refetch();
       } catch (err) {
         console.error(err);
-        Swal.fire('Error', 'Failed to delete order. Try again.', 'error');
+        Swal.fire("Error", "Failed to delete order. Try again.", "error");
       }
     }
   };
@@ -109,84 +186,56 @@ export default function Page() {
     try {
       await api.put(`/orders/${orderId}/assign-courier`, {
         courierId,
-        status: 'assignToCourier'
+        status: "assignToCourier",
       });
-      toast.success('Order assigned to courier successfully');
+      toast.success("Order assigned to courier successfully");
       setIsCourierModalOpen(false);
       setSelectedOrderForCourier(null);
       refetch();
     } catch (err) {
-      console.error('Failed to assign courier:', err);
-      toast.error('Failed to assign courier to order');
+      console.error("Failed to assign courier:", err);
+      toast.error("Failed to assign courier to order");
     }
   };
 
   const handleCancelOrder = async (orderId: string) => {
     const { value: reason } = await Swal.fire({
-      title: 'Cancel Order',
-      input: 'text',
-      inputPlaceholder: 'Enter cancellation reason...',
+      title: "Cancel Order",
+      input: "text",
+      inputPlaceholder: "Enter cancellation reason...",
       showCancelButton: true,
-      confirmButtonText: 'Cancel Order',
-      cancelButtonText: 'Keep Order',
-      confirmButtonColor: '#EF4444',
-      cancelButtonColor: '#6B7280',
+      confirmButtonText: "Cancel Order",
+      cancelButtonText: "Keep Order",
+      confirmButtonColor: "#EF4444",
+      cancelButtonColor: "#6B7280",
       inputValidator: (value) => {
-        if (!value || value.trim() === '') {
-          return 'Cancellation reason is required';
+        if (!value || value.trim() === "") {
+          return "Cancellation reason is required";
         }
         if (value.trim().length < 5) {
-          return 'Please provide a reason (at least 5 characters)';
+          return "Please provide a reason (at least 5 characters)";
         }
         return null;
-      }
+      },
     });
 
     if (reason) {
       try {
         await api.put(`/admin/orders/${orderId}/status`, {
-          status: 'cancelled',
-          reason: reason.trim()
+          status: "cancelled",
+          reason: reason.trim(),
         });
-        toast.success('Order cancelled successfully');
+        toast.success("Order cancelled successfully");
         refetch();
       } catch (err) {
-        console.error('Failed to cancel order:', err);
-        toast.error('Failed to cancel order');
+        console.error("Failed to cancel order:", err);
+        toast.error("Failed to cancel order");
       }
     }
   };
 
   const closingModalFn = () => {
     setIsModalOpen(false);
-  };
-
-  const STATUS = {
-    PENDING: 'pending',
-    ASSIGN_TO_COURIER: 'assignToCourier',
-    COMPLETED: 'completed',
-    CANCELLED: 'cancelled'
-  } as const;
-
-  const normalizeStatus = (status: string): string => {
-    const normalized = status.toLowerCase().trim();
-
-    switch (normalized) {
-      case 'pending':
-        return STATUS.PENDING;
-      case 'assigntocourier':
-      case 'assignedtocourier':
-      case 'assigned':
-        return STATUS.ASSIGN_TO_COURIER;
-      case 'completed':
-      case 'complete':
-        return STATUS.COMPLETED;
-      case 'cancelled':
-      case 'canceled':
-        return STATUS.CANCELLED;
-      default:
-        return status;
-    }
   };
 
   const allowedStatusTransitions: Record<string, string[]> = {
@@ -204,12 +253,26 @@ export default function Page() {
     return (
       <div className="flex flex-col items-center justify-center min-h-96 bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-          <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg
+            className="w-8 h-8 text-red-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
         </div>
-        <h3 className="text-xl font-semibold text-gray-800 mb-2">Error Loading Orders</h3>
-        <p className="text-gray-600 mb-4 text-center">{(error as any)?.message || "Failed to load orders."}</p>
+        <h3 className="text-xl font-semibold text-gray-800 mb-2">
+          Error Loading Orders
+        </h3>
+        <p className="text-gray-600 mb-4 text-center">
+          {(error as any)?.message || "Failed to load orders."}
+        </p>
         <button
           onClick={() => refetch()}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
@@ -228,14 +291,15 @@ export default function Page() {
     },
     status: order.status,
     createdAt: new Date(order.createdAt).toLocaleString(),
-    userName: order.user?.userName || 'Unknown',
-    userRole: order.user?.role || 'Unknown',
+    orderDate: new Date(order.createdAt).toISOString().split("T")[0], // e.g. "2025-08-02"
+    userName: order.user?.userName || "Unknown",
+    userRole: order.user?.role || "Unknown",
     onClickUser: () => {
       const user = order.user || {};
       setSelectedUser({
-        name: user.userName || 'Unknown',
-        email: user.email ?? 'Not Provided',
-        phone: user.phoneNumber || 'N/A',
+        name: user.userName || "Unknown",
+        email: user.email ?? "Not Provided",
+        phone: user.phoneNumber || "N/A",
         imageUrl: user.imageUrl || null,
         address: order.address || {},
       });
@@ -243,11 +307,14 @@ export default function Page() {
     },
     onDelete: () => handleDeleteOrder(order._id),
   }));
+  const activeFilters = Object.fromEntries(
+    filters.map((f) => [f.name, f.active])
+  );
 
   const columns = [
     {
-      key: 'userName',
-      label: 'User',
+      key: "userName",
+      label: "User",
       render: (row: any) => (
         <div className="flex flex-col">
           <button
@@ -262,9 +329,10 @@ export default function Page() {
         </div>
       ),
     },
+
     {
-      key: 'orderId',
-      label: 'Order ID',
+      key: "orderId",
+      label: "Order ID",
       render: (row: any) => (
         <button
           onClick={row.onClickItemsId}
@@ -275,18 +343,20 @@ export default function Page() {
       ),
     },
     {
-      key: 'status',
-      label: 'Status',
+      key: "status",
+      label: "Status",
       sortable: false,
       render: (order: any) => {
         const currentStatus = order.status.toLowerCase();
-let nextStatuses = allowedStatusTransitions[currentStatus] || [];
+        let nextStatuses = allowedStatusTransitions[currentStatus] || [];
 
-if (order.userRole === 'buyer') {
-  nextStatuses = nextStatuses.filter(status => status !== STATUS.CANCELLED);
-}
+        if (order.userRole === "buyer") {
+          nextStatuses = nextStatuses.filter(
+            (status) => status !== STATUS.CANCELLED
+          );
+        }
 
-        if (currentStatus === 'cancelled') {
+        if (currentStatus === "cancelled") {
           return (
             <span className="px-5 py-2 text-xs font-semibold rounded-md bg-red-100 text-red-800">
               cancelled
@@ -294,7 +364,7 @@ if (order.userRole === 'buyer') {
           );
         }
 
-        if (currentStatus === 'completed') {
+        if (currentStatus === "completed") {
           return (
             <span className="px-5 py-2 text-xs font-semibold rounded-md bg-green-100 text-green-800">
               completed
@@ -302,36 +372,39 @@ if (order.userRole === 'buyer') {
           );
         }
 
-        const handleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const handleChange = async (
+          e: React.ChangeEvent<HTMLSelectElement>
+        ) => {
           const newStatus = e.target.value;
           if (newStatus === currentStatus) return;
 
-          if (newStatus === 'assignToCourier') {
+          if (newStatus === "assignToCourier") {
             setSelectedOrderForCourier(order.orderId);
             setIsCourierModalOpen(true);
             e.target.value = currentStatus;
             return;
           }
 
-          if (newStatus === 'cancelled') {
+          if (newStatus === "cancelled") {
             e.target.value = currentStatus;
             await handleCancelOrder(order.orderId);
             return;
           }
 
           try {
-            await api.put(`/admin/orders/${order.orderId}/status`, { status: newStatus });
+            await api.put(`/admin/orders/${order.orderId}/status`, {
+              status: newStatus,
+            });
             toast.success(`Order status updated to ${newStatus}`);
             refetch();
           } catch {
-            toast.error('Failed to update order status.');
+            toast.error("Failed to update order status.");
           }
         };
 
         return (
           <select
             value={currentStatus}
-
             onChange={handleChange}
             disabled={nextStatuses.length === 0}
             className={`px-2 py-1 rounded border ${
@@ -348,7 +421,7 @@ if (order.userRole === 'buyer') {
             <option value={currentStatus}>
               {currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1)}
             </option>
-            {nextStatuses.map(status => (
+            {nextStatuses.map((status) => (
               <option key={status} value={status}>
                 {status.charAt(0).toUpperCase() + status.slice(1)}
               </option>
@@ -357,7 +430,7 @@ if (order.userRole === 'buyer') {
         );
       },
     },
-    { key: 'createdAt', label: 'Date' },
+    { key: "createdAt", label: "Date" },
   ];
 
   return (
@@ -367,30 +440,30 @@ if (order.userRole === 'buyer') {
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex space-x-8 px-6" aria-label="Tabs">
             <button
-              onClick={() => handleTabChange('customer')}
+              onClick={() => handleTabChange("customer")}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'customer'
-                  ? 'border-green-500 text-green-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                activeTab === "customer"
+                  ? "border-green-500 text-green-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`}
             >
               Customer Orders
-              {activeTab === 'customer' && (
+              {activeTab === "customer" && (
                 <span className="ml-2 bg-green-100 text-green-600 py-0.5 px-2.5 rounded-full text-xs font-medium">
                   {totalItems}
                 </span>
               )}
             </button>
             <button
-              onClick={() => handleTabChange('buyer')}
+              onClick={() => handleTabChange("buyer")}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'buyer'
-                  ? 'border-green-500 text-green-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                activeTab === "buyer"
+                  ? "border-green-500 text-green-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`}
             >
               Buyer Orders
-              {activeTab === 'buyer' && (
+              {activeTab === "buyer" && (
                 <span className="ml-2 bg-green-100 text-green-600 py-0.5 px-2.5 rounded-full text-xs font-medium">
                   {totalItems}
                 </span>
@@ -407,7 +480,8 @@ if (order.userRole === 'buyer') {
             No {activeTab} Orders Found
           </h3>
           <p className="text-gray-600 mb-6 max-w-md mx-auto">
-            There are currently no {activeTab} orders in the system. Orders will appear here once {activeTab}s start placing them.
+            There are currently no {activeTab} orders in the system. Orders will
+            appear here once {activeTab}s start placing them.
           </p>
           <button
             onClick={() => refetch()}
@@ -421,25 +495,52 @@ if (order.userRole === 'buyer') {
           <DynamicTable
             data={transformedData}
             columns={columns}
-            title={`${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Orders`}
+            title={`${
+              activeTab.charAt(0).toUpperCase() + activeTab.slice(1)
+            } Orders`}
             itemsPerPage={itemsPerPage}
             showAddButton={false}
-            // showActions={user?.role =='buyer'}
-            showFilter={false}
+            showFilter
+            filtersConfig={filters}
+            externalFilters={activeFilters}
+            onExternalFiltersChange={(updated) => {
+              setFilters((prev) =>
+                prev.map((f) => ({
+                  ...f,
+                  active: updated[f.name] || [],
+                }))
+              );
+              handlePageChange(1); // reset to page 1
+            }}
+            activeFiltersCount={filters.reduce(
+              (acc, f) => acc + (f.active?.length || 0),
+              0
+            )}
             onDelete={(id: string) => handleDeleteOrder(id)}
           />
+
           {totalPages > 1 && <TablePagination {...paginationProps} />}
         </>
       )}
 
       {/* Modals */}
-      <UserModal selectedUser={selectedUser} show={isModalOpen} closingModalFn={closingModalFn} />
-      <ItemsModal selectedOrderItems={selectedOrderItems} show={isItemsModalOpen} onclose={() => setIsItemsModalOpen(false)} />
+      <UserModal
+        selectedUser={selectedUser}
+        show={isModalOpen}
+        closingModalFn={closingModalFn}
+      />
+      <ItemsModal
+        selectedOrderItems={selectedOrderItems}
+        show={isItemsModalOpen}
+        onclose={() => setIsItemsModalOpen(false)}
+      />
       <CourierSelectionModal
         show={isCourierModalOpen}
         couriers={couriers}
         userRole={user?.role}
-        onSelectCourier={(courierId: string) => handleAssignToCourier(selectedOrderForCourier!, courierId)}
+        onSelectCourier={(courierId: string) =>
+          handleAssignToCourier(selectedOrderForCourier!, courierId)
+        }
         onClose={() => {
           setIsCourierModalOpen(false);
           setSelectedOrderForCourier(null);

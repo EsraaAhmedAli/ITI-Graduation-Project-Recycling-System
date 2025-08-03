@@ -10,7 +10,7 @@ interface TopRecyclersCardProps {
   loading: boolean;
 }
 
-const UserAvatar = memo<{ user: TopUser; index: number }>(({ user, index }) => {
+const UserAvatar = memo<{ user: TopUser; index: number }>(({ user }) => {
   if (user.imageUrl) {
     return (
       <Image
@@ -89,11 +89,13 @@ const TopRecyclersCard = memo<TopRecyclersCardProps>(({ topUsers, loading }) => 
       <ul className="mt-3 space-y-2">
         {topUsers.slice(0,3).map((user, idx) => (
           <li
-            key={user._id}
+          key={user.userId}
             className={`flex items-center gap-2 md:gap-3 py-2 md:py-3 px-2 rounded-lg transition-all duration-200 hover:shadow-md transform hover:scale-[1.02] ${getBackgroundClass(idx)}`}
+            
           >
             {/* Rank with Medal */}
             <div className="flex items-center justify-center w-6">
+
               <span 
                 className="font-bold text-sm md:text-lg flex items-center" 
                 style={{ color: MEDAL_COLORS[idx] || "#10b981" }}

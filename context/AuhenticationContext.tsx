@@ -2,7 +2,12 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 
 export type Role = "customer" | "delivery" | "buyer" | "admin";
-export type AuthMode = "login" | "signup" | "role-select" | "complete-signup";
+export type AuthMode =
+  | "login"
+  | "signup"
+  | "forgot-password"
+  | "role-select"
+  | "complete-signup";
 export type GoogleUser = {
   name: string;
   email: string;

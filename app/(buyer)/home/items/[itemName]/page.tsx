@@ -32,7 +32,7 @@ export default function ItemDetailsPage() {
   const { addToCart, loadingItemId } = useCart();
   const { t } = useLanguage();
   const { user } = useUserAuth();
-  const { getCategoryIdByItemName } = useCategories();
+  const { getCategoryIdByItemName, refetch } = useCategories();
 
   console.log("🔍 Item Details Page loaded:", {
     itemName,
@@ -137,15 +137,14 @@ export default function ItemDetailsPage() {
   function convertToCartItem(item: Item, quantity: number): CartItem {
     return {
       _id: item._id,
-      categoryId: item.categoryId,
+      categoryId: getCategoryIdByItemName(item.name),
       categoryName: item.categoryName,
-      itemName: item.name,
+      name: item.name,
       image: item.image,
       points: item.points,
       price: item.price,
       measurement_unit: item.measurement_unit,
       quantity,
-      originalCategoryId: getCategoryIdByItemName(item.name),
     };
   }
 

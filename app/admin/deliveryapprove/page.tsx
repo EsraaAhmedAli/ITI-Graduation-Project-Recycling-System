@@ -6,6 +6,7 @@ import DynamicTable from "@/components/shared/dashboardTable";
 import DeliveryAttachments from "@/components/shared/DeliveryAttachements";
 import { toast } from "react-hot-toast";
 import { Label, Modal, ModalBody, ModalHeader, Textarea, TextInput } from "flowbite-react";
+import Loader from "@/components/common/loader";
 
 // Compact Decline Modal Component
 const DeclineModal = ({ 
@@ -377,9 +378,7 @@ export default function Page() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="text-lg">Loading delivery data...</div>
-        </div>
+     <Loader title="delivery data"/>
       ) : (
         <>
           {/* ✅ ADD: Summary stats */}

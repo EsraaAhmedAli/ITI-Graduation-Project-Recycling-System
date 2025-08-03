@@ -56,6 +56,7 @@ const SocialButtons = () => {
         onSuccess={handleGoogleSuccess}
         onError={() => console.error("Google login failed")}
         useOneTap // optional: enables one-tap popup
+
       />
     </div>
   );

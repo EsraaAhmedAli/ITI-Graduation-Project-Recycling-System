@@ -9,6 +9,8 @@ import LoginForm from "./LoginForm";
 import RoleSelect from "@/app/newAuth/common/RoleSelectionStep";
 import SignUpForm from "./SignUpForm";
 import CompleteSignup from "../common/CompleteSignUp";
+import { useLanguage } from "@/context/LanguageContext";
+import ForgetPasswordForm from "./ForgotPasswordForm";
 export const roleConfig = {
   customer: {
     title: "Customer Registration",
@@ -54,7 +56,7 @@ export default function MainForm() {
     handleClose,
     resetState,
   } = useAuthenticationContext();
-
+  const {t} = useLanguage()
   const { handleSubmit, getValues, trigger } = useFormContext();
 
   const resetForm = () => {
@@ -124,9 +126,11 @@ export default function MainForm() {
       <div className="flex items-start justify-between p-5 border-b border-solid border-gray-200 rounded-t">
         <h3 className="text-xl font-semibold">
           {mode === "role-select"
-            ? "Choose Your Role"
+            ? t('auth.login.ChooseYourRole')
             : mode === "login"
             ? "Sign In"
+            : mode === "forgot-password"
+            ? "Forgot Password"
             : selectedRole
             ? roleConfig[selectedRole]?.title
             : "Sign Up"}
@@ -152,6 +156,7 @@ export default function MainForm() {
 
           {mode === "login" && <LoginForm />}
           {mode === "signup" && selectedRole && <SignUpForm />}
+          {mode === "forgot-password" && <ForgetPasswordForm />}
         </form>
       </div>
     </>

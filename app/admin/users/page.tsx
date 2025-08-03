@@ -10,17 +10,79 @@ import Image from "next/image";
 import Loader from "@/components/common/loader";
 import { useUsers } from "@/hooks/useGetUsers";
 import { useQueryClient } from "@tanstack/react-query";
+import FilterDrawer from "@/components/shared/dashboard/filter/FilterArea";
 
 const AdminUsersPage = () => {
   const router = useRouter();
-const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
 
-  const{data:users,isLoading,error}= useUsers()
+  const { data: users, isLoading, error } = useUsers();
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [userFilters, setUserFilters] = useState([
+    {
+      name: "role",
+      title: "Role",
+      type: "single-select" as const,
+      options: [
+        { label: "Admin", value: "admin" },
+        { label: "Customer", value: "customer" },
+        { label: "Buyer", value: "buyer" },
+        { label: "Delivery", value: "delivery" },
+      ],
+      active: [],
+    },
+    {
+      name: "status",
+      title: "Status",
+      type: "single-select" as const,
+      options: [
+        { label: "Online", value: "online" },
+        { label: "Offline", value: "offline" },
+      ],
+      active: [],
+    },
+    {
+      name: "prefix",
+      title: "Phone Prefix",
+      type: "multi-select" as const,
+      options: [
+        { label: "010", value: "010" },
+        { label: "011", value: "011" },
+        { label: "012", value: "012" },
+        { label: "015", value: "015" },
+      ],
+      active: [],
+    },
+  ]);
+
+  const activeRoleFilter =
+    userFilters.find((f) => f.name === "role")?.active || [];
+  const filteredUsers = users?.filter((user) => {
+    const roleFilter =
+      activeRoleFilter.length === 0 || activeRoleFilter.includes(user.role);
+
+    const statusFilterActive =
+      userFilters.find((f) => f.name === "status")?.active || [];
+    const isOnline = Math.random() < 0.5; // same as your mock
+    const status = isOnline ? "online" : "offline";
+    const statusFilter =
+      statusFilterActive.length === 0 || statusFilterActive.includes(status);
+
+    const prefixFilterActive =
+      userFilters.find((f) => f.name === "prefix")?.active || [];
+    const userPrefix = user.phoneNumber?.slice(0, 3);
+    const prefixFilter =
+      prefixFilterActive.length === 0 ||
+      prefixFilterActive.includes(userPrefix);
+
+    return roleFilter && statusFilter && prefixFilter;
+  });
+
   // const fetchUsers = async () => {
   //   try {
   //     const res = await api.get("/users"); // Your admin-protected endpoint
   //     console.log(res.data.data);
-      
+
   //     setUsers(res.data.data || res.data); // Adjust if paginated
   //   } catch (err: any) {
   //     setError(err?.response?.data?.message || "Failed to load users");
@@ -35,14 +97,11 @@ const queryClient = useQueryClient();
   // useEffect(() => {
   // }, [users]);
 
-
-
-
   const handleDelete = async (user: User) => {
     try {
       await api.delete(`/users/${user._id}`);
       toast.success("User deleted");
-    queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
     } catch {
       toast.error("Delete failed");
     }
@@ -77,19 +136,19 @@ const queryClient = useQueryClient();
     setIsModalOpen(true);
   };
 
-const handleSaveRole = async (id: string, newRole: User["role"]) => {
-  try {
-    await api.patch(`/users/${id}`, { role: newRole });
-    toast.success("Role updated!");
+  const handleSaveRole = async (id: string, newRole: User["role"]) => {
+    try {
+      await api.patch(`/users/${id}`, { role: newRole });
+      toast.success("Role updated!");
 
-    // 🔁 Refetch the users list
-    queryClient.invalidateQueries({ queryKey: ["users"] });
+      // 🔁 Refetch the users list
+      queryClient.invalidateQueries({ queryKey: ["users"] });
 
-    setIsModalOpen(false);
-  } catch (error) {
-    toast.error(`Failed to update role ${error}`);
-  }
-};
+      setIsModalOpen(false);
+    } catch (error) {
+      toast.error(`Failed to update role ${error}`);
+    }
+  };
   // Inside return:
 
   const columns = [
@@ -107,7 +166,19 @@ const handleSaveRole = async (id: string, newRole: User["role"]) => {
           className=" rounded-full object-cover"
         />
       );
-    } else {
+    } 
+    else if(user.role == 'delivery') {
+         return (
+        <Image
+        width={30}
+        height={30}
+          src={user.attachments.deliveryImage}
+          alt={user.name}
+          className=" rounded-full object-cover"
+        />
+      );
+    }
+    {
       return (
         <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-semibold uppercase">
           {user.name?.charAt(0) || "?"}
@@ -163,33 +234,51 @@ const handleSaveRole = async (id: string, newRole: User["role"]) => {
   ];
 
   return (
-      <>
-          {isLoading ? (
-        <Loader title="users"/>
+    <>
+      {isLoading ? (
+        <Loader title="users" />
       ) : error ? (
         <p className="text-center py-10 text-red-500">{error}</p>
       ) : users?.length === 0 ? (
         <p className="text-center py-10 text-gray-400">No users found.</p>
       ) : (
         <DynamicTable
-          data={users}
+          data={filteredUsers}
           columns={columns}
           title="Users"
-          itemsPerPage={8}
+          itemsPerPage={5}
           addButtonText="Add User"
+          showFilter={true} // ✅ add this!
           showAddButton={false}
           onDelete={handleDelete}
           onEdit={handleChangeRole}
+          filtersConfig={userFilters} // ✅ pass filtersConfig
+          externalFilters={Object.fromEntries(
+            userFilters.map((f) => [f.name, f.active])
+          )} // ✅ convert your filter shape
+          onExternalFiltersChange={(updated) => {
+            setUserFilters((prev) =>
+              prev.map((f) => ({
+                ...f,
+                active: updated[f.name] || [],
+              }))
+            );
+          }}
+          setShowFilters={setIsFilterOpen}
+          activeFiltersCount={userFilters.reduce(
+            (count, f) => count + (f.active?.length || 0),
+            0
+          )}
         />
       )}
+
       <EditUserRoleModal
         user={selectedUser}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveRole}
       />
-      </>
-  
+    </>
   );
 };
 

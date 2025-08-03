@@ -35,24 +35,75 @@ function ProfileContent() {
   });
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [loadingMore, setLoadingMore] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState("incoming");
   const [isRecyclingModalOpen, setIsRecyclingModalOpen] = useState(false);
   const [isItemsModalOpen, setIsItemsModalOpen] = useState(false);
   const { t } = useLanguage();
 
-  const getAllOrders = async (): Promise<void> => {
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasNextPage, setHasNextPage] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalCompletedOrders, setTotalCompletedOrders] = useState(0);
+  const ordersPerPage = 4;
+
+  const getAllOrders = async (page: number = 1, append: boolean = false): Promise<void> => {
     try {
-      setLoading(true);
-      const res = await api.get<OrdersResponse>("/orders");
-      setAllOrders(res.data.data);
+      if (!append) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
+      
+      // Map activeTab to status parameter
+      let statusParam = "";
+      if (activeTab === "incoming") {
+        statusParam = "incoming";
+      } else if (activeTab === "completed") {
+        statusParam = "completed";
+      } else if (activeTab === "cancelled") {
+        statusParam = "cancelled";
+      }
+      
+      const res = await api.get<{
+        success: boolean;
+        count: number;
+        totalCount: number;
+        totalCompletedOrders: number;
+        data: Order[];
+        pagination: {
+          currentPage: number;
+          totalPages: number;
+          hasNextPage: boolean;
+          hasPrevPage: boolean;
+          limit: number;
+        };
+      }>(`/orders?page=${page}&limit=${ordersPerPage}&status=${statusParam}`);
+      
+      if (append) {
+        setAllOrders(prev => [...prev, ...res.data.data]);
+      } else {
+        setAllOrders(res.data.data);
+      }
+      
+      setCurrentPage(res.data.pagination.currentPage);
+      setHasNextPage(res.data.pagination.hasNextPage);
+      setTotalCount(res.data.totalCount);
+      setTotalCompletedOrders(res.data.totalCompletedOrders);
+      
       console.log(res.data.data);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
+  const loadMoreOrders = async () => {
+    await getAllOrders(currentPage + 1, true);
+  };
 
   const refreshPoints = async () => {
     await getUserPoints();
@@ -80,11 +131,10 @@ function ProfileContent() {
       if (result.isConfirmed) {
         try {
           await cancelOrder(orderId);
-          setAllOrders((prev) =>
-            prev.map((order) =>
-              order._id === orderId ? { ...order, status: "cancelled" } : order
-            )
-          );
+          // Reload the current tab's data to ensure consistency
+          setCurrentPage(1);
+          setAllOrders([]);
+          await getAllOrders(1, false);
           Swal.fire("Order cancelled", "", "success");
         } catch (error) {
           console.error("Failed to cancel order:", error);
@@ -95,13 +145,24 @@ function ProfileContent() {
       }
     });
   };
-
   useEffect(() => {
     if (user && token) {
-      getAllOrders();
-      getUserPoints(); // Fetch user points
+      // Reset pagination when component mounts or user changes
+      setCurrentPage(1);
+      setAllOrders([]);
+      getAllOrders(1, false);
+      getUserPoints();
     }
   }, [user, token]);
+
+  // Reset orders and pagination when tab changes
+  useEffect(() => {
+    if (user && token) {
+      setCurrentPage(1);
+      setAllOrders([]);
+      getAllOrders(1, false);
+    }
+  }, [activeTab]);
 
   const [selectedOrderItems, setSelectedOrderItems] = useState<any[]>([]);
 
@@ -116,27 +177,21 @@ function ProfileContent() {
   };
 
   const filteredOrders = allOrders.filter((order) => {
-    const status = order.status;
-
-    if (user?.role === "buyer" && status === "cancelled") {
+    // Additional filtering for buyer role (hide cancelled orders)
+    if (user?.role === "buyer" && order.status === "cancelled") {
       return false;
     }
-    if (activeTab === "incoming") {
-      return ["pending", "assigntocourier"].includes(status);
-    }
-    if (activeTab === "completed") {
-      return status === "completed";
-    }
-    if (activeTab === "cancelled") {
-      return status === "cancelled";
-    }
+    // No need to filter by status here since backend already filtered
     return true;
   });
 
+  // Calculate if we should show "See More" button
+  const shouldShowSeeMore = hasNextPage && filteredOrders.length >= 4;
+
   // Updated stats to use stored points instead of calculated points
   const stats = {
-    totalRecycles: allOrders.filter((or) => or.status == "completed")?.length,
-    points: userPoints?.totalPoints || 0, // Use stored points
+    totalRecycles: totalCompletedOrders, // Use total from backend, not filtered local orders
+    points: userPoints?.totalPoints || 0,
     categories: 4,
     tier: 50,
   };
@@ -253,78 +308,104 @@ function ProfileContent() {
         ) : filteredOrders.length === 0 ? (
           <p className="text-center text-gray-500">No orders in this tab yet.</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredOrders.map((order) => (
-              <div
-                key={order._id}
-                className=" rounded-xl p-4 bg-green-50 shadow-sm flex flex-col justify-between"
-              >
-                <div className="flex justify-between items-center mb-2 text-sm text-gray-600">
-                  <span>
-                    {t("profile.orders.date")}: {new Date(order.createdAt).toLocaleDateString()}
-                  </span>
-                  <span className="flex items-center gap-1 font-semibold">
-                    {["assigntocourier"].includes(order.status) && (
-                      <>
-                        <Truck size={16} className="text-yellow-600" />
-                        <span className="text-yellow-700">
-                          {t("profile.orders.status.inTransit")}
-                        </span>
-                      </>
-                    )}
-                    {["pending"].includes(order.status) && (
-                      <>
-                        <Clock1 size={16} className="text-yellow-400" />
-                        <span className="text-yellow-400">
-                          {t("profile.orders.status.pending")}
-                        </span>
-                      </>
-                    )}
-                    {order.status === "completed" && (
-                      <>
-                        <CheckCircle size={16} className="text-green-600" />
-                        <span className="text-green-700">
-                          {t("profile.orders.status.completed")}
-                        </span>
-                      </>
-                    )}
-                    {order.status === "cancelled" && (
-                      <>
-                        <XCircle size={16} className="text-red-600" />
-                        <span className="text-red-700 capitalize">
-                          {t("profile.orders.status.cancelled")}
-                        </span>
-                      </>
-                    )}
-                  </span>
-                </div>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredOrders.map((order) => (
+                <div
+                  key={order._id}
+                  className="rounded-xl p-4 bg-green-50 shadow-sm flex flex-col justify-between"
+                >
+                  <div className="flex justify-between items-center mb-2 text-sm text-gray-600">
+                    <span>
+                      {t("profile.orders.date")}: {new Date(order.createdAt).toLocaleDateString()}
+                    </span>
+                    <span className="flex items-center gap-1 font-semibold">
+                      {["assigntocourier"].includes(order.status) && (
+                        <>
+                          <Truck size={16} className="text-yellow-600" />
+                          <span className="text-yellow-700">
+                            {t("profile.orders.status.inTransit")}
+                          </span>
+                        </>
+                      )}
+                      {["pending"].includes(order.status) && (
+                        <>
+                          <Clock1 size={16} className="text-yellow-400" />
+                          <span className="text-yellow-400">
+                            {t("profile.orders.status.pending")}
+                          </span>
+                        </>
+                      )}
+                      {order.status === "completed" && (
+                        <>
+                          <CheckCircle size={16} className="text-green-600" />
+                          <span className="text-green-700">
+                            {t("profile.orders.status.completed")}
+                          </span>
+                        </>
+                      )}
+                      {order.status === "cancelled" && (
+                        <>
+                          <XCircle size={16} className="text-red-600" />
+                          <span className="text-red-700 capitalize">
+                            {t("profile.orders.status.cancelled")}
+                          </span>
+                        </>
+                      )}
+                    </span>
+                  </div>
 
-                {/* Address summary */}
-                <div className="text-xs text-gray-500 mb-4">
-                  {order.address.street}, Bldg {order.address.building}, Floor{" "}
-                  {order.address.floor}, {order.address.area}, {order.address.city}
-                </div>
+                  {/* Address summary */}
+                  <div className="text-xs text-gray-500 mb-4">
+                    {order.address.street}, Bldg {order.address.building}, Floor{" "}
+                    {order.address.floor}, {order.address.area}, {order.address.city}
+                  </div>
 
-                <div className="flex justify-between">
-                  <button
-                    onClick={() => openItemsModal(order.items)}
-                    className="self-start text-sm  text-green-500 rounded-md transition"
-                  >
-                    {t("profile.orders.viewDetails")}
-                  </button>
-                  {order.status == "pending" && user?.role == "customer" ? (
+                  <div className="flex justify-between">
                     <button
-                      onClick={() => handleCancelOrder(order._id)}
-                      className="self-start text-sm  text-red-500 rounded-md transition"
+                      onClick={() => openItemsModal(order.items)}
+                      className="self-start text-sm text-green-500 rounded-md transition"
                     >
-                      {t("profile.orders.cancelOrder")}
+                      {t("profile.orders.viewDetails")}
                     </button>
-                  ) : (
-                    ""
-                  )}
+                    {order.status == "pending" && user?.role == "customer" ? (
+                      <button
+                        onClick={() => handleCancelOrder(order._id)}
+                        className="self-start text-sm text-red-500 rounded-md transition"
+                      >
+                        {t("profile.orders.cancelOrder")}
+                      </button>
+                    ) : (
+                      ""
+                    )}
+                  </div>
                 </div>
+              ))}
+            </div>
+
+            {/* See More Button */}
+            {shouldShowSeeMore && (
+              <div className="flex justify-center mt-6">
+                <button
+                  onClick={loadMoreOrders}
+                  disabled={loadingMore}
+                  className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-full hover:bg-green-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loadingMore ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                      Loading...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCcw size={16} />
+                      See More Orders
+                    </>
+                  )}
+                </button>
               </div>
-            ))}
+            )}
+
             <ItemsModal
               userRole={user?.role}
               show={isItemsModalOpen}

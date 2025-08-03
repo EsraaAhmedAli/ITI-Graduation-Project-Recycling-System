@@ -66,7 +66,8 @@
     "startRecycling": "Start Recycling",
     "logout": "Logout",
     "title": "XChange",
-    "searchplaceholder": "Search items..."
+    "searchplaceholder": "Search items...",
+    "myCart": "Cart"
   },
 
   "footer": {
@@ -80,7 +81,10 @@
     "contact": "Contact",
     "email": "Email",
     "phone": "Phone",
-    "rights": "All rights reserved."
+    "rights": "All rights reserved.",
+    "ContactUs": "Contact Us",
+    "Eco-Friendly Platform": "Eco-Friendly Platform",
+    "support": "Support"
   },
   "breadcrumbs": {
     "home": "Home",
@@ -144,13 +148,18 @@
       "email": "Email",
       "password": "Password",
       "emailError": "Invalid email format",
+      "emailrequired": "Email is required",
+      "passwordrequired": "password is required",
       "passwordError": "8–20 characters, 1 uppercase, 1 number, 1 symbol",
       "signIn": "Sign in",
       "signingIn": "Signing in...",
       "forgotPassword": "Forgot your password?",
       "securityNote": "Don’t worry, your information is 100% secure.",
       "loginFailed": "Login failed. Please check your credentials.",
-      "loginSuccess": "welcome back !"
+      "loginSuccess": "welcome back !",
+      "dontHaveAccount": "Don't have an account? Sign up",
+      "ChooseYourRole": "Choose Your Role",
+      "typeOfAccount": "Select the type of account you'd like to create."
     }
   },
   "profile": {
@@ -238,12 +247,21 @@
       "mobile": "Mobile",
       "laptop": "laptop",
       "receiver": "receiver",
-      "powerbank":"powerbank",
-      "tea-pot" : "tea pot"
+      "powerbank": "powerbank",
+      "tea-pot": "tea pot"
+
     }
   },
 
   "common": {
+    "adding": "adding",
+    "invalidQuantity": "Please enter a valid quantity",
+    "exceedsMaxQuantity": "Maximum available quantity is {{max}}",
+    "wholeNumbersOnly": "Only whole numbers are allowed for this item",
+    "minimumQuantity": "Minimum quantity is {{min}} kg",
+    "invalidIncrement": "Quantity must be in increments of {{increment}} kg",
+    "kgIncrement": "Minimum 0.25 kg, increments of 0.25 kg",
+    "wholeNumbers": "Whole numbers only",
     "collectionsPlural": "Collection",
     "pointsAbbreviation": "pts",
     "allCategories": "All Categories",
@@ -253,13 +271,17 @@
     "page": "Page",
     "outOfStock": "Out of Stock",
     "addToRecyclingCart": "Add to Recycling Cart",
+    "removeFromRecyclingCart": "Remove From Recycling Cart",
+    "processing": "processing",
     "availableStock": "Available Stock",
     "afterPurchase": "After purchase: {{quantity}} {{unit}}",
     "percentageRemaining": "{{percentage}}% remaining",
     "quantity": "Quantity",
     "unitKg": "kg",
     "unitPiece": "piece",
-    "lowStockWarning" : "low stock"
+    "lowStockWarning": "low stock",
+    "startAdding": "start adding",
+    "removeFromCart": "Remove from cart"
   },
   "marketPlace": {
     "sustainableMarketplace": "Sustainable Marketplace",
@@ -310,6 +332,20 @@
     "newLife": {
       "title": "New Life",
       "description": "Materials are reused in new products."
+    }
+  },
+  "registration": {
+    "customer": {
+      "title": "Customer Registration",
+      "description": "Join our recycling community"
+    },
+    "delivery": {
+      "title": "Delivery Partner Registration",
+      "description": "Become a verified delivery partner"
+    },
+    "buyer": {
+      "title": "Business Buyer Registration",
+      "description": "Register your business to purchase recycled materials"
     }
   }
 }

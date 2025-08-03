@@ -1,16 +1,16 @@
-
 "use client";
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios";
-import { CartItem, useCart } from "@/context/CartContext";
+import { useCart } from "@/context/CartContext";
+import { CartItem } from "@/models/cart";
 import { Recycle, Leaf, Package, Minus, Plus } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
-import { useUserAuth } from "@/context/AuthFormContext";
 import Loader from "@/components/common/loader";
 import { useCategories } from "@/hooks/useGetCategories";
+import toast from "react-hot-toast";
 
 interface Item {
   _id: string;
@@ -30,10 +30,38 @@ export default function ItemDetailsPage() {
   const decodedName =
     typeof itemName === "string" ? decodeURIComponent(itemName) : "";
   const [selectedQuantity, setSelectedQuantity] = useState(1);
-  const { addToCart, loadingItemId } = useCart();
+  const [inputValue, setInputValue] = useState("1"); // For the input field
+  const [inputError, setInputError] = useState("");
+  const {
+    loadingItemId,
+    cart,
+
+    updateCartState,
+  } = useCart();
   const { t } = useLanguage();
-  const { user } = useUserAuth();
   const { getCategoryIdByItemName } = useCategories();
+
+  useEffect(() => {
+    const decodedName = decodeURIComponent(itemName?.toString().toLowerCase());
+
+    const existing = cart.find(
+      (item) => item.name.toLowerCase() === decodedName
+    );
+    if (existing) {
+      setSelectedQuantity(existing.quantity);
+      setInputValue(existing.quantity.toString());
+    }
+  }, [cart, itemName]);
+
+  console.log("🔍 Item Details Page loaded:", {
+    itemName,
+    decodedName,
+    params: useParams(),
+  });
+
+  useEffect(() => {
+    console.log("🛒 Updated cart:", cart);
+  }, [cart]);
 
   // Fetch specific item by name using existing API (original prices only)
   const fetchItemByName = async () => {
@@ -60,7 +88,6 @@ export default function ItemDetailsPage() {
     data: item,
     isLoading,
     isError,
-    error,
   } = useQuery({
     queryKey: ["item-details", decodedName],
     queryFn: fetchItemByName,
@@ -69,16 +96,114 @@ export default function ItemDetailsPage() {
 
   const getMeasurementText = (unit: 1 | 2): string => {
     return unit === 1
-      ? t("common.unitKg", { defaultValue: " kg" })
-      : t("common.unitPiece", { defaultValue: " item" });
+      ? t("common.unitKg")
+      : t("common.unitPiece");
   };
 
-  // Initialize selectedQuantity when item is loaded
-  useEffect(() => {
-    if (item) {
-      setSelectedQuantity(1); // Always start with 1
+  // Validation function for quantity input
+  const validateQuantity = (value: string, measurementUnit: 1 | 2, maxQuantity: number): { isValid: boolean; errorMessage: string; validValue: number } => {
+    const numValue = parseFloat(value);
+    
+    // Check if it's a valid number
+    if (isNaN(numValue) || numValue <= 0) {
+      return {
+        isValid: false,
+        errorMessage: t("common.invalidQuantity"),
+        validValue: 1
+      };
     }
-  }, [item]);
+
+    // Check maximum limit
+    if (numValue > maxQuantity) {
+      return {
+        isValid: false,
+        errorMessage: t("common.exceedsMaxQuantity", { 
+          max: maxQuantity, 
+          defaultValue: `Maximum available quantity is ${maxQuantity}` 
+        }),
+        validValue: maxQuantity
+      };
+    }
+
+    // For measurement unit 2 (pieces) - only whole numbers
+    if (measurementUnit === 2) {
+      if (!Number.isInteger(numValue)) {
+        return {
+          isValid: false,
+          errorMessage: t("common.wholeNumbersOnly"),
+          validValue: Math.floor(numValue) || 1
+        };
+      }
+    }
+
+    // For measurement unit 1 (kg) - minimum 0.25, multiples of 0.25
+    if (measurementUnit === 1) {
+      const minValue = 0.25;
+      if (numValue < minValue) {
+        return {
+          isValid: false,
+          errorMessage: t("common.minimumQuantity", { 
+            min: minValue, 
+            defaultValue: `Minimum quantity is ${minValue} kg` 
+          }),
+          validValue: minValue
+        };
+      }
+
+      // Check if it's a multiple of 0.25
+      const remainder = (numValue * 100) % 25; // Convert to avoid floating point issues
+      if (remainder !== 0) {
+        const roundedValue = Math.round(numValue * 4) / 4; // Round to nearest 0.25
+        return {
+          isValid: false,
+          errorMessage: t("common.invalidIncrement", { 
+            increment: "0.25", 
+            defaultValue: "Quantity must be in increments of 0.25 kg" 
+          }),
+          validValue: roundedValue
+        };
+      }
+    }
+
+    return {
+      isValid: true,
+      errorMessage: "",
+      validValue: numValue
+    };
+  };
+
+  // Handle input change
+  const handleInputChange = (value: string) => {
+    setInputValue(value);
+    
+    if (!item) return;
+
+    const validation = validateQuantity(value, item.measurement_unit, item.quantity);
+    
+    if (validation.isValid) {
+      setSelectedQuantity(validation.validValue);
+      setInputError("");
+    } else {
+      setInputError(validation.errorMessage);
+    }
+  };
+
+  // Handle input blur (when user finishes typing)
+  const handleInputBlur = () => {
+    if (!item) return;
+
+    const validation = validateQuantity(inputValue, item.measurement_unit, item.quantity);
+    
+    if (!validation.isValid) {
+      // Auto-correct to valid value
+      setSelectedQuantity(validation.validValue);
+      setInputValue(validation.validValue.toString());
+      setInputError("");
+      
+      // Show toast with correction message
+      toast.error(validation.errorMessage);
+    }
+  };
 
   if (isLoading) {
     return <Loader title="items" />;
@@ -102,38 +227,83 @@ export default function ItemDetailsPage() {
             onClick={() => window.history.back()}
             className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
           >
-            {t("common.goBack", { defaultValue: "Go Back" })}
+            {t("common.goBack")}
           </button>
         </div>
       </div>
     );
   }
 
-  function convertToCartItem(item: Item, quantity: number): CartItem {
+  function convertToCartItem(item: Item, quantity?: number): CartItem {
     return {
-      categoryId: item._id,
       _id: item._id,
+      categoryId: getCategoryIdByItemName(item.name),
       categoryName: item.categoryName,
-      itemName: item.name,
+      name: item.name,
       image: item.image,
       points: item.points,
       price: item.price,
       measurement_unit: item.measurement_unit,
-      quantity,
-      originalCategoryId: getCategoryIdByItemName(item.name),
+      quantity: quantity ?? item.quantity,
     };
   }
 
   const remainingQuantity = item?.quantity - selectedQuantity;
   const isLowStock = item?.quantity <= 5;
   const isOutOfStock = item?.quantity <= 0;
-  const stockPercentage = Math.min(
-    100,
-    (remainingQuantity / item?.quantity) * 100
+  const isInCart = cart.some((cartItem) => cartItem._id === item._id);
+  const stockPercentage = Math.max(
+    0,
+    Math.min(100, (remainingQuantity / item.quantity) * 100)
   );
 
   const handleAddToCart = () => {
-    addToCart(convertToCartItem(item, selectedQuantity));
+    if (!isOutOfStock && remainingQuantity >= 0) {
+      console.log("🛒 Adding to cart:", {
+        item: item.name,
+        quantity: selectedQuantity,
+      });
+      const newItem = convertToCartItem(item, selectedQuantity);
+
+      const existingIndex = cart.findIndex((ci) => ci._id === newItem._id);
+
+      let updatedCart;
+      if (existingIndex !== -1) {
+        updatedCart = cart.map((ci, idx) =>
+          idx === existingIndex ? newItem : ci
+        );
+      } else {
+        updatedCart = [...cart, newItem];
+      }
+
+      updateCartState(updatedCart);
+    }
+  };
+
+  const handleOperation = (op: "+" | "-") => {
+    const step = item.measurement_unit === 1 ? 0.25 : 1;
+    const appliedStep = op === "+" ? step : -step;
+    const newQuantity = selectedQuantity + appliedStep;
+    
+    // Validate the new quantity
+    const validation = validateQuantity(newQuantity.toString(), item.measurement_unit, item.quantity);
+    
+    if (validation.isValid) {
+      setSelectedQuantity(validation.validValue);
+      setInputValue(validation.validValue.toString());
+      setInputError("");
+    }
+  };
+
+  const handleToggleCart = () => {
+    if (isInCart) {
+      const toRemove = convertToCartItem(item);
+      updateCartState(cart.filter((ci) => ci._id !== toRemove._id));
+      setSelectedQuantity(1);
+      setInputValue("1");
+    } else if (!isOutOfStock) {
+      handleAddToCart();
+    }
   };
 
   return (
@@ -158,16 +328,13 @@ export default function ItemDetailsPage() {
             {/* Category and Title */}
             <div>
               <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 mb-3">
-                {t(`categories.${item?.categoryName}`, {
-                  defaultValue: item?.categoryName,
-                })}
+                {t(`categories.${item?.categoryName}`)}
               </span>
               <h1 className="text-3xl font-bold text-gray-900">
                 {t(
                   `categories.subcategories.${decodedName
                     .toLowerCase()
-                    .replace(/\s+/g, "-")}`,
-                  { defaultValue: item?.name }
+                    .replace(/\s+/g, "-")}`
                 )}
               </h1>
               {item?.description && (
@@ -178,7 +345,8 @@ export default function ItemDetailsPage() {
             {/* Price and Points */}
             <div className="flex items-baseline space-x-4">
               <span className="text-3xl font-bold text-gray-900">
-                {(item.price * selectedQuantity).toFixed(2)} {t('itemsModal.currency')}
+                {(item.price * selectedQuantity).toFixed(2)}{" "}
+                {t("itemsModal.currency")}
               </span>
             </div>
 
@@ -186,9 +354,7 @@ export default function ItemDetailsPage() {
             <div className="pt-4 border-t border-gray-200">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-gray-700">
-                  {t("common.availableStock", {
-                    defaultValue: "Available Stock",
-                  })}
+                  {t("common.availableStock")}
                 </span>
                 <span
                   className={`text-sm font-medium ${
@@ -200,7 +366,7 @@ export default function ItemDetailsPage() {
                   }`}
                 >
                   {isOutOfStock
-                    ? t("common.outOfStock", { defaultValue: "Out of Stock" })
+                    ? t("common.outOfStock")
                     : `${item?.quantity} ${getMeasurementText(
                         item.measurement_unit
                       )}`}
@@ -266,28 +432,42 @@ export default function ItemDetailsPage() {
               )}
             </div>
 
-            {/* Quantity Selector */}
-            <div className="space-y-2">
+            {/* Enhanced Quantity Selector */}
+            {
+              item.quantity !==0 && <>
+                  <div className="space-y-3">
               <label className="block text-sm font-medium text-gray-700">
-                {t("common.quantity", { defaultValue: "Quantity" })}
+                {t("common.quantity")}
               </label>
               <div className="flex items-center space-x-3">
                 <button
-                  onClick={() =>
-                    setSelectedQuantity((prev) => Math.max(1, prev - 1))
+                  onClick={() => handleOperation("-")}
+                  disabled={
+                    selectedQuantity <= (item.measurement_unit === 1 ? 0.25 : 1)
                   }
-                  disabled={selectedQuantity <= 1}
                   className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Minus className="w-4 h-4" />
                 </button>
-                <span className="w-10 text-center font-medium">
-                  {selectedQuantity} {/* Display as integer */}
-                </span>
+                
+                {/* Input Field */}
+                <div className="flex flex-col min-w-0">
+                  <input
+                    type="text"
+                    value={inputValue}
+                    onChange={(e) => handleInputChange(e.target.value)}
+                    onBlur={handleInputBlur}
+                    className={`w-20 px-3 py-2 text-center font-medium border rounded-lg focus:outline-none focus:ring-2 ${
+                      inputError
+                        ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                        : "border-gray-300 focus:ring-green-500 focus:border-green-500"
+                    }`}
+                    placeholder={item.measurement_unit === 1 ? "0.25" : "1"}
+                  />
+                </div>
+
                 <button
-                  onClick={() =>
-                    setSelectedQuantity((prev) => Math.min(item.quantity, prev + 1))
-                  }
+                  onClick={() => handleOperation("+")}
                   disabled={selectedQuantity >= item.quantity}
                   className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -297,15 +477,36 @@ export default function ItemDetailsPage() {
                   {getMeasurementText(item.measurement_unit)}
                 </span>
               </div>
+              
+              {/* Error message with proper spacing */}
+              {inputError && (
+                <div className="text-xs text-red-500 bg-red-50 border border-red-200 rounded-md p-2">
+                  {inputError}
+                </div>
+              )}
+              
+              {/* Helper text */}
+              <p className="text-xs text-gray-500">
+                {item.measurement_unit === 1
+                  ? t("common.kgIncrement", { 
+                      defaultValue: "Minimum 0.25 kg, increments of 0.25 kg" 
+                    })
+                  : t("common.wholeNumbers", { 
+                      defaultValue: "Whole numbers only" 
+                    })
+                }
+              </p>
             </div>
 
             {/* Add to Cart Button */}
             <button
-              onClick={handleAddToCart}
-              disabled={isOutOfStock || loadingItemId === item._id}
+              onClick={handleToggleCart}
+              disabled={isOutOfStock || loadingItemId === item._id || !!inputError}
               className={`w-full py-3 px-6 rounded-lg font-medium flex items-center justify-center space-x-2 transition-colors ${
-                isOutOfStock || loadingItemId === item._id
+                isOutOfStock || loadingItemId === item._id || !!inputError
                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : isInCart
+                  ? "bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg"
                   : "bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg"
               }`}
             >
@@ -315,17 +516,19 @@ export default function ItemDetailsPage() {
                 <Package className="w-5 h-5" />
               )}
               <span>
-                {isOutOfStock
-                  ? t("common.outOfStock", { defaultValue: "Out of Stock" })
+                {isOutOfStock && !isInCart
+                  ? t("common.outOfStock")
                   : loadingItemId === item._id
-                  ? t("common.adding", { defaultValue: "Adding..." })
-                  : t("common.addToRecyclingCart", {
-                      defaultValue: "Add to Cart",
-                    })}
+                  ? t("common.processing")
+                  : isInCart
+                  ? t("common.removeFromRecyclingCart",)
+                  : t("common.addToRecyclingCart",)}
               </span>
             </button>
+              </>
+            }
+        
 
-            {/* Environmental Benefits */}
             <div className="bg-gray-50 rounded-xl p-5 space-y-3">
               <h3 className="font-semibold text-gray-800 flex items-center">
                 <Leaf className="w-5 h-5 mr-2 text-green-600" />

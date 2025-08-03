@@ -39,6 +39,7 @@
     "react-pro-sidebar": "^1.1.0",
     "react-qr-code": "^2.0.18",
     "react-toastify": "^11.0.5",
+    "react-use": "^17.6.0",
     "recharts": "^3.1.0",
     "socket.io-client": "^4.8.1",
     "stripe": "^18.3.0",
