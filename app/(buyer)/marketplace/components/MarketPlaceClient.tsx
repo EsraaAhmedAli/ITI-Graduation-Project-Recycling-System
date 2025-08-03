@@ -43,7 +43,6 @@ interface MarketplaceClientProps {
 const OptimizedItemImage = ({
   item,
   priority = false,
-  index = 0,
 }: {
   item: Item;
   priority?: boolean;
@@ -160,7 +159,7 @@ const [pagination, setPagination] = useState(initialData.pagination);
 // }, [currentPage, itemsPerPage, user?.role]);
 
 
-const { data, isLoading, error } = useGetItems({
+const { data, isLoading } = useGetItems({
   currentPage,
   itemsPerPage,
   userRole: user?.role,
@@ -168,7 +167,7 @@ const { data, isLoading, error } = useGetItems({
 useEffect(() => {
   if (data) {
     setItems(data?.data);
-    setPagination(data.pagination);
+    setPagination(data?.pagination);
   }
 }, [data]);
   const fetchAllCategories = useCallback(async () => {

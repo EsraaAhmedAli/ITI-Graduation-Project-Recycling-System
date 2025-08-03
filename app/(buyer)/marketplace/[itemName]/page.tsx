@@ -437,7 +437,7 @@ export default function ItemDetailsPage() {
               item.quantity !==0 && <>
                   <div className="space-y-3">
               <label className="block text-sm font-medium text-gray-700">
-                {t("common.quantity", { defaultValue: "Quantity" })}
+                {t("common.quantity")}
               </label>
               <div className="flex items-center space-x-3">
                 <button

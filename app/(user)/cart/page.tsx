@@ -23,9 +23,7 @@ export default function CartPage() {
     cart,
     removeFromCart,
     clearCart,
-    increaseQty,
-    decreaseQty,
-    checkInventoryEnhanced,
+
     userRole,
     updateCartState,
   } = useCart();
@@ -155,7 +153,7 @@ export default function CartPage() {
     const maxQuantity = userRole === "buyer" ? stockLevels[itemId] || 999 : 999;
     const validation = validateQuantity(
       value,
-      item.measurement_unit,
+      item.measurement_unit as 1 | 2,
       maxQuantity,
       itemId
     );
@@ -176,7 +174,7 @@ export default function CartPage() {
     const maxQuantity = userRole === "buyer" ? stockLevels[itemId] || 999 : 999;
     const validation = validateQuantity(
       value,
-      item.measurement_unit,
+      item.measurement_unit as 1 |2,
       maxQuantity,
       itemId
     );
@@ -435,7 +433,7 @@ export default function CartPage() {
             )}
 
             <AnimatePresence>
-              {cart.map((item, idx) => (
+              {cart.map((item) => (
                 <motion.div
                   key={item._id}
                   variants={itemVariants}

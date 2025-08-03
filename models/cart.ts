@@ -22,4 +22,5 @@ export interface CartItem {
   price: number;
   measurement_unit: number;
   quantity: number;
+  co2_saved:number
 }
