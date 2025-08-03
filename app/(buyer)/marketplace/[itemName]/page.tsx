@@ -358,7 +358,13 @@ export default function ItemDetailsPage() {
                 {isOutOfStock && !isInCart
                   ? t("common.outOfStock", { defaultValue: "Out of Stock" })
                   : loadingItemId === item._id
-                  ? t("common.adding", { defaultValue: "Adding..." })
+                  ? t("common.processing", {
+                      defaultValue: isInCart ? "Removing..." : "Adding...",
+                    })
+                  : isInCart
+                  ? t("common.removeFromRecyclingCart", {
+                      defaultValue: "Remove from Cart",
+                    })
                   : t("common.addToRecyclingCart", {
                       defaultValue: "Add to Cart",
                     })}

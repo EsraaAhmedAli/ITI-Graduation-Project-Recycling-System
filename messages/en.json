@@ -238,8 +238,8 @@
       "mobile": "Mobile",
       "laptop": "laptop",
       "receiver": "receiver",
-      "powerbank":"powerbank",
-      "tea-pot" : "tea pot"
+      "powerbank": "powerbank",
+      "tea-pot": "tea pot"
     }
   },
 
@@ -253,13 +253,15 @@
     "page": "Page",
     "outOfStock": "Out of Stock",
     "addToRecyclingCart": "Add to Recycling Cart",
+    "removeFromRecyclingCart": "Remove From Recycling Cart",
+    "processing": "processing",
     "availableStock": "Available Stock",
     "afterPurchase": "After purchase: {{quantity}} {{unit}}",
     "percentageRemaining": "{{percentage}}% remaining",
     "quantity": "Quantity",
     "unitKg": "kg",
     "unitPiece": "piece",
-    "lowStockWarning" : "low stock"
+    "lowStockWarning": "low stock"
   },
   "marketPlace": {
     "sustainableMarketplace": "Sustainable Marketplace",
