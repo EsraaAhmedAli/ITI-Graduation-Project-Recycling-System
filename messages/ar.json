@@ -247,6 +247,7 @@
 
   "common": {
     "collectionsPlural": "مجموعات",
+    "adding" : "اضافة",
     "pointsAbbreviation": "نقاط",
     "allCategories": "جميع الفئات",
     "showing": "عرض",
@@ -262,7 +263,9 @@
     "unitPiece": "قطعة",
     "quantity": "الكمية",
     "lowStockWarning": "مخزون منخفض",
-    "startAdding": "ابدأ بالأضافة"
+    "startAdding": "ابدأ بالأضافة",
+        "removeFromCart" : "احذف من عربة التسوق"
+
   },
   "marketPlace": {
     "sustainableMarketplace": "الأسواق المستدامة",

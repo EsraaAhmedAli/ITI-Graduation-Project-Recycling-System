@@ -50,19 +50,19 @@ const Transactions: React.FC = () => {
 
   const [showFilters, setShowFilters] = useState(false);
   const [tempFilters, setTempFilters] = useState<PaymentFilters>(filters);
- const [refundModal, setRefundModal] = useState<{
+  const [refundModal, setRefundModal] = useState<{
     isOpen: boolean;
     payment: PaymentData | null;
   }>({
     isOpen: false,
-    payment: null
+    payment: null,
   });
-  const { 
-    payments, 
+  const {
+    payments,
     pagination,
-    isLoading, 
-    isError, 
-    error, 
+    isLoading,
+    isError,
+    error,
     refetch,
     refundPayment,
     isRefunding,
@@ -73,85 +73,115 @@ const Transactions: React.FC = () => {
   const prefetchPayments = usePrefetchPayments();
 
   // Helper function to format amount (Stripe amounts are in cents)
-  const formatAmount = (amount: number, currency: string = 'usd'): string => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
+  const formatAmount = (amount: number, currency: string = "usd"): string => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
       currency: currency.toUpperCase(),
     }).format(amount / 100);
   };
 
   // Helper function to format date
   const formatDate = (timestamp?: number): string => {
-    if (!timestamp) return 'N/A';
-    return new Date(timestamp * 1000).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    if (!timestamp) return "N/A";
+    return new Date(timestamp * 1000).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   // Helper function to get payment status
   const getPaymentStatus = (payment: PaymentData): string => {
-    if (payment.refunded) return 'refunded';
-    if (payment.disputed) return 'disputed';
-    if (payment.failure_code) return 'failed';
-    if (payment.amount_captured === payment.amount) return 'succeeded';
-    if (payment.amount_captured > 0) return 'partially_captured';
-    return payment.status || 'pending';
+    if (payment.refunded) return "refunded";
+    if (payment.disputed) return "disputed";
+    if (payment.failure_code) return "failed";
+    if (payment.amount_captured === payment.amount) return "succeeded";
+    if (payment.amount_captured > 0) return "partially_captured";
+    return payment.status || "pending";
   };
 
   // Helper function to render status with appropriate styling
   const renderStatus = (payment: PaymentData): JSX.Element => {
     const status = getPaymentStatus(payment);
     const statusConfig = {
-      succeeded: { icon: CheckCircle, color: 'text-green-600 bg-green-100', label: 'Succeeded' },
-      pending: { icon: Clock, color: 'text-yellow-600 bg-yellow-100', label: 'Pending' },
-      failed: { icon: XCircle, color: 'text-red-600 bg-red-100', label: 'Failed' },
-      refunded: { icon: AlertCircle, color: 'text-orange-600 bg-orange-100', label: 'Refunded' },
-      disputed: { icon: AlertCircle, color: 'text-purple-600 bg-purple-100', label: 'Disputed' },
-      partially_captured: { icon: Clock, color: 'text-blue-600 bg-blue-100', label: 'Partial' },
+      succeeded: {
+        icon: CheckCircle,
+        color: "text-green-600 bg-green-100",
+        label: "Succeeded",
+      },
+      pending: {
+        icon: Clock,
+        color: "text-yellow-600 bg-yellow-100",
+        label: "Pending",
+      },
+      failed: {
+        icon: XCircle,
+        color: "text-red-600 bg-red-100",
+        label: "Failed",
+      },
+      refunded: {
+        icon: AlertCircle,
+        color: "text-orange-600 bg-orange-100",
+        label: "Refunded",
+      },
+      disputed: {
+        icon: AlertCircle,
+        color: "text-purple-600 bg-purple-100",
+        label: "Disputed",
+      },
+      partially_captured: {
+        icon: Clock,
+        color: "text-blue-600 bg-blue-100",
+        label: "Partial",
+      },
     };
 
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+    const config =
+      statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
     const Icon = config.icon;
 
     return (
-      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.color}`}>
+      <span
+        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.color}`}
+      >
         <Icon className="w-3 h-3" />
         {config.label}
       </span>
     );
   };
 
-  
   const handleViewDetails = (payment: PaymentData): void => {
-    console.log('View payment details:', payment);
+    console.log("View payment details:", payment);
     // You can implement a modal or navigation to detailed view here
   };
 
   const handleRefund = (payment: PaymentData): void => {
-    console.log('=== REFUND DEBUG ===');
-    console.log('Full payment object:', payment);
-    console.log('Payment ID:', payment.id);
-    console.log('Payment ID type:', typeof payment.id);
-    console.log('Payment ID starts with:', payment.id.substring(0, 3));
-    console.log('====================');
-    
+    console.log("=== REFUND DEBUG ===");
+    console.log("Full payment object:", payment);
+    console.log("Payment ID:", payment.id);
+    console.log("Payment ID type:", typeof payment.id);
+    console.log("Payment ID starts with:", payment.id.substring(0, 3));
+    console.log("====================");
+
     // Open refund modal
     setRefundModal({
       isOpen: true,
-      payment: payment
+      payment: payment,
     });
   };
-   const handleRefundConfirm = (paymentId: string, amount: number, reason: string): void => {
-    refundPayment({ 
-      paymentId, 
+  const handleRefundConfirm = (
+    paymentId: string,
+    amount: number,
+    reason: string
+  ): void => {
+    refundPayment({
+      paymentId,
       amount,
-      reason
+      reason,
     });
-    
+
     // Close modal
     setRefundModal({ isOpen: false, payment: null });
   };
@@ -159,10 +189,12 @@ const Transactions: React.FC = () => {
     setRefundModal({ isOpen: false, payment: null });
   };
 
-
-  const handleFilterChange = (key: keyof PaymentFilters, value: string | number): void => {
-    setTempFilters(prev => ({ 
-      ...prev, 
+  const handleFilterChange = (
+    key: keyof PaymentFilters,
+    value: string | number
+  ): void => {
+    setTempFilters((prev) => ({
+      ...prev,
       [key]: value,
     }));
   };
@@ -176,14 +208,14 @@ const Transactions: React.FC = () => {
     const resetFilters = {
       page: 1,
       limit: filters.limit, // Keep the current page size
-      status: '',
-      startDate: '',
-      endDate: '',
-      search: '',
-      currency: '',
-      country: '',
-      refunded: '',
-      disputed: '',
+      status: "",
+      startDate: "",
+      endDate: "",
+      search: "",
+      currency: "",
+      country: "",
+      refunded: "",
+      disputed: "",
     };
     setTempFilters(resetFilters);
     setFilters(resetFilters);
@@ -197,8 +229,8 @@ const Transactions: React.FC = () => {
 
   // Handle pagination
   const handlePageChange = (newPage: number): void => {
-    setFilters(prev => ({ ...prev, page: newPage }));
-    
+    setFilters((prev) => ({ ...prev, page: newPage }));
+
     // Prefetch next page
     if (newPage < pagination.totalPages) {
       prefetchPayments({ ...filters, page: newPage + 1 });
@@ -207,31 +239,61 @@ const Transactions: React.FC = () => {
 
   // Quick search from table header
   const handleQuickSearch = (searchTerm: string): void => {
-    setFilters(prev => ({ ...prev, search: searchTerm, page: 1 }));
-    setTempFilters(prev => ({ ...prev, search: searchTerm }));
+    setFilters((prev) => ({ ...prev, search: searchTerm, page: 1 }));
+    setTempFilters((prev) => ({ ...prev, search: searchTerm }));
   };
 
   // Count active filters
   const activeFiltersCount = useMemo(() => {
-    return Object.entries(filters).filter(([key, value]) => 
-      key !== 'page' && key !== 'limit' && value !== ''
+    return Object.entries(filters).filter(
+      ([key, value]) => key !== "page" && key !== "limit" && value !== ""
     ).length;
   }, [filters]);
 
   // Generate active filter chips
   const activeFilterChips = useMemo(() => {
     const chips = [];
-    if (filters.search) chips.push({ key: 'search', label: `Search: ${filters.search}`, value: filters.search });
-    if (filters.status) chips.push({ key: 'status', label: `Status: ${filters.status}`, value: filters.status });
-    if (filters.currency) chips.push({ key: 'currency', label: `Currency: ${filters.currency.toUpperCase()}`, value: filters.currency });
-    if (filters.country) chips.push({ key: 'country', label: `Country: ${filters.country}`, value: filters.country });
-    if (filters.startDate) chips.push({ key: 'startDate', label: `From: ${filters.startDate}`, value: filters.startDate });
-    if (filters.endDate) chips.push({ key: 'endDate', label: `To: ${filters.endDate}`, value: filters.endDate });
+    if (filters.search)
+      chips.push({
+        key: "search",
+        label: `Search: ${filters.search}`,
+        value: filters.search,
+      });
+    if (filters.status)
+      chips.push({
+        key: "status",
+        label: `Status: ${filters.status}`,
+        value: filters.status,
+      });
+    if (filters.currency)
+      chips.push({
+        key: "currency",
+        label: `Currency: ${filters.currency.toUpperCase()}`,
+        value: filters.currency,
+      });
+    if (filters.country)
+      chips.push({
+        key: "country",
+        label: `Country: ${filters.country}`,
+        value: filters.country,
+      });
+    if (filters.startDate)
+      chips.push({
+        key: "startDate",
+        label: `From: ${filters.startDate}`,
+        value: filters.startDate,
+      });
+    if (filters.endDate)
+      chips.push({
+        key: "endDate",
+        label: `To: ${filters.endDate}`,
+        value: filters.endDate,
+      });
     return chips;
   }, [filters]);
 
   const removeFilter = (filterKey: string): void => {
-    const newFilters = { ...filters, [filterKey]: '', page: 1 };
+    const newFilters = { ...filters, [filterKey]: "", page: 1 };
     setFilters(newFilters);
     setTempFilters(newFilters);
   };
@@ -318,8 +380,7 @@ const Transactions: React.FC = () => {
 
   // Loading state
   if (isLoading && payments.length === 0) {
-    return (
-  <Loader title='transactions'/>)
+    return <Loader title="transactions" />;
   }
 
   // Error state
@@ -342,7 +403,7 @@ const Transactions: React.FC = () => {
 
   // Refund error notification
   if (refundError) {
-    console.error('Refund error:', refundError);
+    console.error("Refund error:", refundError);
   }
 
   return (
@@ -406,7 +467,9 @@ const Transactions: React.FC = () => {
       {activeFilterChips.length > 0 && (
         <div className="bg-white rounded-lg shadow-sm border border-green-100 p-4">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-medium text-gray-700">Active filters:</span>
+            <span className="text-sm font-medium text-gray-700">
+              Active filters:
+            </span>
             {activeFilterChips.map((chip) => (
               <span
                 key={chip.key}
@@ -432,30 +495,28 @@ const Transactions: React.FC = () => {
       )}
 
       {/* Transactions Table */}
-   <div className="bg-white rounded-lg shadow-sm border border-green-100">
-
-<DynamicTable<PaymentData>
-  data={payments}
-  columns={columns}
-  title="transactions"
-  itemsPerPage={payments.length}
-  showActions={true}
-  showSearch={true}
-  showFilter={true}  // Changed to true to show your custom filter
-  showAddButton={false}
-  onViewDetails={handleViewDetails}
-  onEdit={handleRefund}
-  
-  // Add these new props for your custom filter logic
-  filters={filters}
-  setFilters={setFilters}
-  setShowFilters={setShowFilters}
-  activeFiltersCount={activeFiltersCount}
-  refetch={refetch}
-  isFetching={isFetching}
-  searchTerm={filters.search}
-  onSearchChange={handleQuickSearch}
-/>
+      <div className="bg-white rounded-lg shadow-sm border border-green-100">
+        <DynamicTable<PaymentData>
+          data={payments}
+          columns={columns}
+          title="transactions"
+          itemsPerPage={payments.length}
+          showActions={true}
+          showSearch={true}
+          showFilter={true} // Changed to true to show your custom filter
+          showAddButton={false}
+          onViewDetails={handleViewDetails}
+          onEdit={handleRefund}
+          // Add these new props for your custom filter logic
+          filters={filters}
+          setFilters={setFilters}
+          setShowFilters={setShowFilters}
+          activeFiltersCount={activeFiltersCount}
+          refetch={refetch}
+          isFetching={isFetching}
+          searchTerm={filters.search}
+          onSearchChange={handleQuickSearch}
+        />
 
   {/* NEW: Custom TablePagination component */}
   <TablePagination
@@ -472,11 +533,16 @@ const Transactions: React.FC = () => {
       {/* Filter Modal */}
       {showFilters && (
         <div className="fixed inset-0  bg-opacity-50 flex items-center justify-center z-50">
-          <Modal show={showFilters} dismissible onClose={()=>setShowFilters((pre)=>!pre)}>
+          <Modal
+            show={showFilters}
+            dismissible
+            onClose={() => setShowFilters((pre) => !pre)}
+          >
             {/* Modal Header */}
             <ModalHeader className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Filter Transactions</h2>
-
+              <h2 className="text-lg font-semibold text-gray-900">
+                Filter Transactions
+              </h2>
             </ModalHeader>
 
             {/* Modal Body */}
@@ -492,7 +558,9 @@ const Transactions: React.FC = () => {
                     type="text"
                     placeholder="Email, ID, name, or description..."
                     value={tempFilters.search}
-                    onChange={(e) => handleFilterChange('search', e.target.value)}
+                    onChange={(e) =>
+                      handleFilterChange("search", e.target.value)
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   />
                 </div>
@@ -505,7 +573,9 @@ const Transactions: React.FC = () => {
                   </label>
                   <select
                     value={tempFilters.status}
-                    onChange={(e) => handleFilterChange('status', e.target.value)}
+                    onChange={(e) =>
+                      handleFilterChange("status", e.target.value)
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   >
                     <option value="">All Status</option>
@@ -525,7 +595,9 @@ const Transactions: React.FC = () => {
                   </label>
                   <select
                     value={tempFilters.currency}
-                    onChange={(e) => handleFilterChange('currency', e.target.value)}
+                    onChange={(e) =>
+                      handleFilterChange("currency", e.target.value)
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   >
                     <option value="">All Currencies</option>
@@ -533,27 +605,6 @@ const Transactions: React.FC = () => {
                     <option value="eur">EUR</option>
                     <option value="gbp">GBP</option>
                     <option value="egp">EGP</option>
-                  </select>
-                </div>
-
-                {/* Country */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Globe className="w-4 h-4 inline mr-2" />
-                    Country
-                  </label>
-                  <select
-                    value={tempFilters.country}
-                    onChange={(e) => handleFilterChange('country', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                  >
-                    <option value="">All Countries</option>
-                    <option value="US">United States</option>
-                    <option value="EG">Egypt</option>
-                    <option value="GB">United Kingdom</option>
-                    <option value="CA">Canada</option>
-                    <option value="DE">Germany</option>
-                    <option value="FR">France</option>
                   </select>
                 </div>
 
@@ -566,7 +617,9 @@ const Transactions: React.FC = () => {
                   <input
                     type="date"
                     value={tempFilters.startDate}
-                    onChange={(e) => handleFilterChange('startDate', e.target.value)}
+                    onChange={(e) =>
+                      handleFilterChange("startDate", e.target.value)
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   />
                 </div>
@@ -579,9 +632,34 @@ const Transactions: React.FC = () => {
                   <input
                     type="date"
                     value={tempFilters.endDate}
-                    onChange={(e) => handleFilterChange('endDate', e.target.value)}
+                    onChange={(e) =>
+                      handleFilterChange("endDate", e.target.value)
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   />
+                </div>
+
+                {/* Country */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <Globe className="w-4 h-4 inline mr-2" />
+                    Country
+                  </label>
+                  <select
+                    value={tempFilters.country}
+                    onChange={(e) =>
+                      handleFilterChange("country", e.target.value)
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  >
+                    <option value="">All Countries</option>
+                    <option value="US">United States</option>
+                    <option value="EG">Egypt</option>
+                    <option value="GB">United Kingdom</option>
+                    <option value="CA">Canada</option>
+                    <option value="DE">Germany</option>
+                    <option value="FR">France</option>
+                  </select>
                 </div>
               </div>
             </ModalBody>
@@ -594,7 +672,7 @@ const Transactions: React.FC = () => {
               >
                 Clear All Filters
               </button>
-              
+
               <div className="flex items-center gap-3">
                 <button
                   onClick={cancelFilters}
@@ -613,7 +691,7 @@ const Transactions: React.FC = () => {
           </Modal>
         </div>
       )}
-       <RefundModal
+      <RefundModal
         isOpen={refundModal.isOpen}
         payment={refundModal.payment}
         isRefunding={isRefunding}

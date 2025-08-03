@@ -299,13 +299,13 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
       };
 
       if (item.found && item._id) {
-        const originalCategoryId = getCategoryIdByItemName(item.material);
+        const categoryId = getCategoryIdByItemName(item.material);
 
         const cartItem: CartItem = {
           ...baseCartItem,
           _id: item._id,
-          categoryId: item._id,
-          originalCategoryId,
+          categoryId,
+          name: baseCartItem.itemName,
         };
 
         await addToCart(cartItem);
@@ -318,7 +318,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
           ...baseCartItem,
           _id: fallbackId,
           categoryId: fallbackId,
-          originalCategoryId: fallbackId,
+          name: baseCartItem.itemName,
         };
 
         await addToCart(cartItem);

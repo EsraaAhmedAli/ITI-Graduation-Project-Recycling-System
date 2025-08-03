@@ -10,6 +10,7 @@ import RoleSelect from "@/app/newAuth/common/RoleSelectionStep";
 import SignUpForm from "./SignUpForm";
 import CompleteSignup from "../common/CompleteSignUp";
 import { useLanguage } from "@/context/LanguageContext";
+import ForgetPasswordForm from "./ForgotPasswordForm";
 export const roleConfig = {
   customer: {
     title: "Customer Registration",
@@ -127,7 +128,9 @@ export default function MainForm() {
           {mode === "role-select"
             ? t('auth.login.ChooseYourRole')
             : mode === "login"
-            ? t('auth.login.signIn')
+            ? "Sign In"
+            : mode === "forgot-password"
+            ? "Forgot Password"
             : selectedRole
             ? roleConfig[selectedRole]?.title
             : "Sign Up"}
@@ -153,6 +156,7 @@ export default function MainForm() {
 
           {mode === "login" && <LoginForm />}
           {mode === "signup" && selectedRole && <SignUpForm />}
+          {mode === "forgot-password" && <ForgetPasswordForm />}
         </form>
       </div>
     </>

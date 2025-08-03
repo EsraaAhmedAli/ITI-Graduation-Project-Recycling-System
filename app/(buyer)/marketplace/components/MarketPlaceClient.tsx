@@ -3,26 +3,22 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  Search,
-  ChevronLeft,
-  ChevronRight,
-  Filter,
-  Frown,
-} from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Filter, Frown } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import { useLanguage } from "@/context/LanguageContext";
 import { useUserAuth } from "@/context/AuthFormContext";
+import { Badge } from "flowbite-react";
 
 interface Item {
   _id: string;
   name: string;
   points: number;
   price: number;
-  measurement_unit: number;
+  measurement_unit: 1|2;
   image: string;
   categoryName: string;
+  quantity:number
 }
 
 interface ServerData {
@@ -43,13 +39,13 @@ interface MarketplaceClientProps {
 }
 
 // Optimized Image Component for LCP
-const OptimizedItemImage = ({ 
-  item, 
-  priority = false, 
-  index = 0 
-}: { 
-  item: Item; 
-  priority?: boolean; 
+const OptimizedItemImage = ({
+  item,
+  priority = false,
+  index = 0,
+}: {
+  item: Item;
+  priority?: boolean;
   index?: number;
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -57,15 +53,15 @@ const OptimizedItemImage = ({
 
   // Generate optimized Cloudinary URL - REMOVED fixed height for less cropping
   const getOptimizedImageUrl = (url: string, width: number = 300) => {
-    if (url.includes('cloudinary.com')) {
+    if (url.includes("cloudinary.com")) {
       // Changed from c_fill to c_fit to prevent cropping
       // Removed h_${width} to allow natural aspect ratio
-      return url.replace('/upload/', `/upload/c_fit,w_${width},q_auto,f_auto/`);
+      return url.replace("/upload/", `/upload/c_fit,w_${width},q_auto,f_auto/`);
     }
     return url;
   };
 
-   return (
+  return (
     // OPTION 1: Keep square but ensure no cropping
     <div className="relative aspect-square bg-gray-50 p-2">
       {/* Placeholder/Loading state */}
@@ -74,7 +70,7 @@ const OptimizedItemImage = ({
           <div className="w-8 h-8 border-2 border-green-200 border-t-green-600 rounded-full animate-spin" />
         </div>
       )}
-      
+
       {/* Error state */}
       {imageError && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100 text-gray-400">
@@ -91,11 +87,11 @@ const OptimizedItemImage = ({
         alt={`${item.name} - ${item.categoryName} product image`}
         fill
         className={`object-contain p-1 transition-opacity duration-300 ${
-          imageLoaded ? 'opacity-100' : 'opacity-0'
+          imageLoaded ? "opacity-100" : "opacity-0"
         }`}
         sizes="(max-width: 640px) 150px, (max-width: 768px) 120px, (max-width: 1024px) 180px, 200px"
         priority={priority}
-        quality={85} 
+        quality={85}
         placeholder="blur"
         blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
         onLoad={() => setImageLoaded(true)}
@@ -103,9 +99,9 @@ const OptimizedItemImage = ({
         onLoadingComplete={() => {
           if (priority && index < 2) {
             requestAnimationFrame(() => {
-              document.documentElement.style.transform = 'translateZ(0)';
+              document.documentElement.style.transform = "translateZ(0)";
               requestAnimationFrame(() => {
-                document.documentElement.style.transform = '';
+                document.documentElement.style.transform = "";
               });
             });
           }
@@ -115,90 +111,80 @@ const OptimizedItemImage = ({
   );
 };
 
-export default function MarketplaceClient({ initialData }: MarketplaceClientProps) {
+export default function MarketplaceClient({
+  initialData,
+}: MarketplaceClientProps) {
   const { t } = useLanguage();
   const { user } = useUserAuth();
   const queryClient = useQueryClient();
-  
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [isClient, setIsClient] = useState(false);
+  const [items, setItems] = useState(initialData.items);
+const [isLoading, setLoading] = useState(false);
+const [pagination, setPagination] = useState(initialData.pagination);
   const itemsPerPage = 10;
 
-  // Track client-side hydration
   useEffect(() => {
     setIsClient(true);
-    
+
     // Preload critical images for LCP optimization
     if (initialData.items.length > 0) {
       const firstFourImages = initialData.items.slice(0, 4);
-      firstFourImages.forEach((item, index) => {
+      firstFourImages.forEach((item) => {
         const img = new window.Image();
-        img.src = item.image.includes('cloudinary.com') 
-          ? item.image.replace('/upload/', '/upload/c_fill,w_300,h_300,q_auto,f_auto/')
+        img.src = item.image.includes("cloudinary.com")
+          ? item.image.replace(
+              "/upload/",
+              "/upload/c_fill,w_300,h_300,q_auto,f_auto/"
+            )
           : item.image;
-        // Don't wait for these to load, just start the fetch
       });
     }
-    
+
     // Pre-populate React Query cache with server data
-    queryClient.setQueryData(
-      ["items", 1, null],
-      {
-        data: initialData.items,
-        pagination: initialData.pagination
-      }
-    );
-    queryClient.setQueryData(
-      ["categories", null],
-      initialData.categories
-    );
+    queryClient.setQueryData(["items", 1, null], {
+      data: initialData.items,
+      pagination: initialData.pagination,
+    });
+    queryClient.setQueryData(["categories", null], initialData.categories);
   }, [initialData, queryClient]);
 
   // Client-side fetch functions
-  const fetchItems = useCallback(async () => {
-    if (!isClient) return { data: initialData.items, pagination: initialData.pagination };
-    
+const fetchItems = useCallback(async () => {
+  setLoading(true);
+  try {
     const res = await api.get(
-      `/categories/get-items?page=${currentPage}&limit=${itemsPerPage}&role=${user?.role || ''}`
+      `/categories/get-items?page=${currentPage}&limit=${itemsPerPage}&role=${user?.role || ""}`
     );
-    return res?.data;
-  }, [currentPage, itemsPerPage, user?.role, isClient, initialData]);
+    setItems(res?.data.data || []);
+    setPagination(res?.data.pagination || initialData.pagination);
+  } catch (error) {
+    console.error('Error fetching items:', error);
+  } finally {
+    setLoading(false);
+  }
+}, [currentPage, itemsPerPage, user?.role]);
 
   const fetchAllCategories = useCallback(async () => {
     if (!isClient) return initialData.categories;
-    
+
     try {
       const res = await api.get(
-        `/categories/get-items?page=1&limit=50&role=${user?.role || ''}`
+        `/categories/get-items?page=1&limit=50&role=${user?.role || ""}`
       );
       const allItems = res?.data.data || [];
-      return Array.from(new Set(allItems.map((item: Item) => item.categoryName))).sort();
+      return Array.from(
+        new Set(allItems.map((item: Item) => item.categoryName))
+      ).sort();
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      console.error("Error fetching categories:", error);
       return initialData.categories;
     }
   }, [user?.role, isClient, initialData.categories]);
 
-  // React Query for items
-  const {
-    data: itemsData,
-    isLoading,
-    isFetching,
-  } = useQuery({
-    queryKey: ["items", currentPage, user?.role],
-    queryFn: fetchItems,
-    initialData: currentPage === 1 && !user?.role ? {
-      data: initialData.items,
-      pagination: initialData.pagination
-    } : undefined,
-    keepPreviousData: true,
-    staleTime: 2 * 60 * 1000,
-    cacheTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    enabled: isClient,
-  });
 
   // React Query for categories
   const {
@@ -214,8 +200,7 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
     enabled: isClient,
   });
 
-  const items: Item[] = itemsData?.data || initialData.items;
-  const pagination = itemsData?.pagination || initialData.pagination;
+
   const uniqueCategories = categoriesData || initialData.categories;
 
   // Memoized filtered items
@@ -223,31 +208,36 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
     if (!searchTerm && selectedCategory === "all") {
       return items;
     }
-    
+
     const term = searchTerm.toLowerCase();
     return items.filter((item) => {
-      const matchesSearch = !searchTerm || 
+      const matchesSearch =
+        !searchTerm ||
         item.name.toLowerCase().includes(term) ||
         item.categoryName.toLowerCase().includes(term);
-      const matchesCategory = selectedCategory === "all" ||
-        item.categoryName === selectedCategory;
+      const matchesCategory =
+        selectedCategory === "all" || item.categoryName === selectedCategory;
       return matchesSearch && matchesCategory;
     });
   }, [searchTerm, selectedCategory, items]);
 
-  const getMeasurementText = useCallback((unit: 1 | 2): string => {
-    return unit === 1 
-      ? t('itemsModal.perKg') 
-      : t('itemsModal.perItem');
-  }, [t]);
+  const getMeasurementText = useCallback(
+    (unit: 1 | 2): string => {
+      return unit === 1 ? t("itemsModal.perKg") : t("itemsModal.perItem");
+    },
+    [t]
+  );
 
-  const handlePageChange = useCallback((page: number) => {
-    if (page >= 1 && page <= pagination.totalPages) {
-      setCurrentPage(page);
-      setSearchTerm("");
-      setSelectedCategory("all");
-    }
-  }, [pagination.totalPages]);
+  const handlePageChange = useCallback(
+    (page: number) => {
+      if (page >= 1 && page <= pagination.totalPages) {
+        setCurrentPage(page);
+        setSearchTerm("");
+        setSelectedCategory("all");
+      }
+    },
+    [pagination.totalPages]
+  );
 
   // Debounced search
   useEffect(() => {
@@ -256,18 +246,22 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
     }, 300);
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
+  useEffect(() => {
+  if (isClient) {
+    fetchItems();
+  }
+}, [fetchItems, isClient]);
 
   return (
     <>
       {/* Search and Filter Controls */}
-      <section 
-        className="mb-4 bg-white rounded-lg shadow-sm p-3 sticky top-0 z-10" 
-        aria-label="Search and filter controls"
-      >
+      <section
+        className="mb-4 bg-white rounded-lg shadow-sm p-3 sticky top-0 z-10"
+        aria-label="Search and filter controls">
         <div className="flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
             <label htmlFor="search-input" className="sr-only">
-              {t('navbar.searchplaceholder')}
+              {t("navbar.searchplaceholder")}
             </label>
             <div className="absolute top-3 left-0 pl-3 flex justify-center flex-col">
               <Search className="h-4 w-4 text-gray-400" aria-hidden="true" />
@@ -275,7 +269,7 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
             <input
               id="search-input"
               type="text"
-              placeholder={t('navbar.searchplaceholder')}
+              placeholder={t("navbar.searchplaceholder")}
               className="pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg w-full focus:ring-1 focus:ring-green-500 focus:outline-none"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -299,14 +293,13 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg w-full appearance-none bg-white focus:ring-1 focus:ring-green-500 focus:outline-none"
               disabled={categoriesLoading}
-              aria-describedby="category-help"
-            >
-              <option value="all">
-                {t('common.allCategories')}
-              </option>
+              aria-describedby="category-help">
+              <option value="all">{t("common.allCategories")}</option>
               {uniqueCategories.map((category: string) => (
                 <option key={category} value={category}>
-                  {t(`categories.${category?.toLowerCase().replace(/\s+/g, "-")}`)}
+                  {t(
+                    `categories.${category?.toLowerCase().replace(/\s+/g, "-")}`
+                  )}
                 </option>
               ))}
             </select>
@@ -318,30 +311,27 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
       </section>
 
       {/* Results Info */}
-      <div 
-        className="flex justify-between items-center mb-3 px-1" 
-        role="status" 
-        aria-live="polite"
-      >
+      <div
+        className="flex justify-between items-center mb-3 px-1"
+        role="status"
+        aria-live="polite">
         <span className="text-xs text-gray-500">
-          {t('common.showing')} {filteredItems.length} {' '}
-          {t('common.of')} {pagination.totalItems} {' '}
-          {t('common.items')}
+          {t("common.showing")} {filteredItems.length} {t("common.of")}{" "}
+          {pagination.totalItems} {t("common.items")}
         </span>
         <span className="text-xs text-gray-500">
-          {t('common.page')} {pagination.currentPage} {' '}
-          {t('common.of')} {pagination.totalPages}
+          {t("common.page")} {pagination.currentPage} {t("common.of")}{" "}
+          {pagination.totalPages}
         </span>
       </div>
 
       {/* Main Content */}
       <main>
-        {(isLoading && !items.length) || isFetching ? (
-          <div 
+        {(isLoading && !items.length) ? (
+          <div
             className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"
-            role="status" 
-            aria-label="Loading items"
-          >
+            role="status"
+            aria-label="Loading items">
             {[...Array(8)].map((_, i) => (
               <div
                 key={i}
@@ -352,7 +342,10 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
           </div>
         ) : filteredItems.length === 0 ? (
           <div className="text-center py-12" role="status">
-            <Frown className="mx-auto h-10 w-10 text-gray-400" aria-hidden="true" />
+            <Frown
+              className="mx-auto h-10 w-10 text-gray-400"
+              aria-hidden="true"
+            />
             <h2 className="mt-2 text-sm font-medium text-gray-900">
               No items found
             </h2>
@@ -366,42 +359,51 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
           <>
             {/* Section heading for proper hierarchy */}
             <h2 className="sr-only">Available Products</h2>
-            
+
             {/* Items Grid - Optimized for LCP */}
-            <div 
+            <div
               className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"
               role="grid"
-              aria-label="Available items"
-            >
+              aria-label="Available items">
               {filteredItems.map((item, index) => (
                 <article
                   key={item._id}
                   className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-sm transition-all duration-150 h-full flex flex-col"
-                  role="gridcell"
-                >
+                  role="gridcell">
                   <Link
                     href={`/marketplace/${encodeURIComponent(item.name)}`}
                     className="h-full flex flex-col focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 rounded-lg"
-                    aria-label={`View details for ${item.name}, priced at ${item.price} ${t('itemsModal.currency')}`}
-                  >
+                    aria-label={`View details for ${item.name}, priced at ${
+                      item.price
+                    } ${t("itemsModal.currency")}`}>
                     {/* Optimized Image Component */}
-                    <OptimizedItemImage 
-                      item={item} 
+                    <OptimizedItemImage
+                      item={item}
                       priority={index < 4} // First 4 images get priority
                       index={index}
                     />
-                    
+
                     <div className="p-2 flex-1 flex flex-col">
                       <h3 className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide leading-tight">
-                        {t(`categories.subcategories.${item.name.toLowerCase().replace(/\s+/g, "-")}`)}
+                        {t(
+                          `categories.subcategories.${item.name
+                            .toLowerCase()
+                            .replace(/\s+/g, "-")}`
+                        )}
                       </h3>
                       <div className="flex justify-between items-center mt-auto">
+                      
                         <span className="text-xs font-bold text-green-600">
                           {item.price}
+
                           <span className="text-sm mx-2 ml-1">
-                            {t('itemsModal.currency')}
+                            {t("itemsModal.currency")}
                           </span>
+                      
                         </span>
+                            <span className="text-xs font-bold">
+                                {item?.quantity == 0 ?   <Badge color="failure">Out of stock</Badge> : item.quantity+ ' in stock'}
+                          </span>
                       </div>
                       <div className="text-[0.6rem] text-gray-500 mt-0.5 text-right">
                         {getMeasurementText(item.measurement_unit)}
@@ -414,11 +416,10 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
 
             {/* Pagination */}
             {pagination.totalPages > 1 && (
-              <nav 
-                className="flex justify-center mt-6" 
-                role="navigation" 
-                aria-label="Pagination"
-              >
+              <nav
+                className="flex justify-center mt-6"
+                role="navigation"
+                aria-label="Pagination">
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => handlePageChange(pagination.currentPage - 1)}
@@ -428,12 +429,14 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
                         ? "text-green-600 hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500"
                         : "text-gray-300 cursor-not-allowed"
                     }`}
-                    aria-label="Go to previous page"
-                  >
+                    aria-label="Go to previous page">
                     <ChevronLeft className="w-4 h-4" aria-hidden="true" />
                   </button>
 
-                  {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((page) => (
+                  {Array.from(
+                    { length: pagination.totalPages },
+                    (_, i) => i + 1
+                  ).map((page) => (
                     <button
                       key={page}
                       onClick={() => handlePageChange(page)}
@@ -443,8 +446,9 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
                           : "text-green-600 hover:bg-green-50"
                       }`}
                       aria-label={`Go to page ${page}`}
-                      aria-current={pagination.currentPage === page ? "page" : undefined}
-                    >
+                      aria-current={
+                        pagination.currentPage === page ? "page" : undefined
+                      }>
                       {page}
                     </button>
                   ))}
@@ -457,8 +461,7 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
                         ? "text-green-600 hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500"
                         : "text-gray-300 cursor-not-allowed"
                     }`}
-                    aria-label="Go to next page"
-                  >
+                    aria-label="Go to next page">
                     <ChevronRight className="w-4 h-4" aria-hidden="true" />
                   </button>
                 </div>

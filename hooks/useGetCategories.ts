@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import { Category } from "@/components/Types/categories.type";
+import toast from "react-hot-toast";
 
 export function useCategories() {
   const query = useQuery<Category[]>({
@@ -37,6 +38,32 @@ export function useCategories() {
 
     return "";
   };
+  const geItemQuantityInStock = (itemId: string, categoryId: string) => {
+    const categories = query.data?.data;
+    console.log("CATGEORIES");
+    console.log(categories);
+    if (!Array.isArray(categories)) {
+      toast.error("Catgories NOT ARRAY");
+      return -1;
+    }
 
-  return { ...query, getCategoryIdByItemName };
+    const category = categories.find((cat) => cat._id == categoryId);
+    if (!category) {
+      toast.error(`category with id ${categoryId} not Found`);
+      return -1;
+    }
+    const targetItem = category.items.find((item) => item._id === itemId);
+    if (!targetItem) {
+      toast.error(`item with id ${itemId} not Found`);
+      return -1;
+    }
+    return targetItem.quantity;
+  };
+
+  return {
+    ...query,
+    getCategoryIdByItemName,
+    geItemQuantityInStock,
+    refetch: query.refetch,
+  };
 }

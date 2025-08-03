@@ -9,6 +9,7 @@ import {
   Briefcase,
   FileText,
   Shield,
+  DatabaseBackup,
 } from "lucide-react";
 import { Role } from "@/app/newAuth/Forms/MainForm";
 import { useAuthenticationContext } from "@/context/AuhenticationContext";
@@ -24,6 +25,7 @@ const GoogleStepIcons: Record<Role, React.ReactElement[]> = {
   delivery: [<User />, <Car />, <IdCard />],
   buyer: [<User />, <Briefcase />, <FileText />],
 };
+const forgotIcons = [<User />, <Shield />, <DatabaseBackup />];
 interface RoleStepperWithIconsProps {
   step: number;
   role: Role;
@@ -33,8 +35,13 @@ const RoleStepperWithIcons: React.FC<RoleStepperWithIconsProps> = ({
   step,
   role,
 }) => {
-  const { GoogleUser } = useAuthenticationContext();
-  const icons = GoogleUser ? GoogleStepIcons[role] : stepIcons[role];
+  const { GoogleUser, mode } = useAuthenticationContext();
+  const icons =
+    mode === "forgot-password"
+      ? forgotIcons
+      : GoogleUser
+      ? GoogleStepIcons[role]
+      : stepIcons[role];
 
   return (
     <ol className="flex items-center justify-center w-full mb-5">

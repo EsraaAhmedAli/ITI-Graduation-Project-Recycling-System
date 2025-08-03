@@ -1,5 +1,3 @@
-
-
 "use client";
 import { useCart } from "@/context/CartContext";
 import Swal from "sweetalert2";
@@ -18,27 +16,35 @@ const itemVariants = {
 };
 
 export default function CartPage() {
-  const { 
-    cart, 
-    removeFromCart, 
-    clearCart, 
-    increaseQty, 
+  const {
+    cart,
+    removeFromCart,
+    clearCart,
+    increaseQty,
     decreaseQty,
     checkInventoryEnhanced,
-    userRole
+    userRole,
   } = useCart();
   const router = useRouter();
   const [totalItems, setTotalItems] = useState(0);
   const [totalPoints, setTotalPoints] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
   const { user } = useUserAuth();
-  const [canIncrease, setCanIncrease] = useState<{[key: string]: boolean}>({});
+  const [canIncrease, setCanIncrease] = useState<{ [key: string]: boolean }>(
+    {}
+  );
   const [isCheckingInventory, setIsCheckingInventory] = useState(false);
 
   useEffect(() => {
     const total = cart.reduce((sum, item) => sum + item.quantity, 0);
-    const points = cart.reduce((sum, item) => sum + (item.points || 0) * item.quantity, 0);
-    const price = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const points = cart.reduce(
+      (sum, item) => sum + (item.points || 0) * item.quantity,
+      0
+    );
+    const price = cart.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
 
     setTotalItems(total);
     setTotalPoints(points);
@@ -48,17 +54,20 @@ export default function CartPage() {
   useEffect(() => {
     const checkItems = async () => {
       setIsCheckingInventory(true);
-      const results: {[key: string]: boolean} = {};
-      
+      const results: { [key: string]: boolean } = {};
+
       for (const item of cart) {
-        if (userRole === 'buyer') {
+        if (userRole === "buyer") {
           const increment = item.measurement_unit === 1 ? 0.25 : 1;
-          results[item._id] = await checkInventoryEnhanced(item, item.quantity + increment);
+          results[item._id] = await checkInventoryEnhanced(
+            item,
+            item.quantity + increment
+          );
         } else {
           results[item._id] = true;
         }
       }
-      
+
       setCanIncrease(results);
       setIsCheckingInventory(false);
     };
@@ -100,7 +109,6 @@ export default function CartPage() {
     }
   };
 
-  
   const handleIncrease = async (e: React.MouseEvent, item: any) => {
     e.preventDefault();
     increaseQty(item);
@@ -115,18 +123,25 @@ export default function CartPage() {
     <div className="p-4 sm:p-8 max-w-4xl mx-auto">
       <div className="flex items-center gap-3 mb-6">
         <Recycle className="w-8 h-8 text-green-600" />
-        <h1 className="text-2xl font-bold text-gray-800">Confirm items you want to recycle</h1>
+        <h1 className="text-2xl font-bold text-gray-800">
+          Confirm items you want to recycle
+        </h1>
       </div>
 
       {cart.length === 0 ? (
         <div className="flex flex-col items-center justify-center mt-24 bg-gradient-to-br from-green-50 to-blue-50 p-10 rounded-2xl shadow-md transition-all duration-300">
           <Leaf className="w-16 h-16 text-green-500 mb-4 animate-bounce-slow" />
-          <h2 className="text-xl font-semibold text-gray-700 mb-2">Your recycling bin is empty</h2>
+          <h2 className="text-xl font-semibold text-gray-700 mb-2">
+            Your recycling bin is empty
+          </h2>
           <p className="text-gray-500 text-sm mb-6 text-center max-w-md">
-            Start making a positive impact on the environment. Browse available recyclable items and add them to your bin!
+            Start making a positive impact on the environment. Browse available
+            recyclable items and add them to your bin!
           </p>
           <Button
-            onClick={() => router.push(user?.role === 'buyer' ? "/marketplace" : "/category")}
+            onClick={() =>
+              router.push(user?.role === "buyer" ? "/marketplace" : "/category")
+            }
             className="rounded-full px-6 py-3 shadow-lg hover:shadow-xl transition"
           >
             Browse Recyclable Items
@@ -137,15 +152,21 @@ export default function CartPage() {
           <div className="bg-green-50 rounded-xl p-4 mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-white p-4 rounded-lg shadow-sm text-center">
               <div className="text-gray-500 text-sm">Total Items</div>
-              <div className="text-2xl font-bold text-green-600">{totalItems}</div>
+              <div className="text-2xl font-bold text-green-600">
+                {totalItems}
+              </div>
             </div>
             <div className="bg-white p-4 rounded-lg shadow-sm text-center">
               <div className="text-gray-500 text-sm">Earned Points</div>
-              <div className="text-2xl font-bold text-blue-600">{totalPoints}</div>
+              <div className="text-2xl font-bold text-blue-600">
+                {totalPoints}
+              </div>
             </div>
             <div className="bg-white p-4 rounded-lg shadow-sm text-center">
               <div className="text-gray-500 text-sm">Earned Money</div>
-              <div className="text-2xl font-bold text-emerald-600">{totalPrice.toFixed(2)} EGP</div>
+              <div className="text-2xl font-bold text-emerald-600">
+                {totalPrice.toFixed(2)} EGP
+              </div>
             </div>
           </div>
 
@@ -174,7 +195,7 @@ export default function CartPage() {
                           width={100}
                           height={100}
                           src={item.image}
-                          alt={item.itemName}
+                          alt={item.name}
                           className="object-contain"
                         />
                       ) : (
@@ -184,16 +205,21 @@ export default function CartPage() {
 
                     <div className="flex-1">
                       <div className="flex justify-between items-start">
-                        <h3 className="text-lg font-medium text-gray-800">{item.itemName}</h3>
+                        <h3 className="text-lg font-medium text-gray-800">
+                          {item.name}
+                        </h3>
                         <p className="text-sm text-gray-500 mt-1">
-                          Category: <span className="text-green-600">{item.categoryName}</span>
+                          Category:{" "}
+                          <span className="text-green-600">
+                            {item.categoryName}
+                          </span>
                         </p>
                         <button
                           onClick={(e) => {
                             e.preventDefault();
                             confirmAction({
                               title: "Remove Item?",
-                              text: `Remove ${item.itemName} from your recycling collection?`,
+                              text: `Remove ${item.name} from your recycling collection?`,
                               onConfirm: () => removeFromCart(item),
                             });
                           }}
@@ -208,23 +234,30 @@ export default function CartPage() {
                           <Scale className="w-4 h-4 mr-1" />
                           {item.measurement_unit === 1 ? "By Kilo" : "By Piece"}
                         </div>
-                        <div className="text-green-600 font-medium">{item.points} points each</div>
-                        <div className="text-blue-600">Saves {item.co2_saved || 0} kg CO₂</div>
+                        <div className="text-green-600 font-medium">
+                          {item.points} points each
+                        </div>
+                        <div className="text-blue-600">
+                          Saves {item.co2_saved || 0} kg CO₂
+                        </div>
                       </div>
 
-                      {userRole === 'buyer' && (
+                      {userRole === "buyer" && (
                         <div className="text-xs text-gray-500 mt-1">
-                          Stock: {(item.availableQty ?? 0)} available
+                          Stock: {item.quantity ?? 0} available
                         </div>
                       )}
 
                       <div className="text-emerald-600 text-sm space-y-1 mt-2">
                         <div>
-                          <span className="font-semibold">Price:</span> {item.price.toFixed(2)} EGP
+                          <span className="font-semibold">Price:</span>{" "}
+                          {item.price.toFixed(2)} EGP
                         </div>
                         <div className="text-gray-600 text-sm">
                           {item.quantity} × {item.price.toFixed(2)} ={" "}
-                          <span className="font-medium">{(item.quantity * item.price).toFixed(2)} EGP</span>
+                          <span className="font-medium">
+                            {(item.quantity * item.price).toFixed(2)} EGP
+                          </span>
                         </div>
                       </div>
 
@@ -242,13 +275,17 @@ export default function CartPage() {
                           >
                             -
                           </button>
-                          <span className="px-3 text-base font-medium">{item.quantity}</span>
+                          <span className="px-3 text-base font-medium">
+                            {item.quantity}
+                          </span>
                           <button
                             type="button"
                             onClick={(e) => handleIncrease(e, item)}
-                            disabled={userRole === 'buyer' && !canIncrease[item._id]}
+                            disabled={
+                              userRole === "buyer" && !canIncrease[item._id]
+                            }
                             className={`w-8 h-8 flex items-center justify-center rounded-r-full transition-all ${
-                              userRole === 'buyer' && !canIncrease[item._id]
+                              userRole === "buyer" && !canIncrease[item._id]
                                 ? "text-gray-300 bg-gray-100 cursor-not-allowed"
                                 : "text-gray-600 hover:bg-gray-50"
                             }`}
@@ -300,7 +337,9 @@ export default function CartPage() {
                   </Button>
                 </div>
                 {totalPrice < 100 && (
-                  <p className="text-xs text-red-600 mt-1 text-right">You should reach at least 100 EGP</p>
+                  <p className="text-xs text-red-600 mt-1 text-right">
+                    You should reach at least 100 EGP
+                  </p>
                 )}
               </div>
             </div>
