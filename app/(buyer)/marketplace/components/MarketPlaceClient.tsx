@@ -123,7 +123,7 @@ export default function MarketplaceClient({
   const [currentPage, setCurrentPage] = useState(1);
   const [isClient, setIsClient] = useState(false);
   const [items, setItems] = useState(initialData.items);
-const [isLoading, setLoading] = useState(false);
+const [loading, setLoading] = useState(false);
 const [pagination, setPagination] = useState(initialData.pagination);
   const itemsPerPage = 10;
 
@@ -200,7 +200,8 @@ const fetchItems = useCallback(async () => {
     enabled: isClient,
   });
 
-
+  const items: Item[] = itemsData?.data || initialData.items;
+  const pagination = itemsData?.pagination || initialData.pagination;
   const uniqueCategories = categoriesData || initialData.categories;
 
   // Memoized filtered items
@@ -246,11 +247,6 @@ const fetchItems = useCallback(async () => {
     }, 300);
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
-  useEffect(() => {
-  if (isClient) {
-    fetchItems();
-  }
-}, [fetchItems, isClient]);
 
   return (
     <>
@@ -327,7 +323,7 @@ const fetchItems = useCallback(async () => {
 
       {/* Main Content */}
       <main>
-        {(isLoading && !items.length) ? (
+        {(isLoading && !items.length) || isFetching ? (
           <div
             className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"
             role="status"
