@@ -2,7 +2,7 @@
 import { useCart } from "@/context/CartContext";
 import Swal from "sweetalert2";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { X, Leaf, Recycle, Truck, Scale, Package } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "flowbite-react";
@@ -10,7 +10,7 @@ import Image from "next/image";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { CartItem } from "@/models/cart";
 import { toast } from "react-hot-toast";
-import api from "@/lib/axios";
+import { useGetItems } from "@/hooks/useGetItems"; // Import your hook
 
 const itemVariants = {
   hidden: { opacity: 0, y: 10 },
@@ -23,7 +23,6 @@ export default function CartPage() {
     cart,
     removeFromCart,
     clearCart,
-
     userRole,
     updateCartState,
   } = useCart();
@@ -32,19 +31,77 @@ export default function CartPage() {
   const [totalPoints, setTotalPoints] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
   const { user } = useUserAuth();
-  const [canIncrease, setCanIncrease] = useState<{ [key: string]: boolean }>(
-    {}
-  );
-  const [isCheckingInventory, setIsCheckingInventory] = useState(false);
-  const [stockLevels, setStockLevels] = useState<{ [key: string]: number }>({});
 
   // States for input handling
   const [inputValues, setInputValues] = useState<{ [key: string]: string }>({});
   const [inputErrors, setInputErrors] = useState<{ [key: string]: string }>({});
 
-  // Use ref to track if we're currently checking inventory to prevent multiple calls
-  const isCheckingRef = useRef(false);
-  const checkTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Out of stock tracking
+  const [outOfStockItems, setOutOfStockItems] = useState<{ [key: string]: boolean }>({});
+  const [hasOutOfStockItems, setHasOutOfStockItems] = useState(false);
+  const [canIncrease, setCanIncrease] = useState<{ [key: string]: boolean }>({});
+
+  // Use React Query to get real-time inventory data
+  const { data: itemsData, isLoading: isLoadingItems, error: itemsError } = useGetItems({
+    currentPage: 1,
+    itemsPerPage: 10000, // Get all items to ensure we have stock data for cart items
+    userRole: userRole || 'buyer',
+  });
+
+  // Create a stock levels map from the React Query data
+  const stockLevels = useMemo(() => {
+    if (!itemsData?.data || userRole !== "buyer") return {};
+    
+    const stockMap: { [key: string]: number } = {};
+    cart.forEach((cartItem) => {
+      const foundItem = itemsData.data.find(
+        (apiItem: any) => apiItem._id === cartItem._id
+      );
+      stockMap[cartItem._id] = foundItem?.quantity || 0;
+    });
+    
+    return stockMap;
+  }, [itemsData, cart, userRole]);
+
+  // Check inventory status whenever stockLevels or cart changes
+  useEffect(() => {
+    if (userRole !== "buyer" || cart.length === 0) {
+      const results: { [key: string]: boolean } = {};
+      const outOfStock: { [key: string]: boolean } = {};
+      cart.forEach((item) => {
+        results[item._id] = true;
+        outOfStock[item._id] = false;
+      });
+      setCanIncrease(results);
+      setOutOfStockItems(outOfStock);
+      setHasOutOfStockItems(false);
+      return;
+    }
+
+    const results: { [key: string]: boolean } = {};
+    const outOfStock: { [key: string]: boolean } = {};
+    let hasAnyOutOfStock = false;
+
+    cart.forEach((item) => {
+      const increment = item.measurement_unit === 1 ? 0.25 : 1;
+      const availableStock = stockLevels[item._id] || 0;
+      
+      // Check if item is out of stock (quantity in cart exceeds available stock)
+      const isOutOfStock = availableStock < item.quantity;
+      outOfStock[item._id] = isOutOfStock;
+      
+      if (isOutOfStock) {
+        hasAnyOutOfStock = true;
+      }
+      
+      // Check if we can increase quantity
+      results[item._id] = availableStock >= item.quantity + increment;
+    });
+
+    setCanIncrease(results);
+    setOutOfStockItems(outOfStock);
+    setHasOutOfStockItems(hasAnyOutOfStock);
+  }, [cart, userRole, stockLevels]);
 
   // Initialize input values when cart changes
   useEffect(() => {
@@ -55,6 +112,7 @@ export default function CartPage() {
     setInputValues(newInputValues);
   }, [cart]);
 
+  // Calculate totals
   useEffect(() => {
     const total = cart.reduce((sum, item) => sum + item.quantity, 0);
     const points = cart.reduce(
@@ -70,6 +128,18 @@ export default function CartPage() {
     setTotalPoints(points);
     setTotalPrice(price);
   }, [cart]);
+
+  // Auto-remove out of stock items after a delay (optional)
+  useEffect(() => {
+    if (hasOutOfStockItems) {
+      const timer = setTimeout(() => {
+        // Show a toast notification about out of stock items
+        toast.error("Some items in your cart are out of stock. Please review and remove them.");
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [hasOutOfStockItems]);
 
   // Validation function for quantity input
   const validateQuantity = (
@@ -174,7 +244,7 @@ export default function CartPage() {
     const maxQuantity = userRole === "buyer" ? stockLevels[itemId] || 999 : 999;
     const validation = validateQuantity(
       value,
-      item.measurement_unit as 1 |2,
+      item.measurement_unit as 1 | 2,
       maxQuantity,
       itemId
     );
@@ -204,93 +274,6 @@ export default function CartPage() {
       updateCartState(updatedCart);
     }
   };
-
-  // Use the exact same API call from your CartContext's checkInventoryEnhanced
-  const getStockLevels = useCallback(async () => {
-    if (userRole !== "buyer") return {};
-
-    try {
-      // This is the exact API call from your checkInventoryEnhanced function
-      const res = await api.get("/categories/get-items?limit=10000&role=buyer");
-      const allItems = res.data?.data || [];
-
-      const stockMap: { [key: string]: number } = {};
-      cart.forEach((cartItem) => {
-        const foundItem = allItems.find(
-          (apiItem: any) => apiItem._id === cartItem._id
-        );
-        stockMap[cartItem._id] = foundItem?.quantity || 0;
-      });
-
-      return stockMap;
-    } catch (error) {
-      console.error("Error getting stock levels:", error);
-      // Fallback to assume items are available
-      const stockMap: { [key: string]: number } = {};
-      cart.forEach((cartItem) => {
-        stockMap[cartItem._id] = 999; // High number as fallback
-      });
-      return stockMap;
-    }
-  }, [userRole, cart]);
-
-  // Debounced inventory check function
-  const debouncedInventoryCheck = useCallback(async () => {
-    if (isCheckingRef.current || userRole !== "buyer" || cart.length === 0) {
-      return;
-    }
-
-    isCheckingRef.current = true;
-    setIsCheckingInventory(true);
-
-    try {
-      const results: { [key: string]: boolean } = {};
-      const stockMap = await getStockLevels();
-      setStockLevels(stockMap);
-
-      for (const item of cart) {
-        const increment = item.measurement_unit === 1 ? 0.25 : 1;
-        const availableStock = stockMap[item._id] || 0;
-        results[item._id] = availableStock >= item.quantity + increment;
-      }
-
-      setCanIncrease(results);
-    } catch (error) {
-      console.error("Error checking inventory:", error);
-    } finally {
-      setIsCheckingInventory(false);
-      isCheckingRef.current = false;
-    }
-  }, [cart, userRole, getStockLevels]);
-
-  // Debounced effect for inventory checking
-  useEffect(() => {
-    if (userRole !== "buyer") {
-      // For non-buyers, always allow increase
-      const results: { [key: string]: boolean } = {};
-      cart.forEach((item) => {
-        results[item._id] = true;
-      });
-      setCanIncrease(results);
-      return;
-    }
-
-    // Clear existing timeout
-    if (checkTimeoutRef.current) {
-      clearTimeout(checkTimeoutRef.current);
-    }
-
-    // Set new timeout for debounced check
-    checkTimeoutRef.current = setTimeout(() => {
-      debouncedInventoryCheck();
-    }, 500); // 500ms debounce
-
-    return () => {
-      if (checkTimeoutRef.current) {
-        clearTimeout(checkTimeoutRef.current);
-      }
-    };
-  }, [cart, userRole, debouncedInventoryCheck]);
 
   const confirmAction = async ({
     title,
@@ -370,6 +353,51 @@ export default function CartPage() {
     [cart, updateCartState]
   );
 
+  // Function to handle removing all out of stock items
+  const handleRemoveOutOfStockItems = async () => {
+    const result = await Swal.fire({
+      title: 'Remove Out of Stock Items?',
+      text: 'This will remove all items that are currently out of stock from your cart.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, Remove Them',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#16a34a',
+      cancelButtonColor: '#d33',
+    });
+
+    if (result.isConfirmed) {
+      const availableItems = cart.filter(item => !outOfStockItems[item._id]);
+      updateCartState(availableItems);
+      
+      Swal.fire({
+        icon: 'success',
+        title: 'Items Removed!',
+        text: 'Out of stock items have been removed from your cart.',
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    }
+  };
+
+  // Show loading state while fetching inventory data
+  if (isLoadingItems && userRole === "buyer") {
+    return (
+      <div className="p-4 sm:p-8 max-w-4xl mx-auto">
+        <div className="flex items-center gap-3 mb-6">
+          <Recycle className="w-8 h-8 text-green-600" />
+          <h1 className="text-2xl font-bold text-gray-800">
+            Confirm items you want to recycle
+          </h1>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500"></div>
+          <span className="ml-3 text-gray-600">Checking inventory...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 sm:p-8 max-w-4xl mx-auto">
       <div className="flex items-center gap-3 mb-6">
@@ -377,6 +405,12 @@ export default function CartPage() {
         <h1 className="text-2xl font-bold text-gray-800">
           Confirm items you want to recycle
         </h1>
+        {userRole === "buyer" && (
+          <div className="ml-auto flex items-center gap-2 text-sm text-green-600">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            Live Inventory
+          </div>
+        )}
       </div>
 
       {cart.length === 0 ? (
@@ -421,17 +455,6 @@ export default function CartPage() {
           </div>
 
           <div className="space-y-4 relative">
-            {isCheckingInventory && (
-              <div className="absolute top-0 right-0 z-10 bg-white bg-opacity-90 px-3 py-2 rounded-lg shadow-sm">
-                <div className="flex items-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-green-500"></div>
-                  <span className="text-sm text-gray-600">
-                    Checking stock...
-                  </span>
-                </div>
-              </div>
-            )}
-
             <AnimatePresence>
               {cart.map((item) => (
                 <motion.div
@@ -441,9 +464,38 @@ export default function CartPage() {
                   animate="visible"
                   exit="exit"
                   layout
-                  className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
-                  <div className="p-4 flex flex-col sm:flex-row gap-4">
-                    <div className="bg-green-50 rounded-lg w-full sm:w-24 h-24 flex-shrink-0 flex items-center justify-center relative">
+                  className={`bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-shadow ${
+                    outOfStockItems[item._id] 
+                      ? 'border-red-200 bg-red-50' 
+                      : 'border-gray-100'
+                  }`}
+                >
+                  <div className="p-4 flex flex-col sm:flex-row gap-4 relative">
+                    {/* Out of Stock Badge */}
+                    {outOfStockItems[item._id] && (
+                      <div className="absolute top-2 right-2 z-10">
+                        <span className="bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-sm">
+                          Out of Stock
+                        </span>
+                      </div>
+                    )}
+                    
+                    {/* Stock Warning Badge */}
+                    {userRole === "buyer" && 
+                     !outOfStockItems[item._id] && 
+                     stockLevels[item._id] !== undefined && 
+                     stockLevels[item._id] > 0 && 
+                     stockLevels[item._id] < item.quantity + (item.measurement_unit === 1 ? 0.25 : 1) && (
+                      <div className="absolute top-2 right-2 z-10">
+                        <span className="bg-yellow-500 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-sm">
+                          Low Stock
+                        </span>
+                      </div>
+                    )}
+
+                    <div className={`bg-green-50 rounded-lg w-full sm:w-24 h-24 flex-shrink-0 flex items-center justify-center relative ${
+                      outOfStockItems[item._id] ? 'opacity-50' : ''
+                    }`}>
                       {item.image ? (
                         <Image
                           width={100}
@@ -458,17 +510,20 @@ export default function CartPage() {
                     </div>
 
                     <div className="flex-1">
-                     
                       <div className="flex justify-between items-start">
-                        <h3 className="text-lg font-medium text-gray-800">
-                          {item.name}
-                        </h3>
-                        <p className="text-sm text-gray-500 mt-1">
-                          Category:{" "}
-                          <span className="text-green-600">
-                            {item.categoryName}
-                          </span>
-                        </p>
+                        <div className="flex-1">
+                          <h3 className={`text-lg font-medium ${
+                            outOfStockItems[item._id] ? 'text-gray-500 line-through' : 'text-gray-800'
+                          }`}>
+                            {item.name}
+                          </h3>
+                          <p className="text-sm text-gray-500 mt-1">
+                            Category:{" "}
+                            <span className="text-green-600">
+                              {item.categoryName}
+                            </span>
+                          </p>
+                        </div>
                         <button
                           onClick={(e) => {
                             e.preventDefault();
@@ -478,7 +533,8 @@ export default function CartPage() {
                               onConfirm: () => removeFromCart(item),
                             });
                           }}
-                          className="text-gray-400 hover:text-red-500 transition-colors">
+                          className="text-gray-400 hover:text-red-500 transition-colors ml-2"
+                        >
                           <X className="w-5 h-5" />
                         </button>
                       </div>
@@ -497,13 +553,36 @@ export default function CartPage() {
                       </div>
 
                       {userRole === "buyer" && (
-                        <div className="text-xs text-gray-500 mt-1">
-                          Stock: {stockLevels[item._id] ?? "Loading..."}{" "}
-                          available
+                        <div className="text-xs mt-1 flex items-center gap-2">
+                          <span className={`${
+                            outOfStockItems[item._id] ? 'text-red-600 font-semibold' : 'text-gray-500'
+                          }`}>
+                            Stock: {stockLevels[item._id] ?? "Loading..."} available
+                          </span>
+                          {outOfStockItems[item._id] && (
+                            <span className="text-red-600 font-semibold">
+                              • Requested: {item.quantity}
+                            </span>
+                          )}
                         </div>
                       )}
 
-                      <div className="text-emerald-600 text-sm space-y-1 mt-2">
+                      {/* Out of Stock Warning Message */}
+                      {outOfStockItems[item._id] && (
+                        <div className="mt-2 p-2 bg-red-100 border border-red-200 rounded-md">
+                          <p className="text-sm text-red-700 font-medium">
+                            ⚠️ This item is currently out of stock. 
+                            {stockLevels[item._id] > 0 
+                              ? ` Only ${stockLevels[item._id]} available, but you have ${item.quantity} in cart.`
+                              : ' No stock available.'
+                            }
+                          </p>
+                        </div>
+                      )}
+
+                      <div className={`text-emerald-600 text-sm space-y-1 mt-2 ${
+                        outOfStockItems[item._id] ? 'opacity-50' : ''
+                      }`}>
                         <div>
                           <span className="font-semibold">Price:</span>{" "}
                           {item.price.toFixed(2)} EGP
@@ -516,7 +595,7 @@ export default function CartPage() {
                         </div>
                       </div>
 
-                      {/* Enhanced Quantity Controls */}
+                      {/* Enhanced Quantity Controls - Disabled for out of stock items */}
                       <div className="mt-4 space-y-2">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
@@ -526,16 +605,17 @@ export default function CartPage() {
                                 e.preventDefault();
                                 handleDecrease(item);
                               }}
+                              disabled={
+                                outOfStockItems[item._id] ||
+                                item.quantity <= (item.measurement_unit === 1 ? 0.25 : 1)
+                              }
                               className={`w-8 h-8 flex items-center justify-center rounded-full border transition-all ${
-                                item.quantity <=
-                                (item.measurement_unit === 1 ? 0.25 : 1)
+                                outOfStockItems[item._id] ||
+                                item.quantity <= (item.measurement_unit === 1 ? 0.25 : 1)
                                   ? "text-gray-300 bg-gray-100 border-gray-200 cursor-not-allowed"
                                   : "text-gray-600 hover:bg-gray-50 border-gray-300"
                               }`}
-                              disabled={
-                                item.quantity <=
-                                (item.measurement_unit === 1 ? 0.25 : 1)
-                              }>
+                            >
                               -
                             </button>
 
@@ -549,21 +629,18 @@ export default function CartPage() {
                                     : item.quantity.toString()
                                 }
                                 onChange={(e) =>
-                                  handleInputChange(
-                                    item._id,
-                                    e.target.value,
-                                    item
-                                  )
+                                  handleInputChange(item._id, e.target.value, item)
                                 }
                                 onBlur={() => handleInputBlur(item._id, item)}
+                                disabled={outOfStockItems[item._id]}
                                 className={`w-16 px-2 py-1 text-center text-sm font-medium border rounded-md focus:outline-none focus:ring-2 ${
-                                  inputErrors[item._id]
+                                  outOfStockItems[item._id]
+                                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                    : inputErrors[item._id]
                                     ? "border-red-300 focus:ring-red-500 focus:border-red-500"
                                     : "border-gray-300 focus:ring-green-500 focus:border-green-500"
                                 }`}
-                                placeholder={
-                                  item.measurement_unit === 1 ? "0.25" : "1"
-                                }
+                                placeholder={item.measurement_unit === 1 ? "0.25" : "1"}
                               />
                             </div>
 
@@ -574,13 +651,16 @@ export default function CartPage() {
                                 handleIncrease(item);
                               }}
                               disabled={
-                                userRole === "buyer" && !canIncrease[item._id]
+                                outOfStockItems[item._id] ||
+                                (userRole === "buyer" && !canIncrease[item._id])
                               }
                               className={`w-8 h-8 flex items-center justify-center rounded-full border transition-all ${
-                                userRole === "buyer" && !canIncrease[item._id]
+                                outOfStockItems[item._id] ||
+                                (userRole === "buyer" && !canIncrease[item._id])
                                   ? "text-gray-300 bg-gray-100 border-gray-200 cursor-not-allowed"
                                   : "text-gray-600 hover:bg-gray-50 border-gray-300"
-                              }`}>
+                              }`}
+                            >
                               +
                             </button>
 
@@ -612,6 +692,33 @@ export default function CartPage() {
           </div>
 
           <div className="mt-8 bg-white rounded-xl shadow p-6">
+            {/* Out of Stock Warning */}
+            {hasOutOfStockItems && (
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0">
+                    <svg className="w-5 h-5 text-red-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-medium text-red-800">
+                      Some items are out of stock
+                    </h3>
+                    <p className="text-sm text-red-700 mt-1">
+                      Please remove out of stock items or adjust quantities before proceeding to checkout.
+                    </p>
+                    <button
+                      onClick={handleRemoveOutOfStockItems}
+                      className="mt-2 text-sm bg-red-600 text-white px-3 py-1 rounded-md hover:bg-red-700 transition-colors"
+                    >
+                      Remove Out of Stock Items
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="flex justify-between items-center gap-4">
               <Button
                 color="light"
@@ -623,23 +730,29 @@ export default function CartPage() {
                     onConfirm: clearCart,
                   });
                 }}
-                className="border border-gray-300 text-gray-700 hover:bg-gray-50">
+                className="border border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
                 Clear Collection
               </Button>
 
               <div className="flex flex-col items-end">
-                <div className={totalPrice < 100 ? "pointer-events-none" : ""}>
+                <div className={
+                  totalPrice < 100 || hasOutOfStockItems ? "pointer-events-none" : ""
+                }>
                   <Button
                     onClick={(e) => {
                       e.preventDefault();
-                      router.push("/pickup");
+                      if (!hasOutOfStockItems && totalPrice >= 100) {
+                        router.push("/pickup");
+                      }
                     }}
-                    disabled={totalPrice < 100}
+                    disabled={totalPrice < 100 || hasOutOfStockItems}
                     className={`flex items-center gap-2 px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg ${
-                      totalPrice < 100
+                      totalPrice < 100 || hasOutOfStockItems
                         ? "bg-gray-300 text-white cursor-not-allowed"
                         : "bg-green-500 hover:bg-green-600 text-white"
-                    }`}>
+                    }`}
+                  >
                     <Truck className="w-5 h-5" />
                     Schedule Pickup
                   </Button>
@@ -647,6 +760,11 @@ export default function CartPage() {
                 {totalPrice < 100 && (
                   <p className="text-xs text-red-600 mt-1 text-right">
                     You should reach at least 100 EGP
+                  </p>
+                )}
+                {hasOutOfStockItems && (
+                  <p className="text-xs text-red-600 mt-1 text-right">
+                    Remove out of stock items to continue
                   </p>
                 )}
               </div>
