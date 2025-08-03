@@ -4,13 +4,12 @@ import { useParams } from "next/navigation";
 import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios";
-import { CartItem, useCart } from "@/context/CartContext";
+import { useCart } from "@/context/CartContext";
+import { CartItem } from "@/models/cart";
 import { Recycle, Leaf, Package, Minus, Plus } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
-import { useUserAuth } from "@/context/AuthFormContext";
 import Loader from "@/components/common/loader";
 import { useCategories } from "@/hooks/useGetCategories";
-import toast from "react-hot-toast";
 
 interface Item {
   _id: string;
@@ -29,12 +28,17 @@ export default function ItemDetailsPage() {
   const { itemName } = useParams();
   const decodedName =
     typeof itemName === "string" ? decodeURIComponent(itemName) : "";
-  const { addToCart, removeFromCart, cart, increaseQty, decreaseQty } =
-    useCart();
+  const [selectedQuantity, setSelectedQuantity] = useState(1);
+  const {
+    addToCart,
+    loadingItemId,
+    cart,
+    increaseQty,
+    decreaseQty,
+    removeFromCart,
+  } = useCart();
   const { t } = useLanguage();
   const { getCategoryIdByItemName } = useCategories();
-  const [selectedQuantity, setSelectedQuantity] = useState(1); // Default is 1
-
   useEffect(() => {
     const existing = cart.find(
       (item) => item.name.toLowerCase() === itemName?.toString().toLowerCase()
@@ -51,36 +55,21 @@ export default function ItemDetailsPage() {
 
   // Fetch specific item by name using existing API (original prices only)
   const fetchItemByName = async () => {
-    console.log("🔍 Fetching item by name:", decodedName);
     try {
-      // Get original prices (NO userRole parameter)
       const res = await api.get("/categories/get-items?limit=10000&role=buyer");
-      console.log(
-        "✅ Got all items with original prices, searching for:",
-        decodedName
-      );
-
       const allItems = res.data?.data || [];
-      console.log("📊 Total items received:", allItems.length);
 
-      // Find the item by name (case insensitive)
       const foundItem = allItems.find(
         (item: any) => item.name.toLowerCase() === decodedName.toLowerCase()
       );
 
       if (!foundItem) {
-        console.log("❌ Item not found in results");
         throw new Error("Item not found");
       }
 
-      console.log("✅ Item found with original price:", {
-        name: foundItem.name,
-        originalPrice: foundItem.price,
-      });
-
       return foundItem;
     } catch (error) {
-      console.error("❌ Error fetching item:", error);
+      console.error("Error fetching item:", error);
       throw error;
     }
   };
@@ -94,19 +83,6 @@ export default function ItemDetailsPage() {
     queryKey: ["item-details", decodedName],
     queryFn: fetchItemByName,
     enabled: !!decodedName,
-    retry: 3,
-    staleTime: 30 * 1000, // Reduced from 5 minutes to 30 seconds
-    refetchOnWindowFocus: true, // Refetch when user returns to tab
-    refetchInterval: 60 * 1000, // Refetch every 60 seconds
-    refetchIntervalInBackground: false,
-  });
-
-  console.log("📊 Item Details Query State:", {
-    item,
-    isLoading,
-    isError,
-    error,
-    decodedName,
   });
 
   const getMeasurementText = (unit: 1 | 2): string => {
@@ -115,12 +91,17 @@ export default function ItemDetailsPage() {
       : t("common.unitPiece", { defaultValue: " item" });
   };
 
-  // Show loading state
+  // Initialize selectedQuantity when item is loaded
+  useEffect(() => {
+    if (item) {
+      setSelectedQuantity(1); // Always start with 1
+    }
+  }, [item]);
+
   if (isLoading) {
     return <Loader title="items" />;
   }
 
-  // Show error state
   if (isError || !item) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -175,7 +156,6 @@ export default function ItemDetailsPage() {
         item: item.name,
         quantity: selectedQuantity,
       });
-
       addToCart(convertToCartItem(item, selectedQuantity));
     }
   };
@@ -196,6 +176,7 @@ export default function ItemDetailsPage() {
       handleAddToCart(); // existing function to add item
     }
   };
+
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -209,9 +190,6 @@ export default function ItemDetailsPage() {
                 fill
                 className="object-contain"
                 priority
-                onError={() =>
-                  console.error("🖼️ Image load error:", item?.image)
-                }
               />
             </div>
           </div>
@@ -344,7 +322,7 @@ export default function ItemDetailsPage() {
                   <Minus className="w-4 h-4" />
                 </button>
                 <span className="w-10 text-center font-medium">
-                  {selectedQuantity}
+                  {selectedQuantity} {/* Display as integer */}
                 </span>
                 <button
                   onClick={() => handleOperation("+", item)}
@@ -362,23 +340,25 @@ export default function ItemDetailsPage() {
             {/* Add to Cart Button */}
             <button
               onClick={handleToggleCart}
-              disabled={isOutOfStock && !isInCart}
+              disabled={isOutOfStock || loadingItemId === item._id}
               className={`w-full py-3 px-6 rounded-lg font-medium flex items-center justify-center space-x-2 transition-colors ${
-                isOutOfStock && !isInCart
+                isOutOfStock || loadingItemId === item._id
                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                   : isInCart
                   ? "bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg"
                   : "bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg"
               }`}
             >
-              <Package className="w-5 h-5" />
+              {loadingItemId === item._id ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              ) : (
+                <Package className="w-5 h-5" />
+              )}
               <span>
                 {isOutOfStock && !isInCart
                   ? t("common.outOfStock", { defaultValue: "Out of Stock" })
-                  : isInCart
-                  ? t("common.removeFromCart", {
-                      defaultValue: "Remove from Cart",
-                    })
+                  : loadingItemId === item._id
+                  ? t("common.adding", { defaultValue: "Adding..." })
                   : t("common.addToRecyclingCart", {
                       defaultValue: "Add to Cart",
                     })}

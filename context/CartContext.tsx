@@ -1,43 +1,18 @@
 "use client";
-
 import {
   createContext,
   useContext,
   useEffect,
   useState,
   ReactNode,
+  useCallback,
 } from "react";
 import api from "@/lib/axios";
 import { toast } from "react-hot-toast";
-import { useUserAuth } from "./AuthFormContext";
-import { useCategories } from "@/hooks/useGetCategories";
+import { CartItem } from "@/models/cart";
+import { useUserAuth } from "@/context/AuthFormContext";
 
-// export interface CartItem {
-//   _id: string;
-//   originalCategoryId: string;
-//   categoryId: string;
-//   categoryName: string;
-//   itemName: string;
-//   image?: string;
-//   points: number;
-//   price: number;
-//   measurement_unit: number;
-//   quantity: number;
-// }
-
-export interface CartItem {
-  _id: string;
-  categoryId: string;
-  categoryName: string;
-  name: string;
-  image: string;
-  points: number;
-  price: number;
-  measurement_unit: number;
-  quantity: number;
-}
-
-interface CartContextType {
+type CartContextType = {
   cart: CartItem[];
   addToCart: (item: CartItem) => Promise<void>;
   increaseQty: (item: CartItem) => Promise<void>;
@@ -46,12 +21,15 @@ interface CartContextType {
   clearCart: () => Promise<void>;
   loadCart: () => Promise<void>;
   loadingItemId: string | null;
-  // // selectedQuantities: Record<string, number>;
-  // // updateSelectedQuantity: (itemId: string, value: number) => void;
-  // // setSelectedQuantities: React.Dispatch<
-  // //   React.SetStateAction<Record<string, number>>
-  // >;
-}
+
+  checkInventory: (itemId: string, quantity: number) => Promise<boolean>;
+  checkInventoryEnhanced: (
+    item: CartItem,
+    quantity: number
+  ) => Promise<boolean>;
+  isItemInStock: (item: CartItem) => boolean;
+  userRole: "customer" | "buyer";
+};
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
@@ -66,84 +44,116 @@ export const useCart = () => {
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loadingItemId, setLoadingItemId] = useState<string | null>(null);
+  const { user } = useUserAuth();
+  const userRole = user?.role === "buyer" ? "buyer" : "customer";
 
-  const loadCart = async () => {
+  const loadCart = useCallback(async () => {
     try {
-      const res = await api.get("/cart", {
-        withCredentials: true,
-      });
+      const res = await api.get("/cart", { withCredentials: true });
       setCart(res.data.items || []);
-      // console.log("------------LOADING CART RESPONSE--------------------");
-      // console.log(res);
     } catch (err) {
       console.error("Failed to load cart", err);
+      toast.error("Failed to load cart items");
     }
-  };
-
-  useEffect(() => {
-    loadCart();
   }, []);
 
-  const addToCart = async (item: CartItem) => {
-    setLoadingItemId(item._id); // ✅ Use _id for loading state
-    try {
-      // Ensure minimum quantity for KG items is 1
-      if (item.measurement_unit === 1 && item.quantity < 1) {
-        item.quantity = 1; // ✅ Set minimum to 1 KG
-      }
+  const checkInventoryEnhanced = useCallback(
+    async (item: CartItem, quantity: number): Promise<boolean> => {
+      try {
+        const res = await api.get(
+          "/categories/get-items?limit=10000&role=buyer"
+        );
+        const allItems = res.data?.data || [];
 
-      // Validate quantity based on measurement unit
-      const isValidQuantity = validateQuantity(
-        item.quantity,
-        item.measurement_unit
-      );
-      if (!isValidQuantity) {
-        const message =
-          item.measurement_unit === 1
-            ? "For KG items, minimum quantity is 1 KG and must be in 0.25 increments"
-            : "For Piece items, quantity must be whole numbers ≥ 1";
-        toast.error(message);
-        return;
-      }
+        const foundItem = allItems.find(
+          (apiItem: any) =>
+            apiItem._id === item._id ||
+            apiItem.categoryId === item.categoryId ||
+            apiItem.name?.toLowerCase() === item.name?.toLowerCase()
+        );
 
-      await api.post("/cart", item, { withCredentials: true });
-      toast.success("Item added to your cart");
-      await loadCart();
-    } catch (err) {
-      console.error("Failed to add to cart", err);
-      if (err && typeof err === "object" && "response" in err) {
-        const axiosError = err as { response: { data: { message: string } } };
-        if (axiosError.response?.data?.message) {
-          toast.error(axiosError.response.data.message);
-        } else {
-          toast.error("Failed to add item to cart");
+        if (!foundItem) {
+          console.warn("Item not found in inventory:", item);
+          return false;
         }
-      } else {
-        toast.error("Failed to add item to cart");
+
+        const availableQuantity = foundItem.quantity;
+        return availableQuantity >= quantity;
+      } catch (err) {
+        console.error("Failed to check inventory:", err);
+        return false;
       }
-    } finally {
-      setLoadingItemId(null);
-    }
-  };
-  const validateQuantity = (
-    quantity: number,
-    measurementUnit: number
-  ): boolean => {
-    if (measurementUnit === 1) {
-      // KG items
-      // Must be >= 1 KG and in 0.25 increments
-      if (quantity < 1) return false; // ✅ Minimum 1 KG
-      const multiplied = Math.round(quantity * 4);
-      return Math.abs(quantity * 4 - multiplied) < 0.0001;
-    } else {
-      // Piece items
+    },
+    []
+  );
+
+  const validateQuantity = useCallback(
+    (quantity: number, measurementUnit: number): boolean => {
+      if (measurementUnit === 1) {
+        if (quantity < 1) return false;
+        const multiplied = Math.round(quantity * 4);
+        return Math.abs(quantity * 4 - multiplied) < 0.0001;
+      }
       return Number.isInteger(quantity) && quantity >= 1;
-    }
-  };
+    },
+    []
+  );
+
+  const addToCart = useCallback(
+    async (item: CartItem) => {
+      setLoadingItemId(item._id);
+      try {
+        const validatedItem = { ...item };
+        if (
+          validatedItem.measurement_unit === 1 &&
+          validatedItem.quantity < 1
+        ) {
+          validatedItem.quantity = 1;
+        }
+
+        if (
+          !validateQuantity(
+            validatedItem.quantity,
+            validatedItem.measurement_unit
+          )
+        ) {
+          const message =
+            validatedItem.measurement_unit === 1
+              ? "For KG items, minimum quantity is 1 KG and must be in 0.25 increments"
+              : "For Piece items, quantity must be whole numbers ≥ 1";
+          toast.error(message);
+          return;
+        }
+
+        if (userRole === "buyer") {
+          const isAvailable = await checkInventoryEnhanced(
+            validatedItem,
+            validatedItem.quantity
+          );
+          if (!isAvailable) {
+            toast.error(
+              "Sorry, the requested quantity is not available in stock."
+            );
+            return;
+          }
+        }
+
+        await api.post("/cart", validatedItem, { withCredentials: true });
+        await loadCart();
+        toast.success(`${validatedItem.name} added to cart successfully!`);
+      } catch (err) {
+        console.error("Failed to add to cart", err);
+        toast.error("Failed to add item to cart");
+      } finally {
+        setLoadingItemId(null);
+      }
+    },
+    [checkInventoryEnhanced, loadCart, userRole, validateQuantity]
+  );
 
   const increaseQty = async (item: CartItem) => {
     try {
-      const increment = item.measurement_unit === 1 ? 0.25 : 1; // ✅ KG = 0.25, Piece = 1
+      const increment = item.measurement_unit === 1 ? 0.25 : 1;
       const newQuantity = item.quantity + increment;
 
       await api.put(
@@ -162,77 +172,78 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
     }
   };
-  const decreaseQty = async (item: CartItem) => {
-    const decrement = item.measurement_unit === 1 ? 0.25 : 1; // ✅ KG = 0.25, Piece = 1
-    const minValue = item.measurement_unit === 1 ? 1 : 1; // ✅ Minimum 1 KG or 1 Piece
 
-    if (item.quantity <= minValue) return;
+  const decreaseQty = useCallback(
+    async (item: CartItem) => {
+      const decrement = item.measurement_unit === 1 ? 0.25 : 1;
+      const minValue = item.measurement_unit === 1 ? 1 : 1;
 
-    try {
-      const newQuantity = item.quantity - decrement;
+      if (item.quantity <= minValue) return;
 
-      await api.put(
-        "/cart",
-        { _id: item._id, quantity: newQuantity }, // Keep using categoryId
-        { withCredentials: true }
-      );
-      await loadCart();
-    } catch (err) {
-      console.error("Failed to decrease quantity", err);
-      if (err && typeof err === "object" && "response" in err) {
-        const axiosError = err as { response: { data: { message: string } } };
-        if (axiosError.response?.data?.message) {
-          toast.error(axiosError.response.data.message);
-        }
+      try {
+        const newQuantity = item.quantity - decrement;
+        await api.put(
+          "/cart",
+          { _id: item._id, quantity: newQuantity }, // Keep using categoryId
+          { withCredentials: true }
+        );
+        await loadCart();
+      } catch (err) {
+        console.error("Failed to decrease quantity", err);
+        toast.error("Failed to decrease item quantity");
       }
-    }
-  };
-  const removeFromCart = async (item: CartItem) => {
-    setLoadingItemId(item._id);
-    try {
-      // console.log("DELEITIIIIIIIIIIIIIIIIIIIIIIIIIIIING");
-      // console.log("--------------------------------");
-      // console.log(item._id);
-      // console.log("----------------------------------");
-      await api.delete(`/cart/${item._id}`, {
-        withCredentials: true,
-      });
-      toast.success("Item removed from your cart");
-      await loadCart();
-    } catch (err) {
-      console.error("Failed to remove from cart", err);
-      toast.error("Failed to remove item from cart");
-    } finally {
-      setLoadingItemId(null);
-    }
-  };
+    },
+    [loadCart]
+  );
 
-  const clearCart = async () => {
-    try {
-      await api.delete("cart", {
-        withCredentials: true,
-      });
+  const removeFromCart = useCallback(
+    async (item: CartItem) => {
+      setLoadingItemId(item._id);
+      try {
+        await api.delete(`/cart/${item._id}`, { withCredentials: true });
+        toast.success("Item removed from cart");
+        await loadCart();
+      } catch (err) {
+        console.error("Failed to remove from cart", err);
+        toast.error("Failed to remove item from cart");
+      } finally {
+        setLoadingItemId(null);
+      }
+    },
+    [loadCart]
+  );
 
+  const clearCart = useCallback(async () => {
+    try {
+      await api.delete("/cart", { withCredentials: true });
       setCart([]);
+      toast.success("Cart cleared successfully");
     } catch (err) {
       console.error("Failed to clear cart", err);
+      toast.error("Failed to clear cart");
     }
+  }, []);
+
+  const contextValue = {
+    cart,
+    loadingItemId,
+    addToCart,
+    increaseQty,
+    decreaseQty,
+    removeFromCart,
+    clearCart,
+    loadCart,
+    checkInventory: checkInventoryEnhanced,
+    checkInventoryEnhanced,
+    isItemInStock: (item: CartItem) => (item.quantity ?? 0) > 0,
+    userRole,
   };
 
+  useEffect(() => {
+    loadCart();
+  }, [loadCart]);
+
   return (
-    <CartContext.Provider
-      value={{
-        cart,
-        loadingItemId,
-        addToCart,
-        increaseQty,
-        decreaseQty,
-        removeFromCart,
-        clearCart,
-        loadCart,
-      }}
-    >
-      {children}
-    </CartContext.Provider>
+    <CartContext.Provider value={contextValue}>{children}</CartContext.Provider>
   );
 }

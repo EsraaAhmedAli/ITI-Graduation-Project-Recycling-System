@@ -25,135 +25,154 @@ const LoginForm = () => {
     useAuthenticationContext();
   const { setToken, setUser } = useUserAuth();
 
-const onSubmit = async () => {
-  setLoading(true);
-  try {
-    const { email, password } = getValues();
-    const res = await loginUser({ email, password });
+  const onSubmit = async () => {
+    setLoading(true);
+    try {
+      const { email, password } = getValues();
+      const res = await loginUser({ email, password });
 
-    // Check if user is a delivery user
-    if (res.user.role === "delivery") {
-      let deliveryUserData = {
-        user: res.user,
-        deliveryStatus: "pending",
-        declineReason: "",
-        declinedAt: "",
-        canReapply: false,
-        message: ""
-      };
+      // Check if user is a delivery user
+      if (res.user.role === "delivery") {
+        let deliveryUserData = {
+          user: res.user,
+          deliveryStatus: "pending",
+          declineReason: "",
+          declinedAt: "",
+          canReapply: false,
+          message: "",
+        };
 
-      // ✅ ONLY approved users get tokens and context
-      if (res.user.isApproved === true) {
-        console.log("✅ Approved delivery user - setting token and user");
-        deliveryUserData.deliveryStatus = "approved";
-        
-        // Set user and token for approved users only
-        setUser(res.user);
-        setToken(res.accessToken);
-        
-        sessionStorage.setItem("deliveryUserData", JSON.stringify(deliveryUserData));
-        router.push("/deliverydashboard");
+        // ✅ ONLY approved users get tokens and context
+        if (res.user.isApproved === true) {
+          console.log("✅ Approved delivery user - setting token and user");
+          deliveryUserData.deliveryStatus = "approved";
+
+          // Set user and token for approved users only
+          setUser(res.user);
+          setToken(res.accessToken);
+
+          sessionStorage.setItem(
+            "deliveryUserData",
+            JSON.stringify(deliveryUserData)
+          );
+          router.push("/deliverydashboard");
+          return;
+        }
+
+        // ✅ For declined/pending users - NO tokens, just localStorage
+        console.log(
+          "❌ Declined/pending delivery user - no token, using localStorage only"
+        );
+
+        // Check for decline data from response first
+        if (res.deliveryStatus === "declined") {
+          deliveryUserData = {
+            user: {
+              ...res.user,
+              declineReason: res.declineReason,
+              declinedAt: res.declinedAt,
+            },
+            deliveryStatus: res.deliveryStatus,
+            declineReason: res.declineReason || "",
+            declinedAt: res.declinedAt || "",
+            canReapply: res.canReapply !== undefined ? res.canReapply : true,
+            message: res.message || "",
+          };
+        }
+        // Check user object for decline data if not in response
+        else if (res.user.isApproved === false) {
+          if (res.user.declineReason || res.user.attachments?.declineReason) {
+            deliveryUserData.deliveryStatus = "declined";
+            deliveryUserData.declineReason =
+              res.user.declineReason ||
+              res.user.attachments?.declineReason ||
+              "";
+            deliveryUserData.declinedAt =
+              res.user.declinedAt || res.user.attachments?.declinedAt || "";
+            deliveryUserData.canReapply = true;
+
+            // Add decline data to user object
+            deliveryUserData.user = {
+              ...res.user,
+              declineReason: deliveryUserData.declineReason,
+              declinedAt: deliveryUserData.declinedAt,
+            };
+          } else {
+            // No decline reason means still pending
+            deliveryUserData.deliveryStatus = "pending";
+          }
+        }
+
+        console.log(
+          "🚚 Saving declined/pending delivery data:",
+          deliveryUserData
+        );
+
+        // ✅ For declined/pending users: Set user in context but NO token
+        setUser(deliveryUserData.user);
+        // Don't call setToken() for declined/pending users!
+
+        sessionStorage.setItem(
+          "deliveryUserData",
+          JSON.stringify(deliveryUserData)
+        );
+        router.push("/waiting-for-approval");
         return;
       }
 
-      // ✅ For declined/pending users - NO tokens, just localStorage
-      console.log("❌ Declined/pending delivery user - no token, using localStorage only");
+      // Regular user or admin
+      setUser(res.user);
+      setToken(res.accessToken);
+      router.push("/");
+      toast.success(t("auth.login.loginSuccess") || "Login successful!");
+    } catch (err) {
+      console.error("Login error:", err);
 
-      // Check for decline data from response first
-      if (res.deliveryStatus === "declined") {
-        deliveryUserData = {
+      if (err.response?.data?.deliveryStatus === "declined") {
+        const errorData = err.response.data;
+        const declineData = {
           user: {
-            ...res.user,
-            declineReason: res.declineReason,
-            declinedAt: res.declinedAt
+            ...errorData.user,
+            declineReason: errorData.declineReason,
+            declinedAt: errorData.declinedAt,
+            _id: errorData.user?.userId || errorData.user?._id || "",
+            email: errorData.user?.email || email,
+            role: "delivery",
           },
-          deliveryStatus: res.deliveryStatus,
-          declineReason: res.declineReason || "",
-          declinedAt: res.declinedAt || "",
-          canReapply: res.canReapply !== undefined ? res.canReapply : true,
-          message: res.message || ""
+          deliveryStatus: errorData.deliveryStatus,
+          declineReason: errorData.declineReason || "",
+          declinedAt: errorData.declinedAt || "",
+          canReapply:
+            errorData.canReapply !== undefined ? errorData.canReapply : true,
+          message: errorData.message || "",
         };
-      } 
-      // Check user object for decline data if not in response
-      else if (res.user.isApproved === false) {
-        if (res.user.declineReason || res.user.attachments?.declineReason) {
-          deliveryUserData.deliveryStatus = "declined";
-          deliveryUserData.declineReason = res.user.declineReason || res.user.attachments?.declineReason || "";
-          deliveryUserData.declinedAt = res.user.declinedAt || res.user.attachments?.declinedAt || "";
-          deliveryUserData.canReapply = true;
-          
-          // Add decline data to user object
-          deliveryUserData.user = {
-            ...res.user,
-            declineReason: deliveryUserData.declineReason,
-            declinedAt: deliveryUserData.declinedAt
-          };
-        } else {
-          // No decline reason means still pending
-          deliveryUserData.deliveryStatus = "pending";
-        }
+
+        console.log("🚚 Saving decline data from error:", declineData);
+
+        // ✅ Set user but NO token for declined users
+        setUser(declineData.user);
+        // Don't call setToken() for declined users!
+
+        sessionStorage.setItem("deliveryUserData", JSON.stringify(declineData));
+        router.push("/waiting-for-approval");
+        return;
       }
 
-      console.log("🚚 Saving declined/pending delivery data:", deliveryUserData);
-      
-      // ✅ For declined/pending users: Set user in context but NO token
-      setUser(deliveryUserData.user);
-      // Don't call setToken() for declined/pending users!
-      
-      sessionStorage.setItem("deliveryUserData", JSON.stringify(deliveryUserData));
-      router.push("/waiting-for-approval");
-      return;
+      toast.error(t("auth.login.loginFailed"));
+    } finally {
+      setLoading(false);
     }
-
-    // Regular user or admin
-    setUser(res.user);
-    setToken(res.accessToken);
-    router.push("/");
-    toast.success(t("auth.login.loginSuccess") || "Login successful!");
-
-  } catch (err) {
-    console.error("Login error:", err);
-
-    if (err.response?.data?.deliveryStatus === "declined") {
-      const errorData = err.response.data;
-      const declineData = {
-        user: {
-          ...errorData.user,
-          declineReason: errorData.declineReason,
-          declinedAt: errorData.declinedAt,
-          _id: errorData.user?.userId || errorData.user?._id || "",
-          email: errorData.user?.email || email,
-          role: "delivery"
-        },
-        deliveryStatus: errorData.deliveryStatus,
-        declineReason: errorData.declineReason || "",
-        declinedAt: errorData.declinedAt || "",
-        canReapply: errorData.canReapply !== undefined ? errorData.canReapply : true,
-        message: errorData.message || ""
-      };
-
-      console.log("🚚 Saving decline data from error:", declineData);
-      
-      // ✅ Set user but NO token for declined users
-      setUser(declineData.user);
-      // Don't call setToken() for declined users!
-      
-      sessionStorage.setItem("deliveryUserData", JSON.stringify(declineData));
-      router.push("/waiting-for-approval");
-      return;
-    }
-
-    toast.error(t("auth.login.loginFailed"));
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const navigateToSignUp = () => {
     setMode("role-select");
     reset();
   };
+
+  function navigateToForgot() {
+    setMode("forgot-password");
+    reset();
+  }
 
   return (
     <div className="space-y-6">
@@ -208,7 +227,7 @@ const onSubmit = async () => {
           }
         />
       </div>
-      
+
       {/* Submit */}
       <button
         type="submit"
@@ -237,11 +256,19 @@ const onSubmit = async () => {
         )}
         {loading ? t("auth.login.signingIn") : t("auth.login.signIn")}
       </button>
+      <button
+        type="button"
+        onClick={navigateToForgot}
+        className="flex ms-auto text-sm text-gray-500 hover:underline"
+      >
+        Forget Your Password?
+      </button>
 
       {/* Social */}
       <SocialButtons />
-      
+
       {/* Switch Mode */}
+
       <div className="text-center mt-4">
         <button
           type="button"

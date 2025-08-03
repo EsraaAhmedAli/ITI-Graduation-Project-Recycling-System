@@ -1,5 +1,4 @@
 "use client";
-
 import { useCart } from "@/context/CartContext";
 import Swal from "sweetalert2";
 import { useRouter } from "next/navigation";
@@ -9,8 +8,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "flowbite-react";
 import Image from "next/image";
 import { useUserAuth } from "@/context/AuthFormContext";
-import { useCategories } from "@/hooks/useGetCategories";
-import toast from "react-hot-toast";
 
 const itemVariants = {
   hidden: { opacity: 0, y: 10 },
@@ -19,14 +16,24 @@ const itemVariants = {
 };
 
 export default function CartPage() {
-  const { cart, removeFromCart, clearCart, increaseQty, decreaseQty } =
-    useCart();
+  const {
+    cart,
+    removeFromCart,
+    clearCart,
+    increaseQty,
+    decreaseQty,
+    checkInventoryEnhanced,
+    userRole,
+  } = useCart();
   const router = useRouter();
   const [totalItems, setTotalItems] = useState(0);
   const [totalPoints, setTotalPoints] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
   const { user } = useUserAuth();
-  const { geItemQuantityInStock, refetch } = useCategories();
+  const [canIncrease, setCanIncrease] = useState<{ [key: string]: boolean }>(
+    {}
+  );
+  const [isCheckingInventory, setIsCheckingInventory] = useState(false);
 
   useEffect(() => {
     const total = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -43,6 +50,32 @@ export default function CartPage() {
     setTotalPoints(points);
     setTotalPrice(price);
   }, [cart]);
+
+  useEffect(() => {
+    const checkItems = async () => {
+      setIsCheckingInventory(true);
+      const results: { [key: string]: boolean } = {};
+
+      for (const item of cart) {
+        if (userRole === "buyer") {
+          const increment = item.measurement_unit === 1 ? 0.25 : 1;
+          results[item._id] = await checkInventoryEnhanced(
+            item,
+            item.quantity + increment
+          );
+        } else {
+          results[item._id] = true;
+        }
+      }
+
+      setCanIncrease(results);
+      setIsCheckingInventory(false);
+    };
+
+    if (cart.length > 0) {
+      checkItems();
+    }
+  }, [cart, userRole, checkInventoryEnhanced]);
 
   const confirmAction = async ({
     title,
@@ -74,6 +107,16 @@ export default function CartPage() {
         showConfirmButton: false,
       });
     }
+  };
+
+  const handleIncrease = async (e: React.MouseEvent, item: any) => {
+    e.preventDefault();
+    increaseQty(item);
+  };
+
+  const handleDecrease = async (e: React.MouseEvent, item: any) => {
+    e.preventDefault();
+    decreaseQty(item);
   };
 
   return (
@@ -127,7 +170,13 @@ export default function CartPage() {
             </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-4 relative">
+            {isCheckingInventory && (
+              <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center z-10">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+              </div>
+            )}
+
             <AnimatePresence>
               {cart.map((item, idx) => (
                 <motion.div
@@ -166,13 +215,14 @@ export default function CartPage() {
                           </span>
                         </p>
                         <button
-                          onClick={() =>
+                          onClick={(e) => {
+                            e.preventDefault();
                             confirmAction({
                               title: "Remove Item?",
                               text: `Remove ${item.name} from your recycling collection?`,
                               onConfirm: () => removeFromCart(item),
-                            })
-                          }
+                            });
+                          }}
                           className="text-gray-400 hover:text-red-500 transition-colors"
                         >
                           <X className="w-5 h-5" />
@@ -192,6 +242,12 @@ export default function CartPage() {
                         </div>
                       </div>
 
+                      {userRole === "buyer" && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          Stock: {item.quantity ?? 0} available
+                        </div>
+                      )}
+
                       <div className="text-emerald-600 text-sm space-y-1 mt-2">
                         <div>
                           <span className="font-semibold">Price:</span>{" "}
@@ -208,10 +264,8 @@ export default function CartPage() {
                       <div className="mt-4 flex items-center justify-between">
                         <div className="flex items-center border border-gray-200 rounded-full">
                           <button
-                            onClick={() => {
-                              decreaseQty(item);
-                              refetch();
-                            }}
+                            type="button"
+                            onClick={(e) => handleDecrease(e, item)}
                             className={`w-8 h-8 flex items-center justify-center rounded-l-full transition-all ${
                               item.quantity <= 1
                                 ? "text-gray-300 bg-gray-100 cursor-not-allowed"
@@ -225,38 +279,16 @@ export default function CartPage() {
                             {item.quantity}
                           </span>
                           <button
-                            onClick={() => {
-                              const maxStock = geItemQuantityInStock(
-                                item._id,
-                                item.categoryId
-                              );
-                              if (
-                                user?.role === "buyer" &&
-                                item.quantity >= maxStock
-                              ) {
-                                return toast.error(
-                                  "You’ve reached the max stock available."
-                                );
-                              }
-                              increaseQty(item);
-                              refetch();
-                            }}
+                            type="button"
+                            onClick={(e) => handleIncrease(e, item)}
+                            disabled={
+                              userRole === "buyer" && !canIncrease[item._id]
+                            }
                             className={`w-8 h-8 flex items-center justify-center rounded-r-full transition-all ${
-                              user?.role === "buyer" &&
-                              geItemQuantityInStock(
-                                item._id,
-                                item.categoryId
-                              ) <= item.quantity
+                              userRole === "buyer" && !canIncrease[item._id]
                                 ? "text-gray-300 bg-gray-100 cursor-not-allowed"
                                 : "text-gray-600 hover:bg-gray-50"
                             }`}
-                            disabled={
-                              user?.role === "buyer" &&
-                              geItemQuantityInStock(
-                                item._id,
-                                item.categoryId
-                              ) <= item.quantity
-                            }
                           >
                             +
                           </button>
@@ -273,13 +305,14 @@ export default function CartPage() {
             <div className="flex justify-between items-center gap-4">
               <Button
                 color="light"
-                onClick={() =>
+                onClick={(e) => {
+                  e.preventDefault();
                   confirmAction({
                     title: "Clear All?",
                     text: "Are you sure you want to remove all items from your recycling collection?",
                     onConfirm: clearCart,
-                  })
-                }
+                  });
+                }}
                 className="border border-gray-300 text-gray-700 hover:bg-gray-50"
               >
                 Clear Collection
@@ -288,7 +321,10 @@ export default function CartPage() {
               <div className="flex flex-col items-end">
                 <div className={totalPrice < 100 ? "pointer-events-none" : ""}>
                   <Button
-                    onClick={() => router.push("/pickup")}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      router.push("/pickup");
+                    }}
                     disabled={totalPrice < 100}
                     className={`flex items-center gap-2 px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg ${
                       totalPrice < 100
