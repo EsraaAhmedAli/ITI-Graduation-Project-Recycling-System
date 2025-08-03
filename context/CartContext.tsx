@@ -21,13 +21,14 @@ type CartContextType = {
   clearCart: () => Promise<void>;
   loadCart: () => Promise<void>;
   loadingItemId: string | null;
-
+  updateQuantity: (item: CartItem) => void;
   checkInventory: (itemId: string, quantity: number) => Promise<boolean>;
   checkInventoryEnhanced: (
     item: CartItem,
     quantity: number
   ) => Promise<boolean>;
   isItemInStock: (item: CartItem) => boolean;
+  updateCartState: (newCart: CartItem[]) => void;
   userRole: "customer" | "buyer";
 };
 
@@ -45,12 +46,69 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loadingItemId, setLoadingItemId] = useState<string | null>(null);
   const { user } = useUserAuth();
+  const [cartChanged, setCartChanged] = useState(false);
   const userRole = user?.role === "buyer" ? "buyer" : "customer";
+
+  // const loadCart = useCallback(async () => {
+  //   try {
+  //     const res = await api.get("/cart", { withCredentials: true });
+  //     setCart(res.data.items || []);
+  //   } catch (err) {
+  //     console.error("Failed to load cart", err);
+  //     toast.error("Failed to load cart items");
+  //   }
+  // }, []);
+
+  const updateCartState = (newCart: CartItem[]) => {
+    setCart(newCart);
+    setCartChanged(true);
+  };
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (!cartChanged) return;
+
+      const payload = JSON.stringify({ items: cart });
+      const blob = new Blob([payload], { type: "application/json" });
+
+      const success = navigator.sendBeacon(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/cart/save`,
+        blob
+      );
+
+      console.log("Beacon sent?", success);
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [cart, cartChanged]);
 
   const loadCart = useCallback(async () => {
     try {
       const res = await api.get("/cart", { withCredentials: true });
-      setCart(res.data.items || []);
+      const serverCart = res.data.items || [];
+
+      const unsynced = localStorage.getItem("unsynced_cart");
+
+      if (unsynced) {
+        const localCart: CartItem[] = JSON.parse(unsynced);
+        localStorage.removeItem("unsynced_cart");
+
+        // You may choose to:
+        // - merge
+        // - replace
+        // - prompt user
+
+        await api.post(
+          "/cart/save",
+          { items: localCart },
+          { withCredentials: true }
+        );
+        updateCartState(localCart);
+      } else {
+        setCart(serverCart); // safe here since it came from server
+      }
+
+      setCartChanged(false); // reset
     } catch (err) {
       console.error("Failed to load cart", err);
       toast.error("Failed to load cart items");
@@ -150,18 +208,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
     },
     [checkInventoryEnhanced, loadCart, userRole, validateQuantity]
   );
+  const updateQuantity = (item: CartItem) => {
+    const found = cart.find((ci) => ci._id === item._id);
+    if (found) {
+      found.quantity = item.quantity;
+    }
+  };
 
   const increaseQty = async (item: CartItem) => {
     try {
       const increment = item.measurement_unit === 1 ? 0.25 : 1;
       const newQuantity = item.quantity + increment;
-
-      await api.put(
-        "/cart",
-        { _id: item._id, quantity: newQuantity }, // Keep using categoryId since backend expects it
-        { withCredentials: true }
-      );
-      await loadCart();
+      const found = cart.find((ci) => ci._id === item._id);
+      if (found) found.quantity = newQuantity;
+      // await api.put(
+      //   "/cart",
+      //   { _id: item._id, quantity: newQuantity }, // Keep using categoryId since backend expects it
+      //   { withCredentials: true }
+      // );
+      // await loadCart();
     } catch (err) {
       console.error("Failed to increase quantity", err);
       if (err && typeof err === "object" && "response" in err) {
@@ -182,12 +247,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       try {
         const newQuantity = item.quantity - decrement;
-        await api.put(
-          "/cart",
-          { _id: item._id, quantity: newQuantity }, // Keep using categoryId
-          { withCredentials: true }
-        );
-        await loadCart();
+        const found = cart.find((ci) => ci._id === item._id);
+        if (found) found.quantity = newQuantity;
+        // await api.put(
+        //   "/cart",
+        //   { _id: item._id, quantity: newQuantity }, // Keep using categoryId
+        //   { withCredentials: true }
+        // );
+        // await loadCart();
       } catch (err) {
         console.error("Failed to decrease quantity", err);
         toast.error("Failed to decrease item quantity");
@@ -237,6 +304,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     checkInventoryEnhanced,
     isItemInStock: (item: CartItem) => (item.quantity ?? 0) > 0,
     userRole,
+    updateQuantity,
+    updateCartState,
   };
 
   useEffect(() => {

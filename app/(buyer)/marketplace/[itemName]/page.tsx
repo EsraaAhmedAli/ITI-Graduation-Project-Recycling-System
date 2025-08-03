@@ -10,6 +10,7 @@ import { Recycle, Leaf, Package, Minus, Plus } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import Loader from "@/components/common/loader";
 import { useCategories } from "@/hooks/useGetCategories";
+import toast from "react-hot-toast";
 
 interface Item {
   _id: string;
@@ -36,12 +37,16 @@ export default function ItemDetailsPage() {
     increaseQty,
     decreaseQty,
     removeFromCart,
+    updateQuantity,
+    updateCartState,
   } = useCart();
   const { t } = useLanguage();
   const { getCategoryIdByItemName } = useCategories();
   useEffect(() => {
+    const decodedName = decodeURIComponent(itemName?.toString().toLowerCase());
+
     const existing = cart.find(
-      (item) => item.name.toLowerCase() === itemName?.toString().toLowerCase()
+      (item) => item.name.toLowerCase() === decodedName
     );
     if (existing) {
       setSelectedQuantity(existing.quantity);
@@ -91,12 +96,12 @@ export default function ItemDetailsPage() {
       : t("common.unitPiece", { defaultValue: " item" });
   };
 
-  // Initialize selectedQuantity when item is loaded
-  useEffect(() => {
-    if (item) {
-      setSelectedQuantity(1); // Always start with 1
-    }
-  }, [item]);
+  // // Initialize selectedQuantity when item is loaded
+  // useEffect(() => {
+  //   if (item) {
+  //     setSelectedQuantity(1); // Always start with 1
+  //   }
+  // }, [item]);
 
   if (isLoading) {
     return <Loader title="items" />;
@@ -156,22 +161,23 @@ export default function ItemDetailsPage() {
         item: item.name,
         quantity: selectedQuantity,
       });
-      addToCart(convertToCartItem(item, selectedQuantity));
+      const newItem = convertToCartItem(item, selectedQuantity);
+      updateCartState([...cart, newItem]);
+      // addToCart(convertToCartItem(item, selectedQuantity));
     }
   };
   const handleOperation = (op: "+" | "-", item: CartItem) => {
     const step = item.measurement_unit == 1 ? 0.25 : 1;
     const appliedStep = op === "+" ? step : -step;
     const newQuantity = selectedQuantity + appliedStep;
-    if (cart.find((im) => im._id === item._id)) {
-      if (op == "+") increaseQty({ ...item, quantity: newQuantity });
-      else decreaseQty({ ...item, quantity: newQuantity });
-    }
+    updateQuantity({ ...item, quantity: newQuantity });
     setSelectedQuantity(newQuantity);
   };
   const handleToggleCart = () => {
     if (isInCart) {
-      removeFromCart(convertToCartItem(item));
+      const toRemove = convertToCartItem(item);
+      updateCartState(cart.filter((ci) => ci._id !== toRemove._id));
+      setSelectedQuantity(1);
     } else if (!isOutOfStock) {
       handleAddToCart(); // existing function to add item
     }
