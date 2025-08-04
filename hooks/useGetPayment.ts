@@ -132,6 +132,7 @@ const fetchPaymentStats = async (params: Partial<PaymentsQueryParams> = {}) => {
 
 
 const refundPayment = async ({ paymentId, amount, reason }:{paymentId:string,amount?:number , reason:string}) => {
+  
   try {
     const response = await api.post(`/payment/${paymentId}/refund`, {
       amount,
@@ -172,7 +173,7 @@ export const usePayments = (params: PaymentsQueryParams = {}) => {
   const payments = data?.data || [];
   const pagination = data?.pagination || {
     page: 1,
-    limit: 25,
+    limit: 5,
     total: 0,
     totalPages: 0,
     hasNextPage: false,

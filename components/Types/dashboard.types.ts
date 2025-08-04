@@ -1,8 +1,8 @@
 // types/dashboard.types.ts
 
 export interface TopUser {
-  id: string;
-  userName: string;
+  userId: string;
+  name: string;
   email: string;
   imageUrl?: string;
   totalPoints: number;

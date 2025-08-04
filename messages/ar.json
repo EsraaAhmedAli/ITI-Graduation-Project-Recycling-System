@@ -66,7 +66,8 @@
     "startRecycling": "ابدأ التدوير",
     "logout": "تسجيل خروج",
     "title": "بدلها",
-    "searchplaceholder": "ابحث عن شيء..."
+    "searchplaceholder": "ابحث عن شيء...",
+    "myCart": "عربة التسوق"
   },
   "footer": {
     "title": "بدلها",
@@ -79,7 +80,10 @@
     "contact": "تواصل معنا",
     "email": "البريد الإلكتروني",
     "phone": "رقم الهاتف",
-    "rights": "جميع الحقوق محفوظة."
+    "rights": "جميع الحقوق محفوظة.",
+    "ContactUs": "تحدث معنا",
+    "Eco-Friendly Platform": "تطبيق مساعد للحفاظ على البيئة",
+    "support": "مساعدة"
   },
   "breadcrumbs": {
     "home": "الرئيسية",
@@ -149,8 +153,12 @@
       "forgotPassword": "هل نسيت كلمة المرور؟",
       "securityNote": "لا تقلق، معلوماتك آمنة 100٪.",
       "loginFailed": "فشل تسجيل الدخول. يرجى التحقق من بياناتك.",
-            "loginSuccess": "مرحبا بك!"
-
+      "loginSuccess": "مرحبا بك!",
+      "emailrequired": "يجب ادخال البريد الالكتروني",
+      "passwordrequired": "يجب ادخال كلمة المرور",
+      "dontHaveAccount": "ليس لديك حساب؟ قم بالتسجيل",
+      "ChooseYourRole": "اختر دورك",
+      "typeOfAccount": "حدد نوع الحساب الذي ترغب في إنشائه."
     }
   },
   "profile": {
@@ -164,13 +172,13 @@
       "incoming": "قيد التنفيذ",
       "completed": "مكتملة",
       "cancelled": "ملغاة",
-      "payments" : "عمليات الدفع"
+      "payments": "عمليات الدفع"
     },
     "orders": {
       "loading": "جاري تحميل الطلبات...",
       "empty": "لا توجد طلبات في هذا التبويب بعد.",
       "date": "التاريخ",
-            "cancelOrder": "الغاء الطلب",
+      "cancelOrder": "الغاء الطلب",
 
       "status": {
         "inTransit": "قيد التوصيل",
@@ -238,7 +246,15 @@
   "collectionsOfCategory": "{{collections}}  {{category}}",
 
   "common": {
+       "invalidQuantity": "يرجى إدخال كمية صحيحة",
+    "exceedsMaxQuantity": "الحد الأقصى المتاح هو {{max}}",
+    "wholeNumbersOnly": "يُسمح بالأرقام الصحيحة فقط لهذا المنتج",
+    "minimumQuantity": "الحد الأدنى للكمية هو {{min}} كيلو",
+    "invalidIncrement": "يجب أن تكون الكمية بزيادات {{increment}} كيلو",
+    "kgIncrement": "الحد الأدنى 0.25 كيلو، بزيادات 0.25 كيلو",
+    "wholeNumbers": "أرقام صحيحة فقط",
     "collectionsPlural": "مجموعات",
+    "adding" : "اضافة",
     "pointsAbbreviation": "نقاط",
     "allCategories": "جميع الفئات",
     "showing": "عرض",
@@ -253,7 +269,10 @@
     "unitKg": "كجم",
     "unitPiece": "قطعة",
     "quantity": "الكمية",
-    "lowStockWarning": "مخزون منخفض"
+    "lowStockWarning": "مخزون منخفض",
+    "startAdding": "ابدأ بالأضافة",
+        "removeFromCart" : "احذف من عربة التسوق"
+
   },
   "marketPlace": {
     "sustainableMarketplace": "الأسواق المستدامة",
@@ -303,6 +322,20 @@
     "newLife": {
       "title": "حياة جديدة",
       "description": "يتم إعادة استخدام المواد في منتجات جديدة."
+    }
+  },
+  "registration": {
+    "customer": {
+      "title": "تسجيل العميل",
+      "description": "انضم إلى مجتمع إعادة التدوير الخاص بنا"
+    },
+    "delivery": {
+      "title": "تسجيل شريك التوصيل",
+      "description": "كن شريك توصيل معتمد"
+    },
+    "buyer": {
+      "title": "تسجيل المشتري التجاري",
+      "description": "سجل عملك لشراء المواد المعاد تدويرها"
     }
   }
 }

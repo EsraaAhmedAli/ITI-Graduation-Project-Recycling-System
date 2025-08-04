@@ -10,9 +10,9 @@ export function useCategories() {
       const res = await api.get("/categories");
       return res.data;
     },
-    staleTime: 1000 * 60,
+    staleTime: 2000,
     refetchOnMount: true,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
   });
 
   const getCategoryIdByItemName = (itemName: string): string => {

@@ -107,6 +107,8 @@ export default function Page() {
     queryFn: () =>
       fetchOrders(currentPage, itemsPerPage, activeTab, getActiveFilters()),
     keepPreviousData: true,
+    refetchOnMount:true,
+    staleTime:1
   });
 
   const { user } = useUserAuth();

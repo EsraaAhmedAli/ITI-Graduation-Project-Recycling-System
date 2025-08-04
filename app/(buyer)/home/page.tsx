@@ -5,7 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import PromotionSlider from "@/components/buyer/PromotionSlider";
-import { Search, ChevronRight, Filter, Frown, Leaf, Zap, Recycle, Star } from "lucide-react";
+import {   ChevronRight,  Frown, Leaf, Zap, Recycle,  } from "lucide-react";
+import api from "@/lib/axios";
 
 
 interface Item {
@@ -22,6 +23,7 @@ interface Material {
   image: string;
   totalRecycled: number;
   totalPoints: number;
+  unit:string
 }
 
 export default function BuyerHomePage() {
@@ -41,8 +43,10 @@ export default function BuyerHomePage() {
   const fetchItems = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/categories/get-items?page=1&limit=8&role=buyer`);
-      const data = await response.json();
+      // const response = await fetch(`http://localhost:5000/api/categories/get-items?page=1&limit=8&role=buyer`);
+      // const data = await response.json();
+      const response = await api.get(`/categories/get-items?page=1&limit=8&role=buyer`)
+      const data = response.data
       setItems(data.data);
       setFilteredItems(data.data);
     } catch (error) {
@@ -55,14 +59,19 @@ export default function BuyerHomePage() {
   const fetchMaterials = async () => {
     setMaterialsLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/api/top-materials-recycled");
-      const data = await response.json();
+      // const response = await fetch("http://localhost:5000/api/top-materials-recycled");
+      // const data = await response.json();
+      const response = await api.get('/top-materials-recycled')
+      const data = response.data
+      console.log(data);
+      
 
       const formattedMaterials = data.data.map((item: any) => ({
         name: item._id.itemName,
         image: item.image,
         totalRecycled: item.totalQuantity,
         totalPoints: item.totalPoints,
+        unit:item.unit
       }));
 
       setMaterials(formattedMaterials);
@@ -80,7 +89,6 @@ export default function BuyerHomePage() {
       if (storedData) {
         const parsed = JSON.parse(storedData);
         const role = parsed?.user?.role;
-        console.log("User Role from session:", role);
         setUserRole(role || "buyer");
       } else {
         setUserRole("buyer");
@@ -123,7 +131,8 @@ export default function BuyerHomePage() {
               {selectedCategory === "all" ? "Featured Items" : selectedCategory}
             </h2>
             <Link href="/marketplace" passHref>
-              <button className="text-emerald-600 hover:text-emerald-700 font-medium flex items-center text-sm transition-colors">
+              <button   aria-label="view all items"
+ className="text-emerald-600 hover:text-emerald-700 font-medium flex items-center text-sm transition-colors">
                 View All
                 <ChevronRight className="w-4 h-4 ml-1" />
               </button>
@@ -146,6 +155,8 @@ export default function BuyerHomePage() {
               <h3 className="text-lg font-medium text-gray-900 mb-2">No items found</h3>
               <p className="text-gray-500 mb-4 text-sm">Try adjusting your search or filter</p>
               <button
+                aria-label="reset filters"
+
                 onClick={() => {
                   setSearchTerm("");
                   setSelectedCategory("all");
@@ -238,18 +249,7 @@ export default function BuyerHomePage() {
                 <p className="text-sm text-emerald-100 mb-4 max-w-md mx-auto lg:mx-0">
                   Join our community making a difference. Every recycled item counts.
                 </p>
-                <div className="flex flex-col sm:flex-row gap-2 justify-center lg:justify-start">
-                  <Link href="/start-recycling" passHref>
-                    <button className="px-4 py-2 bg-white text-emerald-700 font-medium rounded-lg hover:bg-emerald-50 flex items-center text-xs shadow-sm transition-all">
-                      Start Now <ChevronRight className="w-3 h-3 ml-1" />
-                    </button>
-                  </Link>
-                  <Link href="/learn-more" passHref>
-                    <button className="px-4 py-2 border border-white text-white font-medium rounded-lg hover:bg-white/10 flex items-center text-xs transition-all">
-                      How It Works <Leaf className="w-3 h-3 ml-1" />
-                    </button>
-                  </Link>
-                </div>
+           
               </div>
 
               <div className="grid grid-cols-2 gap-2 lg:w-1/2 max-w-xs">
@@ -277,12 +277,7 @@ export default function BuyerHomePage() {
               <section className="mb-12">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold text-gray-800">Top Recycled Materials</h2>
-            <Link href="/materials" passHref>
-              <button className="text-emerald-600 hover:text-emerald-700 font-medium flex items-center text-sm transition-colors">
-                View All
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </button>
-            </Link>
+                
           </div>
 
           {materialsLoading ? (
@@ -319,20 +314,19 @@ export default function BuyerHomePage() {
                         ) : (
                           <div className="text-gray-300">
                             <Recycle className="h-10 w-10" />
+                            
                           </div>
                         )}
                       </div>
                       <h3 className="text-base font-medium text-gray-800 truncate mb-1">
                         {material.name}
+                    
                       </h3>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">
-                          {material.totalRecycled} kg
+                          {material.totalRecycled} {material.unit}
                         </span>
-                        <span className="text-sm text-amber-600 flex items-center">
-                          <Star className="w-4 h-4 mr-1 fill-amber-300" />
-                          {material.totalPoints}
-                        </span>
+                  
                       </div>
                     </div>
                   </motion.div>

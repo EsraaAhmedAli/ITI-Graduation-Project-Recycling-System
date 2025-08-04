@@ -152,29 +152,41 @@ const AdminUsersPage = () => {
   // Inside return:
 
   const columns = [
+   {
+  key: "imgUrl",
+  label: "",
+  render: (user: User) => {
+    if (user.imgUrl) {
+      return (
+        <Image
+        width={30}
+        height={30}
+          src={user.imgUrl}
+          alt={user.name}
+          className=" rounded-full object-cover"
+        />
+      );
+    } 
+    else if(user.role == 'delivery') {
+         return (
+        <Image
+        width={30}
+        height={30}
+          src={user.attachments.deliveryImage}
+          alt={user.name}
+          className=" rounded-full object-cover"
+        />
+      );
+    }
     {
-      key: "imgUrl",
-      label: "",
-      render: (user: User) => {
-        if (user.imgUrl) {
-          return (
-            <Image
-              width={30}
-              height={30}
-              src={user.imgUrl}
-              alt={user.name}
-              className=" rounded-full object-cover"
-            />
-          );
-        } else {
-          return (
-            <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-semibold uppercase">
-              {user.name?.charAt(0) || "?"}
-            </div>
-          );
-        }
-      },
-    },
+      return (
+        <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-semibold uppercase">
+          {user.name?.charAt(0) || "?"}
+        </div>
+      );
+    }
+  },
+},
     {
       key: "name",
       label: "Name",
@@ -234,7 +246,7 @@ const AdminUsersPage = () => {
           data={filteredUsers}
           columns={columns}
           title="Users"
-          itemsPerPage={8}
+          itemsPerPage={5}
           addButtonText="Add User"
           showFilter={true} // ✅ add this!
           showAddButton={false}

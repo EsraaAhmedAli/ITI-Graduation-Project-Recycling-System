@@ -25,4 +25,6 @@ export interface User {
   createdAt?: string;
   updatedAt?: string;
   lastActiveAt?: string;
+  deliveryStatus:string
+  declineReason:string
 }

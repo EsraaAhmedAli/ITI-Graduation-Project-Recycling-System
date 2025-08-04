@@ -10,10 +10,10 @@ import React from "react";
 import ReactQueryProvider from "@/components/providers/reactQueryProvider";
 import { Toaster } from "react-hot-toast";
 import { NotificationProvider } from "@/context/notificationContext";
-import { LanguageProvider } from "@/context/LanguageContext"; // Add this
+import { LanguageProvider } from "@/context/LanguageContext";
 import GuestSessionProvider from "@/lib/GuestSessionProvider";
 import { GoogleOAuthProvider } from "@react-oauth/google";
-import AuthRedirectHandler from "@/components/shared/AuthRedirectHandler";
+import { OfflineProvider } from "@/context/OfflineContext"; // Add this import
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,22 +41,22 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <LanguageProvider>
-          {" "}
-          {/* Add this wrapper */}
           <UserAuthProvider>
             <ReactQueryProvider>
               <CartProvider>
-                <Toaster />
-                <NotificationProvider>
-                  <ToastContainer />
-                  <GuestSessionProvider>
-                    <GoogleOAuthProvider
-                      clientId={process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID!}
-                    >
-                      <LayoutWrapper>{children}</LayoutWrapper>
-                    </GoogleOAuthProvider>
-                  </GuestSessionProvider>
-                </NotificationProvider>
+                <OfflineProvider> {/* Add OfflineProvider here */}
+                  <Toaster />
+                  <NotificationProvider>
+                    <ToastContainer />
+                    <GuestSessionProvider>
+                      <GoogleOAuthProvider
+                        clientId={process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID!}
+                      >
+                        <LayoutWrapper>{children}</LayoutWrapper>
+                      </GoogleOAuthProvider>
+                    </GuestSessionProvider>
+                  </NotificationProvider>
+                </OfflineProvider>
               </CartProvider>
             </ReactQueryProvider>
           </UserAuthProvider>

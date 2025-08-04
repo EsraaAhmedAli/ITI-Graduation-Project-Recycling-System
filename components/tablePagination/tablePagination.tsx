@@ -7,6 +7,8 @@ interface TablePaginationProps {
   startIndex: number;
   endIndex: number;
   totalItems: number;
+    isFetching : boolean
+
 }
 
 export function TablePagination({
@@ -15,7 +17,8 @@ export function TablePagination({
   onPageChange,
   startIndex,
   endIndex,
-  totalItems
+  totalItems,
+  isFetching
 }: TablePaginationProps) {
   const renderPagination = () => {
     const pages = [];
@@ -56,7 +59,7 @@ export function TablePagination({
       pages.push(
         <button
           key="next-group"
-          onClick={() => onPageChange(endPage + 1)}
+          onClick={() => onPageChange(totalPages)}
           className="px-2 md:px-3 py-1 rounded text-sm bg-white border border-green-200 hover:bg-green-50 text-green-700 transition-colors"
         >
           &raquo;
@@ -77,7 +80,7 @@ export function TablePagination({
         <div className="flex items-center gap-2 order-1 sm:order-2">
           <button
             onClick={() => onPageChange(currentPage - 1)}
-            disabled={currentPage === 1}
+  disabled={currentPage === 1 || isFetching}
             className="flex items-center gap-1 px-2 md:px-3 py-1 rounded text-sm bg-white border border-green-200 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed text-green-700 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -88,7 +91,7 @@ export function TablePagination({
 
           <button
             onClick={() => onPageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
+  disabled={currentPage === totalPages || isFetching}
             className="flex items-center gap-1 px-2 md:px-3 py-1 rounded text-sm bg-white border border-green-200 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed text-green-700 transition-colors"
           >
             <span className="hidden sm:inline">Next</span>

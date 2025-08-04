@@ -15,7 +15,7 @@ export function useUsers(role?: string) {
     queryFn: async () => {
       const url = role 
         ? `/users?role=${role}` 
-        : "/users?limit=1000"; 
+        : "/users?limit=100"; 
               const res = await api.get(url);
       return res.data.data || [];
     },

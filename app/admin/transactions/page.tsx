@@ -1,30 +1,25 @@
-"use client";
-import React, { useState, useMemo, JSX } from "react";
-import DynamicTable from "@/components/shared/dashboardTable";
-import {
-  usePayments,
-  PaymentData,
-  usePrefetchPayments,
-} from "@/hooks/useGetPayment";
-import {
-  CreditCard,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  XCircle,
-  RefreshCw,
-  Filter,
+'use client'
+import React, { useState, useMemo, JSX } from 'react';
+import DynamicTable from '@/components/shared/dashboardTable';
+import { usePayments, PaymentData, usePrefetchPayments } from '@/hooks/useGetPayment';
+import { 
+  CreditCard, 
+  AlertCircle, 
+  CheckCircle, 
+  Clock, 
+  XCircle, 
+
   Search,
   X,
   Calendar,
   DollarSign,
-  Globe,
-} from "lucide-react";
-import Loader from "@/components/common/loader";
-import { TablePagination } from "@/components/tablePagination/tablePagination";
-import { Modal, ModalBody, ModalFooter, ModalHeader } from "flowbite-react";
-import RefundModal from "@/components/shared/refundModal";
-import { priceWithMarkup } from "@/utils/priceUtils"; // عدلي المسار حسب مكان الملف
+  Globe
+} from 'lucide-react';
+import Loader from '@/components/common/loader';
+import { TablePagination } from '@/components/tablePagination/tablePagination';
+import { Modal, ModalBody, ModalFooter, ModalHeader } from 'flowbite-react';
+import RefundModal from '@/components/shared/refundModal';
+
 
 interface PaymentFilters {
   page: number;
@@ -42,15 +37,15 @@ interface PaymentFilters {
 const Transactions: React.FC = () => {
   const [filters, setFilters] = useState<PaymentFilters>({
     page: 1,
-    limit: 25,
-    status: "",
-    startDate: "",
-    endDate: "",
-    search: "",
-    currency: "",
-    country: "",
-    refunded: "",
-    disputed: "",
+    limit: 5,
+    status: '',
+    startDate: '',
+    endDate: '',
+    search: '',
+    currency: '',
+    country: '',
+    refunded: '',
+    disputed: '',
   });
 
   const [showFilters, setShowFilters] = useState(false);
@@ -73,7 +68,6 @@ const Transactions: React.FC = () => {
     isRefunding,
     refundError,
     isFetching,
-    isPreviousData,
   } = usePayments(filters);
 
   const prefetchPayments = usePrefetchPayments();
@@ -305,84 +299,84 @@ const Transactions: React.FC = () => {
   };
 
   // Define table columns with proper typing
-  const columns = useMemo(
-    () => [
-      {
-        key: "id",
-        label: "Transaction ID",
-        sortable: true,
-        priority: 1,
-        render: (payment: PaymentData) => (
-          <div className="flex items-center gap-2">
-            <CreditCard className="w-4 h-4 text-green-600" />
-            <span className="font-mono text-sm">{payment.id.slice(-8)}</span>
+  const columns = useMemo(() => [
+    {
+      key: 'id',
+      label: 'Transaction ID',
+      sortable: true,
+      priority: 1,
+      render: (payment: PaymentData) => (
+        <div className="flex items-center gap-2">
+          <CreditCard className="w-4 h-4 text-green-600" />
+          <span className="font-mono text-sm">{payment.id.slice(-8)}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'email',
+      label: 'Customer Email',
+      sortable: true,
+      priority: 2,
+      render: (payment: PaymentData) => (
+        <div className="max-w-xs">
+          <div className="text-sm font-medium text-gray-900 truncate">
+            {payment.billing_details?.email || 'N/A'}
           </div>
-        ),
-      },
-      {
-        key: "email",
-        label: "Customer Email",
-        sortable: true,
-        priority: 2,
-        render: (payment: PaymentData) => (
-          <div className="max-w-xs">
-            <div className="text-sm font-medium text-gray-900 truncate">
-              {payment.billing_details?.email || "N/A"}
+          {payment.billing_details?.name && (
+            <div className="text-xs text-gray-500 truncate">
+              {payment.billing_details.name}
             </div>
-            {payment.billing_details?.name && (
-              <div className="text-xs text-gray-500 truncate">
-                {payment.billing_details.name}
-              </div>
-            )}
+          )}
+        </div>
+      ),
+    },
+{
+  key: 'amount',
+  label: 'Amount',
+  sortable: true,
+  type: 'price' as const,
+  priority: 3,
+  render: (payment: PaymentData) => {
+    const baseAmount = payment.amount / 100;
+    return (
+      <div>
+        <div className="text-sm font-semibold text-gray-900">
+          {baseAmount} {payment?.currency?.toUpperCase()}
+        </div>
+        {payment.amount_refunded > 0 && (
+          <div className="text-xs text-red-600">
+            -{formatAmount(payment.amount_refunded, payment.currency)} refunded
           </div>
-        ),
-      },
-      {
-        key: "amount",
-        label: "Amount",
-        sortable: true,
-        type: "price" as const,
-        priority: 3,
-        render: (payment: PaymentData) => {
-          const baseAmount = payment.amount / 100;
-          return (
-            <div>
-              <div className="text-sm font-semibold text-gray-900">
-                {baseAmount} {payment.currency.toUpperCase()}
-              </div>
-              {payment.amount_refunded > 0 && (
-                <div className="text-xs text-red-600">
-                  -{formatAmount(payment.amount_refunded, payment.currency)}{" "}
-                  refunded
-                </div>
-              )}
-            </div>
-          );
-        },
-      },
-      {
-        key: "status",
-        label: "Status",
-        sortable: true,
-        type: "status" as const,
-        hideOnMobile: false,
-        priority: 4,
-        render: (payment: PaymentData) => renderStatus(payment),
-      },
-      {
-        key: "created",
-        label: "Date",
-        sortable: true,
-        hideOnMobile: true,
-        render: (payment: PaymentData) => (
-          <div className="text-sm text-gray-600">
-            {formatDate(payment.created)}
-          </div>
-        ),
-      },
-    ],
-    []
-  );
+        )}
+      </div>
+    );
+  },
+}
+,
+
+    {
+      key: 'status',
+      label: 'Status',
+      sortable: true,
+      type: 'status' as const,
+      hideOnMobile: false,
+      priority: 4,
+      render: (payment: PaymentData) => renderStatus(payment),
+    },
+    {
+      key: 'created',
+      label: 'Date',
+      sortable: true,
+      hideOnMobile: true,
+      render: (payment: PaymentData) => (
+        <div className="text-sm text-gray-600">
+          {formatDate(payment.created)}
+        </div>
+      ),
+    },
+
+
+  ], []);
 
   // Loading state
   if (isLoading && payments.length === 0) {
@@ -524,19 +518,17 @@ const Transactions: React.FC = () => {
           onSearchChange={handleQuickSearch}
         />
 
-        {/* NEW: Custom TablePagination component */}
-        <TablePagination
-          currentPage={pagination.page}
-          totalPages={pagination.totalPages}
-          onPageChange={handlePageChange}
-          startIndex={(pagination.page - 1) * pagination.limit}
-          endIndex={Math.min(
-            pagination.page * pagination.limit,
-            pagination.total
-          )}
-          totalItems={pagination.total}
-        />
-      </div>
+  {/* NEW: Custom TablePagination component */}
+  <TablePagination
+  isFetching={isFetching}
+    currentPage={pagination.page}
+    totalPages={pagination.totalPages}
+    onPageChange={handlePageChange}
+    startIndex={(pagination.page - 1) * pagination.limit}
+    endIndex={Math.min(pagination.page * pagination.limit, pagination.total)}
+    totalItems={pagination.total}
+  />
+</div>
 
       {/* Filter Modal */}
       {showFilters && (
