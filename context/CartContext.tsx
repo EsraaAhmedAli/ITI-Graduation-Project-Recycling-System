@@ -6,6 +6,7 @@ import {
   useState,
   ReactNode,
   useCallback,
+  useRef,
 } from "react";
 import api from "@/lib/axios";
 import { toast } from "react-hot-toast";
@@ -42,101 +43,236 @@ export const useCart = () => {
   return context;
 };
 
+const CART_SESSION_KEY = "guest_cart";
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loadingItemId, setLoadingItemId] = useState<string | null>(null);
   const { user } = useUserAuth();
-  const [cartChanged, setCartChanged] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [cartDirty, setCartDirty] = useState(false);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const userRole = user?.role === "buyer" ? "buyer" : "customer";
+  const isLoggedIn = !!user?._id;
 
-  // const loadCart = useCallback(async () => {
-  //   try {
-  //     const res = await api.get("/cart", { withCredentials: true });
-  //     setCart(res.data.items || []);
-  //   } catch (err) {
-  //     console.error("Failed to load cart", err);
-  //     toast.error("Failed to load cart items");
-  //   }
-  // }, []);
-
-  const updateCartState = (newCart: CartItem[]) => {
-    setCart(newCart);
-    setCartChanged(true);
-  };
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      if (!cartChanged) return;
-
-      const payload = JSON.stringify({ items: cart });
-      const blob = new Blob([payload], { type: "application/json" });
-
-      const success = navigator.sendBeacon(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/cart/save`,
-        blob
-      );
-
-      console.log("Beacon sent?", success);
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [cart, cartChanged]);
-
-  const loadCart = useCallback(async () => {
+  // Session storage helpers
+  const saveCartToSession = useCallback((cartItems: CartItem[]) => {
     try {
-      const res = await api.get("/cart", { withCredentials: true });
-      const serverCart = res.data.items || [];
-
-      const unsynced = localStorage.getItem("unsynced_cart");
-
-      if (unsynced) {
-        const localCart: CartItem[] = JSON.parse(unsynced);
-        localStorage.removeItem("unsynced_cart");
-
-        // You may choose to:
-        // - merge
-        // - replace
-        // - prompt user
-
-        await api.post(
-          "/cart/save",
-          { items: localCart },
-          { withCredentials: true }
-        );
-        updateCartState(localCart);
-      } else {
-        setCart(serverCart); // safe here since it came from server
-      }
-
-      setCartChanged(false); // reset
-    } catch (err) {
-      console.error("Failed to load cart", err);
-      toast.error("Failed to load cart items");
+      localStorage.setItem(CART_SESSION_KEY, JSON.stringify(cartItems));
+    } catch (error) {
+      console.error("Failed to save cart to session:", error);
     }
   }, []);
 
+  const loadCartFromSession = useCallback((): CartItem[] => {
+    try {
+      const stored = localStorage.getItem(CART_SESSION_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch (error) {
+      console.error("Failed to load cart from session:", error);
+      return [];
+    }
+  }, []);
+
+  const clearCartFromSession = useCallback(() => {
+    try {
+      localStorage.removeItem(CART_SESSION_KEY);
+    } catch (error) {
+      console.error("Failed to clear cart from session:", error);
+    }
+  }, []);
+
+  // Database helpers
+  const saveCartToDatabase = useCallback(
+    async (cartItems: CartItem[]) => {
+      if (!isLoggedIn) return;
+
+      try {
+        await api.post(
+          "/cart/save",
+          { items: cartItems },
+          { withCredentials: true }
+        );
+        console.log("Cart saved to database");
+      } catch (error) {
+        console.error("Failed to save cart to database:", error);
+        throw error;
+      }
+    },
+    [isLoggedIn]
+  );
+
+  const loadCartFromDatabase = useCallback(async (): Promise<CartItem[]> => {
+    if (!isLoggedIn) return [];
+
+    try {
+      const res = await api.get("/cart", { withCredentials: true });
+      return res.data.items || [];
+    } catch (error) {
+      console.error("Failed to load cart from database:", error);
+      throw error;
+    }
+  }, [isLoggedIn]);
+
+  // Debounced save function
+  const debouncedSave = useCallback(() => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = setTimeout(async () => {
+      if (!cartDirty) return;
+
+      try {
+        if (isLoggedIn) {
+          await saveCartToDatabase(cart);
+        } else {
+          saveCartToSession(cart);
+        }
+        setCartDirty(false);
+      } catch (error) {
+        console.error("Failed to save cart:", error);
+      }
+    }, 1000); // Save after 1 second of inactivity
+  }, [cart, cartDirty, isLoggedIn, saveCartToDatabase, saveCartToSession]);
+
+  // Update cart state and mark as dirty
+  const updateCartState = useCallback((newCart: CartItem[]) => {
+    setCart(newCart);
+    setCartDirty(true);
+  }, []);
+
+  // Load cart based on authentication state
+  const loadCart = useCallback(async () => {
+    try {
+      let cartItems: CartItem[] = [];
+
+      if (isLoggedIn) {
+        cartItems = await loadCartFromDatabase();
+      } else {
+        cartItems = loadCartFromSession();
+      }
+
+      setCart(cartItems);
+      setCartDirty(false);
+    } catch (error) {
+      console.error("Failed to load cart:", error);
+      toast.error("Failed to load cart items");
+    }
+  }, [isLoggedIn, loadCartFromDatabase, loadCartFromSession]);
+
+  // Handle user authentication changes
+  useEffect(() => {
+    const newUserId = user?._id || null;
+    const userChanged = currentUserId !== newUserId;
+
+    if (userChanged) {
+      const wasLoggedOut = currentUserId && !newUserId; // User logged out
+      const wasLoggedIn = !currentUserId && newUserId; // User logged in (from guest)
+      const userSwitched =
+        currentUserId && newUserId && currentUserId !== newUserId; // Different user logged in
+
+      if (wasLoggedOut) {
+        // User logged out - save current cart to session and keep it
+        console.log("User logged out - saving cart to session");
+        saveCartToSession(cart);
+      } else if (wasLoggedIn) {
+        // User logged in from guest - DO NOT merge carts, just load user's database cart
+        console.log("User logged in - loading user's database cart only");
+
+        // Clear current cart first to avoid mixing
+        setCart([]);
+        setCartDirty(false);
+
+        // Don't merge session cart - each user should have their own isolated cart
+        // Just load the user's database cart
+        loadCart();
+
+        // Optionally: Ask user if they want to merge (but for now, keep separate)
+        const sessionCart = loadCartFromSession();
+        if (sessionCart.length > 0) {
+          console.log(
+            `Guest session had ${sessionCart.length} items - keeping separate`
+          );
+          // Don't clear session cart - keep it for when user logs out
+        }
+      } else if (userSwitched) {
+        // Different user logged in - clear current cart and load new user's cart
+        console.log(
+          "Different user logged in - clearing current cart and loading new user's cart"
+        );
+        setCart([]);
+        setCartDirty(false);
+        loadCart();
+      } else if (newUserId && currentUserId === newUserId) {
+        // Same user, just reload their cart
+        console.log("Same user - reloading cart");
+        loadCart();
+      }
+
+      setCurrentUserId(newUserId);
+    }
+  }, [
+    user?._id,
+    currentUserId,
+    loadCart,
+    saveCartToDatabase,
+    saveCartToSession,
+    loadCartFromSession,
+    clearCartFromSession,
+    cart,
+  ]);
+
+  // Auto-save when cart changes
+  useEffect(() => {
+    if (cartDirty) {
+      debouncedSave();
+    }
+  }, [cartDirty, debouncedSave]);
+
+  // Handle page unload/reload
+  useEffect(() => {
+    const handleBeforeUnload = async () => {
+      if (!cartDirty) return;
+
+      try {
+        if (isLoggedIn) {
+          // Use sendBeacon for reliable background save
+          const payload = JSON.stringify({ items: cart });
+          const blob = new Blob([payload], { type: "application/json" });
+          const success = navigator.sendBeacon(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/cart/save`,
+            blob
+          );
+          console.log("Cart beacon sent:", success);
+        } else {
+          // Save to session storage immediately
+          saveCartToSession(cart);
+        }
+      } catch (error) {
+        console.error("Failed to save cart on page unload:", error);
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [cart, cartDirty, isLoggedIn, saveCartToSession]);
+
+  // Inventory checking
   const checkInventoryEnhanced = useCallback(
     async (item: CartItem, quantity: number): Promise<boolean> => {
       try {
         const res = await api.get(
           "/categories/get-items?limit=10000&role=buyer"
         );
-        const allItems = res.data?.data || [];
-
-        const foundItem = allItems.find(
-          (apiItem: any) => apiItem._id === item._id
-        );
-
-        if (!foundItem || typeof foundItem.quantity !== "number") {
-          console.warn("Item not found or has invalid quantity:", item);
-          return false;
-        }
-
-        const availableQuantity = foundItem.quantity;
-        console.log(
-          `Available: ${availableQuantity} vs Requested: ${quantity}`
-        );
-        return availableQuantity >= quantity;
+        const found = res.data?.data?.find((i: any) => i._id === item._id);
+        return found && found.quantity >= quantity;
       } catch (err) {
         console.error("Failed to check inventory:", err);
         return false;
@@ -145,60 +281,58 @@ export function CartProvider({ children }: { children: ReactNode }) {
     []
   );
 
-  const validateQuantity = useCallback(
-    (quantity: number, measurementUnit: number): boolean => {
-      if (measurementUnit === 1) {
-        if (quantity < 1) return false;
-        const multiplied = Math.round(quantity * 4);
-        return Math.abs(quantity * 4 - multiplied) < 0.0001;
-      }
-      return Number.isInteger(quantity) && quantity >= 1;
-    },
-    []
-  );
+  const validateQuantity = useCallback((qty: number, unit: number): boolean => {
+    return unit === 1
+      ? qty >= 1 && Math.abs(qty * 4 - Math.round(qty * 4)) < 0.0001
+      : Number.isInteger(qty) && qty >= 1;
+  }, []);
 
+  // Cart operations
   const addToCart = useCallback(
     async (item: CartItem) => {
       setLoadingItemId(item._id);
       try {
-        const validatedItem = { ...item };
-        if (
-          validatedItem.measurement_unit === 1 &&
-          validatedItem.quantity < 1
-        ) {
-          validatedItem.quantity = 1;
-        }
-
-        if (
-          !validateQuantity(
-            validatedItem.quantity,
-            validatedItem.measurement_unit
-          )
-        ) {
-          const message =
-            validatedItem.measurement_unit === 1
-              ? "For KG items, minimum quantity is 1 KG and must be in 0.25 increments"
-              : "For Piece items, quantity must be whole numbers ≥ 1";
-          toast.error(message);
+        const validated = { ...item };
+        if (!validateQuantity(validated.quantity, validated.measurement_unit)) {
+          toast.error(
+            validated.measurement_unit === 1
+              ? "For KG items, use increments of 0.25 and at least 1 KG"
+              : "For piece items, quantity must be whole numbers ≥ 1"
+          );
           return;
         }
 
         if (userRole === "buyer") {
           const isAvailable = await checkInventoryEnhanced(
-            validatedItem,
-            validatedItem.quantity
+            validated,
+            validated.quantity
           );
           if (!isAvailable) {
-            toast.error(
-              "Sorry, the requested quantity is not available in stock."
-            );
+            toast.error("Sorry, this quantity is not available in stock.");
             return;
           }
         }
 
-        await api.post("/cart", validatedItem, { withCredentials: true });
-        await loadCart();
-        toast.success(`${validatedItem.name} added to cart successfully!`);
+        // Check if item already exists in cart
+        const existingItemIndex = cart.findIndex(
+          (ci) => ci._id === validated._id
+        );
+        let newCart: CartItem[];
+
+        if (existingItemIndex >= 0) {
+          // Update existing item
+          newCart = [...cart];
+          newCart[existingItemIndex] = {
+            ...newCart[existingItemIndex],
+            quantity: newCart[existingItemIndex].quantity + validated.quantity,
+          };
+        } else {
+          // Add new item
+          newCart = [...cart, validated];
+        }
+
+        updateCartState(newCart);
+        toast.success(`${validated.name} added to cart!`);
       } catch (err) {
         console.error("Failed to add to cart", err);
         toast.error("Failed to add item to cart");
@@ -206,93 +340,79 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setLoadingItemId(null);
       }
     },
-    [checkInventoryEnhanced, loadCart, userRole, validateQuantity]
+    [cart, userRole, checkInventoryEnhanced, validateQuantity, updateCartState]
   );
-  const updateQuantity = (item: CartItem) => {
-    const found = cart.find((ci) => ci._id === item._id);
-    if (found) {
-      found.quantity = item.quantity;
-    }
-  };
 
-  const increaseQty = async (item: CartItem) => {
-    try {
-      const increment = item.measurement_unit === 1 ? 0.25 : 1;
-      const newQuantity = item.quantity + increment;
-      const found = cart.find((ci) => ci._id === item._id);
-      if (found) found.quantity = newQuantity;
-      // await api.put(
-      //   "/cart",
-      //   { _id: item._id, quantity: newQuantity }, // Keep using categoryId since backend expects it
-      //   { withCredentials: true }
-      // );
-      // await loadCart();
-    } catch (err) {
-      console.error("Failed to increase quantity", err);
-      if (err && typeof err === "object" && "response" in err) {
-        const axiosError = err as { response: { data: { message: string } } };
-        if (axiosError.response?.data?.message) {
-          toast.error(axiosError.response.data.message);
-        }
-      }
-    }
-  };
+  const updateQuantity = useCallback(
+    (item: CartItem) => {
+      const newCart = cart.map((ci) =>
+        ci._id === item._id ? { ...ci, quantity: item.quantity } : ci
+      );
+      updateCartState(newCart);
+    },
+    [cart, updateCartState]
+  );
+
+  const increaseQty = useCallback(
+    async (item: CartItem) => {
+      const inc = item.measurement_unit === 1 ? 0.25 : 1;
+      const newCart = cart.map((ci) =>
+        ci._id === item._id ? { ...ci, quantity: ci.quantity + inc } : ci
+      );
+      updateCartState(newCart);
+    },
+    [cart, updateCartState]
+  );
 
   const decreaseQty = useCallback(
     async (item: CartItem) => {
-      const decrement = item.measurement_unit === 1 ? 0.25 : 1;
-      const minValue = item.measurement_unit === 1 ? 1 : 1;
+      const dec = item.measurement_unit === 1 ? 0.25 : 1;
+      if (item.quantity <= dec) return;
 
-      if (item.quantity <= minValue) return;
-
-      try {
-        const newQuantity = item.quantity - decrement;
-        const found = cart.find((ci) => ci._id === item._id);
-        if (found) found.quantity = newQuantity;
-        // await api.put(
-        //   "/cart",
-        //   { _id: item._id, quantity: newQuantity }, // Keep using categoryId
-        //   { withCredentials: true }
-        // );
-        // await loadCart();
-      } catch (err) {
-        console.error("Failed to decrease quantity", err);
-        toast.error("Failed to decrease item quantity");
-      }
+      const newCart = cart.map((ci) =>
+        ci._id === item._id ? { ...ci, quantity: ci.quantity - dec } : ci
+      );
+      updateCartState(newCart);
     },
-    [loadCart]
+    [cart, updateCartState]
   );
 
   const removeFromCart = useCallback(
     async (item: CartItem) => {
       setLoadingItemId(item._id);
       try {
-        updateCartState(cart.filter((ci) => ci._id !== item._id));
-        // await api.delete(`/cart/${item._id}`, { withCredentials: true });
+        const newCart = cart.filter((ci) => ci._id !== item._id);
+        updateCartState(newCart);
         toast.success("Item removed from cart");
-        // await loadCart();
       } catch (err) {
-        console.error("Failed to remove from cart", err);
-        toast.error("Failed to remove item from cart");
+        console.error("Failed to remove item", err);
+        toast.error("Failed to remove item");
       } finally {
         setLoadingItemId(null);
       }
     },
-    [cart]
+    [cart, updateCartState]
   );
 
   const clearCart = useCallback(async () => {
     try {
-      await api.delete("/cart", { withCredentials: true });
-      setCart([]);
-      toast.success("Cart cleared successfully");
+      updateCartState([]);
+
+      // Also clear from database/session immediately
+      if (isLoggedIn) {
+        await api.delete("/cart", { withCredentials: true });
+      } else {
+        clearCartFromSession();
+      }
+
+      toast.success("Cart cleared");
     } catch (err) {
       console.error("Failed to clear cart", err);
       toast.error("Failed to clear cart");
     }
-  }, []);
+  }, [isLoggedIn, updateCartState, clearCartFromSession]);
 
-  const contextValue = {
+  const contextValue: CartContextType = {
     cart,
     loadingItemId,
     addToCart,
@@ -303,15 +423,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     loadCart,
     checkInventory: checkInventoryEnhanced,
     checkInventoryEnhanced,
-    isItemInStock: (item: CartItem) => (item.quantity ?? 0) > 0,
+    isItemInStock: (item) => (item.quantity ?? 0) > 0,
     userRole,
     updateQuantity,
     updateCartState,
   };
-
-  useEffect(() => {
-    loadCart();
-  }, [loadCart]);
 
   return (
     <CartContext.Provider value={contextValue}>{children}</CartContext.Provider>
