@@ -11,7 +11,6 @@ import {
   GalleryVerticalEnd,
   Recycle,
   Store,
-
   Settings,
   LogOut,
   User,
@@ -43,7 +42,6 @@ export default function Navbar() {
   const isBuyer = user?.role === "buyer";
   const { locale, setLocale } = useLanguage();
 
-
   const { t } = useLanguage();
 
   // Close notification dropdown when clicking outside
@@ -67,7 +65,6 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-
   const handleRemoveFromCart = async (item) => {
     try {
       await removeFromCart(item); // Use the context's removeFromCart function
@@ -78,7 +75,7 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     try {
-       logout();
+      logout();
       setIsProfileOpen(false);
     } catch (error) {
       console.error("Error logging out:", error);
@@ -131,7 +128,6 @@ export default function Navbar() {
           {/* Center: Navigation Links - Desktop (More compact) */}
           <div className="hidden lg:flex items-center space-x-1">
             <Link
-        
               prefetch={true}
               href={user?.role == "buyer" ? "/home" : "/"}
               className="flex items-center text-gray-600 hover:text-gray-900 hover:bg-gray-50 font-medium gap-1.5 px-2.5 py-1.5 rounded-md transition-all duration-200 text-sm" // Reduced padding and font size
@@ -173,7 +169,7 @@ export default function Navbar() {
               <button
                 onClick={() => setIsCartOpen(!isCartOpen)}
                 className="relative flex items-center gap-1 text-gray-600 hover:text-gray-900 hover:bg-gray-50 font-medium px-2 py-1.5 rounded-lg transition-all duration-200 border border-transparent hover:border-gray-200" // Reduced padding
-                title={isBuyer ? t("navbar.myCart"):t("navbar.myCollection")}
+                title={isBuyer ? t("navbar.myCart") : t("navbar.myCollection")}
               >
                 <div className="relative">
                   <Recycle className="w-5 h-5" />
@@ -186,8 +182,7 @@ export default function Navbar() {
                   )}
                 </div>
                 <span className="hidden sm:inline font-medium text-sm">
-                {isBuyer ? t("navbar.myCart"):t("navbar.myCollection")
-}
+                  {isBuyer ? t("navbar.myCart") : t("navbar.myCollection")}
                 </span>{" "}
                 {/* Smaller text */}
               </button>
@@ -199,8 +194,7 @@ export default function Navbar() {
                   {/* Slightly smaller width */}
                   <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100">
                     <h3 className="font-semibold text-gray-900 text-sm">
-                     {isBuyer ? t("navbar.myCart"):t("navbar.myCollection")}
-
+                      {isBuyer ? t("navbar.myCart") : t("navbar.myCollection")}
                     </h3>{" "}
                     {/* Smaller text */}
                     <span className="text-xs text-gray-500">
@@ -251,8 +245,8 @@ export default function Navbar() {
                                 {" "}
                                 {/* Smaller text */}
                                 {t(
-                                  `categories.subcategories.${item.name
-                                    .toLowerCase()
+                                  `categories.subcategories.${item?.name
+                                    ?.toLowerCase()
                                     .replace(/\s+/g, "-")}`
                                 )}
                               </p>
@@ -292,10 +286,15 @@ export default function Navbar() {
                         {/* Smaller icon */}
                         <p className="text-xs font-medium mb-1">
                           {t("navbar.yourCollectionEmpty")}
-
                         </p>
                         <p className="text-xs">{t("navbar.addItemsToStart")}</p>
-                        <Link onClick={()=>setIsCartOpen(false)} href={isBuyer ?'/marketplace' :'/category'} className="text-xs text-primary">{t('common.startAdding')}</Link>
+                        <Link
+                          onClick={() => setIsCartOpen(false)}
+                          href={isBuyer ? "/marketplace" : "/category"}
+                          className="text-xs text-primary"
+                        >
+                          {t("common.startAdding")}
+                        </Link>
                       </div>
                     )}
                     {cart &&

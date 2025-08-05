@@ -123,6 +123,7 @@ const LoginForm = () => {
       // Regular user or admin
       setUser(res.user);
       setToken(res.accessToken);
+
       router.push("/");
       toast.success(t("auth.login.loginSuccess") || "Login successful!");
     } catch (err) {

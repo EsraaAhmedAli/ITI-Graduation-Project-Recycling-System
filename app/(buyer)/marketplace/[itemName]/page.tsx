@@ -35,7 +35,9 @@ export default function ItemDetailsPage() {
   const {
     loadingItemId,
     cart,
-
+    addToCart,
+    increaseQty,
+    decreaseQty,
     updateCartState,
   } = useCart();
   const { t } = useLanguage();
@@ -45,7 +47,7 @@ export default function ItemDetailsPage() {
     const decodedName = decodeURIComponent(itemName?.toString().toLowerCase());
 
     const existing = cart.find(
-      (item) => item.name.toLowerCase() === decodedName
+      (item) => item?.name?.toLowerCase() === decodedName
     );
     if (existing) {
       setSelectedQuantity(existing.quantity);
@@ -94,22 +96,32 @@ export default function ItemDetailsPage() {
     enabled: !!decodedName,
   });
 
+  const syncCartWithChanges = (quantity: number) => {
+    if (cart.find((ci) => ci._id === item._id)) {
+      updateCartState(
+        cart.map((ci) => (ci._id === item._id ? { ...item, quantity } : ci))
+      );
+    }
+  };
+
   const getMeasurementText = (unit: 1 | 2): string => {
-    return unit === 1
-      ? t("common.unitKg")
-      : t("common.unitPiece");
+    return unit === 1 ? t("common.unitKg") : t("common.unitPiece");
   };
 
   // Validation function for quantity input
-  const validateQuantity = (value: string, measurementUnit: 1 | 2, maxQuantity: number): { isValid: boolean; errorMessage: string; validValue: number } => {
+  const validateQuantity = (
+    value: string,
+    measurementUnit: 1 | 2,
+    maxQuantity: number
+  ): { isValid: boolean; errorMessage: string; validValue: number } => {
     const numValue = parseFloat(value);
-    
+
     // Check if it's a valid number
     if (isNaN(numValue) || numValue <= 0) {
       return {
         isValid: false,
         errorMessage: t("common.invalidQuantity"),
-        validValue: 1
+        validValue: 1,
       };
     }
 
@@ -117,11 +129,11 @@ export default function ItemDetailsPage() {
     if (numValue > maxQuantity) {
       return {
         isValid: false,
-        errorMessage: t("common.exceedsMaxQuantity", { 
-          max: maxQuantity, 
-          defaultValue: `Maximum available quantity is ${maxQuantity}` 
+        errorMessage: t("common.exceedsMaxQuantity", {
+          max: maxQuantity,
+          defaultValue: `Maximum available quantity is ${maxQuantity}`,
         }),
-        validValue: maxQuantity
+        validValue: maxQuantity,
       };
     }
 
@@ -131,7 +143,7 @@ export default function ItemDetailsPage() {
         return {
           isValid: false,
           errorMessage: t("common.wholeNumbersOnly"),
-          validValue: Math.floor(numValue) || 1
+          validValue: Math.floor(numValue) || 1,
         };
       }
     }
@@ -142,11 +154,11 @@ export default function ItemDetailsPage() {
       if (numValue < minValue) {
         return {
           isValid: false,
-          errorMessage: t("common.minimumQuantity", { 
-            min: minValue, 
-            defaultValue: `Minimum quantity is ${minValue} kg` 
+          errorMessage: t("common.minimumQuantity", {
+            min: minValue,
+            defaultValue: `Minimum quantity is ${minValue} kg`,
           }),
-          validValue: minValue
+          validValue: minValue,
         };
       }
 
@@ -156,11 +168,11 @@ export default function ItemDetailsPage() {
         const roundedValue = Math.round(numValue * 4) / 4; // Round to nearest 0.25
         return {
           isValid: false,
-          errorMessage: t("common.invalidIncrement", { 
-            increment: "0.25", 
-            defaultValue: "Quantity must be in increments of 0.25 kg" 
+          errorMessage: t("common.invalidIncrement", {
+            increment: "0.25",
+            defaultValue: "Quantity must be in increments of 0.25 kg",
           }),
-          validValue: roundedValue
+          validValue: roundedValue,
         };
       }
     }
@@ -168,18 +180,22 @@ export default function ItemDetailsPage() {
     return {
       isValid: true,
       errorMessage: "",
-      validValue: numValue
+      validValue: numValue,
     };
   };
 
   // Handle input change
   const handleInputChange = (value: string) => {
     setInputValue(value);
-    
+
     if (!item) return;
 
-    const validation = validateQuantity(value, item.measurement_unit, item.quantity);
-    
+    const validation = validateQuantity(
+      value,
+      item.measurement_unit,
+      item.quantity
+    );
+
     if (validation.isValid) {
       setSelectedQuantity(validation.validValue);
       setInputError("");
@@ -192,16 +208,22 @@ export default function ItemDetailsPage() {
   const handleInputBlur = () => {
     if (!item) return;
 
-    const validation = validateQuantity(inputValue, item.measurement_unit, item.quantity);
-    
+    const validation = validateQuantity(
+      inputValue,
+      item.measurement_unit,
+      item.quantity
+    );
+
     if (!validation.isValid) {
       // Auto-correct to valid value
       setSelectedQuantity(validation.validValue);
       setInputValue(validation.validValue.toString());
       setInputError("");
-      
+
       // Show toast with correction message
       toast.error(validation.errorMessage);
+    } else {
+      syncCartWithChanges(parseFloat(inputValue));
     }
   };
 
@@ -263,35 +285,29 @@ export default function ItemDetailsPage() {
         item: item.name,
         quantity: selectedQuantity,
       });
-      const newItem = convertToCartItem(item, selectedQuantity);
-
-      const existingIndex = cart.findIndex((ci) => ci._id === newItem._id);
-
-      let updatedCart;
-      if (existingIndex !== -1) {
-        updatedCart = cart.map((ci, idx) =>
-          idx === existingIndex ? newItem : ci
-        );
-      } else {
-        updatedCart = [...cart, newItem];
-      }
-
-      updateCartState(updatedCart);
+      addToCart({ ...item, quantity: selectedQuantity });
     }
   };
 
   const handleOperation = (op: "+" | "-") => {
+    console.log(`HANDLEEEEEEEEEEEEEEEEEEEEE OPERATION ${op}`);
+    console.log(item);
     const step = item.measurement_unit === 1 ? 0.25 : 1;
     const appliedStep = op === "+" ? step : -step;
     const newQuantity = selectedQuantity + appliedStep;
-    
+
     // Validate the new quantity
-    const validation = validateQuantity(newQuantity.toString(), item.measurement_unit, item.quantity);
-    
+    const validation = validateQuantity(
+      newQuantity.toString(),
+      item.measurement_unit,
+      item.quantity
+    );
+
     if (validation.isValid) {
       setSelectedQuantity(validation.validValue);
       setInputValue(validation.validValue.toString());
       setInputError("");
+      syncCartWithChanges(newQuantity);
     }
   };
 
@@ -433,101 +449,103 @@ export default function ItemDetailsPage() {
             </div>
 
             {/* Enhanced Quantity Selector */}
-            {
-              item.quantity !==0 && <>
-                  <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-700">
-                {t("common.quantity")}
-              </label>
-              <div className="flex items-center space-x-3">
+            {item.quantity !== 0 && (
+              <>
+                <div className="space-y-3">
+                  <label className="block text-sm font-medium text-gray-700">
+                    {t("common.quantity")}
+                  </label>
+                  <div className="flex items-center space-x-3">
+                    <button
+                      onClick={() => handleOperation("-")}
+                      disabled={
+                        selectedQuantity <=
+                        (item.measurement_unit === 1 ? 0.25 : 1)
+                      }
+                      className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+
+                    {/* Input Field */}
+                    <div className="flex flex-col min-w-0">
+                      <input
+                        type="text"
+                        value={inputValue}
+                        onChange={(e) => handleInputChange(e.target.value)}
+                        onBlur={handleInputBlur}
+                        className={`w-20 px-3 py-2 text-center font-medium border rounded-lg focus:outline-none focus:ring-2 ${
+                          inputError
+                            ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                            : "border-gray-300 focus:ring-green-500 focus:border-green-500"
+                        }`}
+                        placeholder={item.measurement_unit === 1 ? "0.25" : "1"}
+                      />
+                    </div>
+
+                    <button
+                      onClick={() => handleOperation("+")}
+                      disabled={selectedQuantity >= item.quantity}
+                      className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                    <span className="text-sm text-gray-500">
+                      {getMeasurementText(item.measurement_unit)}
+                    </span>
+                  </div>
+
+                  {/* Error message with proper spacing */}
+                  {inputError && (
+                    <div className="text-xs text-red-500 bg-red-50 border border-red-200 rounded-md p-2">
+                      {inputError}
+                    </div>
+                  )}
+
+                  {/* Helper text */}
+                  <p className="text-xs text-gray-500">
+                    {item.measurement_unit === 1
+                      ? t("common.kgIncrement", {
+                          defaultValue:
+                            "Minimum 0.25 kg, increments of 0.25 kg",
+                        })
+                      : t("common.wholeNumbers", {
+                          defaultValue: "Whole numbers only",
+                        })}
+                  </p>
+                </div>
+
+                {/* Add to Cart Button */}
                 <button
-                  onClick={() => handleOperation("-")}
+                  onClick={handleToggleCart}
                   disabled={
-                    selectedQuantity <= (item.measurement_unit === 1 ? 0.25 : 1)
+                    isOutOfStock || loadingItemId === item._id || !!inputError
                   }
-                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className={`w-full py-3 px-6 rounded-lg font-medium flex items-center justify-center space-x-2 transition-colors ${
+                    isOutOfStock || loadingItemId === item._id || !!inputError
+                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      : isInCart
+                      ? "bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg"
+                      : "bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg"
+                  }`}
                 >
-                  <Minus className="w-4 h-4" />
+                  {loadingItemId === item._id ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  ) : (
+                    <Package className="w-5 h-5" />
+                  )}
+                  <span>
+                    {isOutOfStock && !isInCart
+                      ? t("common.outOfStock")
+                      : loadingItemId === item._id
+                      ? t("common.processing")
+                      : isInCart
+                      ? t("common.removeFromRecyclingCart")
+                      : t("common.addToRecyclingCart")}
+                  </span>
                 </button>
-                
-                {/* Input Field */}
-                <div className="flex flex-col min-w-0">
-                  <input
-                    type="text"
-                    value={inputValue}
-                    onChange={(e) => handleInputChange(e.target.value)}
-                    onBlur={handleInputBlur}
-                    className={`w-20 px-3 py-2 text-center font-medium border rounded-lg focus:outline-none focus:ring-2 ${
-                      inputError
-                        ? "border-red-300 focus:ring-red-500 focus:border-red-500"
-                        : "border-gray-300 focus:ring-green-500 focus:border-green-500"
-                    }`}
-                    placeholder={item.measurement_unit === 1 ? "0.25" : "1"}
-                  />
-                </div>
-
-                <button
-                  onClick={() => handleOperation("+")}
-                  disabled={selectedQuantity >= item.quantity}
-                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-                <span className="text-sm text-gray-500">
-                  {getMeasurementText(item.measurement_unit)}
-                </span>
-              </div>
-              
-              {/* Error message with proper spacing */}
-              {inputError && (
-                <div className="text-xs text-red-500 bg-red-50 border border-red-200 rounded-md p-2">
-                  {inputError}
-                </div>
-              )}
-              
-              {/* Helper text */}
-              <p className="text-xs text-gray-500">
-                {item.measurement_unit === 1
-                  ? t("common.kgIncrement", { 
-                      defaultValue: "Minimum 0.25 kg, increments of 0.25 kg" 
-                    })
-                  : t("common.wholeNumbers", { 
-                      defaultValue: "Whole numbers only" 
-                    })
-                }
-              </p>
-            </div>
-
-            {/* Add to Cart Button */}
-            <button
-              onClick={handleToggleCart}
-              disabled={isOutOfStock || loadingItemId === item._id || !!inputError}
-              className={`w-full py-3 px-6 rounded-lg font-medium flex items-center justify-center space-x-2 transition-colors ${
-                isOutOfStock || loadingItemId === item._id || !!inputError
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : isInCart
-                  ? "bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg"
-                  : "bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg"
-              }`}
-            >
-              {loadingItemId === item._id ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-              ) : (
-                <Package className="w-5 h-5" />
-              )}
-              <span>
-                {isOutOfStock && !isInCart
-                  ? t("common.outOfStock")
-                  : loadingItemId === item._id
-                  ? t("common.processing")
-                  : isInCart
-                  ? t("common.removeFromRecyclingCart",)
-                  : t("common.addToRecyclingCart",)}
-              </span>
-            </button>
               </>
-            }
-        
+            )}
 
             <div className="bg-gray-50 rounded-xl p-5 space-y-3">
               <h3 className="font-semibold text-gray-800 flex items-center">

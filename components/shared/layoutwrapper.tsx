@@ -22,9 +22,12 @@ export default function LayoutWrapper({ children }: { children: ReactNode }) {
   const buyerRestrictedRoutes = [
     "/admin",
     "/deilveryDashboard", 
-    "/waiting-for-approval"
+    "/waiting-for-approval",
     // Add any specific routes that buyers should NOT access
   ];
+
+  // Define routes that are considered "entry points" where we should redirect buyers to /home
+  const entryRoutes = ["/", "/login", "/register", "/auth"];
 
   // Check if current path is restricted for buyers
   const isBuyerRestrictedRoute = useMemo(() => {
@@ -55,10 +58,26 @@ export default function LayoutWrapper({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (isLoading || !user) return;
 
-    // Handle buyer routing - only restrict specific routes
-    if (isBuyer && isBuyerRestrictedRoute) {
-      router.push("/home");
-      return;
+    // Handle buyer routing
+    if (isBuyer) {
+      // Only redirect to /home from specific entry routes (first login scenario)
+      const isOnEntryRoute = entryRoutes.some(route => {
+        if (route === "/") {
+          return pathname === "/"; // Exact match for root
+        }
+        return pathname.startsWith(route);
+      });
+      
+      if (isOnEntryRoute && pathname !== "/home") {
+        router.push("/home");
+        return;
+      }
+      
+      // Restrict access to specific routes
+      if (isBuyerRestrictedRoute) {
+        router.push("/home");
+        return;
+      }
     }
 
     // Handle admin routing

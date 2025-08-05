@@ -43,7 +43,7 @@ export default function Footer() {
             <h3 className="font-semibold text-gray-800 mb-4">{t('footer.quickLinks')}</h3>
             <ul className="space-y-3">
               {[
-                { href: '/', label: t('footer.home') },
+                { href: '/FAQ', label: t('footer.FAQ') },
                 { href: '/about', label: t('footer.about') },
                 { href: '/category', label: t("navbar.categories") },
                 { href: '/cart', label: t('footer.cart') }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import DynamicTable from "@/components/shared/dashboardTable";
 import api from "@/lib/axios";
@@ -71,15 +71,7 @@ const fetchOrders = async (
 };
 
 export default function Page() {
-  const [activeTab, setActiveTab] = useState<UserRole>("customer");
-  const { currentPage, itemsPerPage, handlePageChange } = usePagination(1, 10);
-  const getActiveFilters = () => {
-    const status = filters.find((f) => f.name === "status")?.active || [];
-    const date = filters.find((f) => f.name === "date")?.active || [];
-
-    return { status, date };
-  };
-  const [filters, setFilters] = useState([
+    const [filters, setFilters] = useState([
     {
       name: "status",
       title: "Status",
@@ -101,16 +93,28 @@ export default function Page() {
     },
   ]);
 
-  // React Query fetch with pagination and role filter
-  const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
-    queryKey: ["adminOrders", currentPage, activeTab, filters],
-    queryFn: () =>
-      fetchOrders(currentPage, itemsPerPage, activeTab, getActiveFilters()),
-    keepPreviousData: true,
-    refetchOnMount:true,
-    staleTime:1
-  });
+  const [activeTab, setActiveTab] = useState<UserRole>("customer");
+  const { currentPage, itemsPerPage, handlePageChange } = usePagination(1, 5);
+  const getActiveFilters = () => {
+    const status = filters.find((f) => f.name === "status")?.active || [];
+    const date = filters.find((f) => f.name === "date")?.active || [];
 
+    return { status, date };
+  };
+  const activeFilters = useMemo(() => {
+  const status = filters.find((f) => f.name === "status")?.active || [];
+  const date = filters.find((f) => f.name === "date")?.active || [];
+  return { status, date };
+}, [filters]);
+
+  // React Query fetch with pagination and role filter
+const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
+  queryKey: ["adminOrders", currentPage, activeTab, activeFilters],
+  queryFn: () =>
+    fetchOrders(currentPage, itemsPerPage, activeTab, activeFilters),
+  keepPreviousData: true,
+  refetchOnMount: true,
+staleTime: 2 * 60 * 1000});
   const { user } = useUserAuth();
 
   const orders = data?.data || [];
@@ -307,10 +311,7 @@ export default function Page() {
     },
     onDelete: () => handleDeleteOrder(order._id),
   }));
-  const activeFilters = Object.fromEntries(
-    filters.map((f) => [f.name, f.active])
-  );
-
+  const activeFiltersForTable = activeFilters
   const columns = [
     {
       key: "userName",
@@ -502,14 +503,14 @@ export default function Page() {
             showAddButton={false}
             showFilter
             filtersConfig={filters}
-            externalFilters={activeFilters}
+            externalFilters={activeFiltersForTable}
             onExternalFiltersChange={(updated) => {
-              setFilters((prev) =>
-                prev.map((f) => ({
-                  ...f,
-                  active: updated[f.name] || [],
-                }))
-              );
+            setFilters((prev) =>
+      prev.map((f) => ({
+        ...f,
+        active: updated[f.name] || [],
+      }))
+    );
               handlePageChange(1); // reset to page 1
             }}
             activeFiltersCount={filters.reduce(

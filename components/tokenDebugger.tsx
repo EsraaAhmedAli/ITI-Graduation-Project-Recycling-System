@@ -16,7 +16,6 @@ export const TokenDebugger = () => {
     try {
       // Decode the token payload
       const payload = JSON.parse(atob(token.split('.')[1]));
-      const currentTime = Date.now() / 1000;
       
       console.log("🔍 Token Debug Info:");
       console.log("Token:", token);

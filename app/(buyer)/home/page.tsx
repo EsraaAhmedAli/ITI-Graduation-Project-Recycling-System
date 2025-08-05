@@ -1,11 +1,10 @@
-
 "use client";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import PromotionSlider from "@/components/buyer/PromotionSlider";
-import {   ChevronRight,  Frown, Leaf, Zap, Recycle,  } from "lucide-react";
+import {   ChevronRight,  Frown, Leaf, Zap, Recycle, AlertTriangle  } from "lucide-react";
 import api from "@/lib/axios";
 
 
@@ -16,6 +15,7 @@ interface Item {
   measurement_unit: number;
   image: string;
   categoryName: string;
+  quantity: number; // Added quantity property
 }
 
 interface Material {
@@ -38,6 +38,24 @@ export default function BuyerHomePage() {
 
   const getMeasurementText = (unit: number) => {
     return unit === 1 ? "kg" : "pc";
+  };
+
+  // Format quantity display
+  const formatQuantity = (quantity: number, unit: number) => {
+    if (quantity === 0) return "Out of stock";
+    
+    const unitText = getMeasurementText(unit);
+    if (quantity < 10) {
+      return `Only ${quantity} ${unitText} left`;
+    }
+    return `${quantity} ${unitText} in stock`;
+  };
+
+  // Get stock status color
+  const getStockColor = (quantity: number) => {
+    if (quantity === 0) return "text-red-600";
+    if (quantity < 10) return "text-orange-600";
+    return "text-emerald-600";
   };
 
   const fetchItems = async () => {
@@ -111,7 +129,22 @@ export default function BuyerHomePage() {
       const matchesCategory = selectedCategory === "all" || item.categoryName === selectedCategory;
       return matchesSearch && matchesCategory;
     });
-    setFilteredItems(filtered);
+
+    // Sort items: in-stock items first, then out-of-stock
+    const sortedFiltered = filtered.sort((a, b) => {
+      // If both have stock or both are out of stock, maintain original order
+      if ((a.quantity > 0 && b.quantity > 0) || (a.quantity === 0 && b.quantity === 0)) {
+        return 0;
+      }
+      // If a has stock but b doesn't, a comes first
+      if (a.quantity > 0 && b.quantity === 0) {
+        return -1;
+      }
+      // If b has stock but a doesn't, b comes first
+      return 1;
+    });
+
+    setFilteredItems(sortedFiltered);
   }, [searchTerm, selectedCategory, items]);
 
   const uniqueCategories = Array.from(new Set(items.map((item) => item.categoryName))).sort();
@@ -175,9 +208,33 @@ export default function BuyerHomePage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
                   whileHover={{ y: -5 }}
+                  className="relative"
                 >
                   <Link href={`/home/items/${encodeURIComponent(item.name)}`} passHref>
-                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-emerald-200 transition-all hover:shadow-sm h-full">
+                    <div className={`bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-emerald-200 transition-all hover:shadow-sm h-full relative ${
+                      item.quantity === 0 ? 'opacity-75' : ''
+                    }`}>
+                      
+                      {/* Out of Stock Badge */}
+                      {item.quantity === 0 && (
+                        <div className="absolute top-2 right-2 z-10">
+                          <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                            <AlertTriangle className="w-3 h-3" />
+                            Out of Stock
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Low Stock Badge */}
+                      {item.quantity > 0 && item.quantity < 10 && (
+                        <div className="absolute top-2 right-2 z-10">
+                          <div className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                            <AlertTriangle className="w-3 h-3" />
+                            Low Stock
+                          </div>
+                        </div>
+                      )}
+
                       <div className="relative aspect-square w-full mb-3 bg-white rounded-lg overflow-hidden flex items-center justify-center">
                         {item.image ? (
                           <Image
@@ -185,20 +242,32 @@ export default function BuyerHomePage() {
                             alt={item.name}
                             width={200}
                             height={200}
-                            className="w-full h-full object-contain p-3"
+                            className={`w-full h-full object-contain p-3 ${
+                              item.quantity === 0 ? 'grayscale' : ''
+                            }`}
                           />
                         ) : (
-                          <div className="text-gray-300">
+                          <div className={`text-gray-300 ${item.quantity === 0 ? 'opacity-50' : ''}`}>
                             <Recycle className="h-10 w-10" />
                           </div>
                         )}
                       </div>
-                      <h3 className="text-base font-medium text-gray-800 truncate mb-1">{item.name}</h3>
-                      <div className="flex items-center">
-                        <span className="text-base font-bold text-emerald-600">
-                          {item.price}{" "}
-                        </span>
-                        <span className="text-xs text-emerald-600">/{getMeasurementText(item.measurement_unit)}</span>
+                      
+                      <h3 className="text-base font-medium text-gray-800 truncate mb-2">{item.name}</h3>
+                      
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-base font-bold text-emerald-600">
+                            {item.price} EGP
+                          </span>
+                          <span className="text-xs text-emerald-600">
+                            /{getMeasurementText(item.measurement_unit)}
+                          </span>
+                        </div>
+                        
+                        <div className={`text-xs font-medium ${getStockColor(item.quantity)}`}>
+                          {formatQuantity(item.quantity, item.measurement_unit)}
+                        </div>  
                       </div>
                     </div>
                   </Link>
@@ -324,7 +393,9 @@ export default function BuyerHomePage() {
                       </h3>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">
-                          {material.totalRecycled} {material.unit}
+                        <span className="text-sm text-gray-600 font-bold">  {material.totalRecycled} </span>
+                        
+                        {material.unit}  sold
                         </span>
                   
                       </div>

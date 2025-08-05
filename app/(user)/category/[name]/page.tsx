@@ -59,9 +59,7 @@ export default function UserCategoryPage() {
     const impactKey = `environmentalImpact.${categoryName.toLowerCase()}`;
     return {
       totalItems: data.length,
-      estimatedImpact: t(impactKey, {
-        defaultValue: t("environmentalImpact.default"),
-      }),
+      estimatedImpact: t(impactKey),
       pointsRange: getPointsRange(points),
     };
   }, [data, categoryName, t]);
@@ -113,10 +111,10 @@ export default function UserCategoryPage() {
 
   const getMeasurementText = (unit: number) => {
     return unit === 1
-      ? t("itemsModal.perKg", { defaultValue: "per kg" })
-      : t("itemsModal.perItem", { defaultValue: "per item" });
+      ? t("itemsModal.perKg")
+      : t("itemsModal.perItem");
   };
-  if (isLoading) return <Loader title="recyclable items" />;
+  if (isLoading) return <Loader />;
   if (error) {
     console.error("❌ Query Error:", error);
     return <p className="text-red-500 text-center">Failed to load items.</p>;
@@ -205,8 +203,7 @@ export default function UserCategoryPage() {
                   {t(
                     `categories.subcategories.${item.name
                       .toLowerCase()
-                      .replace(/\s+/g, "-")}`,
-                    { defaultValue: item.name }
+                      .replace(/\s+/g, "-")}`
                   )}
                 </h3>
 

@@ -14,7 +14,7 @@ interface Props {
 }
 
 export default function CategoryCard({ name, image, onClick }: Props) {
-const { t, locale } = useLanguage();
+const { t } = useLanguage();
   return (
     <Link href={`/category/${encodeURIComponent(name)}`}>
       <motion.div

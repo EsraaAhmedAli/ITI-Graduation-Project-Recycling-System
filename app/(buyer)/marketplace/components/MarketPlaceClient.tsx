@@ -163,13 +163,20 @@ const { data, isLoading } = useGetItems({
   currentPage,
   itemsPerPage,
   userRole: user?.role,
+  category: selectedCategory,
+  search: searchTerm,
 });
+
 useEffect(() => {
   if (data) {
     setItems(data?.data);
     setPagination(data?.pagination);
   }
 }, [data]);
+useEffect(() => {
+  setCurrentPage(1);
+}, [selectedCategory, searchTerm]);
+
   const fetchAllCategories = useCallback(async () => {
     if (!isClient) return initialData.categories;
 

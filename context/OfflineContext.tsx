@@ -1,74 +1,78 @@
-'use client'
+"use client";
 
-import { useNetworkState } from 'react-use'
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { useNetworkState } from "react-use";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 
 interface NetworkState {
-  online?: boolean
-  type?: string
-  effectiveType?: string
-  downlink?: number
+  online?: boolean;
+  type?: string;
+  effectiveType?: string;
+  downlink?: number;
 }
 
 interface OfflineContextType {
-  isOnline: boolean
-  isOffline: boolean
-  network: NetworkState
-  wasOffline: boolean
+  isOnline: boolean;
+  isOffline: boolean;
+  network: NetworkState;
+  wasOffline: boolean;
 }
 
-const OfflineContext = createContext<OfflineContextType | undefined>(undefined)
+const OfflineContext = createContext<OfflineContextType | undefined>(undefined);
 
 export function useOffline() {
-  const context = useContext(OfflineContext)
+  const context = useContext(OfflineContext);
   if (!context) {
-    throw new Error('useOffline must be used within OfflineProvider')
+    throw new Error("useOffline must be used within OfflineProvider");
   }
-  return context
+  return context;
 }
 
 interface OfflineProviderProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
 export function OfflineProvider({ children }: OfflineProviderProps) {
-  const network = useNetworkState()
-  const [showBanner, setShowBanner] = useState(false)
-  const [wasOffline, setWasOffline] = useState(false)
+  const network = useNetworkState();
+  const [showBanner, setShowBanner] = useState(false);
+  const [wasOffline, setWasOffline] = useState(false);
 
   useEffect(() => {
     if (!network.online && !wasOffline) {
       // Just went offline
-      setWasOffline(true)
-      setShowBanner(true)
-      console.log('🔴 App went offline')
+      setWasOffline(true);
+      setShowBanner(true);
+      console.log("🔴 App went offline");
     } else if (network.online && wasOffline) {
       // Just came back online
-      setWasOffline(false)
-      console.log('🟢 App came back online')
-      
+      setWasOffline(false);
+      console.log("🟢 App came back online");
+
       // Show "back online" message briefly
-      setShowBanner(true)
-      setTimeout(() => setShowBanner(false), 3000)
+      setShowBanner(true);
+      setTimeout(() => setShowBanner(false), 3000);
     }
-  }, [network.online, wasOffline])
+  }, [network.online, wasOffline]);
 
   const contextValue: OfflineContextType = {
     isOnline: network.online ?? true,
     isOffline: !network.online,
     network,
-    wasOffline
-  }
+    wasOffline,
+  };
 
   return (
     <OfflineContext.Provider value={contextValue}>
       {/* Global offline/online banner */}
       {showBanner && (
-        <div 
+        <div
           className={`fixed top-0 left-0 right-0 z-[9999] px-4 py-3 text-sm font-medium text-white text-center transition-all duration-300 ${
-            network.online 
-              ? 'bg-green-600' 
-              : 'bg-red-600'
+            network.online ? "bg-green-600" : "bg-red-600"
           }`}
           style={{ zIndex: 9999 }}
         >
@@ -80,7 +84,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
                 <>⚠️ You are offline. Some features may not work properly.</>
               )}
             </div>
-            
+
             {/* Close button for online banner */}
             {network.online && (
               <button
@@ -94,11 +98,9 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
           </div>
         </div>
       )}
-      
+
       {/* Add top padding when banner is showing */}
-      <div className={showBanner ? 'pt-12' : ''}>
-        {children}
-      </div>
+      <div className={showBanner ? "pt-12" : ""}>{children}</div>
     </OfflineContext.Provider>
-  )
+  );
 }

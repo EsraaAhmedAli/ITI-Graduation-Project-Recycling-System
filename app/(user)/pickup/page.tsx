@@ -473,7 +473,7 @@ export default function PickupConfirmation() {
                   disabled={!selectedAddress}
                   className={`w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 rounded-2xl font-semibold transition-all duration-300 transform ${
                     selectedAddress
-                      ? "bg-gradient-to-r from-emerald-500 via-green-500 to-emerald-600 text-white hover:shadow-xl hover:shadow-emerald-200 hover:scale-105"
+                      ? " text-white  "
                       : "bg-gray-200 text-gray-500 cursor-not-allowed"
                   }`}
                 >
