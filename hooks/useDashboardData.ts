@@ -80,7 +80,7 @@ const fetchTopMaterials = useCallback(async (category = 'All') => {
     
     // Add timestamp to prevent caching
     const res = await api.get("/top-materials-recycled", { 
-      params: { ...params, _t: Date.now() } 
+      params: { ...params} 
     });
     
     const json = normalizeApiResponse(res.data);

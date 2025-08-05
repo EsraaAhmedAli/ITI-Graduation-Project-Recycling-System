@@ -18,25 +18,36 @@ export function useGetItems({
   currentPage,
   itemsPerPage,
   userRole,
+  category,
+  search,
 }: {
   currentPage: number;
   itemsPerPage: number;
   userRole?: string;
+  category?: string;
+  search?: string;
 }) {
   return useQuery<GetItemsResponse>({
-    queryKey: ['categories items', currentPage, itemsPerPage, userRole],
+    queryKey: ['categories items', currentPage, itemsPerPage, userRole, category, search],
     queryFn: async () => {
-      const res = await api.get(
-        `/categories/get-items?page=${currentPage}&limit=${itemsPerPage}&role=${userRole || ''}`
-      );
+      const res = await api.get(`/categories/get-items`, {
+        params: {
+          page: currentPage,
+          limit: itemsPerPage,
+          role: userRole,
+          category: category === "all" ? undefined : category,
+          search: search || undefined,
+        },
+      });
+
       return {
         data: res.data.data || [],
         pagination: res.data.pagination,
       };
     },
-    staleTime: 2000, // 1 minute
+    staleTime: 2000,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-    keepPreviousData: true, // useful for pagination UX
+    keepPreviousData: true,
   });
 }

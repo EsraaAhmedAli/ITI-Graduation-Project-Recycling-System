@@ -21,6 +21,8 @@ const RecyclingChatInterface = () => {
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [messageIdCounter, setMessageIdCounter] = useState(0);
+
 
   // Translated placeholders
   const placeholders = [
@@ -88,61 +90,67 @@ const RecyclingChatInterface = () => {
     });
   }
 
-  const callApi = async (query: string) => {
-    try {
-      const userMessage: Message = {
-        id: Date.now(),
-        type: 'user',
-        content: query,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, userMessage]);
-      setIsTyping(true);
-      setInputValue('');
+const callApi = async (query: string) => {
+  // Declare all IDs at function scope
+  const userMessageId = messageIdCounter;
+  const aiMessageId = messageIdCounter + 1;
+  setMessageIdCounter(prev => prev + 2);
 
-      const response = await axios.post(
-        'https://api.fireworks.ai/inference/v1/chat/completions',
-        {
-          model: "accounts/fireworks/models/llama4-maverick-instruct-basic",
-          messages: [{ role: "user", content: query }]
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${process.env.NEXT_PUBLIC_API_KEY_FIRE_WORKS}`
-          }
+  try {
+    const userMessage: Message = {
+      id: userMessageId,
+      type: 'user',
+      content: query,
+      timestamp: new Date()
+    };
+     
+    setMessages(prev => [...prev, userMessage]);
+    setIsTyping(true);
+    setInputValue('');
+
+    const response = await axios.post(
+      'https://api.fireworks.ai/inference/v1/chat/completions',
+      {
+        model: "accounts/fireworks/models/llama4-maverick-instruct-basic",
+        messages: [{ role: "user", content: query }]
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.NEXT_PUBLIC_API_KEY_FIRE_WORKS}`
         }
-      );
-
-      const reply = response.data.choices?.[0]?.message?.content || t('ecoAssist.errors.noAnswer');
-      const cleanReply = reply.replace(/\*\*/g, '').replace(/\*/g, '');
-      const sections = parseResponse(cleanReply);
-
-      const aiMessage: Message = {
-        id: Date.now() + 1,
-        type: 'ai',
-        content: cleanReply,
-        timestamp: new Date(),
-      };
-
-      if (sections.length && sections[0].tips.length) {
-        aiMessage.title = sections[0].title;
-        aiMessage.tips = sections[0].tips;
       }
+    );
 
-      setMessages(prev => [...prev, aiMessage]);
-    } catch (err) {
-      console.error(err);
-      setMessages(prev => [...prev, {
-        id: Date.now() + 1,
-        type: 'ai',
-        content: t('ecoAssist.errors.requestError'),
-        timestamp: new Date()
-      }]);
-    } finally {
-      setIsTyping(false);
+    const reply = response.data.choices?.[0]?.message?.content || t('ecoAssist.errors.noAnswer');
+    const cleanReply = reply.replace(/\*\*/g, '').replace(/\*/g, '');
+    const sections = parseResponse(cleanReply);
+
+    const aiMessage: Message = {
+      id: aiMessageId,
+      type: 'ai',
+      content: cleanReply,
+      timestamp: new Date(),
+    };
+
+    if (sections.length && sections[0].tips.length) {
+      aiMessage.title = sections[0].title;
+      aiMessage.tips = sections[0].tips;
     }
-  };
+
+    setMessages(prev => [...prev, aiMessage]);
+  } catch (err) {
+    console.error(err);
+    setMessages(prev => [...prev, {
+      id: aiMessageId, // ✅ Now accessible here
+      type: 'ai',
+      content: t('ecoAssist.errors.requestError'),
+      timestamp: new Date()
+    }]);
+  } finally {
+    setIsTyping(false);
+  }
+};
 
   const handleSend = () => {
     if (!inputValue.trim()) return;

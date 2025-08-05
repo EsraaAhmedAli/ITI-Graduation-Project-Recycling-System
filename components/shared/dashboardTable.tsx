@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import {
   ChevronLeft,
@@ -111,6 +111,17 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
   const [expandedRows, setExpandedRows] = useState<Set<string | number>>(
     new Set()
   );
+  const [pageGroupSize, setPageGroupSize] = useState(5); // Default to desktop
+useEffect(() => {
+  const updatePageGroupSize = () => {
+    setPageGroupSize(window.innerWidth < 768 ? 3 : 5);
+  };
+  
+  updatePageGroupSize(); // Set initial value
+  window.addEventListener('resize', updatePageGroupSize);
+  
+  return () => window.removeEventListener('resize', updatePageGroupSize);
+}, []);
   // Removed isDrawerOpen, setIsDrawerOpen. FilterDrawer now manages its own state.
 
   // Use external search term if provided, otherwise use internal state
@@ -389,12 +400,10 @@ function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
   };
 
   const renderPagination = () => {
-    const pages = [];
-    const pageGroupSize =
-      typeof window !== "undefined" && window.innerWidth < 768 ? 3 : 5; // Fewer pages on mobile
-    const currentGroup = Math.floor((currentPage - 1) / pageGroupSize);
-    const startPage = currentGroup * pageGroupSize + 1;
-    const endPage = Math.min(startPage + pageGroupSize - 1, totalPages);
+     const pages = [];
+  const currentGroup = Math.floor((currentPage - 1) / pageGroupSize);
+  const startPage = currentGroup * pageGroupSize + 1;
+  const endPage = Math.min(startPage + pageGroupSize - 1, totalPages);
 
     // « Previous group
     if (startPage > 1) {

@@ -375,12 +375,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
         // Show success message
         if (guestCart.length > 0) {
-          toast.success(
-            `Welcome back! Added ${guestCart.length} items from your guest session to your cart.`,
-            {
-              duration: 4000,
-            }
-          );
+    
         } else {
           toast.success("Welcome back! Your cart has been loaded.");
         }
