@@ -28,10 +28,10 @@ export default function EditItemPage() {
   useEffect(() => {
     const fetchItem = async () => {
       try {
-        const res = await fetch(
-          `http://localhost:5000/api/categories/get-items/${name}`
+        const res = await api.get(
+          `categories/get-items/${name}`
         );
-        const data = await res.json();
+        const data = res.data
         const item = data.data.find((i: any) => i._id === itemId);
         if (item) {
           setFormData({

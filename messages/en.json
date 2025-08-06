@@ -190,7 +190,8 @@
         "inTransit": "In Transit",
         "completed": "Completed",
         "cancelled": "Cancelled",
-        "pending": "Pending"
+        "pending": "Pending",
+        "collected" : "Collected"
       },
       "cancelOrder": "cancel order",
       "viewDetails": "View Details",
@@ -217,7 +218,8 @@
     "currency": "EGP",
     "perKg": "per kg",
     "perItem": "per item",
-
+"OriginalQuantity" : "Original quantity",
+"quantityByDelivery" : "Quantity by delivery",
     "totalPoints": "Total Points: {{points}}",
     "noItemsTitle": "No Items Found",
     "noItemsDesc": "This order doesn't contain any items.",

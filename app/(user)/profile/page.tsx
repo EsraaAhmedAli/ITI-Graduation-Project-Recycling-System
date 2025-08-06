@@ -9,13 +9,15 @@ import api from "@/lib/axios";
 import { ProtectedRoute } from "@/lib/userProtectedRoute";
 import Link from "next/link";
 import Swal from "sweetalert2";
-import { CheckCircle, Clock1, Pencil, RefreshCcw, Truck, XCircle } from "lucide-react";
+import { CheckCircle, Clock1, MapPin, Package, Pencil, Recycle, RefreshCcw, Truck, XCircle } from "lucide-react";
 import RecyclingModal from "@/components/eWalletModal/ewalletModal";
 import { useUserPoints } from "@/hooks/useGetUserPoints";
 import ItemsModal from "@/components/shared/itemsModal";
 import PointsActivity from "@/components/accordion/accordion";
 import MembershipTier from "@/components/memberTireShip/memberTireShip";
 import { useLanguage } from "@/context/LanguageContext";
+import ReceiptCard from "../../../components/RecipetCard";
+import { ReceiptLink } from "../../../components/RecipetLink";
 
 export default function ProfilePage() {
   return (
@@ -169,6 +171,7 @@ function ProfileContent() {
   const openItemsModal = (items: any[]) => {
     setSelectedOrderItems(items);
     setIsItemsModalOpen(true);
+    
   };
 
   const closeItemsModal = () => {
@@ -308,111 +311,110 @@ function ProfileContent() {
         ) : filteredOrders.length === 0 ? (
           <p className="text-center text-gray-500">No orders in this tab yet.</p>
         ) : (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredOrders.map((order) => (
-                <div
-                  key={order._id}
-                  className="rounded-xl p-4 bg-green-50 shadow-sm flex flex-col justify-between"
-                >
-                  <div className="flex justify-between items-center mb-2 text-sm text-gray-600">
-                    <span>
-                      {t("profile.orders.date")}: {new Date(order.createdAt).toLocaleDateString()}
-                    </span>
-                    <span className="flex items-center gap-1 font-semibold">
-                      {["assigntocourier"].includes(order.status) && (
-                        <>
-                          <Truck size={16} className="text-yellow-600" />
-                          <span className="text-yellow-700">
-                            {t("profile.orders.status.inTransit")}
-                          </span>
-                        </>
-                      )}
-                      {["pending"].includes(order.status) && (
-                        <>
-                          <Clock1 size={16} className="text-yellow-400" />
-                          <span className="text-yellow-400">
-                            {t("profile.orders.status.pending")}
-                          </span>
-                        </>
-                      )}
-                      {order.status === "completed" && (
-                        <>
-                          <CheckCircle size={16} className="text-green-600" />
-                          <span className="text-green-700">
-                            {t("profile.orders.status.completed")}
-                          </span>
-                        </>
-                      )}
-                      {order.status === "cancelled" && (
-                        <>
-                          <XCircle size={16} className="text-red-600" />
-                          <span className="text-red-700 capitalize">
-                            {t("profile.orders.status.cancelled")}
-                          </span>
-                        </>
-                      )}
-                    </span>
-                  </div>
-
-                  {/* Address summary */}
-                  <div className="text-xs text-gray-500 mb-4">
-                    {order.address.street}, Bldg {order.address.building}, Floor{" "}
-                    {order.address.floor}, {order.address.area}, {order.address.city}
-                  </div>
-
-                  <div className="flex justify-between">
-                    <button
-                      onClick={() => openItemsModal(order.items)}
-                      className="self-start text-sm text-green-500 rounded-md transition"
-                    >
-                      {t("profile.orders.viewDetails")}
-                    </button>
-                    {order.status == "pending" && user?.role == "customer" ? (
-                      <button
-                        onClick={() => handleCancelOrder(order._id)}
-                        className="self-start text-sm text-red-500 rounded-md transition"
-                      >
-                        {t("profile.orders.cancelOrder")}
-                      </button>
-                    ) : (
-                      ""
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* See More Button */}
-            {shouldShowSeeMore && (
-              <div className="flex justify-center mt-6">
-                <button
-                  onClick={loadMoreOrders}
-                  disabled={loadingMore}
-                  className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-full hover:bg-green-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loadingMore ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                      Loading...
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCcw size={16} />
-                      See More Orders
-                    </>
-                  )}
-                </button>
+<div className="space-y-4">
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    {filteredOrders.map((order) => (
+      <div
+        key={order._id}
+        className="rounded-xl p-5 bg-gradient-to-br from-green-50 to-white shadow-lg border border-green-100 hover:shadow-xl transition-all duration-300"
+      >
+        {/* Header with Order Info */}
+        <div className="flex justify-between items-start mb-4">
+          <div className="text-sm text-gray-600">
+            <p className="font-medium text-gray-800 mb-1">
+              Order #{order._id.slice(-8).toUpperCase()}
+            </p>
+            <p className="text-xs">
+              {t("profile.orders.date")}: {new Date(order.createdAt).toLocaleDateString()}
+            </p>
+          </div>
+          
+          {/* Enhanced Status Badge with Collected Status */}
+          <div className="flex items-center gap-2">
+            {["assigntocourier"].includes(order.status) && (
+              <div className="flex items-center gap-1 bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium">
+                <Truck size={14} />
+                {t("profile.orders.status.inTransit")}
               </div>
             )}
-
-            <ItemsModal
-              userRole={user?.role}
-              show={isItemsModalOpen}
-              onclose={closeItemsModal}
-              selectedOrderItems={selectedOrderItems}
-            />
+            {["pending"].includes(order.status) && (
+              <div className="flex items-center gap-1 bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-medium">
+                <Clock1 size={14} />
+                {t("profile.orders.status.pending")}
+              </div>
+            )}
+            {order.status === "collected" && (
+              <div className="flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
+                <Package size={14} />
+                {t("profile.orders.status.collected") || "Collected"}
+              </div>
+            )}
+            {order.status === "completed" && (
+              <div className="flex items-center gap-1 bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">
+                <CheckCircle size={14} />
+                {t("profile.orders.status.completed")}
+              </div>
+            )}
+            {order.status === "cancelled" && (
+              <div className="flex items-center gap-1 bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-medium">
+                <XCircle size={14} />
+                {t("profile.orders.status.cancelled")}
+              </div>
+            )}
           </div>
+        </div>
+
+        {/* Address with Icon */}
+        <div className="flex items-start gap-2 mb-4 p-3 bg-gray-50 rounded-lg">
+          <MapPin size={16} className="text-gray-500 mt-0.5 flex-shrink-0" />
+          <div className="text-sm text-gray-600">
+            <p className="font-medium text-gray-800 mb-1">Pickup Location</p>
+            <p className="text-xs leading-relaxed">
+              {order.address.street}, Bldg {order.address.building}, Floor{" "}
+              {order.address.floor}, {order.address.area}, {order.address.city}
+            </p>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex justify-between items-center pt-3 border-t border-gray-200">
+          <div className="flex gap-3">
+            <button
+              onClick={() => openItemsModal(order.items)}
+              className="text-sm text-green-600 hover:text-green-800 font-medium hover:underline transition-colors duration-200"
+            >
+              {t("profile.orders.viewDetails")}
+            </button>
+            
+            {/* Enhanced Receipt Link - Show for collected and completed orders */}
+            {["collected", "completed"].includes(order.status) && (
+              <ReceiptLink orderId={order._id} variant="compact" />
+            )}
+          </div>
+
+          {/* Cancel Button - Only for pending orders */}
+          {order.status === "pending" && user?.role === "customer" && (
+            <button
+              onClick={() => handleCancelOrder(order._id)}
+              className="text-sm text-red-500 hover:text-red-700 font-medium hover:underline transition-colors duration-200"
+            >
+              {t("profile.orders.cancelOrder")}
+            </button>
+          )}
+        </div>
+
+        <ItemsModal
+          userRole={user?.role}
+          show={isItemsModalOpen}
+          onclose={closeItemsModal}
+          selectedOrderItems={selectedOrderItems}
+        />
+
+  
+      </div>
+    ))}
+  </div>
+</div>
         )}
       </div>
     </div>
