@@ -57,30 +57,88 @@ export default function Page() {
     // Initialize quantities with original order quantities
     if (order.user.role === 'customer' && order.items) {
       const initialQuantities = {};
+      
       order.items.forEach((item: any) => {
-        console.log(item)
+        console.log('Item data:', item); // Debug log to see the actual data structure
+        
+        // Use measurement_unit field to determine the correct unit (ignore the unit field as it's incorrect)
+        const correctUnit = item.measurement_unit === 1 ? 'kg' : 'piece';
+        const isUnitMismatch = item.unit !== correctUnit;
         
         initialQuantities[item._id] = {
           originalQuantity: item.quantity,
           actualQuantity: item.quantity,
-          name: item.name || item.productName || 'Item',
-          unit: item.measurement_unit == 1 ? 'KG' : 'piece'
+          name: item.itemName || item.name || item.productName || 'Item',
+          unit: correctUnit, // Use the correct unit based on measurement_unit
+          measurement_unit: item.measurement_unit,
+          hasUnitMismatch: isUnitMismatch, // Track if there was a mismatch
+          originalUnit: item.unit, // Keep track of the original incorrect unit
+          pointsPerUnit: item.points, // Points per single unit
+          originalPoints: item.points * item.quantity, // Original total points
+          currentPoints: item.points * item.quantity // Current points (will update dynamically)
         };
       });
+      
+      console.log('Processed quantities:', initialQuantities);
       setQuantities(initialQuantities);
       setShowQuantityForm(true);
     }
   };
 
+  // Calculate total points for display
+  const calculateTotalPoints = () => {
+    return Object.values(quantities).reduce((total: number, item: any) => {
+      const actualQty = item.actualQuantity === '' ? 0 : Number(item.actualQuantity);
+      return total + (item.pointsPerUnit * actualQty);
+    }, 0);
+  };
+
+  // Calculate original total points
+  const calculateOriginalTotalPoints = () => {
+    return Object.values(quantities).reduce((total: number, item: any) => {
+      return total + item.originalPoints;
+    }, 0);
+  };
+
   // Handle quantity change
-  const handleQuantityChange = (itemId: string, newQuantity: number) => {
-    setQuantities(prev => ({
-      ...prev,
-      [itemId]: {
-        ...prev[itemId],
-        actualQuantity: newQuantity
-      }
-    }));
+  const handleQuantityChange = (itemId: string, value: string, measurementUnit: number) => {
+    // Allow empty string for deletion
+    if (value === '') {
+      setQuantities(prev => ({
+        ...prev,
+        [itemId]: {
+          ...prev[itemId],
+          actualQuantity: '',
+          currentPoints: 0 // No points for empty quantity
+        }
+      }));
+      return;
+    }
+
+    const numericValue = parseFloat(value);
+    if (isNaN(numericValue)) return;
+
+    // For pieces (measurement_unit = 2), ensure whole numbers only
+    let adjustedQuantity;
+    if (measurementUnit === 2) {
+      adjustedQuantity = Math.max(0, Math.round(numericValue)); // Round and ensure non-negative
+    } else {
+      adjustedQuantity = Math.max(0, numericValue); // Just ensure non-negative for kg
+    }
+    
+    setQuantities(prev => {
+      const item = prev[itemId];
+      const newPoints = item.pointsPerUnit * adjustedQuantity;
+      
+      return {
+        ...prev,
+        [itemId]: {
+          ...prev[itemId],
+          actualQuantity: adjustedQuantity,
+          currentPoints: newPoints // Update points based on new quantity
+        }
+      };
+    });
   };
 
   // Handle photo selection
@@ -107,12 +165,23 @@ export default function Page() {
 
     // Check if quantities have been reviewed for customer role
     if (userRole === 'customer' && showQuantityForm) {
-      const hasChanges = Object.values(quantities).some((item: any) => 
-        item.originalQuantity !== item.actualQuantity
-      );
+      const hasChanges = Object.values(quantities).some((item: any) => {
+        const actualQty = item.actualQuantity === '' ? 0 : Number(item.actualQuantity);
+        return item.originalQuantity !== actualQty;
+      });
       
       if (hasChanges && !quantityNotes.trim()) {
         alert('Please add notes about the quantity changes');
+        return;
+      }
+
+      // Validate that all quantities have values
+      const hasEmptyQuantities = Object.values(quantities).some((item: any) => 
+        item.actualQuantity === '' || item.actualQuantity === null || item.actualQuantity === undefined
+      );
+
+      if (hasEmptyQuantities) {
+        alert('Please enter actual quantities for all items');
         return;
       }
     }
@@ -348,204 +417,224 @@ export default function Page() {
       />
 
       {/* Complete Order with Photo Proof Modal */}
-      {showCompleteModal && (
-        <Modal show={showCompleteModal} onClose={closeCompleteModal} size="lg">
-          <ModalHeader>
-            Complete Delivery
-            <button
-              onClick={closeCompleteModal}
-              className="ml-auto text-gray-400 hover:text-gray-600"
-              aria-label="Close modal"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </ModalHeader>
-          <ModalBody>
-            <div className="space-y-6">
-              <div>
-                <h3 className="font-medium text-gray-900 mb-2">
-                  Order #{selectedOrder?._id?.slice(-8)}
-                </h3>
-                <p className="text-sm text-gray-600">
-                  Customer: {selectedOrder?.user?.userName}
-                </p>
-              </div>
+    {/* Complete Order with Photo Proof Modal */}
+{showCompleteModal && (
+  <Modal show={showCompleteModal} onClose={closeCompleteModal} size="lg">
+    <ModalHeader>
+      Complete Delivery
+      <button
+        onClick={closeCompleteModal}
+        className="ml-auto text-gray-400 hover:text-gray-600"
+        aria-label="Close modal"
+      >
+        <X className="w-6 h-6" />
+      </button>
+    </ModalHeader>
+    <ModalBody>
+      <div className="space-y-6">
+        <div>
+          <h3 className="font-medium text-gray-900 mb-2">
+            Order #{selectedOrder?._id?.slice(-8)}
+          </h3>
+          <p className="text-sm text-gray-600">
+            Customer: {selectedOrder?.user?.userName}
+          </p>
+        </div>
 
-              {/* Quantity Review Form for Customer Orders */}
-              {userRole === 'customer' && showQuantityForm && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Edit3 className="w-5 h-5 text-yellow-600" />
-                    <h4 className="font-semibold text-yellow-800">Verify Order Quantities</h4>
-                  </div>
-                  <p className="text-sm text-yellow-700 mb-4">
-                    Please verify the actual quantities after measuring the customer's items.
-                  </p>
-                  
-                  <div className="space-y-4">
-                    {Object.entries(quantities).map(([itemId, item]: [string, any]) => (
-                      <div key={itemId} className="bg-white rounded-lg p-4 border border-yellow-200">
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="font-medium text-gray-900">{item.name}</span>
-                          <span className="text-xs text-gray-500">Unit: {item.unit}</span>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">
-                              Original Quantity
-                            </label>
-                            <input
-                              type="number"
-                              value={item.originalQuantity}
-                              disabled
-                              className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-sm"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">
-                              Actual Quantity *
-                            </label>
-                            <input
-                              type="number"
-                              value={item.actualQuantity}
-                              onChange={(e) => handleQuantityChange(itemId, parseFloat(e.target.value) || 0)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                              step="0.1"
-                              min="0"
-                            />
-                          </div>
-                        </div>
-                        
-                        {item.originalQuantity !== item.actualQuantity && (
-                          <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs">
-                            <span className="text-red-800 font-medium">
-                              Difference: {(item.actualQuantity - item.originalQuantity).toFixed(1)} {item.unit}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                    
-                    {/* Notes for quantity changes */}
-                    {Object.values(quantities).some((item: any) => item.originalQuantity !== item.actualQuantity) && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Reason for Quantity Changes *
-                        </label>
-                        <textarea
-                          value={quantityNotes}
-                          onChange={(e) => setQuantityNotes(e.target.value)}
-                          placeholder="Explain why the quantities differ from the original order..."
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                          rows={3}
-                          required
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Photo Upload Section */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Delivery Proof Photo *
-                </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                  {photoPreview ? (
-                    <div className="relative">
-                      <img
-                        src={photoPreview}
-                        alt="Delivery proof"
-                        className="w-full h-48 object-cover rounded-lg"
-                      />
-                      <button
-                        onClick={() => {
-                          setProofPhoto(null);
-                          setPhotoPreview("");
-                          if (fileInputRef.current) fileInputRef.current.value = "";
-                        }}
-                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                        aria-label="Remove photo"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="text-center">
-                      <Camera className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600 mb-2">
-                        Take a photo of the {userRole === 'customer' ? 'collected' : 'delivered'} order
-                      </p>
-                      <button
-                        onClick={() => fileInputRef.current?.click()}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 flex items-center gap-2 mx-auto"
-                      >
-                        <Upload className="w-4 h-4" />
-                        Upload Photo
-                      </button>
-                    </div>
-                  )}
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    onChange={handlePhotoSelect}
-                    className="hidden"
-                  />
-                </div>
-              </div>
-
-              {/* General Notes */}
-              {userRole !== 'customer' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Estimated weight:
-                  </label>
-                  <textarea
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Order weight"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    rows={3}
-                  />
-                </div>
-              )}
-
-              {/* Action Buttons */}
-              <div className="flex gap-3 pt-4">
-                <Button
-                  onClick={closeCompleteModal}
-                  disabled={completing}
-                  className="flex-1 bg-gray-400"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  color="success"
-                  onClick={completeOrderWithProof}
-                  disabled={!photoPreview || completing}
-                  className="flex-1 flex items-center justify-center gap-2 py-2"
-                >
-                  {completing ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Completing...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="w-4 h-4" />
-                      {userRole == 'customer' ? 'Mark as collected' : 'Mark as delivered'}
-                    </>
-                  )}
-                </Button>
-              </div>
+        {/* Quantity Review Form for Customer Orders */}
+        {userRole === 'customer' && showQuantityForm && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+            <div className="flex items-center gap-2 mb-3">
+              <Edit3 className="w-4 h-4 text-yellow-600" />
+              <h4 className="font-medium text-yellow-800">Verify Quantities</h4>
             </div>
-          </ModalBody>
-        </Modal>
-      )}
+            
+            {/* Items in a grid layout */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+              {Object.entries(quantities).map(([itemId, item]: [string, any]) => (
+                <div key={itemId} className="bg-white rounded p-3 border border-yellow-200">
+                  <div className="mb-2">
+                    <span className="font-medium text-gray-900 text-sm">{item.name}</span>
+                    <span className="text-xs text-gray-500 ml-2">({item.unit})</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">Original</label>
+                      <input
+                        type="number"
+                        value={item.originalQuantity}
+                        disabled
+                        className="w-full px-2 py-1 bg-gray-100 border border-gray-300 rounded text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">Actual *</label>
+                      <input
+                        type="number"
+                        value={item.actualQuantity}
+                        onChange={(e) => handleQuantityChange(itemId, e.target.value, item.measurement_unit)}
+                        className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                        step={item.measurement_unit === 2 ? "1" : "0.1"}
+                        min="0"
+                      />
+                    </div>
+                  </div>
+                  
+                  {(item.originalQuantity !== item.actualQuantity && item.actualQuantity !== '') && (
+                    <div className="mt-2 p-1 bg-red-50 border border-red-200 rounded">
+                      <span className="text-xs text-red-800 font-medium">
+                        Diff: {item.measurement_unit === 2 
+                          ? `${Math.round(Number(item.actualQuantity) - item.originalQuantity)} ${item.unit}`
+                          : `${(Number(item.actualQuantity) - item.originalQuantity).toFixed(1)} ${item.unit}`
+                        }
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            
+            {/* Notes for quantity changes */}
+            {Object.values(quantities).some((item: any) => {
+              const actualQty = item.actualQuantity === '' ? 0 : Number(item.actualQuantity);
+              return item.originalQuantity !== actualQty;
+            }) && (
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Reason for Changes *
+                </label>
+                <textarea
+                  value={quantityNotes}
+                  onChange={(e) => setQuantityNotes(e.target.value)}
+                  placeholder="Explain quantity differences..."
+                  className="w-full px-2 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                  rows={2}
+                  required
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Estimated Weight Section - Compact for customer orders */}
+        {userRole === 'customer' && (
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+              Est. Weight (kg) *:
+            </label>
+            <input
+              type="number"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="e.g. 2.5"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              step="0.1"
+              min="0"
+              required
+            />
+          </div>
+        )}
+
+        {/* General Notes for Non-Customer Orders */}
+        {userRole !== 'customer' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Estimated weight:
+            </label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Order weight"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              rows={3}
+            />
+          </div>
+        )}
+
+        {/* Photo Upload Section */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Delivery Proof Photo *
+          </label>
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+            {photoPreview ? (
+              <div className="relative">
+                <img
+                  src={photoPreview}
+                  alt="Delivery proof"
+                  className="w-full h-48 object-cover rounded-lg"
+                />
+                <button
+                  onClick={() => {
+                    setProofPhoto(null);
+                    setPhotoPreview("");
+                    if (fileInputRef.current) fileInputRef.current.value = "";
+                  }}
+                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                  aria-label="Remove photo"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="text-center">
+                <Camera className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-600 mb-2">
+                  Take a photo of the {userRole === 'customer' ? 'collected' : 'delivered'} order
+                </p>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 flex items-center gap-2 mx-auto"
+                >
+                  <Upload className="w-4 h-4" />
+                  Upload Photo
+                </button>
+              </div>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handlePhotoSelect}
+              className="hidden"
+            />
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-3 pt-4">
+          <Button
+            onClick={closeCompleteModal}
+            disabled={completing}
+            className="flex-1 bg-gray-400"
+          >
+            Cancel
+          </Button>
+          <Button
+            color="success"
+            onClick={completeOrderWithProof}
+            disabled={!photoPreview || completing || (userRole === 'customer' && !notes.trim())}
+            className="flex-1 flex items-center justify-center gap-2 py-2"
+          >
+            {completing ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                Completing...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="w-4 h-4" />
+                {userRole == 'customer' ? 'Mark as collected' : 'Mark as delivered'}
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+    </ModalBody>
+  </Modal>
+)}
     </div>
   )
 }

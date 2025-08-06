@@ -25,7 +25,6 @@ const ReceiptPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 py-10">
-        {console.log(order)      }
       <ReceiptCard
         orderId={order?._id}
         date={new Date(order?.createdAt).toLocaleDateString()}

@@ -92,7 +92,7 @@ export default function Page() {
   const { currentPage, itemsPerPage, handlePageChange } = usePagination(1, 5);
 const [isProofModalOpen, setIsProofModalOpen] = useState(false);
 const [selectedCompletedOrder, setSelectedCompletedOrder] = useState<any>(null);
-
+const [orderStatus,setOrderStatus] = useState(null)
 
   const getFilteredFilters = () => {
     return filters.map(filter => {
@@ -388,6 +388,7 @@ const handleShowCancelReason = (statusHistory: any[]) => {
 const transformedData = orders.map((order: any) => ({
   orderId: order._id,
   onClickItemsId: () => {
+    setOrderStatus (order.status)    
     setSelectedOrderItems(order.items);
     setIsItemsModalOpen(true);
   },
@@ -705,6 +706,7 @@ if (currentStatus === "completed") {
       <ItemsModal
         selectedOrderItems={selectedOrderItems}
         show={isItemsModalOpen}
+        orderStatus={orderStatus}
         onclose={() => setIsItemsModalOpen(false)}
       />
       <CourierSelectionModal
