@@ -11,6 +11,7 @@ import Loader from "@/components/common/loader";
 import { useUsers } from "@/hooks/useGetUsers";
 import { useQueryClient } from "@tanstack/react-query";
 import FilterDrawer from "@/components/shared/dashboard/filter/FilterArea";
+import { CloudHail } from "lucide-react";
 
 const AdminUsersPage = () => {
   const router = useRouter();
@@ -22,7 +23,7 @@ const AdminUsersPage = () => {
     {
       name: "role",
       title: "Role",
-      type: "single-select" as const,
+      type: "multi-select" as const,
       options: [
         { label: "Admin", value: "admin" },
         { label: "Customer", value: "customer" },
@@ -34,7 +35,7 @@ const AdminUsersPage = () => {
     {
       name: "status",
       title: "Status",
-      type: "single-select" as const,
+      type: "multi-select" as const,
       options: [
         { label: "Online", value: "online" },
         { label: "Offline", value: "offline" },
@@ -55,19 +56,26 @@ const AdminUsersPage = () => {
     },
   ]);
 
-  const activeRoleFilter =
-    userFilters.find((f) => f.name === "role")?.active || [];
   const filteredUsers = users?.filter((user) => {
+    // === Role Filter ===
+    const roleFilterActive =
+      userFilters.find((f) => f.name === "role")?.active || [];
     const roleFilter =
-      activeRoleFilter.length === 0 || activeRoleFilter.includes(user.role);
+      roleFilterActive.length === 0 || roleFilterActive.includes(user.role);
 
+    // === Status Filter ===
     const statusFilterActive =
       userFilters.find((f) => f.name === "status")?.active || [];
-    const isOnline = Math.random() < 0.5; // same as your mock
+
+    const lastActive = new Date(user.lastActiveAt);
+    const FIVE_MINUTES = 5 * 60 * 1000;
+    const isOnline = Date.now() - lastActive.getTime() < FIVE_MINUTES;
     const status = isOnline ? "online" : "offline";
+
     const statusFilter =
       statusFilterActive.length === 0 || statusFilterActive.includes(status);
 
+    // === Phone Prefix Filter ===
     const prefixFilterActive =
       userFilters.find((f) => f.name === "prefix")?.active || [];
     const userPrefix = user.phoneNumber?.slice(0, 3);
@@ -152,41 +160,40 @@ const AdminUsersPage = () => {
   // Inside return:
 
   const columns = [
-   {
-  key: "imgUrl",
-  label: "",
-  render: (user: User) => {
-    if (user.imgUrl) {
-      return (
-        <Image
-        width={30}
-        height={30}
-          src={user.imgUrl}
-          alt={user.name}
-          className=" rounded-full object-cover"
-        />
-      );
-    } 
-    else if(user.role == 'delivery') {
-         return (
-        <Image
-        width={30}
-        height={30}
-          src={user.attachments.deliveryImage}
-          alt={user.name}
-          className=" rounded-full object-cover"
-        />
-      );
-    }
     {
-      return (
-        <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-semibold uppercase">
-          {user.name?.charAt(0) || "?"}
-        </div>
-      );
-    }
-  },
-},
+      key: "imgUrl",
+      label: "",
+      render: (user: User) => {
+        if (user.imgUrl) {
+          return (
+            <Image
+              width={30}
+              height={30}
+              src={user.imgUrl}
+              alt={user.name}
+              className=" rounded-full object-cover"
+            />
+          );
+        } else if (user.role == "delivery") {
+          return (
+            <Image
+              width={30}
+              height={30}
+              src={user.attachments.deliveryImage}
+              alt={user.name}
+              className=" rounded-full object-cover"
+            />
+          );
+        }
+        {
+          return (
+            <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-semibold uppercase">
+              {user.name?.charAt(0) || "?"}
+            </div>
+          );
+        }
+      },
+    },
     {
       key: "name",
       label: "Name",
@@ -217,7 +224,11 @@ const AdminUsersPage = () => {
       label: "Status",
       type: "status",
       render: (user: User) => {
-        const isOnline = Math.random() < 0.5; // Mock for now
+        const lastActive = new Date(user?.lastActiveAt || 0);
+        const FIVE_MINUTES = 5 * 60 * 1000;
+
+        const isOnline = Date.now() - lastActive.getTime() < FIVE_MINUTES;
+
         return (
           <span
             className={`text-xs px-2 py-1 rounded-full font-semibold ${
