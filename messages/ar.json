@@ -209,6 +209,9 @@
     "unnamedItem": "عنصر بدون اسم",
     "perKg": "لكل كجم",
     "perItem": "لكل قطعة",
+    "OriginalQuantity" : "الكمية الأصلية",
+"quantityByDelivery" : "الكمية بواسطه عامل التوصيل",
+
     "orderTotal": "إجمالي الطلب",
     "totalPrice": "{{total}} جنيه",
     "currency": "جنيه",
