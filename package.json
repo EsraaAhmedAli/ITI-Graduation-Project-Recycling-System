@@ -21,6 +21,7 @@
     "fuzzball": "^2.2.2",
     "groq-sdk": "^0.27.0",
     "html2canvas": "^1.4.1",
+    "html2pdf.js": "^0.10.3",
     "keen-slider": "^6.8.6",
     "lucide-react": "^0.525.0",
     "next": "15.3.5",

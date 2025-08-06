@@ -190,7 +190,8 @@
         "inTransit": "In Transit",
         "completed": "Completed",
         "cancelled": "Cancelled",
-        "pending": "Pending"
+        "pending": "Pending",
+        "collected" : "Collected"
       },
       "cancelOrder": "cancel order",
       "viewDetails": "View Details",
