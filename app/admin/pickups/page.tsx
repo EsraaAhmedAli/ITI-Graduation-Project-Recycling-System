@@ -3,7 +3,6 @@
 import React, { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import DynamicTable from "@/components/shared/dashboardTable";
-import api from "@/lib/axios";
 import Loader from "@/components/common/loader";
 import UserModal from "@/components/shared/userModal";
 import ItemsModal from "@/components/shared/itemsModal";
@@ -14,14 +13,19 @@ import { useUsers } from "@/hooks/useGetUsers";
 import { usePagination } from "@/hooks/usePagination";
 import { TablePagination } from "../../../components/tablePagination/tablePagination";
 import { useUserAuth } from "@/context/AuthFormContext";
-
+import Button from "@/components/common/Button";
+import ProofOfDeliveryModal from "../../../components/proofDeliveryDetails";
+import api from '../../../lib/axios'
+import { Modal, ModalBody, ModalHeader } from "flowbite-react";
 type UserRole = "customer" | "buyer";
 const STATUS = {
   PENDING: "pending",
   ASSIGN_TO_COURIER: "assignToCourier",
+  COLLECTED: "collected",
   COMPLETED: "completed",
   CANCELLED: "cancelled",
 } as const;
+
 const normalizeStatus = (status: string): string => {
   const normalized = status.toLowerCase().trim();
 
@@ -32,6 +36,8 @@ const normalizeStatus = (status: string): string => {
     case "assignedtocourier":
     case "assigned":
       return STATUS.ASSIGN_TO_COURIER;
+    case "collected":
+      return STATUS.COLLECTED;
     case "completed":
     case "complete":
       return STATUS.COMPLETED;
@@ -42,18 +48,6 @@ const normalizeStatus = (status: string): string => {
       return status;
   }
 };
-// const fetchOrders = async (
-//   page: number,
-//   limit: number,
-//   userRole?: UserRole
-// ) => {
-//   const params: any = { page, limit };
-//   if (userRole) {
-//     params.userRole = userRole;
-//   }
-//   const { data } = await api.get("/admin/orders", { params });
-//   return data;
-// };
 
 const fetchOrders = async (
   page: number,
@@ -63,7 +57,7 @@ const fetchOrders = async (
 ) => {
   const params: any = { page, limit };
   if (userRole) params.userRole = userRole;
-  if (filters?.status?.length) params.status = filters.status.join(","); // convert to comma-separated string
+  if (filters?.status?.length) params.status = filters.status.join(",");
   if (filters?.date?.[0]) params.date = filters.date[0];
 
   const { data } = await api.get("/admin/orders", { params });
@@ -71,7 +65,7 @@ const fetchOrders = async (
 };
 
 export default function Page() {
-    const [filters, setFilters] = useState([
+  const [filters, setFilters] = useState([
     {
       name: "status",
       title: "Status",
@@ -79,6 +73,7 @@ export default function Page() {
       options: [
         { label: "Pending", value: "pending" },
         { label: "Assign To Courier", value: "assigntocourier" },
+        { label: "Collected", value: "collected" },
         { label: "Completed", value: "completed" },
         { label: "Cancelled", value: "cancelled" },
       ],
@@ -87,7 +82,7 @@ export default function Page() {
     {
       name: "date",
       title: "Order Date",
-      type: "date", // Simple string search
+      type: "date",
       options: [],
       active: [],
     },
@@ -95,30 +90,71 @@ export default function Page() {
 
   const [activeTab, setActiveTab] = useState<UserRole>("customer");
   const { currentPage, itemsPerPage, handlePageChange } = usePagination(1, 5);
-  const getActiveFilters = () => {
+const [isProofModalOpen, setIsProofModalOpen] = useState(false);
+const [selectedCompletedOrder, setSelectedCompletedOrder] = useState<any>(null);
+
+
+  const getFilteredFilters = () => {
+    return filters.map(filter => {
+      if (filter.name === "status" && activeTab === "buyer") {
+        return {
+          ...filter,
+          options: filter.options.filter(option => option.value !== "collected")
+        };
+      }
+      return filter;
+    });
+  };
+const handleOpenCompletedDetails = (order: any) => {
+  setSelectedCompletedOrder({
+    orderId: order.orderId,
+    deliveryProof: order.deliveryProof,
+    collectedAt: order.collectedAt,
+    completedAt: order.completedAt,
+    courier: order.courier,
+    statusHistory: order.statusHistory,
+  });
+  setIsProofModalOpen(true);
+};
+
+  const activeFilters = useMemo(() => {
     const status = filters.find((f) => f.name === "status")?.active || [];
     const date = filters.find((f) => f.name === "date")?.active || [];
-
+    
+    // For buyers, automatically filter out 'collected' from active filters
+    if (activeTab === "buyer") {
+      const filteredStatus = status.filter(s => s !== "collected");
+      return { status: filteredStatus, date };
+    }
+    
     return { status, date };
-  };
-  const activeFilters = useMemo(() => {
-  const status = filters.find((f) => f.name === "status")?.active || [];
-  const date = filters.find((f) => f.name === "date")?.active || [];
-  return { status, date };
-}, [filters]);
+  }, [filters, activeTab]);
 
-  // React Query fetch with pagination and role filter
-const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
-  queryKey: ["adminOrders", currentPage, activeTab, activeFilters],
-  queryFn: () =>
-    fetchOrders(currentPage, itemsPerPage, activeTab, activeFilters),
-  keepPreviousData: true,
-  refetchOnMount: true,
-staleTime: 2 * 60 * 1000});
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
+    queryKey: ["adminOrders", currentPage, activeTab, activeFilters],
+    queryFn: () =>
+      fetchOrders(currentPage, itemsPerPage, activeTab, activeFilters),
+    keepPreviousData: true,
+    refetchOnMount: true,
+    refetchOnWindowFocus:true,
+    staleTime : 2000
+  });
+
   const { user } = useUserAuth();
 
-  const orders = data?.data || [];
-  const totalItems = data?.totalOrders || 0;
+  const rawOrders = data?.data || [];
+  
+  // Filter orders based on user role - buyers shouldn't see collected orders, but should see completed ones
+  const orders = useMemo(() => {
+    if (activeTab === "buyer") {
+      // For buyers: show all statuses EXCEPT collected (they should see completed orders)
+      return rawOrders.filter((order: any) => order.status.toLowerCase() !== "collected");
+    }
+    
+    return rawOrders;
+  }, [rawOrders, activeTab]);
+  
+  const totalItems = orders.length; // Use filtered count
   const totalPages = data?.totalPages || 1;
 
   const paginationProps = {
@@ -132,13 +168,12 @@ staleTime: 2 * 60 * 1000});
   };
 
   const [isItemsModalOpen, setIsItemsModalOpen] = useState(false);
-  const [selectedOrderItems, setSelectedOrderItems] = useState<null | any[]>(
-    null
-  );
+  const [selectedOrderItems, setSelectedOrderItems] = useState<null | any[]>(null);
   const [isCourierModalOpen, setIsCourierModalOpen] = useState(false);
-  const [selectedOrderForCourier, setSelectedOrderForCourier] = useState<
-    string | null
-  >(null);
+  const [cancelReason, setCancelReason] = useState<string | null>(null);
+const [showCancelReasonModal, setShowCancelReasonModal] = useState(false);
+
+  const [selectedOrderForCourier, setSelectedOrderForCourier] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<null | {
     name: string;
     phone: string;
@@ -154,13 +189,34 @@ staleTime: 2 * 60 * 1000});
     };
   }>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+const handleShowCancelReason = (statusHistory: any[]) => {
+  const cancelledEntry = statusHistory.find(
+    (entry: any) => entry.status === "cancelled"
+  );
+  setCancelReason(cancelledEntry?.reason || "Order cancelled by customer");
+  setShowCancelReasonModal(true);
+};
 
   const { data: couriers } = useUsers("delivery");
-  console.log(couriers);
 
   const handleTabChange = (tab: UserRole) => {
     setActiveTab(tab);
-    handlePageChange(1); // Reset to first page when changing tabs
+    handlePageChange(1);
+    
+    // Clear collected filter when switching to buyers tab
+    if (tab === "buyer") {
+      setFilters((prev) =>
+        prev.map((f) => {
+          if (f.name === "status") {
+            return {
+              ...f,
+              active: f.active.filter((status: string) => status !== "collected"),
+            };
+          }
+          return f;
+        })
+      );
+    }
   };
 
   const handleDeleteOrder = async (orderId: string) => {
@@ -238,15 +294,57 @@ staleTime: 2 * 60 * 1000});
     }
   };
 
+  const handleMarkAsCompleted = async (orderId: string) => {
+    const result = await Swal.fire({
+      title: "Mark as Completed?",
+      text: "This will mark the order as completed and finalize it.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#10B981",
+      cancelButtonColor: "#6B7280",
+      confirmButtonText: "Yes, mark as completed",
+      cancelButtonText: "Cancel",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await api.put(`/admin/orders/${orderId}/status`, {
+          status: "completed",
+        });
+        toast.success("Order marked as completed successfully");
+        refetch();
+      } catch (err) {
+        console.error("Failed to mark order as completed:", err);
+        toast.error("Failed to mark order as completed");
+      }
+    }
+  };
+
   const closingModalFn = () => {
     setIsModalOpen(false);
   };
 
-  const allowedStatusTransitions: Record<string, string[]> = {
-    [STATUS.PENDING]: [STATUS.ASSIGN_TO_COURIER, STATUS.CANCELLED],
-    [STATUS.ASSIGN_TO_COURIER]: [STATUS.COMPLETED, STATUS.CANCELLED],
-    [STATUS.COMPLETED]: [],
-    [STATUS.CANCELLED]: [],
+  // Updated status transitions - buyers skip collected status
+  const getAllowedStatusTransitions = (userRole: string): Record<string, string[]> => {
+    if (userRole === "buyer") {
+      // Buyers skip collected status - go directly to completed
+      return {
+        [STATUS.PENDING]: [STATUS.ASSIGN_TO_COURIER, STATUS.CANCELLED],
+        [STATUS.ASSIGN_TO_COURIER]: [STATUS.COMPLETED, STATUS.CANCELLED], // Buyers can complete directly
+        [STATUS.COLLECTED]: [STATUS.COMPLETED], // Should not occur for buyers
+        [STATUS.COMPLETED]: [],
+        [STATUS.CANCELLED]: [],
+      };
+    } else {
+      // Customers use collected status flow
+      return {
+        [STATUS.PENDING]: [STATUS.ASSIGN_TO_COURIER, STATUS.CANCELLED],
+        [STATUS.ASSIGN_TO_COURIER]: [STATUS.CANCELLED], // Delivery will update to collected directly
+        [STATUS.COLLECTED]: [STATUS.COMPLETED], // Only admin can complete from collected
+        [STATUS.COMPLETED]: [],
+        [STATUS.CANCELLED]: [],
+      };
+    }
   };
 
   if (isLoading) {
@@ -287,31 +385,37 @@ staleTime: 2 * 60 * 1000});
     );
   }
 
-  const transformedData = orders.map((order: any) => ({
-    orderId: order._id,
-    onClickItemsId: () => {
-      setSelectedOrderItems(order.items);
-      setIsItemsModalOpen(true);
-    },
-    status: order.status,
-    createdAt: new Date(order.createdAt).toLocaleString(),
-    orderDate: new Date(order.createdAt).toISOString().split("T")[0], // e.g. "2025-08-02"
-    userName: order.user?.userName || "Unknown",
-    userRole: order.user?.role || "Unknown",
-    onClickUser: () => {
-      const user = order.user || {};
-      setSelectedUser({
-        name: user.userName || "Unknown",
-        email: user.email ?? "Not Provided",
-        phone: user.phoneNumber || "N/A",
-        imageUrl: user.imageUrl || null,
-        address: order.address || {},
-      });
-      setIsModalOpen(true);
-    },
-    onDelete: () => handleDeleteOrder(order._id),
-  }));
-  const activeFiltersForTable = activeFilters
+const transformedData = orders.map((order: any) => ({
+  orderId: order._id,
+  onClickItemsId: () => {
+    setSelectedOrderItems(order.items);
+    setIsItemsModalOpen(true);
+  },
+  status: order.status,
+  createdAt: new Date(order.createdAt).toLocaleString(),
+  orderDate: new Date(order.createdAt).toISOString().split("T")[0],
+  userName: order.user?.userName || "Unknown",
+  userRole: order.user?.role || "Unknown",
+  // Add these new fields for proof of delivery (matching your API structure)
+  deliveryProof: order.deliveryProof,
+  collectedAt: order.collectedAt,
+  completedAt: order.completedAt,
+  courier: order.courier,
+  statusHistory: order.statusHistory,
+  onClickUser: () => {
+    const user = order.user || {};
+    setSelectedUser({
+      name: user.userName || "Unknown",
+      email: user.email ?? "Not Provided",
+      phone: user.phoneNumber || "N/A",
+      imageUrl: user.imageUrl || null,
+      address: order.address || {},
+    });
+    setIsModalOpen(true);
+  },
+  onDelete: () => handleDeleteOrder(order._id),
+}));
+
   const columns = [
     {
       key: "userName",
@@ -330,7 +434,6 @@ staleTime: 2 * 60 * 1000});
         </div>
       ),
     },
-
     {
       key: "orderId",
       label: "Order ID",
@@ -349,33 +452,73 @@ staleTime: 2 * 60 * 1000});
       sortable: false,
       render: (order: any) => {
         const currentStatus = order.status.toLowerCase();
+        const allowedStatusTransitions = getAllowedStatusTransitions(order.userRole);
         let nextStatuses = allowedStatusTransitions[currentStatus] || [];
 
+        // Filter out cancel option for buyers
         if (order.userRole === "buyer") {
           nextStatuses = nextStatuses.filter(
             (status) => status !== STATUS.CANCELLED
           );
         }
 
-        if (currentStatus === "cancelled") {
+        // Handle completed status
+if (currentStatus === "completed") {
+  return (
+    <Button 
+      onClick={() => handleOpenCompletedDetails(order)} 
+      className="px-5 py-2 text-xs font-semibold rounded-md bg-green-100 text-green-800 hover:bg-green-200 transition-colors"
+    >
+      Completed
+    </Button>
+  );
+}
+
+        // Handle cancelled status
+   if (currentStatus === "cancelled") {
+  return (
+    <button
+      onClick={() => handleShowCancelReason(order.statusHistory)}
+      className="px-5 py-2 text-xs font-semibold rounded-md bg-red-100 text-red-800 hover:bg-red-200 transition-colors"
+    >
+      Cancelled
+    </button>
+  );
+}
+
+
+        // Handle collected status - show button for admin to complete (only for customers)
+   if (currentStatus === "collected") {
+  return (
+    <div className="flex items-center gap-2">
+      <Button
+        onClick={() => handleOpenCompletedDetails(order)}
+        className="px-3 py-1 text-xs font-semibold rounded-md bg-purple-500 text-purple-800 hover:bg-purple-200 transition-colors"
+      >
+        Collected
+      </Button>
+      <button
+        onClick={() => handleMarkAsCompleted(order.orderId)}
+        className="px-3 py-1 text-xs font-semibold rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors"
+        title="Mark as completed"
+      >
+        Complete
+      </button>
+    </div>
+  );
+}
+
+        // For buyers on assigntocourier status, show status without complete button
+        // Complete button will only appear in dropdown or when admin manually completes
+        if (currentStatus === "assigntocourier" && order.userRole === "buyer") {
           return (
-            <span className="px-5 py-2 text-xs font-semibold rounded-md bg-red-100 text-red-800">
-              cancelled
+            <span className="px-3 py-1 text-xs font-semibold rounded-md bg-blue-100 text-blue-800">
+              Assigned to Courier
             </span>
           );
         }
 
-        if (currentStatus === "completed") {
-          return (
-            <span className="px-5 py-2 text-xs font-semibold rounded-md bg-green-100 text-green-800">
-              completed
-            </span>
-          );
-        }
-
-        const handleChange = async (
-          e: React.ChangeEvent<HTMLSelectElement>
-        ) => {
+        const handleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
           const newStatus = e.target.value;
           if (newStatus === currentStatus) return;
 
@@ -392,6 +535,12 @@ staleTime: 2 * 60 * 1000});
             return;
           }
 
+          if (newStatus === "completed") {
+            e.target.value = currentStatus;
+            await handleMarkAsCompleted(order.orderId);
+            return;
+          }
+
           try {
             await api.put(`/admin/orders/${order.orderId}/status`, {
               status: newStatus,
@@ -403,28 +552,41 @@ staleTime: 2 * 60 * 1000});
           }
         };
 
+        const getStatusColor = (status: string) => {
+          switch (status) {
+            case "pending":
+              return "border-yellow-400 bg-yellow-100 text-yellow-800";
+            case "assigntocourier":
+              return "border-blue-400 bg-blue-100 text-blue-800";
+            case "collected":
+              return "border-purple-400 bg-purple-100 text-purple-800";
+            case "completed":
+              return "border-green-400 bg-green-100 text-green-800";
+            default:
+              return "border-gray-400 bg-gray-100 text-gray-800";
+          }
+        };
+
         return (
           <select
             value={currentStatus}
             onChange={handleChange}
             disabled={nextStatuses.length === 0}
-            className={`px-2 py-1 rounded border ${
-              currentStatus === "pending"
-                ? "border-yellow-400 bg-yellow-100 text-yellow-800"
-                : currentStatus === "assigntocourier"
-                ? "border-blue-400 bg-blue-100 text-blue-800"
-                : currentStatus === "completed"
-                ? "border-green-400 bg-green-100 text-green-800"
-                : "border-gray-400 bg-gray-100 text-gray-800"
-            }`}
+            className={`px-2 py-1 rounded border ${getStatusColor(currentStatus)}`}
             onClick={(e) => e.stopPropagation()}
           >
             <option value={currentStatus}>
-              {currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1)}
+              {currentStatus === "assigntocourier" 
+                ? "Assigned to Courier"
+                : currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1)
+              }
             </option>
             {nextStatuses.map((status) => (
               <option key={status} value={status}>
-                {status.charAt(0).toUpperCase() + status.slice(1)}
+                {status === "assignToCourier" 
+                  ? "Assign to Courier"
+                  : status.charAt(0).toUpperCase() + status.slice(1)
+                }
               </option>
             ))}
           </select>
@@ -502,16 +664,26 @@ staleTime: 2 * 60 * 1000});
             itemsPerPage={itemsPerPage}
             showAddButton={false}
             showFilter
-            filtersConfig={filters}
-            externalFilters={activeFiltersForTable}
+            filtersConfig={getFilteredFilters()}
+            externalFilters={activeFilters}
             onExternalFiltersChange={(updated) => {
-            setFilters((prev) =>
-      prev.map((f) => ({
-        ...f,
-        active: updated[f.name] || [],
-      }))
-    );
-              handlePageChange(1); // reset to page 1
+              setFilters((prev) =>
+                prev.map((f) => {
+                  if (f.name === "status" && activeTab === "buyer") {
+                    // For buyers, filter out 'collected' from any filter updates
+                    const filteredActive = (updated[f.name] || []).filter((status: string) => status !== "collected");
+                    return {
+                      ...f,
+                      active: filteredActive,
+                    };
+                  }
+                  return {
+                    ...f,
+                    active: updated[f.name] || [],
+                  };
+                })
+              );
+              handlePageChange(1);
             }}
             activeFiltersCount={filters.reduce(
               (acc, f) => acc + (f.active?.length || 0),
@@ -547,6 +719,40 @@ staleTime: 2 * 60 * 1000});
           setSelectedOrderForCourier(null);
         }}
       />
+      <ProofOfDeliveryModal
+  show={isProofModalOpen}
+  onClose={() => {
+    setIsProofModalOpen(false);
+    setSelectedCompletedOrder(null);
+  }}
+  orderDetails={selectedCompletedOrder}
+/>
+<Modal
+dismissible
+  show={showCancelReasonModal}
+  size="md"
+  popup={true}
+  onClose={() => setShowCancelReasonModal(false)}
+>
+  <ModalHeader />
+  <ModalBody>
+    <div className="text-center">
+      <h3 className="mb-4 text-lg font-medium text-gray-900 dark:text-white">
+        Cancellation Reason
+      </h3>
+      <p className="text-gray-700 dark:text-gray-300">{cancelReason}</p>
+      <div className="mt-6">
+        <button
+          onClick={() => setShowCancelReasonModal(false)}
+          className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </ModalBody>
+</Modal>
+
     </div>
   );
 }

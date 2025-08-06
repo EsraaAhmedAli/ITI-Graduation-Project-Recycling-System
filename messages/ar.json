@@ -185,7 +185,9 @@
         "inTransit": "قيد التوصيل",
         "completed": "مكتملة",
         "cancelled": "ملغاة",
-        "pending": "قيد الانتظار"
+        "pending": "قيد الانتظار",
+                "collected" : "في المخزن"
+
       },
       "viewDetails": "عرض التفاصيل",
       "cancelConfirm": "هل أنت متأكد من إلغاء هذا الطلب؟",

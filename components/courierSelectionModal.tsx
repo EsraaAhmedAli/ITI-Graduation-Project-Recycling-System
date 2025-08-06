@@ -51,7 +51,7 @@ const CourierSelectionModal: React.FC<CourierSelectionModalProps> = ({
         ) : (
           <div className="space-y-3">
       {couriers
-  .filter(courier => courier.isApproved === true)
+  ?.filter(courier => courier.isApproved === true)
   .map((courier) => (
     <div
       key={courier._id}
