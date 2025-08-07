@@ -325,14 +325,17 @@ const CheckoutPage = ({ amount, checkoutData }: CheckoutPageProps) => {
                 <div className="mb-6">
                   <div className="text-gray-600 text-sm mb-1">Total price</div>
                   <div className="text-3xl font-bold text-teal-600">
-                    EGP {localCheckoutData?.totalPrice.toFixed(2)}
+                 EGP {typeof localCheckoutData?.totalPrice === "number"
+  ? localCheckoutData.totalPrice.toFixed(2)
+  : "0.00"}
+
                   </div>
-                  {role !== "buyer" && (
-                    <div className="text-xs text-gray-500 mt-1">
-                      (Base price: EGP{" "}
-                      {localCheckoutData?.totalPrice.toFixed(2)})
-                    </div>
-                  )}
+               {role !== "buyer" && typeof localCheckoutData?.totalPrice === "number" && (
+  <div className="text-xs text-gray-500 mt-1">
+    (Base price: EGP {localCheckoutData.totalPrice.toFixed(2)})
+  </div>
+)}
+
                 </div>
 
                 {/* Payment Method */}

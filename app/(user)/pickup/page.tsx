@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useCreateOrder } from "@/hooks/useCreateOrder";
 import { useRouter } from "next/navigation";
+import { deliveryFees } from "@/constants/deliveryFees";
 
 export default function PickupConfirmation() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -111,39 +112,40 @@ export default function PickupConfirmation() {
     setCurrentStep(step);
   };
 
-  const handleConfirm = async () => {
-    if (user?.role === "buyer") {
-      // Store cart and address data in sessionStorage
-      sessionStorage.setItem(
-        "checkoutData",
-        JSON.stringify({
-          cart,
-          selectedAddress,
-          totalPrice,
-          user: {
-            id: user._id,
-            name: user.name,
-            email: user.email,
-            phoneNumber: user.phoneNumber,
-          },
-        })
-      );
+const handleConfirm = async () => {
+  if (user?.role === "buyer") {
+    const deliveryFee = selectedAddress?.city
+      ? deliveryFees[selectedAddress.city] || 0
+      : 0;
 
-      // Navigate with just the total price
-      router.push(`/payment?total=${totalPrice}`);
-    } else {
-      console.log("----------------------------------");
-      console.log("USER CRETA ORDER");
-      console.log(cart);
-      console.log("----------------------------------");
+    const finalTotal = totalPrice + deliveryFee;
 
-      const result = await createOrder(selectedAddress, cart, user);
+    sessionStorage.setItem(
+      "checkoutData",
+      JSON.stringify({
+        cart,
+        selectedAddress,
+        deliveryFee,
+       totalPrice: finalTotal,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          phoneNumber: user.phoneNumber,
+        },
+      })
+    );
 
-      if (result.success) {
-        console.log("Order created successfully:", result.orderId);
-      }
+    router.push(`/payment?total=${finalTotal}`);
+  } else {
+    const result = await createOrder(selectedAddress, cart, user);
+
+    if (result.success) {
+      console.log("Order created successfully:", result.orderId);
     }
-  };
+  }
+};
+
 
   const handleSaveAddress = async (data: FormInputs) => {
     try {

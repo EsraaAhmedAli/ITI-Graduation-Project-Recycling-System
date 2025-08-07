@@ -29,6 +29,7 @@ interface CheckoutData {
     notes?: string;
   };
   totalPrice: number;
+  deliveryFee: number;
   user: {
     id: string;
     name: string;
@@ -36,6 +37,7 @@ interface CheckoutData {
     phoneNumber: string;
   };
 }
+
 
 export default function RecyclingPaymentPage() {
 
@@ -111,9 +113,34 @@ const searchParams = useSearchParams()
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-6 py-12">
         <div className="grid lg:grid-cols-1 gap-12 items-start">
-  
+         
 
-          {/* Payment Section */}
+        
+          {/* <main className="max-w-6xl mx-auto px-6 py-12">
+  <div className="grid lg:grid-cols-1 gap-12 items-start">
+
+  
+      <div className="bg-white rounded-lg p-6 shadow-md mb-6">
+      <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
+      <div className="flex justify-between mb-2">
+        <span>Subtotal:</span>
+        <span>{checkoutData.totalPrice} EGP</span>
+      </div>
+      <div className="flex justify-between mb-2">
+        <span>Delivery Fee:</span>
+        <span>{checkoutData.deliveryFee} EGP</span>
+      </div>
+      <div className="flex justify-between font-bold text-green-700">
+        <span>Total:</span>
+        <span>{finalAmount} EGP</span>
+      </div>
+    </div> 
+
+ 
+
+  </div>
+</main> */}
+
           <div className="lg:col-span-2 order-1 lg:order-2">
           <Elements
   stripe={stripePromise}
