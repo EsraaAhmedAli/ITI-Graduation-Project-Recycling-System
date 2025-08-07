@@ -50,6 +50,8 @@ const searchParams = useSearchParams()
   const finalAmount = basePrice
   const [checkoutData, setCheckoutData] = useState<CheckoutData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'cod'>('card')
+
 
   // استرجاع بيانات الدفع من sessionStorage
   useEffect(() => {
