@@ -3,6 +3,8 @@ import { FormInputs } from "@/components/Types/address.type";
 import Image from "next/image";
 import { priceWithMarkup } from "@/utils/priceUtils";
 import { CartItem } from "@/context/CartContext";
+import { deliveryFees } from "@/constants/deliveryFees";
+
 
 // type CartItem = {
 //   categoryId: string;
@@ -28,12 +30,17 @@ export default function Review({
   onConfirm,
   loading,
   cartItems,
+  formData,
   userRole,
 }: ReviewProps) {
-  const total = cartItems.reduce(
+  const subtotal = cartItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
+
+  const deliveryFee = formData?.city ? deliveryFees[formData.city] || 0 : 0;
+
+  const total = subtotal + deliveryFee;
 
   return (
     <div className="space-y-6">
@@ -76,10 +83,25 @@ export default function Review({
                 </div>
               </div>
             ))}
+<div className="text-right mt-6 space-y-4">
+  {/* Order Price */}
+  <div className="flex justify-between items-center">
+    <span className="text-gray-500 text-sm md:text-base">Order Price:</span>
+    <span className="font-medium text-gray-700">{subtotal.toFixed(2)} EGP</span>
+  </div>
 
-            <div className="text-right mt-2 font-semibold text-green-900">
-              Total: {total.toFixed(2)} EGP
-            </div>
+  {/* Delivery Fees */}
+  <div className="flex justify-between items-center">
+    <span className="text-gray-500 text-sm md:text-base">Delivery Fees:</span>
+    <span className="font-medium text-gray-700">{deliveryFee.toFixed(2)} EGP</span>
+  </div>
+
+  {/* Total */}
+  <div className="flex justify-between items-center border-t border-gray-200 pt-4 mt-2">
+    <span className="text-lg font-semibold text-green-600">Total:</span>
+    <span className="text-lg font-bold text-green-600">{total.toFixed(2)} EGP</span>
+  </div>
+</div>
           </>
         )}
       </div>
