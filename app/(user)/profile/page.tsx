@@ -3,21 +3,19 @@
 import { useEffect, useState } from "react";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { Avatar } from "flowbite-react";
-import { Order, OrdersResponse } from "@/components/Types/orders.type";
 import Loader from "@/components/common/loader";
 import api from "@/lib/axios";
 import { ProtectedRoute } from "@/lib/userProtectedRoute";
 import Link from "next/link";
-import Swal from "sweetalert2";
-import { CheckCircle, Clock1, MapPin, Package, Pencil, Recycle, RefreshCcw, Truck, XCircle } from "lucide-react";
+import { CheckCircle, Clock1, MapPin, Package, Pencil, RefreshCcw, Truck, XCircle } from "lucide-react";
 import RecyclingModal from "@/components/eWalletModal/ewalletModal";
 import { useUserPoints } from "@/hooks/useGetUserPoints";
 import ItemsModal from "@/components/shared/itemsModal";
 import PointsActivity from "@/components/accordion/accordion";
 import MembershipTier from "@/components/memberTireShip/memberTireShip";
 import { useLanguage } from "@/context/LanguageContext";
-import ReceiptCard from "../../../components/RecipetCard";
 import { ReceiptLink } from "../../../components/RecipetLink";
+import useOrders from "@/hooks/useGetOrders";
 
 export default function ProfilePage() {
   return (
@@ -35,156 +33,97 @@ function ProfileContent() {
     name: user?.name,
     email: user?.email,
   });
-  const [allOrders, setAllOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [loadingMore, setLoadingMore] = useState<boolean>(false);
+
   const [activeTab, setActiveTab] = useState("incoming");
   const [isRecyclingModalOpen, setIsRecyclingModalOpen] = useState(false);
   const [isItemsModalOpen, setIsItemsModalOpen] = useState(false);
+  // Removed unused selectItemStatus state
+  const [selectedOrderItems, setSelectedOrderItems] = useState<any[]>([]);
+  const [selectedOrderStatus, setSelectedOrderStatus] = useState<string | null>(null);
   const { t } = useLanguage();
 
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [hasNextPage, setHasNextPage] = useState(false);
-  const [totalCount, setTotalCount] = useState(0);
-  const [totalCompletedOrders, setTotalCompletedOrders] = useState(0);
-  const ordersPerPage = 4;
-
-  const getAllOrders = async (page: number = 1, append: boolean = false): Promise<void> => {
-    try {
-      if (!append) {
-        setLoading(true);
-      } else {
-        setLoadingMore(true);
-      }
-      
-      // Map activeTab to status parameter
-      let statusParam = "";
-      if (activeTab === "incoming") {
-        statusParam = "incoming";
-      } else if (activeTab === "completed") {
-        statusParam = "completed";
-      } else if (activeTab === "cancelled") {
-        statusParam = "cancelled";
-      }
-      
-      const res = await api.get<{
-        success: boolean;
-        count: number;
-        totalCount: number;
-        totalCompletedOrders: number;
-        data: Order[];
-        pagination: {
-          currentPage: number;
-          totalPages: number;
-          hasNextPage: boolean;
-          hasPrevPage: boolean;
-          limit: number;
-        };
-      }>(`/orders?page=${page}&limit=${ordersPerPage}&status=${statusParam}`);
-      
-      if (append) {
-        setAllOrders(prev => [...prev, ...res.data.data]);
-      } else {
-        setAllOrders(res.data.data);
-      }
-      
-      setCurrentPage(res.data.pagination.currentPage);
-      setHasNextPage(res.data.pagination.hasNextPage);
-      setTotalCount(res.data.totalCount);
-      setTotalCompletedOrders(res.data.totalCompletedOrders);
-      
-      console.log(res.data.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
+  // Map activeTab to status parameter
+  const getStatusParam = (tab: string) => {
+    if (tab === "incoming") {
+      return "incoming";
+    } else if (tab === "completed") {
+      return "completed";
+    } else if (tab === "cancelled") {
+      return "cancelled";
     }
+    return "";
   };
 
+  // Use the orders hook with status filter for better performance
+  const {
+    allOrders,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    handleCancelOrder: hookHandleCancelOrder,
+    refetch,
+  } = useOrders({ 
+    limit: 4,
+    status: getStatusParam(activeTab)
+  });
+
+  // Keep total completed orders count for stats (separate call)
+  const [totalCompletedOrders, setTotalCompletedOrders] = useState(0);
+
   const loadMoreOrders = async () => {
-    await getAllOrders(currentPage + 1, true);
+    if (hasNextPage && !isFetchingNextPage) {
+      await fetchNextPage();
+    }
   };
 
   const refreshPoints = async () => {
     await getUserPoints();
   };
 
-  const cancelOrder = async (orderId: string) => {
-    try {
-      const res = await api.put(`/orders/${orderId}/status`, {
-        status: "cancelled",
-      });
-      return res.data;
-    } catch (error) {
-      throw error;
-    }
+  // Use the hook's cancel function
+  const handleCancelOrder = async (orderId: string) => {
+    await hookHandleCancelOrder(orderId);
+    // The hook handles optimistic updates, so we just need to refetch if needed
+    await refetch();
   };
 
-  const handleCancelOrder = (orderId: string) => {
-    Swal.fire({
-      title: "Are you sure you want to cancel this order?",
-      showCancelButton: true,
-      confirmButtonText: "Yes",
-      cancelButtonText: "No",
-      icon: "warning",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          await cancelOrder(orderId);
-          // Reload the current tab's data to ensure consistency
-          setCurrentPage(1);
-          setAllOrders([]);
-          await getAllOrders(1, false);
-          Swal.fire("Order cancelled", "", "success");
-        } catch (error) {
-          console.error("Failed to cancel order:", error);
-          Swal.fire("Failed to cancel order", "", "error");
-        }
-      } else {
-        Swal.fire("Your order is safe", "", "info");
-      }
-    });
-  };
+  // Fetch total completed orders count for stats (separate call)
   useEffect(() => {
+    const fetchCompletedOrdersCount = async () => {
+      try {
+        const res = await api.get('/orders?status=completed&limit=1');
+        setTotalCompletedOrders(res.data.totalCount || 0);
+      } catch (error) {
+        console.error('Failed to fetch completed orders count:', error);
+      }
+    };
+
     if (user && token) {
-      // Reset pagination when component mounts or user changes
-      setCurrentPage(1);
-      setAllOrders([]);
-      getAllOrders(1, false);
+      fetchCompletedOrdersCount();
       getUserPoints();
     }
-  }, [user, token]);
+  }, [user, token, getUserPoints]);
 
-  // Reset orders and pagination when tab changes
-  useEffect(() => {
-    if (user && token) {
-      setCurrentPage(1);
-      setAllOrders([]);
-      getAllOrders(1, false);
-    }
-  }, [activeTab]);
-
-  const [selectedOrderItems, setSelectedOrderItems] = useState<any[]>([]);
-
-  const openItemsModal = (items: any[]) => {
+  // FIXED: Updated function to accept both items and orderStatus
+  const openItemsModal = (items: any[], orderStatus: string) => {
+    console.log('Opening modal with status:', orderStatus); // Debug log
     setSelectedOrderItems(items);
+    setSelectedOrderStatus(orderStatus);
     setIsItemsModalOpen(true);
-    
   };
 
   const closeItemsModal = () => {
     setSelectedOrderItems([]);
+    setSelectedOrderStatus(null);
     setIsItemsModalOpen(false);
   };
 
+  // Filter orders for buyer role (hide cancelled orders)
   const filteredOrders = allOrders.filter((order) => {
-    // Additional filtering for buyer role (hide cancelled orders)
     if (user?.role === "buyer" && order.status === "cancelled") {
       return false;
     }
-    // No need to filter by status here since backend already filtered
     return true;
   });
 
@@ -306,117 +245,131 @@ function ProfileContent() {
         {/* Orders or Payments */}
         {activeTab === "payments" ? (
           <PaymentsHistory />
-        ) : loading ? (
+        ) : isLoading ? (
           <Loader title=" orders..." />
         ) : filteredOrders.length === 0 ? (
           <p className="text-center text-gray-500">No orders in this tab yet.</p>
         ) : (
-<div className="space-y-4">
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-    {filteredOrders.map((order) => (
-      <div
-        key={order._id}
-        className="rounded-xl p-5 bg-gradient-to-br from-green-50 to-white shadow-lg border border-green-100 hover:shadow-xl transition-all duration-300"
-      >
-        {/* Header with Order Info */}
-        <div className="flex justify-between items-start mb-4">
-          <div className="text-sm text-gray-600">
-            <p className="font-medium text-gray-800 mb-1">
-              Order #{order._id.slice(-8).toUpperCase()}
-            </p>
-            <p className="text-xs">
-              {t("profile.orders.date")}: {new Date(order.createdAt).toLocaleDateString()}
-            </p>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredOrders.map((order) => (
+                <div
+                  key={order._id}
+                  className="rounded-xl p-5 bg-gradient-to-br from-green-50 to-white shadow-lg border border-green-100 hover:shadow-xl transition-all duration-300"
+                >
+                  {/* Header with Order Info */}
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="text-sm text-gray-600">
+                      <p className="font-medium text-gray-800 mb-1">
+                        Order #{order._id.slice(-8).toUpperCase()}
+                      </p>
+                      <p className="text-xs">
+                        {t("profile.orders.date")}: {new Date(order.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    
+                    {/* Enhanced Status Badge with Collected Status */}
+                    <div className="flex items-center gap-2">
+                      {["assigntocourier"].includes(order.status) && (
+                        <div className="flex items-center gap-1 bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium">
+                          <Truck size={14} />
+                          {t("profile.orders.status.inTransit")}
+                        </div>
+                      )}
+                      {["pending"].includes(order.status) && (
+                        <div className="flex items-center gap-1 bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-medium">
+                          <Clock1 size={14} />
+                          {t("profile.orders.status.pending")}
+                        </div>
+                      )}
+                      {order.status === "collected" && (
+                        <div className="flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
+                          <Package size={14} />
+                          {t("profile.orders.status.collected") || "Collected"}
+                        </div>
+                      )}
+                      {order.status === "completed" && (
+                        <div className="flex items-center gap-1 bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">
+                          <CheckCircle size={14} />
+                          {t("profile.orders.status.completed")}
+                        </div>
+                      )}
+                      {order.status === "cancelled" && (
+                        <div className="flex items-center gap-1 bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-medium">
+                          <XCircle size={14} />
+                          {t("profile.orders.status.cancelled")}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Address with Icon */}
+                  <div className="flex items-start gap-2 mb-4 p-3 bg-gray-50 rounded-lg">
+                    <MapPin size={16} className="text-gray-500 mt-0.5 flex-shrink-0" />
+                    <div className="text-sm text-gray-600">
+                      <p className="font-medium text-gray-800 mb-1">Pickup Location</p>
+                      <p className="text-xs leading-relaxed">
+                        {order.address.street}, Bldg {order.address.building}, Floor{" "}
+                        {order.address.floor}, {order.address.area}, {order.address.city}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex justify-between items-center pt-3 border-t border-gray-200">
+                    <div className="flex gap-3">
+                      <button
+onClick={() => openItemsModal(order.items, order.status)}
+                        className="text-sm text-green-600 hover:text-green-800 font-medium hover:underline transition-colors duration-200"
+                      >
+                        {t("profile.orders.viewDetails")}
+                      </button>
+                      
+                      {/* Enhanced Receipt Link - Show for collected and completed orders */}
+                      {["collected", "completed"].includes(order.status) && (
+                        <ReceiptLink orderId={order._id} variant="compact" />
+                      )}
+                    </div>
+
+                    {/* Cancel Button - Only for pending orders */}
+                    {order.status === "pending" && user?.role === "customer" && (
+                      <button
+                        onClick={() => handleCancelOrder(order._id)}
+                        className="text-sm text-red-500 hover:text-red-700 font-medium hover:underline transition-colors duration-200"
+                      >
+                        {t("profile.orders.cancelOrder")}
+                      </button>
+                    )}
+                  </div>
+                  {/* REMOVED: ItemsModal from inside the loop to fix navy background */}
+                </div>
+              ))}
+            </div>
+
+            {/* Load More Button */}
+            {shouldShowSeeMore && (
+              <div className="flex justify-center pt-4">
+                <button
+                  onClick={loadMoreOrders}
+                  disabled={isFetchingNextPage}
+                  className="bg-green-600 text-white px-6 py-2 rounded-full hover:bg-green-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isFetchingNextPage ? "Loading more..." : "See More"}
+                </button>
+              </div>
+            )}
           </div>
-          
-          {/* Enhanced Status Badge with Collected Status */}
-          <div className="flex items-center gap-2">
-            {["assigntocourier"].includes(order.status) && (
-              <div className="flex items-center gap-1 bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium">
-                <Truck size={14} />
-                {t("profile.orders.status.inTransit")}
-              </div>
-            )}
-            {["pending"].includes(order.status) && (
-              <div className="flex items-center gap-1 bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-medium">
-                <Clock1 size={14} />
-                {t("profile.orders.status.pending")}
-              </div>
-            )}
-            {order.status === "collected" && (
-              <div className="flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
-                <Package size={14} />
-                {t("profile.orders.status.collected") || "Collected"}
-              </div>
-            )}
-            {order.status === "completed" && (
-              <div className="flex items-center gap-1 bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">
-                <CheckCircle size={14} />
-                {t("profile.orders.status.completed")}
-              </div>
-            )}
-            {order.status === "cancelled" && (
-              <div className="flex items-center gap-1 bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-medium">
-                <XCircle size={14} />
-                {t("profile.orders.status.cancelled")}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Address with Icon */}
-        <div className="flex items-start gap-2 mb-4 p-3 bg-gray-50 rounded-lg">
-          <MapPin size={16} className="text-gray-500 mt-0.5 flex-shrink-0" />
-          <div className="text-sm text-gray-600">
-            <p className="font-medium text-gray-800 mb-1">Pickup Location</p>
-            <p className="text-xs leading-relaxed">
-              {order.address.street}, Bldg {order.address.building}, Floor{" "}
-              {order.address.floor}, {order.address.area}, {order.address.city}
-            </p>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex justify-between items-center pt-3 border-t border-gray-200">
-          <div className="flex gap-3">
-            <button
-              onClick={() => openItemsModal(order.items)}
-              className="text-sm text-green-600 hover:text-green-800 font-medium hover:underline transition-colors duration-200"
-            >
-              {t("profile.orders.viewDetails")}
-            </button>
-            
-            {/* Enhanced Receipt Link - Show for collected and completed orders */}
-            {["collected", "completed"].includes(order.status) && (
-              <ReceiptLink orderId={order._id} variant="compact" />
-            )}
-          </div>
-
-          {/* Cancel Button - Only for pending orders */}
-          {order.status === "pending" && user?.role === "customer" && (
-            <button
-              onClick={() => handleCancelOrder(order._id)}
-              className="text-sm text-red-500 hover:text-red-700 font-medium hover:underline transition-colors duration-200"
-            >
-              {t("profile.orders.cancelOrder")}
-            </button>
-          )}
-        </div>
-
-        <ItemsModal
-          userRole={user?.role}
-          show={isItemsModalOpen}
-          onclose={closeItemsModal}
-          selectedOrderItems={selectedOrderItems}
-        />
-
-  
-      </div>
-    ))}
-  </div>
-</div>
         )}
+        
+      <ItemsModal
+        orderStatus={selectedOrderStatus}
+        userRole={user?.role}
+        show={isItemsModalOpen}
+        onclose={closeItemsModal}
+        selectedOrderItems={selectedOrderItems}
+      />
       </div>
+
     </div>
   );
 }
@@ -439,8 +392,6 @@ function StatBox({ label, value, loading = false }: { label: string; value: numb
     </div>
   );
 }
-
-
 
 function PaymentsHistory() {
   const { user } = useUserAuth();

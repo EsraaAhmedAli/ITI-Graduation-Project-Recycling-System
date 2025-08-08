@@ -4,16 +4,29 @@ import { OrdersResponse } from "@/components/Types/orders.type";
 export interface GetOrdersParams {
   page?: number;
   limit?: number;
+  status?: string;
 }
 
 export const ordersApi = {
-  getOrders: async ({ page = 1, limit = 10 }: GetOrdersParams = {}): Promise<OrdersResponse> => {
-    const response = await api.get<OrdersResponse>(`/orders?page=${page}&limit=${limit}`);
+  getOrders: async ({ page = 1, limit = 10, status }: GetOrdersParams = {}): Promise<OrdersResponse> => {
+    // Build query string with optional status parameter
+    const queryParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+    
+    if (status) {
+      queryParams.append('status', status);
+    }
+    
+    const response = await api.get<OrdersResponse>(`/orders?${queryParams.toString()}`);
     return response.data;
   },
 
   cancelOrder: async (orderId: string) => {
-    const response = await api.patch(`/orders/${orderId}/cancel`);
+    const response = await api.put(`/orders/${orderId}/status`, {
+      status: 'cancelled'
+    });
     return response.data;
   },
 };
