@@ -4,6 +4,7 @@ import ReceiptCard from "../../../components/RecipetCard";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios";
+import Loader from "@/components/common/loader";
 
 const ReceiptPage = () => {
   const params = useParams();
@@ -16,7 +17,7 @@ const ReceiptPage = () => {
     enabled: !!orderId,
   });
 
-  if (isLoading) return <p>Loading receipt...</p>;
+  if (isLoading) return <Loader title="receipt"/>;
   if (isError || !data) return <p>Error loading receipt.</p>;
 
   const order = data.data;

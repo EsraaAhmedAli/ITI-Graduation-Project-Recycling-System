@@ -5,6 +5,8 @@ import { priceWithMarkup } from '@/utils/priceUtils';
 
 export default function ItemsModal({ show, onclose, selectedOrderItems, userRole , orderStatus }) {
   const { t, locale } = useLanguage();
+  console.log('from prof' , orderStatus);
+  
 
   const count = selectedOrderItems?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0;
   const formatted = count.toLocaleString();
@@ -69,46 +71,54 @@ export default function ItemsModal({ show, onclose, selectedOrderItems, userRole
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {/* Quantity */}
-                     
-                 {
-                  orderStatus == 'collected' ?       <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
-                          <div className="flex items-center gap-2 mb-2">
-                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2h4a1 1 0 010 2h-1v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6H3a1 1 0 110-2h4z" />
-                            </svg>
-                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('itemsModal.OriginalQuantity')}</p>
+                      <div className={`grid grid-cols-1 gap-4 ${
+                        orderStatus === 'collected' ? 'md:grid-cols-4' : 'md:grid-cols-3'
+                      }`}>
+                        {/* Quantity sections - separate containers for collected orders */}
+                        {orderStatus === 'collected' ? (
+                          <>
+                            {/* Original Quantity */}
+                            <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
+                              <div className="flex items-center gap-2 mb-2">
+                                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2h4a1 1 0 010 2h-1v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6H3a1 1 0 110-2h4z" />
+                                </svg>
+                                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('itemsModal.OriginalQuantity')}</p>
+                              </div>
+                              <p className="text-gray-800 font-semibold text-lg">{item.originalQuantity || 0}</p>
+                            </div>
+                            
+                            {/* Delivered Quantity */}
+                            <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
+                              <div className="flex items-center gap-2 mb-2">
+                                <svg className={`w-4 h-4 ${isOutOfStock ? 'text-red-500' : 'text-green-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                </svg>
+                                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('itemsModal.quantityByDelivery')}</p>
+                              </div>
+                              <p className={`font-semibold text-lg ${
+                                isOutOfStock 
+                                  ? 'text-red-600' 
+                                  : hasQuantityChange 
+                                    ? 'text-orange-600' 
+                                    : 'text-gray-800'
+                              }`}>
+                                {item.quantity || 0}
+                              </p>
+                            </div>
+                          </>
+                        ) : (
+                          /* Regular quantity for non-collected orders */
+                          <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
+                            <div className="flex items-center gap-2 mb-2">
+                              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2h4a1 1 0 010 2h-1v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6H3a1 1 0 110-2h4z" />
+                              </svg>
+                              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('itemsModal.quantity')}</p>
+                            </div>
+                            <p className="text-gray-800 font-semibold text-lg">{item.quantity || 0}</p>
                           </div>
-                          <p className="text-gray-800 font-semibold text-lg mb-3">{item.originalQuantity || 0}</p>
-                          
-                          <div className="flex items-center gap-2 mb-2">
-                            <svg className={`w-4 h-4 ${isOutOfStock ? 'text-red-500' : 'text-green-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                            </svg>
-                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('itemsModal.quantityByDelivery')}</p>
-                          </div>
-                          <p className={`font-semibold text-lg ${
-                            isOutOfStock 
-                              ? 'text-red-600' 
-                              : hasQuantityChange 
-                                ? 'text-orange-600' 
-                                : 'text-gray-800'
-                          }`}>
-                            {item.quantity || 0}
-                          </p>
-                          
-                      
-                        </div> :      <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
-                          <div className="flex items-center gap-2 mb-2">
-                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2h4a1 1 0 010 2h-1v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6H3a1 1 0 110-2h4z" />
-                            </svg>
-                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('itemsModal.quantity')}</p>
-                          </div>
-                          <p className="text-gray-800 font-semibold text-lg">{item.quantity || 0}</p>
-                        </div>
-                 }
+                        )}
 
                         {/* Unit Price */}
                         <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">

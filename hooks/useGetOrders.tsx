@@ -26,13 +26,10 @@ export const useOrders = (params: Omit<GetOrdersParams, 'page'> = {}) => {
         ? lastPage.pagination.currentPage + 1 
         : undefined;
     },
-    staleTime: 2000
+    staleTime: 2000,
     gcTime: 10 * 60 * 1000,
-    refetchOnMount:true
-    ,
-    refetchOnWindowFocus:true
-    
-    
+    refetchOnMount: true,
+    refetchOnWindowFocus: true
   });
 
   // Flatten all orders from all pages
@@ -45,21 +42,10 @@ export const useOrders = (params: Omit<GetOrdersParams, 'page'> = {}) => {
   const cancelOrderMutation = useMutation({
     mutationFn: (orderId: string) => ordersApi.cancelOrder(orderId),
     onSuccess: (_, orderId) => {
-      // Update the cache optimistically
-      queryClient.setQueryData(['orders', params], (oldData: any) => {
-        if (!oldData) return oldData;
-        
-        return {
-          ...oldData,
-          pages: oldData.pages.map((page: OrdersResponse) => ({
-            ...page,
-            data: page.data.map((order: Order) =>
-              order._id === orderId 
-                ? { ...order, status: 'cancelled' as const }
-                : order
-            ),
-          })),
-        };
+      // Invalidate all orders queries to ensure fresh data
+      queryClient.invalidateQueries({ 
+        queryKey: ['orders'],
+        exact: false 
       });
       
       Swal.fire("Order cancelled", "", "success");
@@ -71,20 +57,20 @@ export const useOrders = (params: Omit<GetOrdersParams, 'page'> = {}) => {
   });
 
   // Helper function to handle cancel with confirmation
-  const handleCancelOrder = (orderId: string) => {
-    Swal.fire({
+  const handleCancelOrder = async (orderId: string) => {
+    const result = await Swal.fire({
       title: "Are you sure you want to cancel this order?",
       showCancelButton: true,
       confirmButtonText: "Yes",
       cancelButtonText: "No",
       icon: "warning",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        cancelOrderMutation.mutate(orderId);
-      } else {
-        Swal.fire("Your order is safe", "", "info");
-      }
     });
+
+    if (result.isConfirmed) {
+      await cancelOrderMutation.mutateAsync(orderId);
+    } else {
+      Swal.fire("Your order is safe", "", "info");
+    }
   };
 
   // Filter orders by status
