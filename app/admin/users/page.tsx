@@ -56,6 +56,10 @@ const AdminUsersPage = () => {
     },
   ]);
 
+  console.log("-------------USERS----------------");
+  console.log(users);
+  console.log("-----------------------------..");
+
   const filteredUsers = users?.filter((user) => {
     // === Role Filter ===
     const roleFilterActive =

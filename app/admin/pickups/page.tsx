@@ -15,7 +15,7 @@ import { TablePagination } from "../../../components/tablePagination/tablePagina
 import { useUserAuth } from "@/context/AuthFormContext";
 import Button from "@/components/common/Button";
 import ProofOfDeliveryModal from "../../../components/proofDeliveryDetails";
-import api from '../../../lib/axios'
+import api from "../../../lib/axios";
 import { Modal, ModalBody, ModalHeader } from "flowbite-react";
 type UserRole = "customer" | "buyer";
 const STATUS = {
@@ -90,43 +90,46 @@ export default function Page() {
 
   const [activeTab, setActiveTab] = useState<UserRole>("customer");
   const { currentPage, itemsPerPage, handlePageChange } = usePagination(1, 5);
-const [isProofModalOpen, setIsProofModalOpen] = useState(false);
-const [selectedCompletedOrder, setSelectedCompletedOrder] = useState<any>(null);
-const [orderStatus,setOrderStatus] = useState(null)
+  const [isProofModalOpen, setIsProofModalOpen] = useState(false);
+  const [selectedCompletedOrder, setSelectedCompletedOrder] =
+    useState<any>(null);
+  const [orderStatus, setOrderStatus] = useState(null);
 
   const getFilteredFilters = () => {
-    return filters.map(filter => {
+    return filters.map((filter) => {
       if (filter.name === "status" && activeTab === "buyer") {
         return {
           ...filter,
-          options: filter.options.filter(option => option.value !== "collected")
+          options: filter.options.filter(
+            (option) => option.value !== "collected"
+          ),
         };
       }
       return filter;
     });
   };
-const handleOpenCompletedDetails = (order: any) => {
-  setSelectedCompletedOrder({
-    orderId: order.orderId,
-    deliveryProof: order.deliveryProof,
-    collectedAt: order.collectedAt,
-    completedAt: order.completedAt,
-    courier: order.courier,
-    statusHistory: order.statusHistory,
-  });
-  setIsProofModalOpen(true);
-};
+  const handleOpenCompletedDetails = (order: any) => {
+    setSelectedCompletedOrder({
+      orderId: order.orderId,
+      deliveryProof: order.deliveryProof,
+      collectedAt: order.collectedAt,
+      completedAt: order.completedAt,
+      courier: order.courier,
+      statusHistory: order.statusHistory,
+    });
+    setIsProofModalOpen(true);
+  };
 
   const activeFilters = useMemo(() => {
     const status = filters.find((f) => f.name === "status")?.active || [];
     const date = filters.find((f) => f.name === "date")?.active || [];
-    
+
     // For buyers, automatically filter out 'collected' from active filters
     if (activeTab === "buyer") {
-      const filteredStatus = status.filter(s => s !== "collected");
+      const filteredStatus = status.filter((s) => s !== "collected");
       return { status: filteredStatus, date };
     }
-    
+
     return { status, date };
   }, [filters, activeTab]);
 
@@ -136,24 +139,26 @@ const handleOpenCompletedDetails = (order: any) => {
       fetchOrders(currentPage, itemsPerPage, activeTab, activeFilters),
     keepPreviousData: true,
     refetchOnMount: true,
-    refetchOnWindowFocus:true,
-    staleTime : 2000
+    refetchOnWindowFocus: true,
+    staleTime: 2000,
   });
 
   const { user } = useUserAuth();
 
   const rawOrders = data?.data || [];
-  
+
   // Filter orders based on user role - buyers shouldn't see collected orders, but should see completed ones
   const orders = useMemo(() => {
     if (activeTab === "buyer") {
       // For buyers: show all statuses EXCEPT collected (they should see completed orders)
-      return rawOrders.filter((order: any) => order.status.toLowerCase() !== "collected");
+      return rawOrders.filter(
+        (order: any) => order.status.toLowerCase() !== "collected"
+      );
     }
-    
+
     return rawOrders;
   }, [rawOrders, activeTab]);
-  
+
   const totalItems = orders.length; // Use filtered count
   const totalPages = data?.totalPages || 1;
 
@@ -168,12 +173,16 @@ const handleOpenCompletedDetails = (order: any) => {
   };
 
   const [isItemsModalOpen, setIsItemsModalOpen] = useState(false);
-  const [selectedOrderItems, setSelectedOrderItems] = useState<null | any[]>(null);
+  const [selectedOrderItems, setSelectedOrderItems] = useState<null | any[]>(
+    null
+  );
   const [isCourierModalOpen, setIsCourierModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState<string | null>(null);
-const [showCancelReasonModal, setShowCancelReasonModal] = useState(false);
+  const [showCancelReasonModal, setShowCancelReasonModal] = useState(false);
 
-  const [selectedOrderForCourier, setSelectedOrderForCourier] = useState<string | null>(null);
+  const [selectedOrderForCourier, setSelectedOrderForCourier] = useState<
+    string | null
+  >(null);
   const [selectedUser, setSelectedUser] = useState<null | {
     name: string;
     phone: string;
@@ -189,20 +198,20 @@ const [showCancelReasonModal, setShowCancelReasonModal] = useState(false);
     };
   }>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-const handleShowCancelReason = (statusHistory: any[]) => {
-  const cancelledEntry = statusHistory.find(
-    (entry: any) => entry.status === "cancelled"
-  );
-  setCancelReason(cancelledEntry?.reason || "Order cancelled by customer");
-  setShowCancelReasonModal(true);
-};
+  const handleShowCancelReason = (statusHistory: any[]) => {
+    const cancelledEntry = statusHistory.find(
+      (entry: any) => entry.status === "cancelled"
+    );
+    setCancelReason(cancelledEntry?.reason || "Order cancelled by customer");
+    setShowCancelReasonModal(true);
+  };
 
   const { data: couriers } = useUsers("delivery");
 
   const handleTabChange = (tab: UserRole) => {
     setActiveTab(tab);
     handlePageChange(1);
-    
+
     // Clear collected filter when switching to buyers tab
     if (tab === "buyer") {
       setFilters((prev) =>
@@ -210,7 +219,9 @@ const handleShowCancelReason = (statusHistory: any[]) => {
           if (f.name === "status") {
             return {
               ...f,
-              active: f.active.filter((status: string) => status !== "collected"),
+              active: f.active.filter(
+                (status: string) => status !== "collected"
+              ),
             };
           }
           return f;
@@ -325,7 +336,9 @@ const handleShowCancelReason = (statusHistory: any[]) => {
   };
 
   // Updated status transitions - buyers skip collected status
-  const getAllowedStatusTransitions = (userRole: string): Record<string, string[]> => {
+  const getAllowedStatusTransitions = (
+    userRole: string
+  ): Record<string, string[]> => {
     if (userRole === "buyer") {
       // Buyers skip collected status - go directly to completed
       return {
@@ -385,37 +398,37 @@ const handleShowCancelReason = (statusHistory: any[]) => {
     );
   }
 
-const transformedData = orders.map((order: any) => ({
-  orderId: order._id,
-  onClickItemsId: () => {
-    setOrderStatus (order.status)    
-    setSelectedOrderItems(order.items);
-    setIsItemsModalOpen(true);
-  },
-  status: order.status,
-  createdAt: new Date(order.createdAt).toLocaleString(),
-  orderDate: new Date(order.createdAt).toISOString().split("T")[0],
-  userName: order.user?.userName || "Unknown",
-  userRole: order.user?.role || "Unknown",
-  // Add these new fields for proof of delivery (matching your API structure)
-  deliveryProof: order.deliveryProof,
-  collectedAt: order.collectedAt,
-  completedAt: order.completedAt,
-  courier: order.courier,
-  statusHistory: order.statusHistory,
-  onClickUser: () => {
-    const user = order.user || {};
-    setSelectedUser({
-      name: user.userName || "Unknown",
-      email: user.email ?? "Not Provided",
-      phone: user.phoneNumber || "N/A",
-      imageUrl: user.imageUrl || null,
-      address: order.address || {},
-    });
-    setIsModalOpen(true);
-  },
-  onDelete: () => handleDeleteOrder(order._id),
-}));
+  const transformedData = orders.map((order: any) => ({
+    orderId: order._id,
+    onClickItemsId: () => {
+      setOrderStatus(order.status);
+      setSelectedOrderItems(order.items);
+      setIsItemsModalOpen(true);
+    },
+    status: order.status,
+    createdAt: new Date(order.createdAt).toLocaleString(),
+    orderDate: new Date(order.createdAt).toISOString().split("T")[0],
+    userName: order.user?.userName || "Unknown",
+    userRole: order.user?.role || "Unknown",
+    // Add these new fields for proof of delivery (matching your API structure)
+    deliveryProof: order.deliveryProof,
+    collectedAt: order.collectedAt,
+    completedAt: order.completedAt,
+    courier: order.courier,
+    statusHistory: order.statusHistory,
+    onClickUser: () => {
+      const user = order.user || {};
+      setSelectedUser({
+        name: user.userName || "Unknown",
+        email: user.email ?? "Not Provided",
+        phone: user.phoneNumber || "N/A",
+        imageUrl: user.imageUrl || null,
+        address: order.address || {},
+      });
+      setIsModalOpen(true);
+    },
+    onDelete: () => handleDeleteOrder(order._id),
+  }));
 
   const columns = [
     {
@@ -453,7 +466,9 @@ const transformedData = orders.map((order: any) => ({
       sortable: false,
       render: (order: any) => {
         const currentStatus = order.status.toLowerCase();
-        const allowedStatusTransitions = getAllowedStatusTransitions(order.userRole);
+        const allowedStatusTransitions = getAllowedStatusTransitions(
+          order.userRole
+        );
         let nextStatuses = allowedStatusTransitions[currentStatus] || [];
 
         // Filter out cancel option for buyers
@@ -464,50 +479,49 @@ const transformedData = orders.map((order: any) => ({
         }
 
         // Handle completed status
-if (currentStatus === "completed") {
-  return (
-    <Button 
-      onClick={() => handleOpenCompletedDetails(order)} 
-      className="px-5 py-2 text-xs font-semibold rounded-md bg-green-100 text-green-800 hover:bg-green-200 transition-colors"
-    >
-      Completed
-    </Button>
-  );
-}
+        if (currentStatus === "completed") {
+          return (
+            <Button
+              onClick={() => handleOpenCompletedDetails(order)}
+              className="px-5 py-2 text-xs font-semibold rounded-md bg-green-100 text-green-800 hover:bg-green-200 transition-colors"
+            >
+              Completed
+            </Button>
+          );
+        }
 
         // Handle cancelled status
-   if (currentStatus === "cancelled") {
-  return (
-    <button
-      onClick={() => handleShowCancelReason(order.statusHistory)}
-      className="px-5 py-2 text-xs font-semibold rounded-md bg-red-100 text-red-800 hover:bg-red-200 transition-colors"
-    >
-      Cancelled
-    </button>
-  );
-}
-
+        if (currentStatus === "cancelled") {
+          return (
+            <button
+              onClick={() => handleShowCancelReason(order.statusHistory)}
+              className="px-5 py-2 text-xs font-semibold rounded-md bg-red-100 text-red-800 hover:bg-red-200 transition-colors"
+            >
+              Cancelled
+            </button>
+          );
+        }
 
         // Handle collected status - show button for admin to complete (only for customers)
-   if (currentStatus === "collected") {
-  return (
-    <div className="flex items-center gap-2">
-      <Button
-        onClick={() => handleOpenCompletedDetails(order)}
-        className="px-3 py-1 text-xs font-semibold rounded-md bg-purple-500 text-purple-800 hover:bg-purple-200 transition-colors"
-      >
-        Collected
-      </Button>
-      <button
-        onClick={() => handleMarkAsCompleted(order.orderId)}
-        className="px-3 py-1 text-xs font-semibold rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors"
-        title="Mark as completed"
-      >
-        Complete
-      </button>
-    </div>
-  );
-}
+        if (currentStatus === "collected") {
+          return (
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => handleOpenCompletedDetails(order)}
+                className="px-3 py-1 text-xs font-semibold rounded-md bg-purple-500 text-purple-800 hover:bg-purple-200 transition-colors"
+              >
+                Collected
+              </Button>
+              <button
+                onClick={() => handleMarkAsCompleted(order.orderId)}
+                className="px-3 py-1 text-xs font-semibold rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors"
+                title="Mark as completed"
+              >
+                Complete
+              </button>
+            </div>
+          );
+        }
 
         // For buyers on assigntocourier status, show status without complete button
         // Complete button will only appear in dropdown or when admin manually completes
@@ -519,7 +533,9 @@ if (currentStatus === "completed") {
           );
         }
 
-        const handleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const handleChange = async (
+          e: React.ChangeEvent<HTMLSelectElement>
+        ) => {
           const newStatus = e.target.value;
           if (newStatus === currentStatus) return;
 
@@ -573,21 +589,22 @@ if (currentStatus === "completed") {
             value={currentStatus}
             onChange={handleChange}
             disabled={nextStatuses.length === 0}
-            className={`px-2 py-1 rounded border ${getStatusColor(currentStatus)}`}
+            className={`px-2 py-1 rounded border ${getStatusColor(
+              currentStatus
+            )}`}
             onClick={(e) => e.stopPropagation()}
           >
             <option value={currentStatus}>
-              {currentStatus === "assigntocourier" 
+              {currentStatus === "assigntocourier"
                 ? "Assigned to Courier"
-                : currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1)
-              }
+                : currentStatus.charAt(0).toUpperCase() +
+                  currentStatus.slice(1)}
             </option>
             {nextStatuses.map((status) => (
               <option key={status} value={status}>
-                {status === "assignToCourier" 
+                {status === "assignToCourier"
                   ? "Assign to Courier"
-                  : status.charAt(0).toUpperCase() + status.slice(1)
-                }
+                  : status.charAt(0).toUpperCase() + status.slice(1)}
               </option>
             ))}
           </select>
@@ -638,7 +655,7 @@ if (currentStatus === "completed") {
       </div>
 
       {/* Orders Content */}
-      {!orders || orders.length === 0 ? (
+      {!orders || (!filters.length && orders.length === 0) ? (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
           <h3 className="text-2xl font-semibold text-gray-800 mb-2">
             No {activeTab} Orders Found
@@ -672,7 +689,9 @@ if (currentStatus === "completed") {
                 prev.map((f) => {
                   if (f.name === "status" && activeTab === "buyer") {
                     // For buyers, filter out 'collected' from any filter updates
-                    const filteredActive = (updated[f.name] || []).filter((status: string) => status !== "collected");
+                    const filteredActive = (updated[f.name] || []).filter(
+                      (status: string) => status !== "collected"
+                    );
                     return {
                       ...f,
                       active: filteredActive,
@@ -722,39 +741,38 @@ if (currentStatus === "completed") {
         }}
       />
       <ProofOfDeliveryModal
-  show={isProofModalOpen}
-  onClose={() => {
-    setIsProofModalOpen(false);
-    setSelectedCompletedOrder(null);
-  }}
-  orderDetails={selectedCompletedOrder}
-/>
-<Modal
-dismissible
-  show={showCancelReasonModal}
-  size="md"
-  popup={true}
-  onClose={() => setShowCancelReasonModal(false)}
->
-  <ModalHeader />
-  <ModalBody>
-    <div className="text-center">
-      <h3 className="mb-4 text-lg font-medium text-gray-900 dark:text-white">
-        Cancellation Reason
-      </h3>
-      <p className="text-gray-700 dark:text-gray-300">{cancelReason}</p>
-      <div className="mt-6">
-        <button
-          onClick={() => setShowCancelReasonModal(false)}
-          className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
-        >
-          Close
-        </button>
-      </div>
-    </div>
-  </ModalBody>
-</Modal>
-
+        show={isProofModalOpen}
+        onClose={() => {
+          setIsProofModalOpen(false);
+          setSelectedCompletedOrder(null);
+        }}
+        orderDetails={selectedCompletedOrder}
+      />
+      <Modal
+        dismissible
+        show={showCancelReasonModal}
+        size="md"
+        popup={true}
+        onClose={() => setShowCancelReasonModal(false)}
+      >
+        <ModalHeader />
+        <ModalBody>
+          <div className="text-center">
+            <h3 className="mb-4 text-lg font-medium text-gray-900 dark:text-white">
+              Cancellation Reason
+            </h3>
+            <p className="text-gray-700 dark:text-gray-300">{cancelReason}</p>
+            <div className="mt-6">
+              <button
+                onClick={() => setShowCancelReasonModal(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </ModalBody>
+      </Modal>
     </div>
   );
 }

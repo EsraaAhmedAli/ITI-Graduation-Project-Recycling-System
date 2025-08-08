@@ -10,7 +10,7 @@ export interface ICartItem {
   measurement_unit: number;
   quantity: number;
   availableQty?: number;
-} 
+}
 
 export interface CartItem {
   _id: string;
@@ -22,5 +22,5 @@ export interface CartItem {
   price: number;
   measurement_unit: number;
   quantity: number;
-  co2_saved:number
+  co2_saved?: number;
 }

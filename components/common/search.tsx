@@ -128,27 +128,73 @@ export default function NavbarSearch() {
             </div>
           </div>
 
-          {/* A-Z Index */}
+          {/* Enhanced A-Z Index with Better Visibility */}
           <div className="mb-8">
-            <div className="flex flex-wrap gap-3 justify-center mb-3">
-              {alphabet.map((letter) => (
-                <span
-                  key={letter}
-                  className={`text-xl ${
-                    availableLetters.has(letter)
-                      ? "text-green-600 font-bold hover:text-green-800 cursor-pointer"
-                      : "text-red-400"
-                  }`}
-                  onClick={() =>
-                    availableLetters.has(letter) && setSearchQuery(letter)
-                  }
-                >
-                  {letter}
-                </span>
-              ))}
+            {/* Main instruction with better styling */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <div className="flex items-center mb-2">
+                <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center mr-2">
+                  <span className="text-white text-xs font-bold">i</span>
+                </div>
+                <h3 className="text-blue-800 font-semibold text-lg">
+                  Quick Search Tips
+                </h3>
+              </div>
+              <p className="text-blue-700 text-base leading-relaxed">
+                💡 <strong>Click on any GREEN letter</strong> below to instantly
+                find all items starting with that letter!
+              </p>
+              <p className="text-blue-600 text-sm mt-1">
+                Red letters indicate no items available starting with those
+                letters.
+              </p>
             </div>
-            <div className="text-center text-sm text-gray-500">
-              Click on green letters to search - Starting With that Cahracter
+
+            {/* Alphabet grid with enhanced styling */}
+            <div className="bg-gray-50 rounded-lg p-6">
+              <h4 className="text-center text-gray-700 font-medium mb-4 text-lg">
+                Browse by First Letter
+              </h4>
+              <div className="flex flex-wrap gap-2 justify-center mb-4">
+                {alphabet.map((letter) => (
+                  <button
+                    key={letter}
+                    className={`
+                      w-12 h-12 rounded-lg text-xl font-bold transition-all duration-200 transform
+                      ${
+                        availableLetters.has(letter)
+                          ? "bg-green-500 text-white hover:bg-green-600 hover:scale-110 shadow-md hover:shadow-lg cursor-pointer border-2 border-green-500 hover:border-green-600"
+                          : "bg-red-100 text-red-400 cursor-not-allowed border-2 border-red-200"
+                      }
+                    `}
+                    onClick={() =>
+                      availableLetters.has(letter) && setSearchQuery(letter)
+                    }
+                    disabled={!availableLetters.has(letter)}
+                    title={
+                      availableLetters.has(letter)
+                        ? `Click to see items starting with "${letter}"`
+                        : `No items start with "${letter}"`
+                    }
+                  >
+                    {letter}
+                  </button>
+                ))}
+              </div>
+
+              {/* Legend with icons */}
+              <div className="flex justify-center items-center gap-6 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-green-500 rounded"></div>
+                  <span className="text-gray-700 font-medium">
+                    Available (Click to search)
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-red-200 rounded"></div>
+                  <span className="text-gray-700">Not available</span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -194,16 +240,32 @@ export default function NavbarSearch() {
                   </div>
                 ) : (
                   <div className="text-center py-12">
+                    <div className="text-6xl mb-4">🔍</div>
                     <p className="text-lg text-gray-500 mb-2">No items found</p>
-                    <p className="text-gray-400">Try a different search term</p>
+                    <p className="text-gray-400 mb-4">
+                      Try a different search term
+                    </p>
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                    >
+                      Clear search and browse letters
+                    </button>
                   </div>
                 )}
               </>
             ) : (
               <div className="text-center py-12">
-                <p className="text-lg text-gray-500 mb-2">Start your search</p>
-                <p className="text-gray-400">
-                  Type above or click on available letters
+                <div className="text-6xl mb-4">🔤</div>
+                <p className="text-lg text-gray-500 mb-2 font-medium">
+                  Ready to search!
+                </p>
+                <p className="text-gray-600 text-base leading-relaxed max-w-md mx-auto">
+                  Type in the search box above, or click on any{" "}
+                  <span className="bg-green-100 text-green-700 px-2 py-1 rounded font-semibold">
+                    GREEN letter
+                  </span>{" "}
+                  to browse items alphabetically
                 </p>
               </div>
             )}

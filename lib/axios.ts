@@ -49,11 +49,6 @@ api.interceptors.request.use((config) => {
     config.headers["x-session-id"] = sessionId;
   }
 
-  // Track user activity
-  if (typeof window !== "undefined") {
-    localStorage.setItem("lastActive", new Date().toISOString());
-  }
-
   return config;
 });
 
