@@ -1,16 +1,19 @@
-import { useQuery } from '@tanstack/react-query';
-import api from '@/lib/axios';
-import { Category } from '@/components/Types/categories.type';
+import { useQuery } from "@tanstack/react-query";
+import api from "@/lib/axios";
+import { Category } from "@/components/Types/categories.type";
+import { CartItem } from "@/models/cart";
 
 interface Pagination {
-  total: number;
-  limit: number;
-  page: number;
-  pages: number;
+  currentPage: number;
+  itemsPerPage: number;
+  totalItems: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
 }
 
-interface GetItemsResponse {
-  data: Category[];
+export interface GetItemsResponse {
+  data: CartItem[];
   pagination: Pagination;
 }
 
@@ -28,7 +31,14 @@ export function useGetItems({
   search?: string;
 }) {
   return useQuery<GetItemsResponse>({
-    queryKey: ['categories items', currentPage, itemsPerPage, userRole, category, search],
+    queryKey: [
+      "categories items",
+      currentPage,
+      itemsPerPage,
+      userRole,
+      category,
+      search,
+    ],
     queryFn: async () => {
       const res = await api.get(`/categories/get-items`, {
         params: {
@@ -40,14 +50,17 @@ export function useGetItems({
         },
       });
 
+      console.log("📦 Fetched items:", res.data.data);
+      console.log("📦 Pagination info:", res.data.pagination);
       return {
         data: res.data.data || [],
         pagination: res.data.pagination,
       };
     },
-    staleTime: 2000,
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
-    keepPreviousData: true,
+    staleTime: Infinity, // Never consider data stale
+    gcTime: Infinity, // Keep in cache forever (previously cacheTime)
+    refetchOnMount: true, // Don't refetch when component mounts
+    refetchOnWindowFocus: false, // Don't refetch when window gains focus
+    refetchOnReconnect: true, // Don't refetch when network reconnects
   });
 }

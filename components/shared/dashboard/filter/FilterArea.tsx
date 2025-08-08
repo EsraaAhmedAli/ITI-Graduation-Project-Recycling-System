@@ -259,7 +259,7 @@ export default function FilterDrawer({
   };
 
   return (
-    <div className=" inline-block text-left">
+    <div className="inline-block text-left">
       <button
         onClick={() => setIsOpen((prev) => !prev)}
         className={`flex items-center justify-between gap-2 px-4 py-2 rounded-md shadow-sm text-sm min-w-[140px] border transition-colors
@@ -285,10 +285,7 @@ export default function FilterDrawer({
 
       {isOpen && (
         <div
-          className="absolute right-0 mt-2 z-50 
-                 w-[90vw] sm:w-[320px] md:w-[400px] 
-                 max-h-[75vh] overflow-y-auto 
-                 bg-white border border-green-200 rounded-xl shadow-xl 
+          className="fixed mt-2 right-5 z-50 min-w-[180px]   bg-white border border-green-200 rounded-xl shadow-xl 
                  p-4 animate-slide-down"
         >
           {/* Header */}

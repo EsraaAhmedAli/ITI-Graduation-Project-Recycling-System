@@ -10,16 +10,17 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { Badge } from "flowbite-react";
 import { useGetItems } from "@/hooks/useGetItems";
+import { useItemSocket } from "@/hooks/useItemSocket";
 
 interface Item {
   _id: string;
   name: string;
   points: number;
   price: number;
-  measurement_unit: 1|2;
+  measurement_unit: 1 | 2;
   image: string;
   categoryName: string;
-  quantity:number
+  quantity: number;
 }
 
 interface ServerData {
@@ -96,7 +97,6 @@ const OptimizedItemImage = ({
         blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
         onLoad={() => setImageLoaded(true)}
         onError={() => setImageError(true)}
-     
       />
     </div>
   );
@@ -114,7 +114,7 @@ export default function MarketplaceClient({
   const [currentPage, setCurrentPage] = useState(1);
   const [isClient, setIsClient] = useState(false);
   const [items, setItems] = useState(initialData.items);
-const [pagination, setPagination] = useState(initialData.pagination);
+  const [pagination, setPagination] = useState(initialData.pagination);
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -143,39 +143,45 @@ const [pagination, setPagination] = useState(initialData.pagination);
   }, [initialData, queryClient]);
 
   // Client-side fetch functions
-// const fetchItems = useCallback(async () => {
-//   setLoading(true);
-//   try {
-//     const res = await api.get(
-//       `/categories/get-items?page=${currentPage}&limit=${itemsPerPage}&role=${user?.role || ""}`
-//     );
-//     setItems(res?.data.data || []);
-//     setPagination(res?.data.pagination || initialData.pagination);
-//   } catch (error) {
-//     console.error('Error fetching items:', error);
-//   } finally {
-//     setLoading(false);
-//   }
-// }, [currentPage, itemsPerPage, user?.role]);
+  // const fetchItems = useCallback(async () => {
+  //   setLoading(true);
+  //   try {
+  //     const res = await api.get(
+  //       `/categories/get-items?page=${currentPage}&limit=${itemsPerPage}&role=${user?.role || ""}`
+  //     );
+  //     setItems(res?.data.data || []);
+  //     setPagination(res?.data.pagination || initialData.pagination);
+  //   } catch (error) {
+  //     console.error('Error fetching items:', error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }, [currentPage, itemsPerPage, user?.role]);
 
+  const { data, isLoading } = useGetItems({
+    currentPage,
+    itemsPerPage,
+    userRole: user?.role,
+    category: selectedCategory,
+    search: searchTerm,
+  });
+  useItemSocket({
+    currentPage,
+    itemsPerPage,
+    userRole: user?.role,
+    selectedCategory,
+    searchTerm,
+  });
 
-const { data, isLoading } = useGetItems({
-  currentPage,
-  itemsPerPage,
-  userRole: user?.role,
-  category: selectedCategory,
-  search: searchTerm,
-});
-
-useEffect(() => {
-  if (data) {
-    setItems(data?.data);
-    setPagination(data?.pagination);
-  }
-}, [data]);
-useEffect(() => {
-  setCurrentPage(1);
-}, [selectedCategory, searchTerm]);
+  useEffect(() => {
+    if (data) {
+      setItems(data?.data);
+      setPagination(data?.pagination);
+    }
+  }, [data]);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory, searchTerm]);
 
   const fetchAllCategories = useCallback(async () => {
     if (!isClient) return initialData.categories;
@@ -194,7 +200,6 @@ useEffect(() => {
     }
   }, [user?.role, isClient, initialData.categories]);
 
-
   // React Query for categories
   const {
     data: categoriesData,
@@ -208,7 +213,6 @@ useEffect(() => {
     refetchOnWindowFocus: true,
     enabled: isClient,
   });
-
 
   const uniqueCategories = categoriesData || initialData.categories;
 
@@ -255,18 +259,19 @@ useEffect(() => {
     }, 300);
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
-//   useEffect(() => {
-//   if (isClient) {
-//     fetchItems();
-//   }
-// }, [fetchItems, isClient]);
+  //   useEffect(() => {
+  //   if (isClient) {
+  //     fetchItems();
+  //   }
+  // }, [fetchItems, isClient]);
 
   return (
     <>
       {/* Search and Filter Controls */}
       <section
         className="mb-4 bg-white rounded-lg shadow-sm p-3 sticky top-0 z-10"
-        aria-label="Search and filter controls">
+        aria-label="Search and filter controls"
+      >
         <div className="flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
             <label htmlFor="search-input" className="sr-only">
@@ -302,7 +307,8 @@ useEffect(() => {
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg w-full appearance-none bg-white focus:ring-1 focus:ring-green-500 focus:outline-none"
               disabled={categoriesLoading}
-              aria-describedby="category-help">
+              aria-describedby="category-help"
+            >
               <option value="all">{t("common.allCategories")}</option>
               {uniqueCategories.map((category: string) => (
                 <option key={category} value={category}>
@@ -323,7 +329,8 @@ useEffect(() => {
       <div
         className="flex justify-between items-center mb-3 px-1"
         role="status"
-        aria-live="polite">
+        aria-live="polite"
+      >
         <span className="text-xs text-gray-500">
           {t("common.showing")} {filteredItems.length} {t("common.of")}{" "}
           {pagination.totalItems} {t("common.items")}
@@ -336,11 +343,12 @@ useEffect(() => {
 
       {/* Main Content */}
       <main>
-        {(isLoading && !items.length) ? (
+        {isLoading && !items.length ? (
           <div
             className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"
             role="status"
-            aria-label="Loading items">
+            aria-label="Loading items"
+          >
             {[...Array(8)].map((_, i) => (
               <div
                 key={i}
@@ -373,18 +381,21 @@ useEffect(() => {
             <div
               className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"
               role="grid"
-              aria-label="Available items">
+              aria-label="Available items"
+            >
               {filteredItems.map((item, index) => (
                 <article
                   key={item._id}
                   className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-sm transition-all duration-150 h-full flex flex-col"
-                  role="gridcell">
+                  role="gridcell"
+                >
                   <Link
                     href={`/marketplace/${encodeURIComponent(item.name)}`}
                     className="h-full flex flex-col focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 rounded-lg"
                     aria-label={`View details for ${item.name}, priced at ${
                       item.price
-                    } ${t("itemsModal.currency")}`}>
+                    } ${t("itemsModal.currency")}`}
+                  >
                     {/* Optimized Image Component */}
                     <OptimizedItemImage
                       item={item}
@@ -401,18 +412,20 @@ useEffect(() => {
                         )}
                       </h3>
                       <div className="flex justify-between items-center mt-auto">
-                      
                         <span className="text-xs font-bold text-green-600">
                           {item.price}
 
                           <span className="text-sm mx-2 ml-1">
                             {t("itemsModal.currency")}
                           </span>
-                      
                         </span>
-                            <span className="text-xs font-bold">
-                                {item?.quantity == 0 ?   <Badge color="failure">Out of stock</Badge> : item.quantity+ ' in stock'}
-                          </span>
+                        <span className="text-xs font-bold">
+                          {item?.quantity == 0 ? (
+                            <Badge color="failure">Out of stock</Badge>
+                          ) : (
+                            item.quantity + " in stock"
+                          )}
+                        </span>
                       </div>
                       <div className="text-[0.6rem] text-gray-500 mt-0.5 text-right">
                         {getMeasurementText(item.measurement_unit)}
@@ -428,7 +441,8 @@ useEffect(() => {
               <nav
                 className="flex justify-center mt-6"
                 role="navigation"
-                aria-label="Pagination">
+                aria-label="Pagination"
+              >
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => handlePageChange(pagination.currentPage - 1)}
@@ -438,7 +452,8 @@ useEffect(() => {
                         ? "text-green-600 hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500"
                         : "text-gray-300 cursor-not-allowed"
                     }`}
-                    aria-label="Go to previous page">
+                    aria-label="Go to previous page"
+                  >
                     <ChevronLeft className="w-4 h-4" aria-hidden="true" />
                   </button>
 
@@ -457,7 +472,8 @@ useEffect(() => {
                       aria-label={`Go to page ${page}`}
                       aria-current={
                         pagination.currentPage === page ? "page" : undefined
-                      }>
+                      }
+                    >
                       {page}
                     </button>
                   ))}
@@ -470,7 +486,8 @@ useEffect(() => {
                         ? "text-green-600 hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500"
                         : "text-gray-300 cursor-not-allowed"
                     }`}
-                    aria-label="Go to next page">
+                    aria-label="Go to next page"
+                  >
                     <ChevronRight className="w-4 h-4" aria-hidden="true" />
                   </button>
                 </div>

@@ -6,7 +6,6 @@ import { UserAuthProvider } from "@/context/AuthFormContext";
 import { CartProvider } from "@/context/CartContext";
 import { ToastContainer } from "react-toastify";
 import LayoutWrapper from "@/components/shared/layoutwrapper";
-import React from "react";
 import ReactQueryProvider from "@/components/providers/reactQueryProvider";
 import { Toaster } from "react-hot-toast";
 import { NotificationProvider } from "@/context/notificationContext";
@@ -44,7 +43,9 @@ export default function RootLayout({
           <UserAuthProvider>
             <ReactQueryProvider>
               <CartProvider>
-                <OfflineProvider> {/* Add OfflineProvider here */}
+                <OfflineProvider>
+                  {" "}
+                  {/* Add OfflineProvider here */}
                   <Toaster />
                   <NotificationProvider>
                     <ToastContainer />
