@@ -44,8 +44,38 @@ export const UserAuthProvider = ({
   const [isLoading, setIsLoading] = useState(true);
   const [deliveryStatus, setDeliveryStatusState] = useState<string | null>(null);
   const router = useRouter();
+    const [lastRefreshTime, setLastRefreshTime] = useState(0); // ✅ ADD: Prevent rapid refreshes
+ const determineDeliveryStatus = useCallback((userData: User) => {
+    if (userData.role !== "delivery") return null;
 
-  const setUser = useCallback((user: User | null) => {
+    // Check attachments for status information
+    const attachments = userData.attachments;
+    const declineReason = userData.declineReason || attachments?.declineReason;
+    const revokeReason = attachments?.revokeReason;
+    const declinedAt = userData.declinedAt || attachments?.declinedAt;
+    const revokedAt = attachments?.revokedAt;
+    const approvedAt = attachments?.approvedAt;
+
+    // Get timestamps for comparison
+    const declineTimestamp = declinedAt ? new Date(declinedAt).getTime() : 0;
+    const revokeTimestamp = revokedAt ? new Date(revokedAt).getTime() : 0;
+    const approveTimestamp = approvedAt ? new Date(approvedAt).getTime() : 0;
+
+    // Find most recent action
+    const mostRecentTimestamp = Math.max(declineTimestamp, revokeTimestamp, approveTimestamp);
+
+    if (mostRecentTimestamp === revokeTimestamp && revokeReason) {
+      return "revoked";
+    } else if (mostRecentTimestamp === declineTimestamp && declineReason) {
+      return "declined";
+    } else if (userData.isApproved === true && (mostRecentTimestamp === approveTimestamp || approveTimestamp > 0)) {
+      return "approved";
+    } else {
+      return "pending";
+    }
+  }, []);
+
+ const setUser = useCallback((user: User | null) => {
     if (user) localStorage.setItem("user", JSON.stringify(user));
     else localStorage.removeItem("user");
     setUserState(user);
@@ -53,16 +83,11 @@ export const UserAuthProvider = ({
     if (!user || user.role !== "delivery") {
       setDeliveryStatusState(null);
     } else {
-      // Set initial status based on user data
-      let status = "pending";
-      if (user.isApproved === true) {
-        status = "approved";
-      } else if (user.declineReason || user.attachments?.declineReason) {
-        status = "declined";
-      }
+      // ✅ ENHANCED: Use better status determination
+      const status = determineDeliveryStatus(user);
       setDeliveryStatusState(status);
     }
-  }, []);
+  }, [determineDeliveryStatus]);
 
   const setToken = useCallback((token: string | null) => {
     if (token) localStorage.setItem("token", token);
@@ -82,6 +107,8 @@ export const UserAuthProvider = ({
     sessionStorage.removeItem("deliveryUserData");
     setUserState(null);
     setTokenState(null);
+        setLastRefreshTime(0); // ✅ ADD: Reset refresh time
+
     setDeliveryStatusState(null);
     setAccessToken(null);
     delete api.defaults.headers.common["Authorization"];
@@ -93,7 +120,6 @@ export const UserAuthProvider = ({
     try {
       console.log("📡 Checking public delivery status for:", email);
       
-      // Use axios for consistency with the rest of the app
       const response = await api.post('/auth/check-delivery-status', { email });
       console.log("📡 Public API returned:", response.data);
       
@@ -101,9 +127,10 @@ export const UserAuthProvider = ({
     } catch (error) {
       console.error("❌ Public API error:", error);
       
-      // Handle axios error format
       if (error.response) {
-        throw new Error(`HTTP ${error.response.status}: ${error.response.data?.message || error.response.statusText}`);
+        console.log(error.response.statusText);
+        
+        // throw new Error(`HTTP ${error.response.status}: ${error.response.data?.message || error.response.statusText}`);
       } else if (error.request) {
         throw new Error('Network error: No response received');
       } else {
@@ -130,7 +157,18 @@ export const UserAuthProvider = ({
 
   // ✅ IMPROVED: Better delivery status refresh with public API fallback
  const refreshDeliveryStatus = useCallback(async () => {
-    if (!user || user.role !== "delivery") return;
+    if (!user || user.role !== "delivery") {
+      return Promise.resolve(null);
+    }
+
+    // ✅ ADD: Rate limiting to prevent rapid refreshes
+    const now = Date.now();
+    if (now - lastRefreshTime < 3000) { // Minimum 3 seconds between refreshes
+      console.log("⏰ Skipping refresh - too soon since last refresh");
+      return Promise.resolve(null);
+    }
+
+    setLastRefreshTime(now);
 
     try {
       console.log("🚚 Refreshing delivery status for user:", user.email);
@@ -166,43 +204,72 @@ export const UserAuthProvider = ({
       
       console.log("🔄 Status comparison:", { newStatus, currentStatus, userApproved: user.isApproved });
 
-      // Update delivery status
-      setDeliveryStatus(newStatus);
-
-      // Handle approval - REMOVED ALERT AND LOGOUT
- // Handle approval - UPDATE STATUS BUT DON'T UPDATE USER CONTEXT YET
-if (newStatus === "approved" && (currentStatus !== "approved" || !user.isApproved)) {
-  console.log("🎉 User was approved! Updating session data only (not user context to prevent redirects)...");
-  
-  // Update session storage to show approval, but DON'T update user context
-  // This prevents any other components from detecting the approval and redirecting
-  const approvedData = {
-    user: { 
-      ...user, 
-      isApproved: true,
-      declineReason: undefined,
-      declinedAt: undefined,
-      attachments: {
-        ...user.attachments,
-        declineReason: undefined,
-        declinedAt: undefined,
-        approvedAt: statusData.approvedAt
+      // ✅ FIXED: Only update if status actually changed
+      if (newStatus !== currentStatus) {
+        setDeliveryStatus(newStatus);
+        console.log(`📝 Status updated: ${currentStatus} → ${newStatus}`);
       }
-    },
-    deliveryStatus: "approved",
-    declineReason: "",
-    declinedAt: "",
-    canReapply: false,
-    message: "Application approved"
-  };
-  
-  sessionStorage.setItem("deliveryUserData", JSON.stringify(approvedData));
-  
-  // DON'T call setUser() here to prevent other components from detecting approval
-  // The waiting page component will handle showing the approval UI
-  
-  return statusData;
-}
+
+      // ✅ ENHANCED: Handle all status changes without triggering more refreshes
+      if (newStatus === "approved" && (currentStatus !== "approved" || !user.isApproved)) {
+        console.log("🎉 User was approved! Updating session data only...");
+        
+        const approvedData = {
+          user: { 
+            ...user, 
+            isApproved: true,
+            declineReason: undefined,
+            declinedAt: undefined,
+            attachments: {
+              ...user.attachments,
+              declineReason: undefined,
+              declinedAt: undefined,
+              revokeReason: undefined,
+              revokedAt: undefined,
+              approvedAt: statusData.approvedAt,
+              status: "approved"
+            }
+          },
+          deliveryStatus: "approved",
+          declineReason: "",
+          declinedAt: "",
+          revokeReason: "",
+          revokedAt: "",
+          canReapply: false,
+          message: "Application approved"
+        };
+        
+        sessionStorage.setItem("deliveryUserData", JSON.stringify(approvedData));
+      }
+      // ✅ ADD: Handle revoked status
+      else if (newStatus === "revoked" && currentStatus !== "revoked") {
+        console.log("🚫 User was revoked! Updating session data...");
+        
+        const updatedUser = { 
+          ...user, 
+          isApproved: false,
+          attachments: {
+            ...user.attachments,
+            revokeReason: statusData.revokeReason,
+            revokedAt: statusData.revokedAt,
+            status: "revoked"
+          }
+        };
+        
+        setUser(updatedUser);
+        
+        const revokeData = {
+          user: updatedUser,
+          deliveryStatus: "revoked",
+          revokeReason: statusData.revokeReason,
+          revokedAt: statusData.revokedAt,
+          activeOrdersCount: statusData.activeOrdersCount || 0,
+          canReapply: statusData.canReapply || true,
+          message: "Access revoked"
+        };
+        
+        sessionStorage.setItem("deliveryUserData", JSON.stringify(revokeData));
+      }
       else if (newStatus === "declined" && currentStatus !== "declined") {
         console.log("❌ User was declined! Updating session data...");
         
@@ -226,7 +293,6 @@ if (newStatus === "approved" && (currentStatus !== "approved" || !user.isApprove
           setToken(null);
         }
         
-        // Update session storage
         const declineData = {
           user: updatedUser,
           deliveryStatus: "declined",
@@ -237,8 +303,6 @@ if (newStatus === "approved" && (currentStatus !== "approved" || !user.isApprove
         };
         
         sessionStorage.setItem("deliveryUserData", JSON.stringify(declineData));
-        
-    
       }
       else if (newStatus === "pending" && currentStatus !== "pending") {
         console.log("⏳ Status changed to pending");
@@ -246,26 +310,33 @@ if (newStatus === "approved" && (currentStatus !== "approved" || !user.isApprove
         const updatedUser = { 
           ...user, 
           isApproved: false,
-          // Clear decline data if it was declined before
+          // Clear previous decline/revoke data
           declineReason: undefined,
-          declinedAt: undefined
+          declinedAt: undefined,
+          attachments: {
+            ...user.attachments,
+            declineReason: undefined,
+            declinedAt: undefined,
+            revokeReason: undefined,
+            revokedAt: undefined,
+            status: "pending"
+          }
         };
         
         setUser(updatedUser);
         
-        // Clear any decline session data
-        const storedData = sessionStorage.getItem("deliveryUserData");
-        if (storedData) {
-          const parsedData = JSON.parse(storedData);
-          const updatedData = {
-            ...parsedData,
-            deliveryStatus: "pending",
-            declineReason: "",
-            declinedAt: "",
-            user: updatedUser
-          };
-          sessionStorage.setItem("deliveryUserData", JSON.stringify(updatedData));
-        }
+        const pendingData = {
+          user: updatedUser,
+          deliveryStatus: "pending",
+          declineReason: "",
+          declinedAt: "",
+          revokeReason: "",
+          revokedAt: "",
+          canReapply: false,
+          message: "Application pending"
+        };
+        
+        sessionStorage.setItem("deliveryUserData", JSON.stringify(pendingData));
       }
 
       return statusData;
@@ -274,7 +345,7 @@ if (newStatus === "approved" && (currentStatus !== "approved" || !user.isApprove
       console.error("❌ Failed to refresh delivery status:", err);
       throw err;
     }
-  }, [user, token, deliveryStatus, setUser, setToken, setDeliveryStatus, checkPublicDeliveryStatus]);
+  }, [user, token, deliveryStatus, setUser, setToken, setDeliveryStatus, checkPublicDeliveryStatus, lastRefreshTime]);
 
   const validateSession = useCallback(async () => {
     const storedUser = localStorage.getItem("user");
@@ -335,19 +406,23 @@ if (newStatus === "approved" && (currentStatus !== "approved" || !user.isApprove
   }, [setToken, setDeliveryStatus]);
 
   // ✅ IMPROVED: Better focus-based refresh
-  useEffect(() => {
+ useEffect(() => {
     const handleFocus = async () => {
       if (user?.role === "delivery" && !isLoading) {
-        console.log("👀 Window focused - refreshing delivery status");
-        setTimeout(() => {
-          refreshDeliveryStatus().catch(console.error);
-        }, 1000);
+        const now = Date.now();
+        if (now - lastRefreshTime > 5000) { // Only refresh if last refresh was more than 5 seconds ago
+          console.log("👀 Window focused - refreshing delivery status");
+          setTimeout(() => {
+            refreshDeliveryStatus().catch(console.error);
+          }, 1000);
+        }
       }
     };
 
     window.addEventListener("focus", handleFocus);
     return () => window.removeEventListener("focus", handleFocus);
-  }, [user, isLoading, refreshDeliveryStatus]);
+  }, [user, isLoading, refreshDeliveryStatus, lastRefreshTime]);
+
 
   const computedValues = useMemo(
     () => ({
