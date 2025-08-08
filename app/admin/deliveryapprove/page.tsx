@@ -1,3 +1,5 @@
+// Updated version of your existing component with revoke functionality
+
 "use client";
 import React, { useEffect, useState } from "react";
 import api from "@/lib/axios";
@@ -7,20 +9,23 @@ import DeliveryAttachments from "@/components/shared/DeliveryAttachements";
 import { toast } from "react-hot-toast";
 import { Label, Modal, ModalBody, ModalHeader, Textarea, TextInput } from "flowbite-react";
 import Loader from "@/components/common/loader";
+import { useQuery } from "@tanstack/react-query";
 
-// Compact Decline Modal Component
-const DeclineModal = ({ 
+// Enhanced Decline/Revoke Modal Component
+const ActionModal = ({ 
   isOpen, 
   onClose, 
   onConfirm, 
   userName, 
-  isLoading 
+  isLoading,
+  actionType = "decline" // "decline" or "revoke"
 }: {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (reason: string) => void;
   userName: string;
   isLoading: boolean;
+  actionType?: "decline" | "revoke";
 }) => {
   const [reason, setReason] = useState("");
 
@@ -36,6 +41,8 @@ const DeclineModal = ({
 
   if (!isOpen) return null;
 
+  const isRevoke = actionType === "revoke";
+
   return (
     <Modal show={isOpen} onClose={handleClose} size="sm" popup>
       <ModalHeader />
@@ -44,17 +51,22 @@ const DeclineModal = ({
           <div className="space-y-3">
             <div className="text-center">
               <h3 className="text-base font-medium text-gray-900 mb-1">
-                Decline Application
+                {isRevoke ? "Revoke Access" : "Decline Application"}
               </h3>
               <p className="text-sm text-gray-600">
-                Decline <span className="font-medium">{userName}</span>'s application?
+                {isRevoke ? "Revoke" : "Decline"} <span className="font-medium">{userName}</span>'s {isRevoke ? "delivery access" : "application"}?
               </p>
+              {isRevoke && (
+                <p className="text-xs text-orange-600 mt-1">
+                  Note: Active orders will be preserved
+                </p>
+              )}
             </div>
 
             <div>
               <TextInput
                 id="reason"
-                placeholder="Reason (optional)"
+                placeholder={`Reason ${isRevoke ? "(required)" : "(optional)"}`}
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 disabled={isLoading}
@@ -77,10 +89,10 @@ const DeclineModal = ({
                 size="sm"
                 type="submit"
                 isProcessing={isLoading}
-                disabled={isLoading}
-                className="flex-1 bg-red-600"
+                disabled={isLoading || (isRevoke && !reason.trim())}
+                className={`flex-1 ${isRevoke ? "bg-orange-600" : "bg-red-600"}`}
               >
-                Decline
+                {isRevoke ? "Revoke" : "Decline"}
               </Button>
             </div>
           </div>
@@ -91,14 +103,15 @@ const DeclineModal = ({
 };
 
 export default function Page() {
-  const [deliveryData, setDeliveryData] = useState([]);
+  // const [deliveryData, setDeliveryData] = useState([]);
   const [activeAttachments, setActiveAttachments] = useState<any | null>(null);
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   
   // Modal state
-  const [showDeclineModal, setShowDeclineModal] = useState(false);
+  const [showActionModal, setShowActionModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
+  const [actionType, setActionType] = useState<"decline" | "revoke">("decline");
 
   const handleApprove = async (item: any) => {
     const userId = item.userId;
@@ -107,46 +120,43 @@ export default function Page() {
     try {
       const response = await api.patch(`/delivery/approve/${userId}`);
       
-      // ✅ FIX: Update the local state with proper currentStatus
-      setDeliveryData(prevData => 
-        prevData.map(user => 
-          user.userId === userId 
-            ? { 
-                ...user, 
-                isApproved: true,
-                currentStatus: "approved", // ✅ Update currentStatus
-                // Clear any previous decline information
-                attachments: {
-                  ...user.attachments,
-                  status: "approved",
-                  approvedAt: new Date().toISOString(),
-                  // Remove decline fields if they exist
-                  declineReason: undefined,
-                  declinedAt: undefined
-                }
-              }
-            : user
-        )
-      );
+      // Update the local state with proper currentStatus
+      // setDeliveryData(prevData => 
+      //   prevData.map(user => 
+      //     user.userId === userId 
+      //       ? { 
+      //           ...user, 
+      //           isApproved: true,
+      //           currentStatus: "approved",
+      //           attachments: {
+      //             ...user.attachments,
+      //             status: "approved",
+      //             approvedAt: new Date().toISOString(),
+      //             // Clear previous decline/revoke information
+      //             declineReason: undefined,
+      //             declinedAt: undefined,
+      //             revokeReason: undefined,
+      //             revokedAt: undefined
+      //           }
+      //         }
+      //       : user
+      //   )
+      // );
+      await refetch();
 
-      // Show success toast
+
       toast.success(`${item.name} has been approved successfully!`, {
         duration: 4000,
         position: 'top-right',
       });
       
-      console.log("Approval successful:", response.data);
-      
     } catch (error: any) {
       console.error("Error approving delivery user:", error);
-      
-      // Show error toast
       const errorMessage = error.response?.data?.message || "Failed to approve user";
       toast.error(`Error: ${errorMessage}`, {
         duration: 5000,
         position: 'top-right',
       });
-      
     } finally {
       setActionLoading(null);
     }
@@ -154,93 +164,148 @@ export default function Page() {
 
   const handleDeclineClick = (item: any) => {
     setSelectedUser(item);
-    setShowDeclineModal(true);
+    setActionType("decline");
+    setShowActionModal(true);
   };
 
-  const handleDeclineConfirm = async (reason: string) => {
+  const handleRevokeClick = (item: any) => {
+    setSelectedUser(item);
+    setActionType("revoke");
+    setShowActionModal(true);
+  };
+
+  const handleActionConfirm = async (reason: string) => {
     if (!selectedUser) return;
     
     const userId = selectedUser.userId;
     setActionLoading(userId);
     
     try {
-      const response = await api.patch(`/delivery/decline/${userId}`, {
-        reason: reason || undefined
-      });
-      
-      // ✅ FIX: Update the local state with proper currentStatus and decline info
-      setDeliveryData(prevData => 
-        prevData.map(user => 
-          user.userId === userId 
-            ? { 
-                ...user, 
-                isApproved: false,
-                currentStatus: "declined", // ✅ Update currentStatus
-                attachments: {
-                  ...user.attachments,
-                  status: "declined",
-                  declineReason: reason || "Application declined",
-                  declinedAt: new Date().toISOString(),
-                  // Remove approval fields if they exist
-                  approvedAt: undefined
-                }
-              }
-            : user
-        )
-      );
+      let response;
+      let successMessage;
+      let newStatus;
 
-      // Show success toast
-      toast.success(`${selectedUser.name} has been declined successfully!`, {
+      if (actionType === "revoke") {
+        // Call revoke endpoint
+        response = await api.patch(`/delivery/revoke/${userId}`, {
+          reason: reason || "Access revoked by admin"
+        });
+        successMessage = `${selectedUser.name} has been revoked successfully!`;
+        newStatus = "revoked";
+      } else {
+        // Call decline endpoint
+        response = await api.patch(`/delivery/decline/${userId}`, {
+          reason: reason || undefined
+        });
+        successMessage = `${selectedUser.name} has been declined successfully!`;
+        newStatus = "declined";
+      }
+      
+      // Update the local state
+      // setDeliveryData(prevData => 
+      //   prevData.map(user => 
+      //     user.userId === userId 
+      //       ? { 
+      //           ...user, 
+      //           isApproved: false,
+      //           currentStatus: newStatus,
+      //           attachments: {
+      //             ...user.attachments,
+      //             status: newStatus,
+      //             ...(actionType === "revoke" 
+      //               ? {
+      //                   revokeReason: reason || "Access revoked by admin",
+      //                   revokedAt: new Date().toISOString()
+      //                 }
+      //               : {
+      //                   declineReason: reason || "Application declined",
+      //                   declinedAt: new Date().toISOString()
+      //                 }
+      //             )
+      //           }
+      //         }
+      //       : user
+      //   )
+      // );
+
+      await refetch()
+      toast.success(successMessage, {
         duration: 4000,
         position: 'top-right',
       });
       
-      console.log("Decline successful:", response.data);
-      
+      // Show additional info for revoke
+      if (actionType === "revoke" && response.data.activeOrdersCount > 0) {
+        toast.error(`User has ${response.data.activeOrdersCount} active orders that will be preserved`, {
+          duration: 6000,
+          position: 'top-right',
+        });
+      }
+
       // Close modal
-      setShowDeclineModal(false);
+      setShowActionModal(false);
       setSelectedUser(null);
       
     } catch (error: any) {
-      console.error("Error declining delivery user:", error);
-      
-      // Show error toast
-      const errorMessage = error.response?.data?.message || "Failed to decline user";
+      console.error(`Error ${actionType}ing delivery user:`, error);
+      const errorMessage = error.response?.data?.message || `Failed to ${actionType} user`;
       toast.error(`Error: ${errorMessage}`, {
         duration: 5000,
         position: 'top-right',
       });
-      
     } finally {
       setActionLoading(null);
     }
   };
 
-  const handleDeclineCancel = () => {
-    setShowDeclineModal(false);
+  const handleActionCancel = () => {
+    setShowActionModal(false);
     setSelectedUser(null);
   };
+  const fetchDeliveryAttachments = async () => {
+  const res = await api.get("/delivery-attachments");
+  return res.data.data;
+};
 
-  const getAlldeliveryAttach = async () => {
-    setLoading(true);
-    try {
-      const res = await api.get("/delivery-attachments");
-      console.log("📊 Delivery data received:", res.data.data);
-      setDeliveryData(res.data.data);
-    } catch (err) {
-      console.error("Error fetching delivery attachments:", err);
-      toast.error("Failed to fetch delivery data", {
-        duration: 5000,
-        position: 'top-right',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const getAlldeliveryAttach = async () => {
+  //   setLoading(true);
+  //   try {
+  //     const res = await api.get("/delivery-attachments");
+  //     console.log("📊 Delivery data received:", res.data.data);
+  //     setDeliveryData(res.data.data);
+  //   } catch (err) {
+  //     console.error("Error fetching delivery attachments:", err);
+  //     toast.error("Failed to fetch delivery data", {
+  //       duration: 5000,
+  //       position: 'top-right',
+  //     });
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+  const {
+  data: deliveryData = [],
+  isLoading: loading,
+  error,
+  refetch,
+} = useQuery({
+  queryKey: ["delivery-attachments"],
+  queryFn: fetchDeliveryAttachments,
+  onError: (err: any) => {
+    console.error("Error fetching delivery attachments:", err);
+    toast.error("Failed to fetch delivery data", {
+      duration: 5000,
+      position: 'top-right',
+    });
+  },
+  refetchOnMount:true,
+  refetchOnWindowFocus:true,
+  staleTime:2000
+});
 
-  useEffect(() => {
-    getAlldeliveryAttach();
-  }, []);
+  // useEffect(() => {
+  //   getAlldeliveryAttach();
+  // }, []);
 
   const columns = [
     {
@@ -262,10 +327,9 @@ export default function Page() {
       priority: 3,
     },
     {
-      key: "currentStatus", // ✅ FIX: Use currentStatus instead of isApproved
+      key: "currentStatus",
       label: "Status",
       render: (item: any) => {
-        // ✅ FIX: Use currentStatus from backend which has proper logic
         const status = item.currentStatus || "pending";
         
         return (
@@ -275,6 +339,8 @@ export default function Page() {
                 ? "bg-green-100 text-green-800"
                 : status === "declined"
                 ? "bg-red-100 text-red-800"
+                : status === "revoked"
+                ? "bg-orange-100 text-orange-800"
                 : "bg-yellow-100 text-yellow-800"
             }`}
           >
@@ -282,6 +348,8 @@ export default function Page() {
               ? "Approved"
               : status === "declined"
               ? "Declined"
+              : status === "revoked"
+              ? "Revoked"
               : "Pending"}
           </span>
         );
@@ -292,7 +360,6 @@ export default function Page() {
       label: "Action",
       render: (item: any) => {
         const isProcessing = actionLoading === item.userId;
-        // ✅ FIX: Use currentStatus to determine available actions
         const currentStatus = item.currentStatus || "pending";
 
         return (
@@ -303,6 +370,7 @@ export default function Page() {
               const value = e.target.value;
               if (value === "approve") handleApprove(item);
               else if (value === "decline") handleDeclineClick(item);
+              else if (value === "revoke") handleRevokeClick(item);
               // Reset select after action
               e.target.value = "";
             }}
@@ -314,17 +382,24 @@ export default function Page() {
               {isProcessing ? "Processing..." : "Select Action"}
             </option>
             
-            {/* ✅ FIX: Show Approve option if not currently approved */}
+            {/* Show Approve option if not currently approved */}
             {currentStatus !== "approved" && (
               <option value="approve">
-                {currentStatus === "declined" ? "Re-approve" : "Approve"}
+                {currentStatus === "declined" || currentStatus === "revoked" ? "Re-approve" : "Approve"}
               </option>
             )}
             
-            {/* ✅ FIX: Show Decline option if not currently declined */}
-            {currentStatus !== "declined" && (
+            {/* Show Decline option if not currently declined */}
+            {currentStatus !== "declined" && currentStatus !== "revoked" && (
               <option value="decline">
-                {currentStatus === "approved" ? "Revoke Approval" : "Decline"}
+                Decline
+              </option>
+            )}
+
+            {/* Show Revoke option only for approved users */}
+            {currentStatus === "approved" && (
+              <option value="revoke">
+                Revoke Access
               </option>
             )}
           </select>
@@ -332,7 +407,35 @@ export default function Page() {
       },
     },
     {
-      key: "createdAt", // ✅ ADD: Show when application was submitted
+      key: "canReapply",
+      label: "Reapply Status",
+      render: (item: any) => {
+        const currentStatus = item.currentStatus || "pending";
+        const canReapply = item.canReapply;
+        
+        if (canReapply) {
+          return (
+            <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              Can Reapply
+            </span>
+          );
+        } else if (currentStatus === "approved") {
+          return (
+            <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+              Active
+            </span>
+          );
+        } else {
+          return (
+            <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+              N/A
+            </span>
+          );
+        }
+      },
+    },
+    {
+      key: "createdAt",
       label: "Applied Date",
       sortable: true,
       render: (item: any) => {
@@ -343,16 +446,6 @@ export default function Page() {
           </span>
         );
       },
-    },
-    {
-      key: "userId",
-      label: "User ID",
-      sortable: false,
-      render: (item: any) => (
-        <span className="text-xs text-gray-500 font-mono">
-          {item.userId.slice(-8)} {/* Show last 8 characters */}
-        </span>
-      ),
     },
     {
       key: "attachments",
@@ -373,16 +466,16 @@ export default function Page() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Delivery Applications</h1>
         <p className="text-gray-600 mt-1">
-          Manage delivery driver applications and approvals
+          Manage delivery driver applications, approvals, and access
         </p>
       </div>
 
       {loading ? (
-     <Loader title="delivery data"/>
+        <Loader title="delivery data"/>
       ) : (
         <>
-          {/* ✅ ADD: Summary stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          {/* Enhanced Summary stats */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <div className="text-sm font-medium text-yellow-800">Pending</div>
               <div className="text-2xl font-bold text-yellow-900">
@@ -401,6 +494,12 @@ export default function Page() {
                 {deliveryData.filter(item => item.currentStatus === "declined").length}
               </div>
             </div>
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+              <div className="text-sm font-medium text-orange-800">Revoked</div>
+              <div className="text-2xl font-bold text-orange-900">
+                {deliveryData.filter(item => item.currentStatus === "revoked").length}
+              </div>
+            </div>
           </div>
 
           <DynamicTable
@@ -408,7 +507,7 @@ export default function Page() {
             data={deliveryData}
             columns={columns}
             showAddButton={false}
-            showFilter={true} // ✅ Enable filtering
+            showFilter={true}
             showActions={false}
           />
 
@@ -420,13 +519,14 @@ export default function Page() {
             />
           )}
 
-          {/* Decline Modal */}
-          <DeclineModal
-            isOpen={showDeclineModal}
-            onClose={handleDeclineCancel}
-            onConfirm={handleDeclineConfirm}
+          {/* Enhanced Action Modal */}
+          <ActionModal
+            isOpen={showActionModal}
+            onClose={handleActionCancel}
+            onConfirm={handleActionConfirm}
             userName={selectedUser?.name || ""}
             isLoading={actionLoading === selectedUser?.userId}
+            actionType={actionType}
           />
         </>
       )}

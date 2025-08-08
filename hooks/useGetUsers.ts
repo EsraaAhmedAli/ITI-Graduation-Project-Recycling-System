@@ -19,9 +19,11 @@ export function useUsers(role?: string) {
               const res = await api.get(url);
       return res.data.data || [];
     },
-    staleTime: 5 * 60 * 1000, // optional: cache for 5 mins
+    staleTime: 2000,
+    refetchOnMount:true,
     onError: (error: unknown) => {
       console.error("Failed to fetch users:", error);
+
     },
   });
 }

@@ -26,7 +26,7 @@ export const useOrders = (params: Omit<GetOrdersParams, 'page'> = {}) => {
         ? lastPage.pagination.currentPage + 1 
         : undefined;
     },
-    staleTime: 1* 60 * 1000, // 5 minutes
+    staleTime: 2000
     gcTime: 10 * 60 * 1000,
     refetchOnMount:true
     ,

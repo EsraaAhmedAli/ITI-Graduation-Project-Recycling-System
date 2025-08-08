@@ -93,6 +93,11 @@ export default function Page() {
     }, 0);
   };
 
+  const getInitials = (name:string)=>{
+  return  name.split(' ').map((n)=>n[0]).join('').toLowerCase()
+
+  }
+
   // Calculate original total points
   const calculateOriginalTotalPoints = () => {
     return Object.values(quantities).reduce((total: number, item: any) => {
@@ -262,14 +267,28 @@ export default function Page() {
       label: 'customer',
       render: (row: any) => (
         <div className="flex items-center gap-3 py-2">
+
           <div className="relative">
-            <Image
-              src={row.user?.image }
-              alt={row.user?.image}
-              width={100}
-              height={100}
-              className=" max-w-[50px] rounded-full border-2 border-white shadow-md ring-2 ring-gray-100"
-            />
+        
+      {
+  row.user.image ? (
+    <Image
+      src={row.user.image}
+      alt={row.user.userName}
+      width={50}
+      height={50}
+      className="w-[50px] h-[50px] rounded-full border-2 border-white shadow-md ring-2 ring-gray-100 object-cover"
+    />
+  ) : (
+    <div
+      className="w-[50px] h-[50px] rounded-full bg-gray-200 text-gray-700 flex items-center justify-center font-semibold uppercase ring-2 ring-gray-100 shadow-md"
+      title={row.user.userName}
+    >
+      {getInitials(row.user.userName)}
+    </div>
+  )
+}
+
             <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
           </div>
           <div className="flex flex-col">
