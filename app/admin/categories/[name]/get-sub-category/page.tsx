@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 import React, { useEffect, useState } from "react";
 import api from "@/lib/axios";
+import Loader from "@/components/common/Loader";
 
 export default function Page() {
   const [items, setItems] = useState([]);
@@ -38,8 +39,8 @@ export default function Page() {
           item.measurement_unit === 1
             ? "KG"
             : item.measurement_unit === 2
-            ? "Pieces"
-            : "Unknown",
+              ? "Pieces"
+              : "Unknown",
       }));
 
       setItems(formatted);
@@ -95,7 +96,7 @@ export default function Page() {
   return (
     <>
       {loading ? (
-        <p className="text-center py-10">Loading...</p>
+        <Loader title={`items in ${name}`} />
       ) : error ? (
         <p className="text-center text-red-500 py-10">{error}</p>
       ) : items.length === 0 ? (
