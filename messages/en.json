@@ -350,6 +350,15 @@
       "description": "Register your business to purchase recycled materials"
     }
   },
+  "pickup": {
+    "steps": {
+      "address": "Address",
+      "review": "Review",
+      "waiting": "Waiting",
+      "tracking": "Tracking",
+      "deliveryReview": "Delivery Review"
+    }
+  },
   "faq": {
     "materialExchange": {
       "question": "How does the material exchange process work?",
