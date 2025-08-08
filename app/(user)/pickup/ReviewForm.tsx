@@ -1,18 +1,8 @@
 import Button from "@/components/common/Button";
 import { FormInputs } from "@/components/Types/address.type";
 import Image from "next/image";
-import { priceWithMarkup } from "@/utils/priceUtils";
 import { CartItem } from "@/context/CartContext";
-
-// type CartItem = {
-//   categoryId: string;
-//   image: string;
-//   itemName: string;
-//   measurement_unit: 1 | 2;
-//   points: number;
-//   price: number;
-//   quantity: number;
-// };
+import { deliveryFees } from "@/constants/deliveryFees";
 
 interface ReviewProps {
   onBack: () => void;
@@ -28,12 +18,20 @@ export default function Review({
   onConfirm,
   loading,
   cartItems,
+  formData,
   userRole,
 }: ReviewProps) {
-  const total = cartItems.reduce(
+  const subtotal = cartItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
+
+  const deliveryFee =
+    formData?.city && userRole === "buyer"
+      ? deliveryFees[formData.city] || 0
+      : 0;
+
+  const total = userRole === "buyer" ? subtotal + deliveryFee : subtotal;
 
   return (
     <div className="space-y-6">
@@ -54,7 +52,7 @@ export default function Review({
                   height={64}
                   src={item.image}
                   alt={item.name}
-                  className=" object-cover rounded-md border"
+                  className="object-cover rounded-md border"
                 />
                 <div className="flex-1">
                   <h3 className="font-semibold text-green-800">{item.name}</h3>
@@ -68,7 +66,6 @@ export default function Review({
                       {item.price.toFixed(2)} EGP
                     </span>
                   </p>
-
                   <p className="text-sm text-gray-600">
                     Points:{" "}
                     <span className="text-green-700">{item.points}</span>
@@ -77,26 +74,56 @@ export default function Review({
               </div>
             ))}
 
-            <div className="text-right mt-2 font-semibold text-green-900">
-              Total: {total.toFixed(2)} EGP
+            {/* Summary Section */}
+           <div className="text-right mt-6 space-y-4">
+  {/* Show full breakdown only for buyer */}
+{userRole === "buyer" && (
+  <>
+    <div className="flex justify-between items-center">
+      <span className="text-gray-500 text-sm md:text-base">Order Price:</span>
+      <span className="font-medium text-gray-700">
+        {subtotal.toFixed(2)} EGP
+      </span>
+    </div>
+
+    <div className="flex justify-between items-center">
+      <span className="text-gray-500 text-sm md:text-base">Delivery Fees:</span>
+      <span className="font-medium text-gray-700">
+        {deliveryFee.toFixed(2)} EGP
+      </span>
+    </div>
+  </>
+)}
+
+
+  {/* Always show total */}
+  <div className="flex justify-between items-center border-t border-gray-200 pt-4 mt-2">
+    <span className="text-lg font-semibold text-green-600">Total:</span>
+    <span className="text-lg font-bold text-green-600">
+      {total.toFixed(2)} EGP
+    </span>
+  </div>
+</div>
+
+
+            {/* Action Buttons */}
+            <div className="flex justify-between mt-4">
+              <Button onClick={onBack} className="bg-red-600 px-6 py-2 rounded-lg">
+                Back
+              </Button>
+
+              <Button
+                disabled={loading}
+                onClick={onConfirm}
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg"
+              >
+                {loading ? "Processing..." : "Confirm Order"}
+              </Button>
             </div>
           </>
         )}
       </div>
-
-      <div className="flex justify-between mt-4">
-        <Button onClick={onBack} className="bg-red-600 px-6 py-2 rounded-lg">
-          Back
-        </Button>
-
-        <Button
-          disabled={loading}
-          onClick={onConfirm}
-          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg"
-        >
-          {loading ? "Processing..." : "Confirm Order"}
-        </Button>
-      </div>
     </div>
   );
 }
+
