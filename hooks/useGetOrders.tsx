@@ -27,7 +27,6 @@ export const useOrders = (params: Omit<GetOrdersParams, 'page'> = {}) => {
         : undefined;
     },
     staleTime: 2000,
-    gcTime: 10 * 60 * 1000,
     refetchOnMount: true,
     refetchOnWindowFocus: true
   });

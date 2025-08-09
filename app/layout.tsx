@@ -13,6 +13,7 @@ import { LanguageProvider } from "@/context/LanguageContext";
 import GuestSessionProvider from "@/lib/GuestSessionProvider";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { OfflineProvider } from "@/context/OfflineContext"; // Add this import
+import UserPointsWrapper from "@/components/shared/pointsWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,6 +43,8 @@ export default function RootLayout({
         <LanguageProvider>
           <UserAuthProvider>
             <ReactQueryProvider>
+              <UserPointsWrapper>
+
               <CartProvider>
                 <OfflineProvider>
                   {" "}
@@ -59,6 +62,8 @@ export default function RootLayout({
                   </NotificationProvider>
                 </OfflineProvider>
               </CartProvider>
+                            </UserPointsWrapper>
+
             </ReactQueryProvider>
           </UserAuthProvider>
         </LanguageProvider>

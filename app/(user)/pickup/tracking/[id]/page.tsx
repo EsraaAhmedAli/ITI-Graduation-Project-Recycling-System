@@ -16,6 +16,7 @@ import { OrderWithDetails } from "@/components/Types/orders.type";
 import { SafetyDialog, SafetyReportData } from "../../SafetyDialog";
 import { useParams } from "next/navigation";
 import DeliveryReview from "../../DeliveryReview";
+import { useUserAuth } from "@/context/AuthFormContext";
 
 const trackingSteps = [
   {
@@ -55,7 +56,7 @@ export default function TrackingStep({
   onDelivered, 
   embedded = false 
 }: TrackingStepProps) {
-  const [trackingStarted, setTrackingStarted] = useState(true);
+  const [trackingStarted] = useState(true);
   const [lastDriverStatus, setLastDriverStatus] = useState<string | null>(null);
   const [driverMovementWarnings, setDriverMovementWarnings] = useState(0);
   const [truckPosition, setTruckPosition] = useState({
@@ -64,6 +65,7 @@ export default function TrackingStep({
   });
   const [showSafetyDialog, setShowSafetyDialog] = useState(false);
   const [showDeliveryReview, setShowDeliveryReview] = useState(false);
+  const {user} = useUserAuth()
 
   // Get orderId from route parameters (for standalone page) or props (for embedded use)
   const params = useParams();
@@ -264,47 +266,49 @@ export default function TrackingStep({
               }}
             />
           </div>
-          <div className="relative flex justify-between">
-            {trackingSteps.map((step, index) => {
-              const Icon = step.icon;
-              const isActive = index <= currentStepIndex;
-              const isCurrent = index === currentStepIndex;
-              return (
-                <div key={step.id} className="flex flex-col items-center">
-                  <div
-                    className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-all duration-300 ${
-                      isActive
-                        ? "bg-green-500 text-white shadow-lg"
-                        : "bg-gray-200 text-gray-400"
-                    }`}>
-                    <Icon className="w-6 h-6" />
-                  </div>
-                  <div className="text-center max-w-24">
-                    <p
-                      className={`text-sm font-medium ${
-                        isCurrent
-                          ? "text-green-600"
-                          : isActive
-                          ? "text-gray-700"
-                          : "text-gray-400"
-                      }`}>
-                      {step.label}
-                    </p>
-                    <p
-                      className={`text-xs mt-1 ${
-                        isCurrent
-                          ? "text-green-600"
-                          : isActive
-                          ? "text-gray-600"
-                          : "text-gray-400"
-                      }`}>
-                      {step.description}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
+        <div className="relative flex justify-between">
+  {trackingSteps
+    .filter(step => !(user?.role === 'buyer' && step.id === 'collected')) // Skip collected step for buyers
+    .map((step, index) => {
+      const Icon = step.icon;
+      const isActive = index <= currentStepIndex;
+      const isCurrent = index === currentStepIndex;
+      return (
+        <div key={step.id} className="flex flex-col items-center">
+          <div
+            className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-all duration-300 ${
+              isActive
+                ? "bg-green-500 text-white shadow-lg"
+                : "bg-gray-200 text-gray-400"
+            }`}>
+            <Icon className="w-6 h-6" />
           </div>
+          <div className="text-center max-w-24">
+            <p
+              className={`text-sm font-medium ${
+                isCurrent
+                  ? "text-green-600"
+                  : isActive
+                  ? "text-gray-700"
+                  : "text-gray-400"
+              }`}>
+              {step.label}
+            </p>
+            <p
+              className={`text-xs mt-1 ${
+                isCurrent
+                  ? "text-green-600"
+                  : isActive
+                  ? "text-gray-600"
+                  : "text-gray-400"
+              }`}>
+              {step.description}
+            </p>
+          </div>
+        </div>
+      );
+    })}
+</div>
         </div>
       </div>
 

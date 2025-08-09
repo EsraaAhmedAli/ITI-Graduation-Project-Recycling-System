@@ -54,7 +54,7 @@ const CheckoutPage = ({ amount, checkoutData }: CheckoutPageProps) => {
   const [loading, setLoading] = useState(false);
   const [paymentSuccessful, setPaymentSuccessful] = useState(false);
   const { user } = useUserAuth();
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "cash">("card");
+  const [paymentMethod] = useState<"card" | "cash">("card");
 
   // Get checkout data from sessionStorage if not passed as prop
   const [localCheckoutData, setLocalCheckoutData] =
