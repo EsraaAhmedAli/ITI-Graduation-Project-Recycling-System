@@ -21,23 +21,23 @@ export default function DeliveryReview({
   const [submissionAttempted, setSubmissionAttempted] = useState(false);
   const router = useRouter();
 
-  // Auto-redirect timer
-  useEffect(() => {
-    if (showReviewForm) {
-      const timer = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
-            setShowReviewForm(false);
-            router.push("/");
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+  // // Auto-redirect timer
+  // useEffect(() => {
+  //   if (showReviewForm) {
+  //     const timer = setInterval(() => {
+  //       setTimeLeft((prev) => {
+  //         if (prev <= 1) {
+  //           setShowReviewForm(false);
+  //           router.push("/");
+  //           return 0;
+  //         }
+  //         return prev - 1;
+  //       });
+  //     }, 1000);
 
-      return () => clearInterval(timer);
-    }
-  }, [showReviewForm, router]);
+  //     return () => clearInterval(timer);
+  //   }
+  // }, [showReviewForm, router]);
 
   const handleSubmit = async () => {
     if (rating === 0) {

@@ -25,15 +25,13 @@ import {
 import { useCreateOrder } from "@/hooks/useCreateOrder";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
-import WaitingApprovalStep from "./WaitingApprovalStep";
-import TrackingStep from "./TrackingStep";
 import DeliveryReview from "./DeliveryReview";
 import { deliveryFees } from "@/constants/deliveryFees";
+import TrackingStep from "./tracking/[id]/page";
 
 enum Steps {
   ADDRESS = 1,
   REVIEW,
-  WAITING,
   TRACKING,
   DELIVERY_REVIEW,
 }
@@ -122,7 +120,7 @@ export default function PickupConfirmation() {
     setCurrentStep(step);
   };
 
-    const handleConfirm = async () => {
+  const handleConfirm = async () => {
     if (user?.role === "buyer") {
       const deliveryFee = selectedAddress?.city
         ? deliveryFees[selectedAddress.city] || 0
@@ -151,6 +149,8 @@ export default function PickupConfirmation() {
       const result = await createOrder(selectedAddress, cart, user);
       if (result.success) {
         console.log("Order created successfully:", result.orderId);
+        // Skip waiting step and go directly to tracking
+        setCurrentStep(Steps.TRACKING);
       }
     }
   };
@@ -257,22 +257,6 @@ export default function PickupConfirmation() {
           direction={direction}
           isCurrent={currentStep === Steps.REVIEW}
           active={currentStep >= Steps.REVIEW}
-        />
-        <div
-          className={`hidden md:flex flex-grow h-0.5 mx-2 ${
-            currentStep >= Steps.WAITING ? "bg-green-700" : "bg-gray-300"
-          }`}
-        />
-        <div
-          className={`flex md:hidden w-0.5 h-6 ${
-            currentStep >= Steps.WAITING ? "bg-green-700" : "bg-gray-300"
-          }`}
-        />
-        <Step
-          label={t("pickup.steps.waiting")}
-          direction={direction}
-          isCurrent={currentStep === Steps.WAITING}
-          active={currentStep >= Steps.WAITING}
         />
         <div
           className={`hidden md:flex flex-grow h-0.5 mx-2 ${
@@ -547,20 +531,13 @@ export default function PickupConfirmation() {
         />
       )}
 
-      {currentStep === Steps.WAITING && createdOrderId && (
-        <WaitingApprovalStep orderId={createdOrderId} onApproved={() => setCurrentStep(Steps.TRACKING)} />
-      )}
-
-      {currentStep === Steps.TRACKING && createdOrderId && (
-        <TrackingStep orderId={createdOrderId} onDelivered={() => setCurrentStep(Steps.DELIVERY_REVIEW)} />
-      )}
-
-      {currentStep === Steps.DELIVERY_REVIEW && createdOrderId && (
-        <DeliveryReview 
-          orderId={createdOrderId} 
-          onSubmitted={() => router.push("/profile")}
-        />
-      )}
+{currentStep === Steps.TRACKING && createdOrderId && (
+  <TrackingStep 
+    orderId={createdOrderId} 
+    onDelivered={() => router.push("/profile")} // Navigate to profile after review is submitted
+    embedded={true}
+  />
+)}
     </div>
   );
 }
