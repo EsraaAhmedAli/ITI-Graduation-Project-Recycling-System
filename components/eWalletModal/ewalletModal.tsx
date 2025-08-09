@@ -7,7 +7,8 @@ import html2canvas from "html2canvas";
 import Swal from "sweetalert2";
 import api from "@/lib/axios";
 import { UserAuthContext } from "@/context/AuthFormContext";
-import { useUserPoints } from "@/hooks/useGetUserPoints";
+// CHANGED: Import from context instead of custom hook
+import { useUserPoints } from "@/context/UserPointsContext";
 
 const vouchers = [
   { id: "1", name: "Talabat Mart", value: "50 EGP", points: 500 },
@@ -17,13 +18,12 @@ const vouchers = [
 
 export default function RecyclingModal({
   onPointsUpdated, // Add this
-
   modalOpen,
   closeModal,
 }: {
   modalOpen: boolean;
   closeModal: () => void;
-  onPointsUpdated:()=> void
+  onPointsUpdated: () => void;
 }) {
   const [activeOption, setActiveOption] = useState<"money" | "voucher" | null>(null);
   const [selectedVoucher, setSelectedVoucher] = useState<string | null>(null);
@@ -34,73 +34,71 @@ export default function RecyclingModal({
   const qrRef = useRef(null);
   const { user } = useContext(UserAuthContext);
   const userId = user?._id;
-  const { userPoints, pointsLoading, getUserPoints } = useUserPoints({
-    userId: user?._id,
-    name: user?.name,
-    email: user?.email,
-  });
-const totalPoints= userPoints?.totalPoints  
+  
+  // CHANGED: Use context hook without parameters
+  const { userPoints, pointsLoading, getUserPoints } = useUserPoints();
+  
+  const totalPoints = userPoints?.totalPoints || 0;
   const requiredPoints = amount ? parseInt(amount) * 19 : 0;
-const remainingPoints = ( totalPoints) - requiredPoints;
+  const remainingPoints = totalPoints - requiredPoints;
 
-const handleRedeem = async () => {
-  if (!activeOption) return;
+  const handleRedeem = async () => {
+    if (!activeOption) return;
 
-  if (activeOption === "money") {
-    if (!amount || requiredPoints > totalPoints) {
-      Swal.fire("Invalid amount", "You don't have enough points", "error");
-      return;
-    }
-    try {
-      await api.post(`/users/${userId}/points/deduct`, {
-        points: requiredPoints,
-        reason: `Cashback for ${amount} EGP`,
-      });
-      await getUserPoints(); // Refresh points after successful redemption
-              onPointsUpdated?.(); // Call the callback
-
-      Swal.fire("Success", "Cashback redeemed successfully!", "success");
-      setQrVisible(false);
-    } catch (error) {
-      Swal.fire(
-        "Error",
-        error.response?.data?.message || "Could not deduct points",
-        "error"
-      );
-    }
-  }
-
-  if (activeOption === "voucher") {
-    const voucher = vouchers.find((v) => v.id === selectedVoucher);
-    if (!voucher) return Swal.fire("Select a voucher", "", "warning");
-
-    try {
-      await api.post(`/users/${userId}/points/deduct`, {
-        points: voucher.points,
-        reason: `Voucher redeemed: ${voucher.name}`,
-      });
-      await getUserPoints(); // Refresh points after successful redemption
+    if (activeOption === "money") {
+      if (!amount || requiredPoints > totalPoints) {
+        Swal.fire("Invalid amount", "You don't have enough points", "error");
+        return;
+      }
+      try {
+        await api.post(`/users/${userId}/points/deduct`, {
+          points: requiredPoints,
+          reason: `Cashback for ${amount} EGP`,
+        });
+        await getUserPoints(); // Refresh points after successful redemption
         onPointsUpdated?.(); // Call the callback
 
-      const qrText = `Voucher: ${voucher.name} - Value: ${voucher.value}`;
-      setQrValue(qrText);
-      setQrVisible(true);
-      setRedeemedVouchers([...redeemedVouchers, voucher.id]);
-      Swal.fire("Success", "Your voucher is ready!", "success");
-    } catch (error) {
-      Swal.fire(
-        "Error",
-        error.response?.data?.message || "Could not deduct points",
-        "error"
-      );
+        Swal.fire("Success", "Cashback redeemed successfully!", "success");
+        setQrVisible(false);
+      } catch (error) {
+        Swal.fire(
+          "Error",
+          error.response?.data?.message || "Could not deduct points",
+          "error"
+        );
+      }
     }
-  }
-};
-useEffect(() => {
-  if (modalOpen) {
-    getUserPoints();
-  }
-}, [modalOpen, getUserPoints])
+
+    if (activeOption === "voucher") {
+      const voucher = vouchers.find((v) => v.id === selectedVoucher);
+      if (!voucher) return Swal.fire("Select a voucher", "", "warning");
+
+      try {
+        await api.post(`/users/${userId}/points/deduct`, {
+          points: voucher.points,
+          reason: `Voucher redeemed: ${voucher.name}`,
+        });
+        await getUserPoints(); // Refresh points after successful redemption
+        onPointsUpdated?.(); // Call the callback
+
+        const qrText = `Voucher: ${voucher.name} - Value: ${voucher.value}`;
+        setQrValue(qrText);
+        setQrVisible(true);
+        setRedeemedVouchers([...redeemedVouchers, voucher.id]);
+        Swal.fire("Success", "Your voucher is ready!", "success");
+      } catch (error) {
+        Swal.fire(
+          "Error",
+          error.response?.data?.message || "Could not deduct points",
+          "error"
+        );
+      }
+    }
+  };
+
+  // REMOVED: useEffect that manually fetches points since context handles this automatically
+  // The context will automatically fetch points when user data is available
+
   const handleDownloadQR = async () => {
     if (!qrRef.current) return;
     const canvas = await html2canvas(qrRef.current);
@@ -116,14 +114,13 @@ useEffect(() => {
         <div className="flex flex-col w-full">
           <div className="flex justify-between items-center w-full">
             <h3 className="text-2xl font-bold text-gray-900">Redeem Eco Points</h3>
-     
           </div>
           <div className="flex items-center mt-2">
             <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium flex items-center">
               <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" clipRule="evenodd" />
               </svg>
-{(totalPoints)?.toLocaleString()} Points
+              {pointsLoading ? "Loading..." : `${totalPoints?.toLocaleString()} Points`}
             </div>
           </div>
         </div>
@@ -334,6 +331,7 @@ useEffect(() => {
         <button
           onClick={handleRedeem}
           disabled={
+            pointsLoading || // Disable while loading
             (activeOption === "voucher" &&
               (!selectedVoucher ||
                 totalPoints <
@@ -344,7 +342,9 @@ useEffect(() => {
           }
           className="mt-6 w-full py-3.5 rounded-lg font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 flex items-center justify-center"
         >
-          {activeOption === "voucher" ? (
+          {pointsLoading ? (
+            "Loading..."
+          ) : activeOption === "voucher" ? (
             redeemedVouchers.includes(selectedVoucher || "") ? (
               <>
                 <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">

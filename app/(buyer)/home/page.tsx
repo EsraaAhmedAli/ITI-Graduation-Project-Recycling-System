@@ -6,6 +6,8 @@ import { motion } from "framer-motion";
 import PromotionSlider from "@/components/buyer/PromotionSlider";
 import {   ChevronRight,  Frown, Leaf, Zap, Recycle, AlertTriangle  } from "lucide-react";
 import api from "@/lib/axios";
+import { useUserAuth } from "@/context/AuthFormContext";
+import { useUserPoints } from "@/context/UserPointsContext";
 
 
 interface Item {
@@ -36,6 +38,10 @@ export default function BuyerHomePage() {
   const [materialsLoading, setMaterialsLoading] = useState(true);
   const [userRole, setUserRole] = useState<string>("buyer"); // default fallback
 
+  const {userPoints}= useUserPoints()
+  console.log(userPoints);
+  
+
   const getMeasurementText = (unit: number) => {
     return unit === 1 ? "kg" : "pc";
   };
@@ -57,7 +63,7 @@ export default function BuyerHomePage() {
     if (quantity < 10) return "text-orange-600";
     return "text-emerald-600";
   };
-
+const {user} = useUserAuth()
   const fetchItems = async () => {
     setIsLoading(true);
     try {
@@ -99,6 +105,8 @@ export default function BuyerHomePage() {
       setMaterialsLoading(false);
     }
   };
+
+
 
   useEffect(() => {
     // Try to get user role from session storage

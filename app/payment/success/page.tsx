@@ -1,16 +1,15 @@
 'use client';
 
-import Button from "@/components/common/Button";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 export default function PaymentSuccess() {
   const searchParams = useSearchParams();
 
-  const orderId = searchParams.get("orderId");
+  const orderId = sessionStorage.getItem('orderId');
   const paidAmount = searchParams.get("amount"); 
-  const baseAmount = searchParams.get("base");
  
+console.log(orderId);
 
   return (
     <main className="mx-auto px-6 py-8 w-1/2">
@@ -79,6 +78,12 @@ export default function PaymentSuccess() {
                 href="/profile"
               >
                 See your orders
+              </Link>
+              <Link
+                className="text-center block bg-green-500 text-white rounded-md py-1 my-3"
+                href={`/pickup/tracking/${orderId}`}
+              >
+                track your order
               </Link>
             </div>
           </div>

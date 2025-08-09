@@ -59,7 +59,9 @@ export default function DeliveryReview({
         throw new Error("Comments are too long (max 1000 characters)");
       }
 
-      const response = await api.post(`/orders/${orderId}/review`, { 
+      console.log(rating , comments);
+      
+      const response = await api.post(`/${orderId}/review`, { 
         rating, 
         comments: comments.trim() 
       });
@@ -92,10 +94,10 @@ export default function DeliveryReview({
     }
   };
 
-  const handleSkip = () => {
-    setShowReviewForm(false);
-    router.push("/");
-  };
+  // const handleSkip = () => {
+  //   setShowReviewForm(false);
+  //   router.push("/");
+  // };
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
@@ -180,13 +182,13 @@ export default function DeliveryReview({
               {loading ? "Submitting..." : "Submit Review"}
             </Button>
             
-            <Button 
+            {/* <Button 
               onClick={handleSkip}
               className="flex-1 sm:flex-none bg-gray-100 hover:bg-gray-200 text-gray-700 px-8 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center gap-2"
             >
               <SkipForward className="w-4 h-4" />
               Skip Review
-            </Button>
+            </Button> */}
           </div>
         </div>
       )}
