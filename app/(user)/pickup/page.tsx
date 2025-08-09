@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useEffect, useContext } from "react";
 import { useForm } from "react-hook-form";
 import { City, FormInputs } from "@/components/Types/address.type";
@@ -15,25 +16,30 @@ import api from "@/lib/axios";
 import {
   Building2,
   ChevronRight,
-  CreditCard,
   Edit3,
   Home,
   MapPin,
   Plus,
   Trash2,
-  Wallet,
 } from "lucide-react";
 import { useCreateOrder } from "@/hooks/useCreateOrder";
 import { useRouter } from "next/navigation";
+import { useLanguage } from "@/context/LanguageContext";
+import DeliveryReview from "./DeliveryReview";
 import { deliveryFees } from "@/constants/deliveryFees";
+import TrackingStep from "./tracking/[id]/page";
 
-type PaymentMethod = 'cash' | 'credit_card' | 'wallet';
+enum Steps {
+  ADDRESS = 1,
+  REVIEW,
+  TRACKING,
+  DELIVERY_REVIEW,
+}
 
 export default function PickupConfirmation() {
-  const [currentStep, setCurrentStep] = useState(1);
+  const { t } = useLanguage();
+  const [currentStep, setCurrentStep] = useState<Steps>(Steps.ADDRESS);
   const [loading, setLoading] = useState<boolean>(true);
-  const [copied, setCopied] = useState(false);
-  const [loadingBtn, setLoadingBtn] = useState<boolean>(false);
   const [direction, setDirection] = useState<"forward" | "backward">("forward");
   const router = useRouter();
   const [selectedCity, setSelectedCity] = useState<City | "">("");
@@ -41,7 +47,7 @@ export default function PickupConfirmation() {
   const [addresses, setAddresses] = useState<FormInputs[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<FormInputs | null>(null);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
+
   const [isEditing, setIsEditing] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const [notLoggedIn, setNotLoggedIn] = useState(false);
@@ -99,13 +105,13 @@ export default function PickupConfirmation() {
 
   const handleNextStep = () => {
     if (!selectedAddress) {
-      toast.error("Please select address");
+      toast.error("please select address");
     } else {
-      goToStep(2);
+      goToStep(Steps.REVIEW);
     }
   };
 
-  const goToStep = (step: number) => {
+  const goToStep = (step: Steps) => {
     if (step > currentStep) {
       setDirection("forward");
     } else if (step < currentStep) {
@@ -115,53 +121,37 @@ export default function PickupConfirmation() {
   };
 
   const handleConfirm = async () => {
-    setLoadingBtn(true);
-    try {
-      if (user?.role === "buyer") {
-        const deliveryFee = selectedAddress?.city
-          ? deliveryFees[selectedAddress.city] || 0
-          : 0;
+    if (user?.role === "buyer") {
+      const deliveryFee = selectedAddress?.city
+        ? deliveryFees[selectedAddress.city] || 0
+        : 0;
 
-        const finalTotal = totalPrice + deliveryFee;
+      const finalTotal = totalPrice + deliveryFee;
 
-        sessionStorage.setItem(
-          "checkoutData",
-          JSON.stringify({
-            cart,
-            selectedAddress,
-            deliveryFee,
-            totalPrice: finalTotal,
-            paymentMethod: selectedPaymentMethod,
-            user: {
-              id: user._id,
-              name: user.name,
-              email: user.email,
-              phoneNumber: user.phoneNumber,
-            },
-          })
-        );
+      sessionStorage.setItem(
+        "checkoutData",
+        JSON.stringify({
+          cart,
+          selectedAddress,
+          deliveryFee,
+          totalPrice: finalTotal,
+          user: {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            phoneNumber: user.phoneNumber,
+          },
+        })
+      );
 
-        if (selectedPaymentMethod === 'credit_card') {
-          router.push(`/payment?total=${finalTotal}`);
-        } else {
-          const result = await createOrder(selectedAddress, cart, user, selectedPaymentMethod);
-          if (result.success) {
-            console.log("Order created successfully:", result.orderId);
-            goToStep(4);
-          }
-        }
-      } else {
-        const result = await createOrder(selectedAddress, cart, user, selectedPaymentMethod);
-        if (result.success) {
-          console.log("Order created successfully:", result.orderId);
-          goToStep(4);
-        }
+      router.push(`/payment?total=${finalTotal}`);
+    } else {
+      const result = await createOrder(selectedAddress, cart, user);
+      if (result.success) {
+        console.log("Order created successfully:", result.orderId);
+        // Skip waiting step and go directly to tracking
+        setCurrentStep(Steps.TRACKING);
       }
-    } catch (error) {
-      console.error("Error during order confirmation:", error);
-      toast.error("Failed to confirm order. Please try again.");
-    } finally {
-      setLoadingBtn(false);
     }
   };
 
@@ -171,7 +161,7 @@ export default function PickupConfirmation() {
       setAddresses((prev) => [...prev, res.data]);
       setIsEditing(false);
       setSelectedAddress(res.data);
-      setCurrentStep(1);
+      setCurrentStep(Steps.ADDRESS);
       reset();
       toast.success("Address saved!");
     } catch (err) {
@@ -214,7 +204,7 @@ export default function PickupConfirmation() {
       setEditingAddressId(null);
       setSelectedAddress(res.data);
       toast.success("Address updated!");
-      setCurrentStep(1);
+      setCurrentStep(Steps.ADDRESS);
       reset();
     } catch (err) {
       console.error(err);
@@ -226,6 +216,7 @@ export default function PickupConfirmation() {
     return <Loader title="your info" />;
   }
 
+  // Show message if user is not logged in instead of app UI
   if (notLoggedIn) {
     return (
       <div className="text-center p-10">
@@ -246,66 +237,62 @@ export default function PickupConfirmation() {
     <div className="lg:w-3xl w-full mx-auto md:p-8 p-5 bg-white rounded-2xl shadow-lg border border-green-100">
       <div className="flex my-3 flex-col md:flex-row items-start md:items-center gap-4 md:gap-0">
         <Step
-          label="Address"
+          label={t("pickup.steps.address")}
           direction={direction}
-          isCurrent={currentStep === 1}
-          active={currentStep >= 1}
-          stepNumber={1}
+          isCurrent={currentStep === Steps.ADDRESS}
+          active={currentStep >= Steps.ADDRESS}
         />
         <div
           className={`hidden md:flex flex-grow h-0.5 mx-2 ${
-            currentStep >= 2 ? "bg-green-700" : "bg-gray-300"
+            currentStep >= Steps.REVIEW ? "bg-green-700" : "bg-gray-300"
           }`}
         />
         <div
           className={`flex md:hidden w-0.5 h-6 ${
-            currentStep >= 2 ? "bg-green-700" : "bg-gray-300"
+            currentStep >= Steps.REVIEW ? "bg-green-700" : "bg-gray-300"
           }`}
         />
         <Step
-          label="Payment"
+          label={t("pickup.steps.review")}
           direction={direction}
-          isCurrent={currentStep === 2}
-          active={currentStep >= 2}
-          stepNumber={2}
+          isCurrent={currentStep === Steps.REVIEW}
+          active={currentStep >= Steps.REVIEW}
         />
         <div
           className={`hidden md:flex flex-grow h-0.5 mx-2 ${
-            currentStep >= 3 ? "bg-green-700" : "bg-gray-300"
+            currentStep >= Steps.TRACKING ? "bg-green-700" : "bg-gray-300"
           }`}
         />
         <div
           className={`flex md:hidden w-0.5 h-6 ${
-            currentStep >= 3 ? "bg-green-700" : "bg-gray-300"
+            currentStep >= Steps.TRACKING ? "bg-green-700" : "bg-gray-300"
           }`}
         />
         <Step
-          label="Review"
+          label={t("pickup.steps.tracking")}
           direction={direction}
-          isCurrent={currentStep === 3}
-          active={currentStep >= 3}
-          stepNumber={3}
+          isCurrent={currentStep === Steps.TRACKING}
+          active={currentStep >= Steps.TRACKING}
         />
         <div
           className={`hidden md:flex flex-grow h-0.5 mx-2 ${
-            currentStep >= 4 ? "bg-green-700" : "bg-gray-300"
+            currentStep >= Steps.DELIVERY_REVIEW ? "bg-green-700" : "bg-gray-300"
           }`}
         />
         <div
           className={`flex md:hidden w-0.5 h-6 ${
-            currentStep >= 4 ? "bg-green-700" : "bg-gray-300"
+            currentStep >= Steps.DELIVERY_REVIEW ? "bg-green-700" : "bg-gray-300"
           }`}
         />
         <Step
-          label="Finish"
+          label={t("pickup.steps.deliveryReview")}
           direction={direction}
-          isCurrent={currentStep === 4}
-          active={currentStep >= 4}
-          stepNumber={4}
+          isCurrent={currentStep === Steps.DELIVERY_REVIEW}
+          active={currentStep >= Steps.DELIVERY_REVIEW}
         />
       </div>
 
-      {currentStep === 1 && (
+      {currentStep === Steps.ADDRESS && (
         <>
           {isEditing ? (
             <AddressStep
@@ -325,6 +312,7 @@ export default function PickupConfirmation() {
             />
           ) : (
             <div className="max-w-4xl mx-auto p-6 space-y-6">
+              {/* Header */}
               <div className="text-center space-y-2 mb-8">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-4">
                   <MapPin className="w-8 h-8 text-white" />
@@ -337,6 +325,7 @@ export default function PickupConfirmation() {
                 </p>
               </div>
 
+              {/* Address Grid */}
               <div className="grid gap-6">
                 {addresses.length === 0 ? (
                   <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded-3xl border border-gray-200">
@@ -359,6 +348,7 @@ export default function PickupConfirmation() {
                       }`}
                       onClick={() => handleSelectAddress(addr)}
                     >
+                      {/* Selection Indicator */}
                       <div
                         className={`absolute top-0 left-0 right-0 h-1 transition-all duration-300 ${
                           selectedAddress?._id === addr._id
@@ -369,7 +359,9 @@ export default function PickupConfirmation() {
 
                       <div className="p-5">
                         <div className="flex items-center justify-between">
+                          {/* Main Content */}
                           <div className="flex items-center gap-4 flex-1">
+                            {/* Icon */}
                             <div
                               className={`relative p-3 rounded-xl transition-all duration-300 ${
                                 selectedAddress?._id === addr._id
@@ -395,6 +387,7 @@ export default function PickupConfirmation() {
                               )}
                             </div>
 
+                            {/* Address Info */}
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
                                 <h3 className="text-lg font-bold text-gray-800 truncate">
@@ -416,6 +409,7 @@ export default function PickupConfirmation() {
                                 </p>
                               )}
 
+                              {/* Compact Address Details */}
                               <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600">
                                 <span>{addr.street}</span>
                                 <span>•</span>
@@ -428,6 +422,7 @@ export default function PickupConfirmation() {
                             </div>
                           </div>
 
+                          {/* Action Buttons */}
                           <div className="flex items-center gap-2 ml-4">
                             <button
                               onClick={(e) => {
@@ -450,6 +445,7 @@ export default function PickupConfirmation() {
                               <Trash2 className="w-4 h-4" />
                             </button>
 
+                            {/* Radio Button */}
                             <div
                               className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
                                 selectedAddress?._id === addr._id
@@ -469,6 +465,7 @@ export default function PickupConfirmation() {
                 )}
               </div>
 
+              {/* Enhanced Bottom Actions */}
               <div className="flex flex-col sm:flex-row gap-4 justify-between items-center pt-8 border-t border-gray-200">
                 <button
                   onClick={() => {
@@ -508,6 +505,7 @@ export default function PickupConfirmation() {
                 </Button>
               </div>
 
+              {/* Progress Indicator */}
               <div className="flex justify-center pt-4">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -522,208 +520,24 @@ export default function PickupConfirmation() {
         </>
       )}
 
-      {currentStep === 2 && (
-        <div className="max-w-4xl mx-auto p-6 space-y-6">
-          <div className="text-center space-y-2 mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-4">
-              <Wallet className="w-8 h-8 text-white" />
-            </div>
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-              Payment Method
-            </h2>
-            <p className="text-gray-600">
-              Choose your preferred payment method
-            </p>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div
-              className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 ${
-                selectedPaymentMethod === 'credit_card'
-                  ? 'border-green-500 bg-green-50 shadow-md'
-                  : 'border-gray-200 hover:border-blue-300'
-              }`}
-              onClick={() => setSelectedPaymentMethod('credit_card')}
-            >
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-blue-100 rounded-lg text-blue-600">
-                  <CreditCard className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-lg">Credit/Debit Card</h3>
-                  <p className="text-gray-600 text-sm">Pay securely with your card</p>
-                </div>
-                {selectedPaymentMethod === 'credit_card' && (
-                  <div className="ml-auto w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
-                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div
-              className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 ${
-                selectedPaymentMethod === 'cash'
-                  ? 'border-green-500 bg-green-50 shadow-md'
-                  : 'border-gray-200 hover:border-blue-300'
-              }`}
-              onClick={() => setSelectedPaymentMethod('cash')}
-            >
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-green-100 rounded-lg text-green-600">
-                  <Wallet className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-lg">Cash on Delivery</h3>
-                  <p className="text-gray-600 text-sm">Pay when you receive your order</p>
-                </div>
-                {selectedPaymentMethod === 'cash' && (
-                  <div className="ml-auto w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
-                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {user?.walletBalance && (
-              <div
-                className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 ${
-                  selectedPaymentMethod === 'wallet'
-                    ? 'border-green-500 bg-green-50 shadow-md'
-                    : 'border-gray-200 hover:border-blue-300'
-                }`}
-                onClick={() => setSelectedPaymentMethod('wallet')}
-              >
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-purple-100 rounded-lg text-purple-600">
-                    <Wallet className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg">Wallet Balance</h3>
-                    <p className="text-gray-600 text-sm">
-                      Use your wallet balance (${user.walletBalance.toFixed(2)} available)
-                    </p>
-                  </div>
-                  {selectedPaymentMethod === 'wallet' && (
-                    <div className="ml-auto w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
-                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="flex justify-between pt-8 border-t border-gray-200">
-            <Button
-              onClick={() => goToStep(1)}
-              className="px-6 py-3 bg-gray-200 text-gray-700 hover:bg-gray-300"
-            >
-              Back
-            </Button>
-            <Button
-              onClick={() => {
-                if (!selectedPaymentMethod) {
-                  toast.error("Please select a payment method");
-                } else {
-                  goToStep(3);
-                }
-              }}
-              disabled={!selectedPaymentMethod}
-              className={`px-6 py-3 ${
-                selectedPaymentMethod
-                  ? "bg-green-600 hover:bg-green-700 text-white"
-                  : "bg-gray-200 text-gray-500 cursor-not-allowed"
-              }`}
-            >
-              Continue
-              <ChevronRight className="w-5 h-5 ml-2" />
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {currentStep === 3 && (
+      {currentStep === Steps.REVIEW && (
         <Review
           cartItems={cart}
           formData={formData}
-          paymentMethod={selectedPaymentMethod}
-          onBack={() => goToStep(2)}
+          onBack={() => setCurrentStep(Steps.ADDRESS)}
           onConfirm={handleConfirm}
-          loading={loadingBtn}
+          loading={false}
           userRole={user?.role}
         />
       )}
 
-      {currentStep === 4 && (
-        <div className="text-center max-w-lg mx-auto space-y-6 bg-green-50 p-8 rounded-xl shadow border border-green-100">
-          <div className="flex justify-center">
-            <svg
-              className="w-16 h-16 text-green-600 mb-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-          </div>
-          <h2 className="text-3xl font-bold text-green-700">
-            {selectedPaymentMethod === 'credit_card' 
-              ? "Payment Successful!" 
-              : "Order Confirmed!"}
-          </h2>
-          <p className="text-green-900 text-lg">
-            {selectedPaymentMethod === 'credit_card'
-              ? "Thank you for your payment. Your order is being processed."
-              : "Thank you for your order. We will contact you soon."}
-          </p>
-          {createdOrderId && (
-            <div className="bg-white border border-green-300 rounded-lg p-4 shadow-sm ">
-              <p className="text-sm text-green-800 mb-2 font-medium">
-                Your Tracking Number:
-              </p>
-              <div className="block   text-center">
-                <span className="font-mono text-green-900 text-lg break-all">
-                  {createdOrderId}
-                </span>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(createdOrderId);
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 2000);
-                  }}
-                  className={`text-sm border px-2 py-1 rounded
-          ${
-            copied
-              ? "bg-green-600 text-white border-green-600"
-              : "text-green-600 border-green-300 hover:text-green-800 hover:border-green-800"
-          }`}
-                  title="Copy to clipboard"
-                >
-                  {copied ? "Copied!" : "Copy"}
-                </button>
-              </div>
-            </div>
-          )}
-          <Link
-            href={"/profile"}
-            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg"
-          >
-            See your orders
-          </Link>
-        </div>
-      )}
+{currentStep === Steps.TRACKING && createdOrderId && (
+  <TrackingStep 
+    orderId={createdOrderId} 
+    onDelivered={() => router.push("/profile")} // Navigate to profile after review is submitted
+    embedded={true}
+  />
+)}
     </div>
   );
 }

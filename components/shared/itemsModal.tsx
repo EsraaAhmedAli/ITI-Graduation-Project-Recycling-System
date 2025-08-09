@@ -5,7 +5,6 @@ import { priceWithMarkup } from '@/utils/priceUtils';
 
 export default function ItemsModal({ show, onclose, selectedOrderItems, userRole , orderStatus }) {
   const { t, locale } = useLanguage();
-  console.log('from prof' , orderStatus);
   
 
   const count = selectedOrderItems?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0;
@@ -47,7 +46,6 @@ export default function ItemsModal({ show, onclose, selectedOrderItems, userRole
         {selectedOrderItems && selectedOrderItems.length > 0 ? (
           <div className="space-y-4">
             {selectedOrderItems.map((item, index) => {
-              console.log(item)
               
               const price = priceWithMarkup(item.price || 0, userRole);
               const isOutOfStock = item.quantity === 0;

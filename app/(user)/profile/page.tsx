@@ -316,31 +316,43 @@ function ProfileContent() {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex justify-between items-center pt-3 border-t border-gray-200">
-                    <div className="flex gap-3">
-                      <button
-onClick={() => openItemsModal(order.items, order.status)}
-                        className="text-sm text-green-600 hover:text-green-800 font-medium hover:underline transition-colors duration-200"
-                      >
-                        {t("profile.orders.viewDetails")}
-                      </button>
-                      
-                      {/* Enhanced Receipt Link - Show for collected and completed orders */}
-                      {["collected", "completed"].includes(order.status) && (
-                        <ReceiptLink orderId={order._id} variant="compact" />
-                      )}
-                    </div>
 
-                    {/* Cancel Button - Only for pending orders */}
-                    {order.status === "pending" && user?.role === "customer" && (
-                      <button
-                        onClick={() => handleCancelOrder(order._id)}
-                        className="text-sm text-red-500 hover:text-red-700 font-medium hover:underline transition-colors duration-200"
-                      >
-                        {t("profile.orders.cancelOrder")}
-                      </button>
-                    )}
-                  </div>
+{/* Action Buttons */}
+<div className="flex justify-between items-center pt-3 border-t border-gray-200">
+  <div className="flex gap-3">
+    <button
+      onClick={() => openItemsModal(order.items, order.status)}
+      className="text-sm text-green-600 hover:text-green-800 font-medium hover:underline transition-colors duration-200"
+    >
+      {t("profile.orders.viewDetails")}
+    </button>
+    
+    {/* Enhanced Receipt Link - Show for collected and completed orders */}
+    {["collected", "completed"].includes(order.status) && (
+      <ReceiptLink orderId={order._id} variant="compact" />
+    )}
+    
+    {/* NEW: Tracking Link - Show for orders in transit */}
+    {["assigntocourier", "enroute", "arrived", "collected"].includes(order.status) && (
+      <Link
+        href={`/pickup/tracking/${order._id}`}
+        className="text-sm text-blue-600 hover:text-blue-800 font-medium hover:underline transition-colors duration-200"
+      >
+        Track Order
+      </Link>
+    )}
+  </div>
+
+  {/* Cancel Button - Only for pending orders */}
+  {order.status === "pending" && user?.role === "customer" && (
+    <button
+      onClick={() => handleCancelOrder(order._id)}
+      className="text-sm text-red-500 hover:text-red-700 font-medium hover:underline transition-colors duration-200"
+    >
+      {t("profile.orders.cancelOrder")}
+    </button>
+  )}
+</div>
                   {/* REMOVED: ItemsModal from inside the loop to fix navy background */}
                 </div>
               ))}

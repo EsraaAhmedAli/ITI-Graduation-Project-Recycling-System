@@ -343,6 +343,15 @@
       "description": "سجل عملك لشراء المواد المعاد تدويرها"
     }
   },
+  "pickup": {
+    "steps": {
+      "address": "العنوان",
+      "review": "المراجعة",
+      "waiting": "الانتظار",
+      "tracking": "التتبع",
+      "deliveryReview": "مراجعة التوصيل"
+    }
+  },
   "faq": {
     "materialExchange": {
       "question": "كيف تعمل عملية تبادل المواد؟",

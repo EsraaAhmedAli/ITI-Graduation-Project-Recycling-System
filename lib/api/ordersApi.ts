@@ -29,6 +29,25 @@ export const ordersApi = {
     });
     return response.data;
   },
+
+  cancelOrderWithReason: async (orderId: string, reason: string) => {
+    const response = await api.patch(`/orders/${orderId}/cancel`, { reason });
+    return response.data;
+  },
+
+  autoApproveOrder: async (orderId: string) => {
+    const response = await api.put(`/orders/${orderId}/status`, {
+      status: "assigntocourier",
+    });
+    return response.data;
+  },
+
+  completeOrder: async (orderId: string) => {
+    const response = await api.put(`/orders/${orderId}/status`, {
+      status: "completed",
+    });
+    return response.data;
+  },
 };
 
 export default ordersApi;
