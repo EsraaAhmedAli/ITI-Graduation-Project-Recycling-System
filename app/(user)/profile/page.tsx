@@ -18,15 +18,14 @@ import {
   XCircle,
 } from "lucide-react";
 import RecyclingModal from "@/components/eWalletModal/ewalletModal";
-import { useUserPoints } from "@/hooks/useGetUserPoints";
+// CHANGED: Import from context instead of hook
 import ItemsModal from "@/components/shared/itemsModal";
 import PointsActivity from "@/components/accordion/accordion";
 import MembershipTier from "@/components/memberTireShip/memberTireShip";
 import { useLanguage } from "@/context/LanguageContext";
 import { ReceiptLink } from "../../../components/RecipetLink";
 import useOrders from "@/hooks/useGetOrders";
-import { set } from "react-hook-form";
-import { User } from "@/components/Types/Auser.type";
+import { useUserPoints } from "@/context/UserPointsContext";
 
 export default function ProfilePage() {
   return (
@@ -39,20 +38,20 @@ export default function ProfilePage() {
 function ProfileContent() {
   const { user, token, setUserRewards } = useUserAuth();
   console.log(user?.role);
-  const { userPoints, pointsLoading, getUserPoints } = useUserPoints({
-    userId: user?._id,
-    name: user?.name,
-    email: user?.email,
-  });
+
+  // CHANGED: Use context hook instead of custom hook with parameters
+  const { userPoints, pointsLoading, getUserPoints } = useUserPoints();
 
   const [activeTab, setActiveTab] = useState("incoming");
   const [isRecyclingModalOpen, setIsRecyclingModalOpen] = useState(false);
   const [isItemsModalOpen, setIsItemsModalOpen] = useState(false);
-  // Removed unused selectItemStatus state
   const [selectedOrderItems, setSelectedOrderItems] = useState<any[]>([]);
   const [selectedOrderStatus, setSelectedOrderStatus] = useState<string | null>(
     null
   );
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [reviewableOrders, setReviewableOrders] = useState<any[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
   const { t } = useLanguage();
 
   // Map activeTab to status parameter
@@ -114,9 +113,9 @@ function ProfileContent() {
 
     if (user && token) {
       fetchCompletedOrdersCount();
-      getUserPoints();
+      // REMOVED: getUserPoints() call since it's now handled automatically by context
     }
-  }, [user, token, getUserPoints]);
+  }, [user, token]); // REMOVED: getUserPoints from dependency array
 
   // FIXED: Updated function to accept both items and orderStatus
   const openItemsModal = (items: any[], orderStatus: string) => {
@@ -160,11 +159,61 @@ function ProfileContent() {
     } else {
       baseTabs.push("cancelled");
     }
+    if (user?.role === "customer") {
+      baseTabs.push("reviews");
+    }
 
     return baseTabs;
   };
 
   const tabs = getTabsForUser();
+
+  const fetchReviewsData = async () => {
+    if (!user?._id || !token) return;
+
+    setReviewsLoading(true);
+    try {
+      // Fetch existing reviews made by the user
+      const reviewsRes = await api.get(`/reviews/my-reviews`);
+      setReviews(reviewsRes.data || []);
+
+      // Fetch completed orders to check which ones can be reviewed
+      const completedOrdersRes = await api.get("/orders?status=completed");
+      const completedOrders = completedOrdersRes.data.orders || [];
+
+      // Filter orders that don't have reviews yet
+      // This assumes your review response includes orderId field
+      const ordersWithoutReviews = completedOrders.filter(
+        (order: any) =>
+          !reviewsRes.data.find((review: any) => review.orderId === order._id)
+      );
+
+      setReviewableOrders(ordersWithoutReviews);
+    } catch (error) {
+      console.error("Failed to fetch reviews data:", error);
+      // If user reviews endpoint doesn't exist, try alternative approach
+      try {
+        // Alternative: Get all completed orders and check each one
+        const completedOrdersRes = await api.get("/orders?status=completed");
+        const completedOrders = completedOrdersRes.data.orders || [];
+
+        // For now, assume all completed orders can be reviewed
+        // You might need to adjust this based on your actual API structure
+        setReviewableOrders(completedOrders);
+        setReviews([]); // Set empty if no reviews endpoint
+      } catch (altError) {
+        console.error("Alternative fetch also failed:", altError);
+      }
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "reviews" && user?.role === "customer") {
+      fetchReviewsData();
+    }
+  }, [activeTab, user, token]);
 
   return (
     <div className="h-auto bg-green-50 px-4">
@@ -340,8 +389,6 @@ function ProfileContent() {
                   </div>
 
                   {/* Action Buttons */}
-
-                  {/* Action Buttons */}
                   <div className="flex justify-between items-center pt-3 border-t border-gray-200">
                     <div className="flex gap-3">
                       <button
@@ -385,7 +432,6 @@ function ProfileContent() {
                         </button>
                       )}
                   </div>
-                  {/* REMOVED: ItemsModal from inside the loop to fix navy background */}
                 </div>
               ))}
             </div>

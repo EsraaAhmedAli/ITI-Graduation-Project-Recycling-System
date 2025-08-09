@@ -21,20 +21,26 @@ import {
   MapPin,
   Plus,
   Trash2,
+  CreditCard,
+  Wallet,
+  Banknote,
+  Check,
 } from "lucide-react";
 import { useCreateOrder } from "@/hooks/useCreateOrder";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
-import DeliveryReview from "./DeliveryReview";
 import { deliveryFees } from "@/constants/deliveryFees";
 import TrackingStep from "./tracking/[id]/page";
 
 enum Steps {
   ADDRESS = 1,
+  PAYMENT,
   REVIEW,
   TRACKING,
   DELIVERY_REVIEW,
 }
+
+type PaymentMethod = 'cash' | 'credit_card' | 'wallet';
 
 export default function PickupConfirmation() {
   const { t } = useLanguage();
@@ -47,10 +53,12 @@ export default function PickupConfirmation() {
   const [addresses, setAddresses] = useState<FormInputs[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<FormInputs | null>(null);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
 
   const [isEditing, setIsEditing] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
-  const [notLoggedIn, setNotLoggedIn] = useState(false);
+  const [notLoggedIn] = useState(false);
+  const [loadingBtn, setLoadingBtn] = useState<boolean>(false);
 
   const { user } = useContext(UserAuthContext) ?? {};
   
@@ -96,20 +104,29 @@ export default function PickupConfirmation() {
     reValidateMode: "onChange",
   });
 
-  useEffect(() => {
-    if (user) {
-      fetchAddresses();
-      setIsEditing(false);
+useEffect(() => {
+  if (user) {
+    fetchAddresses();
+    setIsEditing(false);
+    // Set default payment method for customers (since they skip payment step)
+    if (user.role === "customer") {
+      setSelectedPaymentMethod('cash');
     }
-  }, [reset, user]);
+  }
+}, [reset, user]);
 
-  const handleNextStep = () => {
-    if (!selectedAddress) {
-      toast.error("please select address");
+ const handleNextStep = () => {
+  if (!selectedAddress) {
+    toast.error("please select address");
+  } else {
+    // Only buyers go to payment step, customers skip directly to review
+    if (user?.role === "buyer") {
+      goToStep(Steps.PAYMENT);
     } else {
       goToStep(Steps.REVIEW);
     }
-  };
+  }
+};
 
   const goToStep = (step: Steps) => {
     if (step > currentStep) {
@@ -120,7 +137,16 @@ export default function PickupConfirmation() {
     setCurrentStep(step);
   };
 
-  const handleConfirm = async () => {
+  const handlePaymentNext = () => {
+    if (!selectedPaymentMethod) {
+      toast.error("Please select a payment method");
+    } else {
+      goToStep(Steps.REVIEW);
+    }
+  };
+const handleConfirm = async () => {
+  setLoadingBtn(true);
+  try {
     if (user?.role === "buyer") {
       const deliveryFee = selectedAddress?.city
         ? deliveryFees[selectedAddress.city] || 0
@@ -135,6 +161,7 @@ export default function PickupConfirmation() {
           selectedAddress,
           deliveryFee,
           totalPrice: finalTotal,
+          paymentMethod: selectedPaymentMethod,
           user: {
             id: user._id,
             name: user.name,
@@ -144,16 +171,31 @@ export default function PickupConfirmation() {
         })
       );
 
-      router.push(`/payment?total=${finalTotal}`);
+      if (selectedPaymentMethod === 'credit_card') {
+        router.push(`/payment?total=${finalTotal}`);
+        return; // Exit early for credit card payment
+      } else {
+        const result = await createOrder(selectedAddress, cart, user, selectedPaymentMethod);
+        if (result.success) {
+          console.log("Order created successfully:", result.orderId);
+          setCurrentStep(Steps.TRACKING);
+        }
+      }
     } else {
-      const result = await createOrder(selectedAddress, cart, user);
+      // Handle customer orders
+      const result = await createOrder(selectedAddress, cart, user, selectedPaymentMethod);
       if (result.success) {
         console.log("Order created successfully:", result.orderId);
-        // Skip waiting step and go directly to tracking
         setCurrentStep(Steps.TRACKING);
       }
     }
-  };
+  } catch (error) {
+    console.error("Error during order confirmation:", error);
+    toast.error("Failed to confirm order. Please try again.");
+  } finally {
+    setLoadingBtn(false);
+  }
+};
 
   const handleSaveAddress = async (data: FormInputs) => {
     try {
@@ -212,6 +254,23 @@ export default function PickupConfirmation() {
     }
   };
 
+  // Payment method options
+  const paymentMethods = [
+    {
+      id: 'cash' as PaymentMethod,
+      name: 'Cash on Delivery',
+      description: 'Pay when your order arrives',
+      icon: Banknote,
+    },
+    {
+      id: 'credit_card' as PaymentMethod,
+      name: 'Credit/Debit Card',
+      description: 'Pay securely with your card',
+      icon: CreditCard,
+    },
+    
+  ];
+
   if (loading) {
     return <Loader title="your info" />;
   }
@@ -236,28 +295,35 @@ export default function PickupConfirmation() {
   return (
     <div className="lg:w-3xl w-full mx-auto md:p-8 p-5 bg-white rounded-2xl shadow-lg border border-green-100">
       <div className="flex my-3 flex-col md:flex-row items-start md:items-center gap-4 md:gap-0">
-        <Step
-          label={t("pickup.steps.address")}
-          direction={direction}
-          isCurrent={currentStep === Steps.ADDRESS}
-          active={currentStep >= Steps.ADDRESS}
-        />
-        <div
-          className={`hidden md:flex flex-grow h-0.5 mx-2 ${
-            currentStep >= Steps.REVIEW ? "bg-green-700" : "bg-gray-300"
-          }`}
-        />
-        <div
-          className={`flex md:hidden w-0.5 h-6 ${
-            currentStep >= Steps.REVIEW ? "bg-green-700" : "bg-gray-300"
-          }`}
-        />
-        <Step
-          label={t("pickup.steps.review")}
-          direction={direction}
-          isCurrent={currentStep === Steps.REVIEW}
-          active={currentStep >= Steps.REVIEW}
-        />
+   <Step
+  label={t("pickup.steps.address")}
+  direction={direction}
+  isCurrent={currentStep === Steps.ADDRESS}
+  active={currentStep >= Steps.ADDRESS}
+/>
+
+{/* Only show payment step and connectors for buyers */}
+{user?.role === "buyer" && (
+  <>
+    <div className={`hidden md:flex flex-grow h-0.5 mx-2 ${currentStep >= Steps.PAYMENT ? "bg-green-700" : "bg-gray-300"}`} />
+    <div className={`flex md:hidden w-0.5 h-6 ${currentStep >= Steps.PAYMENT ? "bg-green-700" : "bg-gray-300"}`} />
+    <Step
+      label="Payment"
+      direction={direction}
+      isCurrent={currentStep === Steps.PAYMENT}
+      active={currentStep >= Steps.PAYMENT}
+    />
+  </>
+)}
+
+<div className={`hidden md:flex flex-grow h-0.5 mx-2 ${currentStep >= Steps.REVIEW ? "bg-green-700" : "bg-gray-300"}`} />
+<div className={`flex md:hidden w-0.5 h-6 ${currentStep >= Steps.REVIEW ? "bg-green-700" : "bg-gray-300"}`} />
+<Step
+  label={t("pickup.steps.review")}
+  direction={direction}
+  isCurrent={currentStep === Steps.REVIEW}
+  active={currentStep >= Steps.REVIEW}
+/>
         <div
           className={`hidden md:flex flex-grow h-0.5 mx-2 ${
             currentStep >= Steps.TRACKING ? "bg-green-700" : "bg-gray-300"
@@ -513,6 +579,10 @@ export default function PickupConfirmation() {
                   <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
                   <div className="w-8 h-1 bg-gray-300 rounded-full"></div>
                   <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                  <div className="w-8 h-1 bg-gray-300 rounded-full"></div>
+                  <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                  <div className="w-8 h-1 bg-gray-300 rounded-full"></div>
+                  <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
                 </div>
               </div>
             </div>
@@ -520,24 +590,159 @@ export default function PickupConfirmation() {
         </>
       )}
 
+      {currentStep === Steps.PAYMENT && (
+        <div className="max-w-4xl mx-auto p-6 space-y-6">
+          {/* Header */}
+          <div className="text-center space-y-2 mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-4">
+              <Wallet className="w-8 h-8 text-white" />
+            </div>
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+              Payment Method
+            </h2>
+            <p className="text-gray-600">
+              Choose your preferred payment method
+            </p>
+          </div>
+
+          {/* Payment Methods */}
+          <div className="grid gap-4 md:grid-cols-2">
+            {paymentMethods.map((method) => {
+              const IconComponent = method.icon;
+              const isSelected = selectedPaymentMethod === method.id;
+              
+              return (
+                <div
+                  key={method.id}
+                  className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 ${
+                    isSelected
+                      ? 'border-green-500 bg-green-50 shadow-md'
+                      : 'border-gray-200 hover:border-blue-300'
+                  }`}
+                  onClick={() => setSelectedPaymentMethod(method.id)}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={`p-3 rounded-lg ${
+                      method.id === 'cash' ? 'bg-green-100 text-green-600' :
+                      method.id === 'credit_card' ? 'bg-blue-100 text-blue-600' :
+                      'bg-purple-100 text-purple-600'
+                    }`}>
+                      <IconComponent className="w-6 h-6" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-lg">{method.name}</h3>
+                      <p className="text-gray-600 text-sm">{method.description}</p>
+                    </div>
+                    {isSelected && (
+                      <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                        <Check className="w-3 h-3 text-white" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+
+            {user?.walletBalance && user.walletBalance > 0 && (
+              <div
+                className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 ${
+                  selectedPaymentMethod === 'wallet'
+                    ? 'border-green-500 bg-green-50 shadow-md'
+                    : 'border-gray-200 hover:border-blue-300'
+                }`}
+                onClick={() => setSelectedPaymentMethod('wallet')}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-purple-100 rounded-lg text-purple-600">
+                    <Wallet className="w-6 h-6" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg">Wallet Balance</h3>
+                    <p className="text-gray-600 text-sm">
+                      Use your wallet balance (${user.walletBalance.toFixed(2)} available)
+                    </p>
+                  </div>
+                  {selectedPaymentMethod === 'wallet' && (
+                    <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                      <Check className="w-3 h-3 text-white" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Order Summary */}
+          <div className="bg-gray-50 rounded-xl p-6 space-y-3">
+            <h3 className="font-semibold text-gray-800 mb-4">Order Summary</h3>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Subtotal</span>
+              <span className="font-medium">EGP{totalPrice.toFixed(2)}</span>
+            </div>
+            {selectedAddress?.city && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Delivery Fee</span>
+                <span className="font-medium">
+                  EGP{(deliveryFees[selectedAddress.city] || 0).toFixed(2)}
+                </span>
+              </div>
+            )}
+            <div className="border-t pt-3 flex justify-between font-semibold text-lg">
+              <span>Total</span>
+              <span>
+                EGP{(totalPrice + (selectedAddress?.city ? deliveryFees[selectedAddress.city] || 0 : 0)).toFixed(2)}
+              </span>
+            </div>
+          </div>
+
+          {/* Bottom Actions */}
+          <div className="flex justify-between pt-8 border-t border-gray-200">
+            <Button
+              onClick={() => goToStep(Steps.ADDRESS)}
+              className="px-6 py-3 bg-gray-200 text-gray-700 hover:bg-gray-300"
+            >
+              Back
+            </Button>
+            <Button
+              onClick={handlePaymentNext}
+              disabled={!selectedPaymentMethod}
+              className={`px-6 py-3 flex items-center gap-2 ${
+                selectedPaymentMethod
+                  ? "bg-green-600 hover:bg-green-700 text-white"
+                  : "bg-gray-200 text-gray-500 cursor-not-allowed"
+              }`}
+            >
+              Continue
+              <ChevronRight className="w-5 h-5" />
+            </Button>
+          </div>
+        </div>
+      )}
+
       {currentStep === Steps.REVIEW && (
         <Review
           cartItems={cart}
           formData={formData}
-          onBack={() => setCurrentStep(Steps.ADDRESS)}
-          onConfirm={handleConfirm}
-          loading={false}
+          paymentMethod={selectedPaymentMethod}
+onBack={() => {
+  if (user?.role === "customer") {
+    setCurrentStep(Steps.ADDRESS);
+  } else {
+    setCurrentStep(Steps.PAYMENT);
+  }
+}}          onConfirm={handleConfirm}
+          loading={loadingBtn}
           userRole={user?.role}
         />
       )}
 
-{currentStep === Steps.TRACKING && createdOrderId && (
-  <TrackingStep 
-    orderId={createdOrderId} 
-    onDelivered={() => router.push("/profile")} // Navigate to profile after review is submitted
-    embedded={true}
-  />
-)}
+      {currentStep === Steps.TRACKING && createdOrderId && (
+        <TrackingStep 
+          orderId={createdOrderId} 
+          onDelivered={() => router.push("/profile")}
+          embedded={true}
+        />
+      )}
     </div>
   );
 }
