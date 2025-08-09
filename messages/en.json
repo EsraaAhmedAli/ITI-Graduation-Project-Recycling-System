@@ -72,13 +72,14 @@
 
   "footer": {
     "title": "XChange",
-    "FAQ" : "FAQ",
+    "FAQ": "FAQ",
     "slogan": "Recycle smarter, live cleaner.",
     "quickLinks": "Quick Links",
     "home": "Home",
     "about": "About",
     "cart": "Cart",
     "contact": "Contact",
+    "rewarding": "Recycling Rewards",
     "email": "Email",
     "phone": "Phone",
     "rights": "All rights reserved.",
@@ -191,7 +192,7 @@
         "completed": "Completed",
         "cancelled": "Cancelled",
         "pending": "Pending",
-        "collected" : "Collected"
+        "collected": "Collected"
       },
       "cancelOrder": "cancel order",
       "viewDetails": "View Details",
@@ -218,8 +219,8 @@
     "currency": "EGP",
     "perKg": "per kg",
     "perItem": "per item",
-"OriginalQuantity" : "Original quantity",
-"quantityByDelivery" : "Quantity by delivery",
+    "OriginalQuantity": "Original quantity",
+    "quantityByDelivery": "Quantity by delivery",
     "totalPoints": "Total Points: {{points}}",
     "noItemsTitle": "No Items Found",
     "noItemsDesc": "This order doesn't contain any items.",
@@ -251,7 +252,6 @@
       "receiver": "receiver",
       "powerbank": "powerbank",
       "tea-pot": "tea pot"
-
     }
   },
 
@@ -364,8 +364,8 @@
       "question": "How does the material exchange process work?",
       "answer": "It's simple! Sellers list their items on our platform with photos and descriptions. Buyers browse and select what they need. We handle quality verification, pickup from sellers, and delivery to buyers' doors. Everything is tracked through our platform for transparency."
     },
-    "title" : "Frequently Asked Questions",
-    "slogan" : "                Everything you need to know about our material exchange process",
+    "title": "Frequently Asked Questions",
+    "slogan": "                Everything you need to know about our material exchange process",
     "acceptedMaterials": {
       "question": "What types of materials do you accept?",
       "answer": "We accept a wide variety of materials including furniture, building materials, textiles, books, appliances, and more. Items must be in good condition and pass our quality inspection. We focus on items that can be reused rather than disposed of."

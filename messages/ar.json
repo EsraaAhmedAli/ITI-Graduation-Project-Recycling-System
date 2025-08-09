@@ -72,7 +72,7 @@
   "footer": {
     "title": "بدلها",
     "FAQ": "الاسئلة الأكثر شيوعا",
-
+    "rewarding": "مكافآت إعادة التدوير",
     "slogan": "أعد التدوير بذكاء، وعيش بنظافة.",
     "quickLinks": "روابط سريعة",
     "home": "الرئيسية",
@@ -186,8 +186,7 @@
         "completed": "مكتملة",
         "cancelled": "ملغاة",
         "pending": "قيد الانتظار",
-                "collected" : "في المخزن"
-
+        "collected": "في المخزن"
       },
       "viewDetails": "عرض التفاصيل",
       "cancelConfirm": "هل أنت متأكد من إلغاء هذا الطلب؟",
@@ -209,8 +208,8 @@
     "unnamedItem": "عنصر بدون اسم",
     "perKg": "لكل كجم",
     "perItem": "لكل قطعة",
-    "OriginalQuantity" : "الكمية الأصلية",
-"quantityByDelivery" : "الكمية بواسطه عامل التوصيل",
+    "OriginalQuantity": "الكمية الأصلية",
+    "quantityByDelivery": "الكمية بواسطه عامل التوصيل",
 
     "orderTotal": "إجمالي الطلب",
     "totalPrice": "{{total}} جنيه",
