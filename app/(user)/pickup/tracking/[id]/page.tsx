@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import api from "@/lib/axios";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CheckCircle,
   Truck,
@@ -11,12 +11,15 @@ import {
   Phone,
   User,
   Shield,
+  Star,
+  MessageCircle,
 } from "lucide-react";
 import { OrderWithDetails } from "@/components/Types/orders.type";
 import { SafetyDialog, SafetyReportData } from "../../SafetyDialog";
 import { useParams } from "next/navigation";
-import DeliveryReview from "../../DeliveryReview";
 import { useUserAuth } from "@/context/AuthFormContext";
+import { useReviews } from "@/hooks/useReviews";
+import DeliveryReviewModal from "../../DeliveryReview";
 
 const trackingSteps = [
   {
@@ -49,12 +52,19 @@ interface TrackingStepProps {
   orderId?: string; // Optional - can come from props
   onDelivered?: () => void; // Optional callback
   embedded?: boolean; // Whether it's embedded in pickup flow or standalone
+  // Optional props from ReviewManager wrapper
+  userReviews?: any[];
+  refetchReviews?: () => Promise<any>;
+  isReviewsLoading?: boolean;
 }
 
 export default function TrackingStep({ 
   orderId: propOrderId, 
   onDelivered, 
-  embedded = false 
+  embedded = false,
+  userReviews: propsUserReviews,
+  refetchReviews: propsRefetchReviews,
+  isReviewsLoading: propsIsReviewsLoading 
 }: TrackingStepProps) {
   const [trackingStarted] = useState(true);
   const [lastDriverStatus, setLastDriverStatus] = useState<string | null>(null);
@@ -65,12 +75,38 @@ export default function TrackingStep({
   });
   const [showSafetyDialog, setShowSafetyDialog] = useState(false);
   const [showDeliveryReview, setShowDeliveryReview] = useState(false);
-  const {user} = useUserAuth()
-
+  const [hasShownCompletionModal, setHasShownCompletionModal] = useState(false);
+  
+  const {user} = useUserAuth();
+  const queryClient = useQueryClient();
+  
   // Get orderId from route parameters (for standalone page) or props (for embedded use)
   const params = useParams();
   const routeOrderId = params?.id as string;
   const orderId = propOrderId || routeOrderId;
+
+  // Use the same review system as ReviewManager - prioritize props from wrapper
+  const hookReviews = useReviews();
+  const { 
+    userReviews, 
+    refetch: refetchReviews, 
+    isLoading: isReviewsLoading 
+  } = {
+    userReviews: propsUserReviews || hookReviews.userReviews,
+    refetch: propsRefetchReviews || hookReviews.refetch,
+    isLoading: propsIsReviewsLoading || hookReviews.isLoading
+  };
+
+  // Find existing review using the same logic as ReviewManager
+  const existingReview = orderId ? userReviews.find(review => review.orderId === orderId) : null;
+
+  // Force refetch reviews when component mounts in embedded mode
+  useEffect(() => {
+    if (embedded && orderId) {
+      console.log("TrackingStep mounted in embedded mode, forcing review refetch...");
+      refetchReviews();
+    }
+  }, [embedded, orderId, refetchReviews]);
 
   const getRefetchInterval = (status: string) => {
     switch (status) {
@@ -165,48 +201,80 @@ export default function TrackingStep({
     }
   }, [order?.status]);
 
+  // Handle completed order - show review modal only once if no existing review
   useEffect(() => {
-    if (order?.status === "completed") {
-      // Show delivery review form when order is completed
-      setShowDeliveryReview(true);
-      
-      // Call onDelivered callback if provided (for embedded use)
-      if (onDelivered) {
-        onDelivered();
-      }
-      // Note: Removed auto-redirect logic since we want to show review first
+    if (order?.status === "completed" && !hasShownCompletionModal && !existingReview && !isReviewsLoading) {
+      const timer = setTimeout(() => {
+        setShowDeliveryReview(true);
+        setHasShownCompletionModal(true);
+      }, 1000);
+
+      return () => clearTimeout(timer);
     }
-  }, [order?.status, onDelivered]);
+  }, [order?.status, existingReview, hasShownCompletionModal, isReviewsLoading]);
 
   const handleSafetyReport = (report: SafetyReportData) => {
     safetyReportMutation.mutate(report);
   };
 
-  const handleDeliveryReviewSubmitted = () => {
+  // Debug: Force a complete data refresh on review submission
+  const handleDeliveryReviewSubmitted = async () => {
+    console.log("🔄 Review submitted, starting refresh process...");
+    
+    try {
+      // First, invalidate all related queries
+      queryClient.invalidateQueries({
+        queryKey: ["user-reviews"]
+      });
+      
+      // Force refetch reviews with explicit await
+      console.log("🔄 Forcing reviews refetch...");
+      const result = await refetchReviews();
+      console.log("✅ Reviews refetched result:", result);
+      
+      // Also invalidate any order-specific review queries
+      queryClient.invalidateQueries({
+        queryKey: ["/api/orders", orderId, "review"]
+      });
+      
+      // Add a delay and force a state update
+      setTimeout(async () => {
+        console.log("🔄 Second refetch attempt...");
+        await refetchReviews();
+        console.log("📊 Current reviews count:", userReviews.length);
+        console.log("📊 Looking for review with orderId:", orderId);
+        const foundReview = userReviews.find(r => r.orderId === orderId);
+        console.log("📊 Found existing review:", foundReview);
+      }, 500);
+      
+    } catch (error) {
+      console.error("❌ Failed to refetch reviews:", error);
+    }
+    
     setShowDeliveryReview(false);
     
     if (embedded) {
-      // If embedded in pickup flow, call onDelivered to continue the flow
       if (onDelivered) {
         onDelivered();
       }
     } else {
-      // If standalone, redirect to profile
-      window.location.href = "/profile";
+      setTimeout(() => {
+        window.location.href = "/profile";
+      }, 500);
     }
   };
 
-  // If delivery review should be shown, show it instead of tracking
-  if (showDeliveryReview && order?.status === "completed") {
-    return (
-      <div className={embedded ? "space-y-6" : "max-w-4xl mx-auto p-6 space-y-6"}>
-        <DeliveryReview 
-          orderId={orderId}
-          onSubmitted={handleDeliveryReviewSubmitted}
-        />
-      </div>
-    );
-  }
+  const handleCloseReview = () => {
+    setShowDeliveryReview(false);
+    
+    if (embedded && onDelivered) {
+      onDelivered();
+    }
+  };
+
+  const handleShowReviewModal = () => {
+    setShowDeliveryReview(true);
+  };
 
   const handleEmergencyContact = () => {
     emergencyContactMutation.mutate();
@@ -221,6 +289,25 @@ export default function TrackingStep({
   };
 
   const currentStepIndex = getCurrentStepIndex();
+
+  // Helper function to get courier name (same as ReviewManager)
+  const getCourierDisplayName = (courier: any) => {
+    if (!courier) return "Unknown Courier";
+    
+    return courier.name || 
+           courier.userName || 
+           courier.email?.split('@')[0] || 
+           courier.phoneNumber || 
+           "Unknown Courier";
+  };
+
+  // Prepare order info for the review modal (same structure as ReviewManager)
+  const orderInfo = order ? {
+    orderNumber: order.orderNumber || orderId?.slice(-8).toUpperCase(),
+    courierName: getCourierDisplayName(order.courier) || order.driverName,
+    orderDate: order.createdAt || order.orderDate,
+    itemCount: order.items?.length || 0
+  } : undefined;
 
   // Show error if no orderId
   if (!orderId) {
@@ -250,6 +337,8 @@ export default function TrackingStep({
 
   return (
     <div className={embedded ? "space-y-6" : "max-w-4xl mx-auto p-6 space-y-6"}>
+   
+
       {/* Progress Indicator */}
       <div className="bg-white border border-gray-200 rounded-xl p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-6">
@@ -266,64 +355,80 @@ export default function TrackingStep({
               }}
             />
           </div>
-        <div className="relative flex justify-between">
-  {trackingSteps
-    .filter(step => !(user?.role === 'buyer' && step.id === 'collected')) // Skip collected step for buyers
-    .map((step, index) => {
-      const Icon = step.icon;
-      const isActive = index <= currentStepIndex;
-      const isCurrent = index === currentStepIndex;
-      return (
-        <div key={step.id} className="flex flex-col items-center">
-          <div
-            className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-all duration-300 ${
-              isActive
-                ? "bg-green-500 text-white shadow-lg"
-                : "bg-gray-200 text-gray-400"
-            }`}>
-            <Icon className="w-6 h-6" />
+          <div className="relative flex justify-between">
+            {trackingSteps
+              .filter(step => !(user?.role === 'buyer' && step.id === 'collected'))
+              .map((step, index) => {
+                const Icon = step.icon;
+                const isActive = index <= currentStepIndex;
+                const isCurrent = index === currentStepIndex;
+                return (
+                  <div key={step.id} className="flex flex-col items-center">
+                    <div
+                      className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-all duration-300 ${
+                        isActive
+                          ? "bg-green-500 text-white shadow-lg"
+                          : "bg-gray-200 text-gray-400"
+                      }`}>
+                      <Icon className="w-6 h-6" />
+                    </div>
+                    <div className="text-center max-w-24">
+                      <p
+                        className={`text-sm font-medium ${
+                          isCurrent
+                            ? "text-green-600"
+                            : isActive
+                            ? "text-gray-700"
+                            : "text-gray-400"
+                        }`}>
+                        {step.label}
+                      </p>
+                      <p
+                        className={`text-xs mt-1 ${
+                          isCurrent
+                            ? "text-green-600"
+                            : isActive
+                            ? "text-gray-600"
+                            : "text-gray-400"
+                        }`}>
+                        {step.description}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
           </div>
-          <div className="text-center max-w-24">
-            <p
-              className={`text-sm font-medium ${
-                isCurrent
-                  ? "text-green-600"
-                  : isActive
-                  ? "text-gray-700"
-                  : "text-gray-400"
-              }`}>
-              {step.label}
-            </p>
-            <p
-              className={`text-xs mt-1 ${
-                isCurrent
-                  ? "text-green-600"
-                  : isActive
-                  ? "text-gray-600"
-                  : "text-gray-400"
-              }`}>
-              {step.description}
-            </p>
-          </div>
-        </div>
-      );
-    })}
-</div>
         </div>
       </div>
 
       {/* Main Status Card */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-8 text-center relative">
-        <div className="w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-6">
-          <Truck className="text-white text-3xl" />
+      <div className={`border rounded-xl p-8 text-center relative ${
+        order.status === "completed" 
+          ? "bg-green-50 border-green-200" 
+          : "bg-blue-50 border-blue-200"
+      }`}>
+        <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${
+          order.status === "completed" 
+            ? "bg-green-500" 
+            : "bg-blue-500"
+        }`}>
+          {order.status === "completed" ? (
+            <CheckCircle className="text-white text-3xl" />
+          ) : (
+            <Truck className="text-white text-3xl" />
+          )}
         </div>
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           {trackingSteps[currentStepIndex]?.label || "Order in Transit"}
         </h1>
         <p className="text-gray-600 mb-4">
-          Order #{orderId?.slice(-8) || orderId.slice(-8)}
+          Order #{orderId?.slice(-8) || orderId?.slice(-8)}
         </p>
-        <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-lg font-semibold">
+        <div className={`inline-flex items-center px-4 py-2 rounded-full text-lg font-semibold ${
+          order.status === "completed" 
+            ? "bg-green-100 text-green-800" 
+            : "bg-blue-100 text-blue-800"
+        }`}>
           {trackingSteps[currentStepIndex]?.description || "In Progress"}
         </div>
         <div
@@ -331,15 +436,49 @@ export default function TrackingStep({
           style={truckPosition}></div>
       </div>
 
-      {/* Safety Button Only */}
-      <div className="flex justify-center">
-        <button
-          onClick={() => setShowSafetyDialog(true)}
-          className="flex items-center justify-center gap-2 px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium transition-colors duration-200">
-          <Shield className="w-4 h-4" />
-          Report Safety Issue
-        </button>
-      </div>
+      {/* Completion Actions - Show only when completed */}
+      {order.status === "completed" && (
+        <div className="bg-green-50 border border-green-200 rounded-xl p-6">
+          <div className="text-center mb-4">
+            <h3 className="text-lg font-semibold text-green-800 mb-2">
+              🎉 Pickup Completed Successfully!
+            </h3>
+            <p className="text-green-700">
+              Your items have been collected and your rewards have been processed.
+            </p>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              onClick={handleShowReviewModal}
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors duration-200"
+            >
+              <Star className="w-4 h-4" />
+              {existingReview ? "Edit Review" : "Rate Experience"}
+            </button>
+            
+            {existingReview && (
+              <div className="flex items-center justify-center gap-2 px-4 py-2 bg-green-100 text-green-800 rounded-lg">
+                <Star className="w-4 h-4 fill-current" />
+                <span className="font-medium">{existingReview.stars}/5</span>
+                <MessageCircle className="w-4 h-4" />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Safety Button - Show only when not completed */}
+      {order.status !== "completed" && (
+        <div className="flex justify-center">
+          <button
+            onClick={() => setShowSafetyDialog(true)}
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium transition-colors duration-200">
+            <Shield className="w-4 h-4" />
+            Report Safety Issue
+          </button>
+        </div>
+      )}
 
       {/* Driver Information */}
       {order.driverName && (
@@ -411,14 +550,16 @@ export default function TrackingStep({
               <CheckCircle className="w-5 h-5 text-purple-600" />
             </div>
             <h2 className="text-xl font-semibold text-gray-900">
-              Items to Pickup
+              Items {order.status === "completed" ? "Collected" : "to Pickup"}
             </h2>
           </div>
           <div className="space-y-3">
             {order.items.map((item: any, index: number) => (
               <div
                 key={index}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                className={`flex items-center justify-between p-3 rounded-lg ${
+                  order.status === "completed" ? "bg-green-50" : "bg-gray-50"
+                }`}>
                 <div className="flex items-center gap-3">
                   {item.image && (
                     <img
@@ -440,7 +581,9 @@ export default function TrackingStep({
                   <p className="font-medium text-gray-900">
                     {item.price * item.quantity} EGP
                   </p>
-                  <p className="text-sm text-green-600">
+                  <p className={`text-sm ${
+                    order.status === "completed" ? "text-green-600" : "text-green-600"
+                  }`}>
                     {item.points * item.quantity} points
                   </p>
                 </div>
@@ -451,8 +594,14 @@ export default function TrackingStep({
       )}
 
       {/* Status Message */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center">
-        <p className="text-blue-800 font-medium">
+      <div className={`border rounded-xl p-6 text-center ${
+        order.status === "completed" 
+          ? "bg-green-50 border-green-200" 
+          : "bg-blue-50 border-blue-200"
+      }`}>
+        <p className={`font-medium ${
+          order.status === "completed" ? "text-green-800" : "text-blue-800"
+        }`}>
           {(() => {
             const currentStep = trackingSteps[currentStepIndex];
             if (!currentStep) return "Order is being processed";
@@ -465,7 +614,7 @@ export default function TrackingStep({
               case "collected":
                 return "Your items have been collected! They're now being processed for rewards.";
               case "completed":
-                return "Pickup completed successfully! Your rewards have been added to your account.";
+                return "🎉 Pickup completed successfully! Your rewards have been added to your account. Thank you for choosing our service!";
               default:
                 return currentStep.description;
             }
@@ -473,6 +622,24 @@ export default function TrackingStep({
         </p>
       </div>
 
+      {/* Delivery Review Modal */}
+      <DeliveryReviewModal
+        isOpen={showDeliveryReview}
+        onClose={handleCloseReview}
+        orderId={orderId}
+        orderInfo={orderInfo}
+        existingReview={
+          existingReview
+            ? {
+                rating: existingReview.stars,
+                comments: existingReview.comment,
+              }
+            : undefined
+        }
+        onSubmitted={handleDeliveryReviewSubmitted}
+      />
+
+      {/* Safety Dialog */}
       <SafetyDialog
         open={showSafetyDialog}
         onClose={() => setShowSafetyDialog(false)}
