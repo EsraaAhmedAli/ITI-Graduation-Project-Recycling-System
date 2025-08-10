@@ -26,6 +26,8 @@ import { useLanguage } from "@/context/LanguageContext";
 import { ReceiptLink } from "../../../components/RecipetLink";
 import useOrders from "@/hooks/useGetOrders";
 import { useUserPoints } from "@/context/UserPointsContext";
+import Header from "@/components/profile/header";
+import { rewardLevels } from "@/constants/rewardsTiers";
 
 export default function ProfilePage() {
   return (
@@ -36,11 +38,11 @@ export default function ProfilePage() {
 }
 
 function ProfileContent() {
-  const { user, token, setUserRewards } = useUserAuth();
-  console.log(user?.role);
+  const { user, token } = useUserAuth();
 
   // CHANGED: Use context hook instead of custom hook with parameters
-  const { userPoints, pointsLoading, getUserPoints } = useUserPoints();
+  const { userPoints, pointsLoading, totalCompletedOrders, getUserPoints } =
+    useUserPoints();
 
   const [activeTab, setActiveTab] = useState("incoming");
   const [isRecyclingModalOpen, setIsRecyclingModalOpen] = useState(false);
@@ -81,7 +83,7 @@ function ProfileContent() {
   });
 
   // Keep total completed orders count for stats (separate call)
-  const [totalCompletedOrders, setTotalCompletedOrders] = useState(0);
+  // const [totalCompletedOrders, setTotalCompletedOrders] = useState(0);
 
   const loadMoreOrders = async () => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -101,21 +103,30 @@ function ProfileContent() {
   };
 
   // Fetch total completed orders count for stats (separate call)
-  useEffect(() => {
-    const fetchCompletedOrdersCount = async () => {
-      try {
-        const res = await api.get("/orders?status=completed&limit=1");
-        setTotalCompletedOrders(res.data.totalCount || 0);
-      } catch (error) {
-        console.error("Failed to fetch completed orders count:", error);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchCompletedOrdersCount = async () => {
+  //     try {
+  //       const res = await api.get("/orders?status=completed&limit=1");
+  //       setTotalCompletedOrders(res.data.totalCount || 0);
+  //     } catch (error) {
+  //       console.error("Failed to fetch completed orders count:", error);
+  //     }
+  //   };
 
-    if (user && token) {
-      fetchCompletedOrdersCount();
-      // REMOVED: getUserPoints() call since it's now handled automatically by context
-    }
-  }, [user, token]); // REMOVED: getUserPoints from dependency array
+  //   if (user && token) {
+  //     fetchCompletedOrdersCount();
+
+  //     // REMOVED: getUserPoints() call since it's now handled automatically by context
+  //   }
+  // }, [user, token]); // REMOVED: getUserPoints from dependency array
+
+  // useEffect(() => {
+  //   // Fetch user points on mount
+  //   setUserRewards({
+  //     currentPoints: userPoints?.totalPoints || 0,
+  //     totalOrders: totalCompletedOrders,
+  //   });
+  // }, [userPoints, totalCompletedOrders, setUserRewards]);
 
   // FIXED: Updated function to accept both items and orderStatus
   const openItemsModal = (items: any[], orderStatus: string) => {
@@ -214,12 +225,18 @@ function ProfileContent() {
       fetchReviewsData();
     }
   }, [activeTab, user, token]);
+  const userTier = rewardLevels.find(
+    (tier) =>
+      userPoints.totalPoints >= tier.minPoints &&
+      userPoints.totalPoints <= tier.maxPoints
+  );
 
   return (
     <div className="h-auto bg-green-50 px-4">
       <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-xl p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap">
+          {/* Left: Avatar + Info */}
           <div className="flex items-center space-x-4">
             <Avatar
               img={
@@ -235,14 +252,26 @@ function ProfileContent() {
               </h2>
               <p className="text-sm text-gray-500">{user?.email}</p>
               <p className="text-sm text-gray-500">
-                {user?.phoneNumber.padStart(11, "0")}
+                {user?.phoneNumber?.padStart(11, "0")}
               </p>
               <p className="text-xs text-gray-400">Cairo, July 2025</p>
             </div>
           </div>
 
-          <div className="flex gap-4 items-center mt-4">
-            {/* Return & Earn Button */}
+          {/* Right: Member Tier Card */}
+          {userTier && (
+            <div
+              className={`flex items-center gap-2 border rounded-lg px-3 py-2 shadow-sm ${userTier.color}`}
+            >
+              <userTier.icon size={20} />
+              <span className="text-sm font-medium">
+                {userTier.badge} {userTier.name}
+              </span>
+            </div>
+          )}
+
+          {/* Buttons */}
+          <div className="flex gap-4 items-center mt-4 w-full sm:w-auto">
             {user?.role !== "buyer" && (
               <button
                 onClick={() => setIsRecyclingModalOpen(true)}
@@ -252,8 +281,6 @@ function ProfileContent() {
                 {t("profile.returnEarn")}
               </button>
             )}
-
-            {/* Edit Profile Link */}
             <Link
               href="/editprofile"
               className="flex items-center gap-2 bg-white border border-green-600 text-green-700 px-4 py-2 rounded-full hover:bg-green-100 transition-colors duration-200"
@@ -263,7 +290,6 @@ function ProfileContent() {
             </Link>
           </div>
         </div>
-
         <RecyclingModal
           onPointsUpdated={refreshPoints}
           modalOpen={isRecyclingModalOpen}
@@ -284,7 +310,7 @@ function ProfileContent() {
               loading={pointsLoading}
             />
           )}
-          <MembershipTier totalPoints={userPoints?.totalPoints} />
+          <MembershipTier totalPoints={600} />
         </div>
 
         {user?.role == "customer" && <PointsActivity userPoints={userPoints} />}

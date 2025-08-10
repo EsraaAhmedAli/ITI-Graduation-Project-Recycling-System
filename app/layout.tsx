@@ -44,26 +44,26 @@ export default function RootLayout({
           <UserAuthProvider>
             <ReactQueryProvider>
               <UserPointsWrapper>
-
-              <CartProvider>
-                <OfflineProvider>
-                  {" "}
-                  {/* Add OfflineProvider here */}
-                  <Toaster />
-                  <NotificationProvider>
-                    <ToastContainer />
-                    <GuestSessionProvider>
-                      <GoogleOAuthProvider
-                        clientId={process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID!}
-                      >
-                        <LayoutWrapper>{children}</LayoutWrapper>
-                      </GoogleOAuthProvider>
-                    </GuestSessionProvider>
-                  </NotificationProvider>
-                </OfflineProvider>
-              </CartProvider>
-                            </UserPointsWrapper>
-
+                <CartProvider>
+                  <OfflineProvider>
+                    {" "}
+                    {/* Add OfflineProvider here */}
+                    <Toaster />
+                    <NotificationProvider>
+                      <ToastContainer />
+                      <GuestSessionProvider>
+                        <GoogleOAuthProvider
+                          clientId={
+                            process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID!
+                          }
+                        >
+                          <LayoutWrapper>{children}</LayoutWrapper>
+                        </GoogleOAuthProvider>
+                      </GuestSessionProvider>
+                    </NotificationProvider>
+                  </OfflineProvider>
+                </CartProvider>
+              </UserPointsWrapper>
             </ReactQueryProvider>
           </UserAuthProvider>
         </LanguageProvider>

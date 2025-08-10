@@ -10,114 +10,15 @@ import {
   Zap,
   Target,
 } from "lucide-react";
+import { rewardLevels } from "@/constants/rewardsTiers";
 import { useUserAuth } from "@/context/AuthFormContext";
+import { useUserPoints } from "@/context/UserPointsContext";
 
 const RecyclingRewardsSystem = () => {
   // Sample customer data - replace with real data from your API
-  const { user, userRewards } = useUserAuth();
+  const { user } = useUserAuth();
+  const { userPoints, totalCompletedOrders } = useUserPoints();
 
-  // Define your reward levels and badges
-  const rewardLevels = [
-    {
-      id: 1,
-      name: "Eco Starter",
-      minPoints: 0,
-      maxPoints: 499,
-      color: "bg-gray-100 text-gray-800 border-gray-300",
-      icon: Recycle,
-      benefits: [
-        "5 points per recycling order",
-        "Welcome bonus: 50 points",
-        "Basic recycling tips",
-      ],
-      badge: "🌱",
-    },
-    {
-      id: 2,
-      name: "Green Helper",
-      minPoints: 500,
-      maxPoints: 999,
-      color: "bg-green-100 text-green-800 border-green-300",
-      icon: Target,
-      benefits: [
-        "7 points per recycling order",
-        "Monthly bonus: 25 points",
-        "Free pickup scheduling",
-        "Eco-friendly tips newsletter",
-      ],
-      badge: "♻️",
-    },
-    {
-      id: 3,
-      name: "Silver Recycler",
-      minPoints: 1000,
-      maxPoints: 1999,
-      color: "bg-gray-200 text-gray-700 border-gray-400",
-      icon: Award,
-      benefits: [
-        "10 points per recycling order",
-        "Priority customer support",
-        "Monthly bonus: 50 points",
-        "5% cash redemption bonus",
-        "Quarterly eco-product vouchers",
-      ],
-      badge: "🥈",
-    },
-    {
-      id: 4,
-      name: "Gold Guardian",
-      minPoints: 2000,
-      maxPoints: 3999,
-      color: "bg-yellow-100 text-yellow-800 border-yellow-300",
-      icon: Star,
-      benefits: [
-        "15 points per recycling order",
-        "VIP customer support",
-        "Monthly bonus: 100 points",
-        "10% cash redemption bonus",
-        "Free eco-product samples",
-        "Referral bonus: 200 points",
-      ],
-      badge: "🥇",
-    },
-    {
-      id: 5,
-      name: "Platinum Pioneer",
-      minPoints: 4000,
-      maxPoints: 7999,
-      color: "bg-blue-100 text-blue-800 border-blue-300",
-      icon: Trophy,
-      benefits: [
-        "20 points per recycling order",
-        "Dedicated account manager",
-        "Monthly bonus: 150 points",
-        "15% cash redemption bonus",
-        "Exclusive eco-events invitation",
-        "Custom pickup scheduling",
-        "Sustainability consultation",
-      ],
-      badge: "💎",
-    },
-    {
-      id: 6,
-      name: "Diamond Elite",
-      minPoints: 8000,
-      maxPoints: 999999,
-      color: "bg-purple-100 text-purple-800 border-purple-300",
-      icon: Crown,
-      benefits: [
-        "25 points per recycling order",
-        "Personal sustainability advisor",
-        "Monthly bonus: 250 points",
-        "20% cash redemption bonus",
-        "Annual eco-trip voucher",
-        "Beta access to new services",
-        "Environmental impact reports",
-        "Community ambassador program",
-      ],
-      badge: "👑",
-    },
-  ];
   // Function to calculate current level based on points
   const calculateCurrentLevel = (points) => {
     for (const level of rewardLevels) {
@@ -147,16 +48,16 @@ const RecyclingRewardsSystem = () => {
   };
 
   // Initialize customer data with calculations
-  const userPoints = userRewards?.currentPoints || 0;
-  const totalCompletedOrders = userRewards?.totalOrders || 0;
-  const currentLevelData = calculateCurrentLevel(userPoints);
+  const currentUserPoints = userPoints?.totalPoints || 0;
+  const currentTotalCompletedOrders = totalCompletedOrders || 0;
+  const currentLevelData = calculateCurrentLevel(currentUserPoints);
   const nextLevelData = calculateNextLevel(userPoints);
   const pointsToNextLevel = calculatePointsToNext(userPoints);
 
   const [customerData, setCustomerData] = useState({
     name: user?.name || "Guest User",
-    currentPoints: userPoints,
-    totalOrders: totalCompletedOrders,
+    currentPoints: 1200,
+    totalOrders: currentTotalCompletedOrders,
     currentLevel: currentLevelData?.name || "Eco Starter",
     nextLevel: nextLevelData?.name || "Max Level Reached",
     pointsToNext: pointsToNextLevel,
