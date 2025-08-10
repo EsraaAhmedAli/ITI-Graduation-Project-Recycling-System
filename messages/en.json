@@ -180,7 +180,8 @@
       "incoming": "Incoming",
       "completed": "Completed",
       "cancelled": "Cancelled",
-      "payments": "Payment"
+      "payments": "Payment",
+      "reviews" : "Reviews"
     },
     "orders": {
       "loading": " orders...",

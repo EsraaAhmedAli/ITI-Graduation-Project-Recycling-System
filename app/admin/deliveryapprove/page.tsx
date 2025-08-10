@@ -1,244 +1,17 @@
 // Enhanced version of your delivery applications page with delivery reviews
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import api from "@/lib/axios";
 import Button from "@/components/common/Button";
 import DynamicTable from "@/components/shared/dashboardTable";
 import DeliveryAttachments from "@/components/shared/DeliveryAttachements";
 import { toast } from "react-hot-toast";
-import { Label, Modal, ModalBody, ModalHeader, Textarea, TextInput } from "flowbite-react";
+import { Modal, ModalBody, ModalHeader, TextInput } from "flowbite-react";
 import Loader from "@/components/common/loader";
 import { useQuery } from "@tanstack/react-query";
-import { Star, Eye, User, Calendar, MessageSquare, ChevronLeft, ChevronRight } from "lucide-react";
-import { RatingModal } from "@/components/ratingModal";
-
-// Rating Display Component
-
-const RatingDisplay = ({ rating, totalReviews, size = "sm" }: {
-  rating: number;
-  totalReviews: number;
-  size?: "sm" | "md" | "lg";
-}) => {
-  const starSize = size === "lg" ? "w-5 h-5" : size === "md" ? "w-4 h-4" : "w-3 h-3";
-  const textSize = size === "lg" ? "text-base" : size === "md" ? "text-sm" : "text-xs";
-  
-  if (totalReviews === 0) {
-    return (
-      <div className="flex items-center gap-1">
-        <div className="flex">
-          {[1, 2, 3, 4, 5].map((star) => (
-            <Star key={star} className={`${starSize} text-gray-300`} />
-          ))}
-        </div>
-        <span className={`${textSize} text-gray-500 ml-1`}>No reviews</span>
-      </div>
-    );
-  }
-  return (
-    <div className="flex items-center gap-1">
-      <div className="flex">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star
-            key={star}
-            className={`${starSize} ${
-              star <= Math.round(rating)
-                ? "text-yellow-400 fill-current"
-                : "text-gray-300"
-            }`}
-          />
-        ))}
-      </div>
-      <span className={`${textSize} text-gray-700 ml-1 font-medium`}>
-        {rating.toFixed(1)}
-      </span>
-      <span className={`${textSize} text-gray-500`}>
-        ({totalReviews} review{totalReviews !== 1 ? 's' : ''})
-      </span>
-    </div>
-  );
-};
-
-// Reviews Modal Component
-const ReviewsModal = ({ 
-  isOpen, 
-  onClose, 
-  courierId,
-  courierName 
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  courierId: string;
-  courierName: string;
-}) => {
-  const [reviews, setReviews] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [courierStats, setCourierStats] = useState({ averageRating: 0, totalReviews: 0 });
-  const [pagination, setPagination] = useState({
-    currentPage: 1,
-    totalPages: 1,
-    hasNext: false,
-    hasPrev: false
-  });
-
-  const fetchReviews = async (pageNum = 1) => {
-    if (!courierId) return;
-    
-    setLoading(true);
-    try {
-      const response = await api.get(`/reviews/courier/${courierId}?page=${pageNum}&limit=5`);
-      const data = response.data;
-      
-      setReviews(data.reviews || []);
-      setCourierStats({
-        averageRating: data.courier?.averageRating || 0,
-        totalReviews: data.courier?.totalReviews || 0
-      });
-      setPagination(data.pagination || {
-        currentPage: pageNum,
-        totalPages: 1,
-        hasNext: false,
-        hasPrev: false
-      });
-    } catch (error) {
-      console.error("Error fetching reviews:", error);
-      toast.error("Failed to load reviews");
-      setReviews([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (isOpen && courierId) {
-      fetchReviews(1);
-    }
-  }, [isOpen, courierId]);
-
-  const handlePageChange = (newPage: number) => {
-    fetchReviews(newPage);
-  };
+import ReviewsModal, { RatingModal } from "@/components/ratingModal";
 
 
-  if (!isOpen) return null;
-
-  return (
-    <Modal show={isOpen} onClose={onClose} size="lg">
-      <ModalHeader>
-        <div className="flex items-center gap-3">
-          <User className="w-5 h-5 text-gray-600" />
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">
-              Reviews for {courierName}
-            </h3>
-            <RatingDisplay 
-              rating={courierStats.averageRating} 
-              totalReviews={courierStats.totalReviews} 
-              size="md" 
-            />
-          </div>
-        </div>
-      </ModalHeader>
-      <ModalBody className="p-0">
-        <div className="p-6">
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
-            </div>
-          ) : reviews.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <MessageSquare className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-              <p className="text-lg font-medium">No reviews yet</p>
-              <p className="text-sm">This courier hasn't received any reviews.</p>
-            </div>
-          ) : (
-            <>
-              <div className="space-y-4 mb-6">
-                {reviews.map((review: any, index) => (
-                  <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                          <User className="w-5 h-5 text-green-600" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900">
-                            {review.customerName}
-                          </p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <div className="flex">
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <Star
-                                  key={star}
-                                  className={`w-4 h-4 ${
-                                    star <= review.stars
-                                      ? "text-yellow-400 fill-current"
-                                      : "text-gray-300"
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                            <span className="text-sm text-gray-600">
-                              {review.stars} star{review.stars !== 1 ? 's' : ''}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs text-gray-500 flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {new Date(review.reviewedAt).toLocaleDateString()}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          Order: {new Date(review.orderDate).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                    {review.comment && (
-                      <div className="pl-13">
-                        <p className="text-sm text-gray-700 italic">
-                          "{review.comment}"
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-              
-              {/* Pagination */}
-              {pagination.totalPages > 1 && (
-                <div className="flex items-center justify-between border-t pt-4">
-                  <div className="text-sm text-gray-500">
-                    Page {pagination.currentPage} of {pagination.totalPages}
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handlePageChange(pagination.currentPage - 1)}
-                      disabled={!pagination.hasPrev}
-                      className="flex items-center gap-1 px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                      Previous
-                    </button>
-                    <button
-                      onClick={() => handlePageChange(pagination.currentPage + 1)}
-                      disabled={!pagination.hasNext}
-                      className="flex items-center gap-1 px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Next
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </ModalBody>
-    </Modal>
-  );
-};
-
-// Enhanced Decline/Revoke Modal Component
 const ActionModal = ({ 
   isOpen, 
   onClose, 
@@ -341,14 +114,7 @@ export default function Page() {
   // Reviews modal state
   const [showReviewsModal, setShowReviewsModal] = useState(false);
   const [selectedCourier, setSelectedCourier] = useState<{ id: string; name: string } | null>(null);
-  const [ratingModal,setRatingModal] = useState(false)
-  const handleOpenRatingModal =(selectedCourierId)=>{
-setSelectedCourier(selectedCourierId);
-    
-    console.log('modal opend');
-    setRatingModal(true)
-    
-  }
+
   const handleApprove = async (item: any) => {
     const userId = item.userId;
     setActionLoading(userId);
@@ -505,7 +271,10 @@ setSelectedCourier(selectedCourierId);
  <>
           <div className="flex items-center gap-2">
         <button           className="text-green-500 hover:text-green-700 underline text-sm"
- onClick={()=>handleOpenRatingModal(item.userId)}>view ratings</button>
+onClick={() => {
+  setSelectedCourier({ id: item.userId, name: item.name });
+  setShowReviewsModal(true);
+}}>view ratings</button>
           </div>
  </>
         );
@@ -716,7 +485,6 @@ setSelectedCourier(selectedCourierId);
             actionType={actionType}
           />
 
-          {/* Reviews Modal */}
           <ReviewsModal
             isOpen={showReviewsModal}
             onClose={() => {
@@ -726,7 +494,6 @@ setSelectedCourier(selectedCourierId);
             courierId={selectedCourier?.id || ""}
             courierName={selectedCourier?.name || ""}
           />
-                    <RatingModal courierId={selectedCourier} show={ratingModal} onclose={()=>setRatingModal(false)} />
 
         </>
       )}
