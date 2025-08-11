@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React, { createContext, useEffect, useState, useContext } from 'react';
-import { initSocket, getSocket } from '@/lib/socket';
-import { useUserAuth } from './AuthFormContext';
-import api from '@/lib/axios';
+import React, { createContext, useEffect, useState, useContext } from "react";
+import { initSocket, getSocket } from "@/lib/socket";
+import { useUserAuth } from "./AuthFormContext";
+import api from "@/lib/axios";
 
 interface Notification {
   _id: string;
@@ -40,7 +40,11 @@ const NotificationContext = createContext<NotificationContextType>({
 
 export const useNotification = () => useContext(NotificationContext);
 
-export const NotificationProvider = ({ children }: { children: React.ReactNode }) => {
+export const NotificationProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   const { user, token } = useUserAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -53,89 +57,94 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
   const isDelivery = user?.role === "delivery";
   const shouldDisableNotifications = isAdmin || isDelivery;
 
-
   const markAsRead = (id: string) => {
     if (shouldDisableNotifications) {
       return;
     }
-    
+
     setNotifications((prev) =>
-      prev.map((notif) => (notif._id === id ? { ...notif, isRead: true } : notif))
+      prev.map((notif) =>
+        notif._id === id ? { ...notif, isRead: true } : notif
+      )
     );
     setUnreadCount((prev) => Math.max(0, prev - 1));
   };
 
   const markAllAsRead = async () => {
     if (shouldDisableNotifications) {
-      console.log('🚫 markAllAsRead blocked for admin/delivery user');
+      console.log("🚫 markAllAsRead blocked for admin/delivery user");
       return;
     }
-    
+
     try {
-      const response = await api.patch('/notifications/mark-read', {
+      const response = await api.patch("/notifications/mark-read", {
         notificationIds: [],
       });
 
       if (response.data.success) {
-        setNotifications((prev) => prev.map((notif) => ({ ...notif, isRead: true })));
+        setNotifications((prev) =>
+          prev.map((notif) => ({ ...notif, isRead: true }))
+        );
         setUnreadCount(0);
       }
     } catch (error) {
-      console.error('Failed to mark all notifications as read:', error);
+      console.error("Failed to mark all notifications as read:", error);
     }
   };
 
   const loadMoreNotifications = async () => {
     if (shouldDisableNotifications) {
-      console.log('🚫 loadMoreNotifications blocked for admin/delivery user');
+      console.log("🚫 loadMoreNotifications blocked for admin/delivery user");
       return;
     }
-    
+
     if (!hasMore || loadingMore) return;
 
     setLoadingMore(true);
     try {
       const nextPage = currentPage + 1;
       const res = await api.get(`/notifications?page=${nextPage}`);
-      const newNotifications = res.data.data.notifications.map((notif: any) => ({
-        ...notif,
-        isRead: notif.isRead ?? notif.read ?? false,
-      }));
+      const newNotifications = res.data.data.notifications.map(
+        (notif: any) => ({
+          ...notif,
+          isRead: notif.isRead ?? notif.read ?? false,
+        })
+      );
 
       setNotifications((prev) => [...prev, ...newNotifications]);
       setCurrentPage(nextPage);
       setHasMore(res.data.data.hasMore);
     } catch (error) {
-      console.error('Failed to load more notifications:', error);
+      console.error("Failed to load more notifications:", error);
     } finally {
       setLoadingMore(false);
     }
   };
 
   useEffect(() => {
-
     // Only fetch notifications and setup socket for non-admin, non-delivery users
     if (user && token && !shouldDisableNotifications) {
-      
       const fetchInitialData = async () => {
         try {
           const [notifsRes, countRes] = await Promise.all([
-            api.get('/notifications?page=1'),
-            api.get('/notifications/unread-count'),
+            api.get("/notifications?page=1"),
+            api.get("/notifications/unread-count"),
           ]);
 
-          const normalizedNotifications = notifsRes.data.data.notifications.map((notif: any) => ({
-            ...notif,
-            isRead: notif.isRead ?? notif.read ?? false,
-          }));
+          const normalizedNotifications = notifsRes.data.data.notifications.map(
+            (notif: any) => ({
+              ...notif,
+              isRead: notif.isRead ?? notif.read ?? false,
+            })
+          );
 
           setNotifications(normalizedNotifications);
           setCurrentPage(1);
           setHasMore(notifsRes.data.data.hasMore);
-          
+
           setUnreadCount(countRes.data.data.unreadCount || 0);
         } catch (error) {
-          console.error('❌ Failed to fetch notifications:', error);
+          console.error("❌ Failed to fetch notifications:", error);
         }
       };
 
@@ -143,11 +152,12 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
 
       const socket = initSocket(token);
 
-      socket.on('connect', () => {
-        socket.emit('test', 'Hello from client');
+      socket.on("connect", () => {
+        socket.emit("test", "Hello from client");
+        socket.emit("joinRoom", { userId: user._id });
       });
 
-      socket.on('notification:new', (newNotification: Notification) => {
+      socket.on("notification:new", (newNotification: Notification) => {
         const normalizedNew = {
           ...newNotification,
           isRead: newNotification.isRead ?? newNotification.read ?? false,
@@ -156,24 +166,24 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
         setNotifications((prev) => [normalizedNew, ...prev]);
         setUnreadCount((prev) => prev + 1);
 
-        import('react-toastify').then(({ toast }) => {
+        import("react-toastify").then(({ toast }) => {
           toast.info(`${normalizedNew.title}: ${normalizedNew.body}`);
         });
       });
 
-      socket.on('notification:count', (count: number) => {
+      socket.on("notification:count", (count: number) => {
         setUnreadCount(count);
       });
 
       socket.onAny((eventName, ...args) => {
-        console.log('🔍 Socket event received:', eventName, args);
+        console.log("🔍 Socket event received:", eventName, args);
       });
 
       return () => {
         const currentSocket = getSocket();
         if (currentSocket) {
-          currentSocket.off('notification:new');
-          currentSocket.off('notification:count');
+          currentSocket.off("notification:new");
+          currentSocket.off("notification:count");
           currentSocket.offAny();
         }
       };
@@ -187,12 +197,15 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
   }, [user, token, shouldDisableNotifications]);
 
   const handleNotificationClick = async (id: string) => {
-    console.log('📝 handleNotificationClick called:', { id, shouldDisableNotifications });
+    console.log("📝 handleNotificationClick called:", {
+      id,
+      shouldDisableNotifications,
+    });
     if (shouldDisableNotifications) {
-      console.log('🚫 handleNotificationClick blocked for admin/delivery user');
+      console.log("🚫 handleNotificationClick blocked for admin/delivery user");
       return;
     }
-    
+
     try {
       const response = await api.patch(`/notifications/${id}/mark-read`);
 
@@ -201,15 +214,17 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
 
         setNotifications((prev) =>
           prev.map((notif) =>
-            notif._id === updatedNotification._id ? { ...notif, isRead: true } : notif
+            notif._id === updatedNotification._id
+              ? { ...notif, isRead: true }
+              : notif
           )
         );
 
-        const countRes = await api.get('/notifications/unread-count');
+        const countRes = await api.get("/notifications/unread-count");
         setUnreadCount(countRes.data.data.unreadCount || 0);
       }
     } catch (error) {
-      console.error('Failed to mark notification as read:', error);
+      console.error("Failed to mark notification as read:", error);
     }
   };
 
@@ -224,8 +239,6 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
     hasMore: shouldDisableNotifications ? false : hasMore,
     loadingMore: shouldDisableNotifications ? false : loadingMore,
   };
-
- 
 
   return (
     <NotificationContext.Provider value={contextValue}>

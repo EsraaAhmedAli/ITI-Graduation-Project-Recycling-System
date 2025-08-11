@@ -7,6 +7,7 @@ import React, {
 } from "react";
 // import { UserPointsResponse, UserPointsType } from "@/types/user";
 import api from "@/lib/axios";
+import { getSocket } from "@/lib/socket";
 // types/user.ts
 
 // A single history entry for points earned or used
@@ -46,6 +47,7 @@ interface UserPointsContextType {
   pointsLoading: boolean;
   totalCompletedOrders: number;
   getUserPoints: () => Promise<void>;
+  fetchCompletedOrdersCount: () => Promise<void>;
   updateUserPoints: (points: Partial<UserPointsType>) => void;
   clearUserPoints: () => void;
 }
@@ -107,32 +109,56 @@ export function UserPointsProvider({
       setPointsLoading(false);
     }
   }, [userId, name, email]);
-
+  const fetchCompletedOrdersCount = useCallback(async () => {
+    try {
+      const res = await api.get("/orders?status=completed&limit=1");
+      setTotalCompletedOrders(res.data.totalCount || 0);
+    } catch (error) {
+      console.error("Failed to fetch completed orders count:", error);
+    }
+  }, []);
   // Auto-fetch points on mount or when userId changes
   useEffect(() => {
     console.log("😜😜😜😜😜POINTS😜😜😜😜😜");
-    if (userId && !hasInitialized) {
+    console.log(userId);
+    if (userId) {
       getUserPoints();
-      setHasInitialized(true);
     }
-  }, [userId, getUserPoints, hasInitialized]);
+  }, [userId, getUserPoints]);
 
   // Fetch total completed orders count if user is a customer
   useEffect(() => {
     console.log("😜😜😜😜😜ORDERS😜😜😜😜😜");
-    const fetchCompletedOrdersCount = async () => {
-      try {
-        const res = await api.get("/orders?status=completed&limit=1");
-        setTotalCompletedOrders(res.data.totalCount || 0);
-      } catch (error) {
-        console.error("Failed to fetch completed orders count:", error);
-      }
-    };
 
     if (role === "customer" && token) {
       fetchCompletedOrdersCount();
     }
-  }, [role, token]);
+  }, [role, token, fetchCompletedOrdersCount]);
+
+  useEffect(() => {
+    const socket = getSocket();
+    console.log("Socket instance in useEffect:", socket);
+
+    if (!userId) {
+      console.log("No userId, skipping socket listener setup");
+      return;
+    }
+    if (!socket) {
+      console.log("No socket instance, skipping listener setup");
+      return;
+    }
+
+    socket.on("points:updated", (data) => {
+      console.log("Received points:updated event:", data);
+      setUserPoints((prev) =>
+        prev ? { ...prev, totalPoints: data.totalPoints } : prev
+      );
+    });
+
+    return () => {
+      socket.off("points:updated");
+    };
+  }, [userId]);
 
   const updateUserPoints = useCallback((updates: Partial<UserPointsType>) => {
     setUserPoints((prev) => (prev ? { ...prev, ...updates } : null));
@@ -151,6 +177,7 @@ export function UserPointsProvider({
     getUserPoints,
     updateUserPoints,
     clearUserPoints,
+    fetchCompletedOrdersCount,
   };
 
   return (

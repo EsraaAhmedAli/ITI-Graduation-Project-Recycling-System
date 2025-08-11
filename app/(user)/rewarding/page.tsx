@@ -56,7 +56,7 @@ const RecyclingRewardsSystem = () => {
 
   const [customerData, setCustomerData] = useState({
     name: user?.name || "Guest User",
-    currentPoints: 1200,
+    currentPoints: userPoints?.totalPoints || 0,
     totalOrders: currentTotalCompletedOrders,
     currentLevel: currentLevelData?.name || "Eco Starter",
     nextLevel: nextLevelData?.name || "Max Level Reached",

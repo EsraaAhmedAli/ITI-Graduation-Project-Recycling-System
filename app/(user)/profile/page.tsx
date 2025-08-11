@@ -1,6 +1,8 @@
+// Simplified ProfilePage component with extracted review logic
+
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { Avatar } from "flowbite-react";
 import Loader from "@/components/common/loader";
@@ -17,33 +19,59 @@ import {
   Truck,
   XCircle,
 } from "lucide-react";
+
+// Import the new components
+import ReviewManager from "@/components/profile/ReviewManager";
+import OrderActions from "@/components/profile/OrderActions";
+
 import RecyclingModal from "@/components/eWalletModal/ewalletModal";
-// CHANGED: Import from context instead of hook
 import ItemsModal from "@/components/shared/itemsModal";
 import PointsActivity from "@/components/accordion/accordion";
-import MembershipTier from "@/components/memberTireShip/memberTireShip";
+import MembershipTier, {
+  getUserTier,
+} from "@/components/memberTireShip/memberTireShip";
 import { useLanguage } from "@/context/LanguageContext";
-import { ReceiptLink } from "../../../components/RecipetLink";
 import useOrders from "@/hooks/useGetOrders";
 import { useUserPoints } from "@/context/UserPointsContext";
 import Header from "@/components/profile/header";
 import { rewardLevels } from "@/constants/rewardsTiers";
+import ReviewsTab from "@/components/profile/ReviewTabs";
+import { useRouter } from "next/navigation";
+import { useNotification } from "@/context/notificationContext";
 
 export default function ProfilePage() {
   return (
     <ProtectedRoute>
-      <ProfileContent />
+      <ReviewManager>
+        {({ openReviewModal, deleteReview, userReviews, isReviewsLoading }) => (
+          <ProfileContent
+            openReviewModal={openReviewModal}
+            deleteReview={deleteReview}
+            userReviews={userReviews}
+            isReviewsLoading={isReviewsLoading}
+          />
+        )}
+      </ReviewManager>
     </ProtectedRoute>
   );
 }
 
-function ProfileContent() {
+function ProfileContent({
+  openReviewModal,
+  deleteReview,
+  userReviews,
+  isReviewsLoading,
+}: {
+  openReviewModal: (order: any) => void;
+  deleteReview: (orderId: string) => Promise<void>;
+  userReviews: any[];
+  isReviewsLoading: boolean;
+}) {
   const { user, token } = useUserAuth();
 
   // CHANGED: Use context hook instead of custom hook with parameters
-  const { userPoints, pointsLoading, totalCompletedOrders, getUserPoints } =
-    useUserPoints();
-
+  const { userPoints, pointsLoading, getUserPoints } = useUserPoints();
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState("incoming");
   const [isRecyclingModalOpen, setIsRecyclingModalOpen] = useState(false);
   const [isItemsModalOpen, setIsItemsModalOpen] = useState(false);
@@ -51,24 +79,18 @@ function ProfileContent() {
   const [selectedOrderStatus, setSelectedOrderStatus] = useState<string | null>(
     null
   );
-  const [reviews, setReviews] = useState<any[]>([]);
-  const [reviewableOrders, setReviewableOrders] = useState<any[]>([]);
-  const [reviewsLoading, setReviewsLoading] = useState(false);
-  const { t } = useLanguage();
+  const router = useRouter();
+  const [totalCompletedOrders, setTotalCompletedOrders] = useState(0);
+  // const { refetchNotifications } = useNotification();
 
   // Map activeTab to status parameter
   const getStatusParam = (tab: string) => {
-    if (tab === "incoming") {
-      return "incoming";
-    } else if (tab === "completed") {
-      return "completed";
-    } else if (tab === "cancelled") {
-      return "cancelled";
-    }
+    if (tab === "incoming") return "incoming";
+    if (tab === "completed") return "completed";
+    if (tab === "cancelled") return "cancelled";
     return "";
   };
 
-  // Use the orders hook with status filter for better performance
   const {
     allOrders,
     isLoading,
@@ -82,9 +104,6 @@ function ProfileContent() {
     status: getStatusParam(activeTab),
   });
 
-  // Keep total completed orders count for stats (separate call)
-  // const [totalCompletedOrders, setTotalCompletedOrders] = useState(0);
-
   const loadMoreOrders = async () => {
     if (hasNextPage && !isFetchingNextPage) {
       await fetchNextPage();
@@ -94,15 +113,40 @@ function ProfileContent() {
   const refreshPoints = async () => {
     await getUserPoints();
   };
+  // Fetch total completed orders count for stats
+  useEffect(() => {
+    const fetchCompletedOrdersCount = async () => {
+      try {
+        const res = await api.get("/orders?status=completed&limit=1");
+        setTotalCompletedOrders(res.data.totalCount || 0);
+      } catch (error) {
+        console.error("Failed to fetch completed orders count:", error);
+      }
+    };
 
-  // Use the hook's cancel function
+    if (user && token) {
+      fetchCompletedOrdersCount();
+    }
+  }, [user, token]);
+
   const handleCancelOrder = async (orderId: string) => {
     await hookHandleCancelOrder(orderId);
-    // The hook handles optimistic updates, so we just need to refetch if needed
     await refetch();
   };
 
-  // Fetch total completed orders count for stats (separate call)
+  const openItemsModal = (items: any[], orderStatus: string) => {
+    setSelectedOrderItems(items);
+    setSelectedOrderStatus(orderStatus);
+    setIsItemsModalOpen(true);
+  };
+
+  const closeItemsModal = () => {
+    setSelectedOrderItems([]);
+    setSelectedOrderStatus(null);
+    setIsItemsModalOpen(false);
+  };
+
+  // // Fetch total completed orders count for stats
   // useEffect(() => {
   //   const fetchCompletedOrdersCount = async () => {
   //     try {
@@ -115,32 +159,8 @@ function ProfileContent() {
 
   //   if (user && token) {
   //     fetchCompletedOrdersCount();
-
-  //     // REMOVED: getUserPoints() call since it's now handled automatically by context
   //   }
-  // }, [user, token]); // REMOVED: getUserPoints from dependency array
-
-  // useEffect(() => {
-  //   // Fetch user points on mount
-  //   setUserRewards({
-  //     currentPoints: userPoints?.totalPoints || 0,
-  //     totalOrders: totalCompletedOrders,
-  //   });
-  // }, [userPoints, totalCompletedOrders, setUserRewards]);
-
-  // FIXED: Updated function to accept both items and orderStatus
-  const openItemsModal = (items: any[], orderStatus: string) => {
-    console.log("Opening modal with status:", orderStatus); // Debug log
-    setSelectedOrderItems(items);
-    setSelectedOrderStatus(orderStatus);
-    setIsItemsModalOpen(true);
-  };
-
-  const closeItemsModal = () => {
-    setSelectedOrderItems([]);
-    setSelectedOrderStatus(null);
-    setIsItemsModalOpen(false);
-  };
+  // }, [user, token]);
 
   // Filter orders for buyer role (hide cancelled orders)
   const filteredOrders = allOrders.filter((order) => {
@@ -150,18 +170,15 @@ function ProfileContent() {
     return true;
   });
 
-  // Calculate if we should show "See More" button
   const shouldShowSeeMore = hasNextPage && filteredOrders.length >= 4;
 
-  // Updated stats to use stored points instead of calculated points
   const stats = {
-    totalRecycles: totalCompletedOrders, // Use total from backend, not filtered local orders
+    totalRecycles: totalCompletedOrders,
     points: userPoints?.totalPoints || 0,
     categories: 4,
     tier: 50,
   };
 
-  // Update tabs array to include payment for buyers
   const getTabsForUser = () => {
     const baseTabs = ["incoming", "completed"];
 
@@ -170,7 +187,8 @@ function ProfileContent() {
     } else {
       baseTabs.push("cancelled");
     }
-    if (user?.role === "customer") {
+
+    if (user?.role === "customer" || user?.role === "buyer") {
       baseTabs.push("reviews");
     }
 
@@ -178,57 +196,10 @@ function ProfileContent() {
   };
 
   const tabs = getTabsForUser();
-
-  const fetchReviewsData = async () => {
-    if (!user?._id || !token) return;
-
-    setReviewsLoading(true);
-    try {
-      // Fetch existing reviews made by the user
-      const reviewsRes = await api.get(`/reviews/my-reviews`);
-      setReviews(reviewsRes.data || []);
-
-      // Fetch completed orders to check which ones can be reviewed
-      const completedOrdersRes = await api.get("/orders?status=completed");
-      const completedOrders = completedOrdersRes.data.orders || [];
-
-      // Filter orders that don't have reviews yet
-      // This assumes your review response includes orderId field
-      const ordersWithoutReviews = completedOrders.filter(
-        (order: any) =>
-          !reviewsRes.data.find((review: any) => review.orderId === order._id)
-      );
-
-      setReviewableOrders(ordersWithoutReviews);
-    } catch (error) {
-      console.error("Failed to fetch reviews data:", error);
-      // If user reviews endpoint doesn't exist, try alternative approach
-      try {
-        // Alternative: Get all completed orders and check each one
-        const completedOrdersRes = await api.get("/orders?status=completed");
-        const completedOrders = completedOrdersRes.data.orders || [];
-
-        // For now, assume all completed orders can be reviewed
-        // You might need to adjust this based on your actual API structure
-        setReviewableOrders(completedOrders);
-        setReviews([]); // Set empty if no reviews endpoint
-      } catch (altError) {
-        console.error("Alternative fetch also failed:", altError);
-      }
-    } finally {
-      setReviewsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (activeTab === "reviews" && user?.role === "customer") {
-      fetchReviewsData();
-    }
-  }, [activeTab, user, token]);
-  const userTier = rewardLevels.find(
+  const tier = rewardLevels.find(
     (tier) =>
-      userPoints.totalPoints >= tier.minPoints &&
-      userPoints.totalPoints <= tier.maxPoints
+      userPoints?.totalPoints >= tier.minPoints &&
+      userPoints?.totalPoints <= tier.maxPoints
   );
 
   return (
@@ -238,14 +209,34 @@ function ProfileContent() {
         <div className="flex items-center justify-between flex-wrap">
           {/* Left: Avatar + Info */}
           <div className="flex items-center space-x-4">
-            <Avatar
-              img={
-                user?.imgUrl ||
-                "https://api.dicebear.com/7.x/bottts/svg?seed=user123"
-              }
-              rounded
-              size="lg"
-            />
+            <div className="relative inline-block">
+              {/* Avatar */}
+              <Avatar
+                img={
+                  user?.imgUrl ||
+                  "https://api.dicebear.com/7.x/bottts/svg?seed=user123"
+                }
+                rounded
+                size="lg"
+              />
+
+              {/* Tier Badge */}
+              {user.role === "customer" && tier && (
+                <div
+                  className={`absolute bottom-0 right-0 transform translate-x-1/4 translate-y-1/4
+               size-10 rounded-full flex items-center justify-center
+               text-2xl font-bold shadow-md border-2 animate-spin-slow hover:[animation-play-state:paused] bg-amber-100`}
+                >
+                  <span
+                    className="size-6 flex items-center justify-center"
+                    style={{ backgroundColor: tier.color, color: "white" }}
+                  >
+                    {tier.badge}
+                  </span>
+                </div>
+              )}
+            </div>
+
             <div>
               <h2 className="text-xl font-semibold text-green-800">
                 {user?.name || "John Doe"}
@@ -258,20 +249,7 @@ function ProfileContent() {
             </div>
           </div>
 
-          {/* Right: Member Tier Card */}
-          {userTier && (
-            <div
-              className={`flex items-center gap-2 border rounded-lg px-3 py-2 shadow-sm ${userTier.color}`}
-            >
-              <userTier.icon size={20} />
-              <span className="text-sm font-medium">
-                {userTier.badge} {userTier.name}
-              </span>
-            </div>
-          )}
-
-          {/* Buttons */}
-          <div className="flex gap-4 items-center mt-4 w-full sm:w-auto">
+          <div className="flex gap-4 items-center mt-4">
             {user?.role !== "buyer" && (
               <button
                 onClick={() => setIsRecyclingModalOpen(true)}
@@ -297,7 +275,7 @@ function ProfileContent() {
           totalPoints={userPoints?.totalPoints}
         />
 
-        {/* Stats - Updated to show loading state for points */}
+        {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
           <StatBox
             label={t("profile.stats.recycles")}
@@ -310,10 +288,14 @@ function ProfileContent() {
               loading={pointsLoading}
             />
           )}
-          <MembershipTier totalPoints={600} />
+          {user.role === "customer" && (
+            <MembershipTier totalPoints={userPoints?.totalPoints} />
+          )}
         </div>
 
-        {user?.role == "customer" && <PointsActivity userPoints={userPoints} />}
+        {user?.role === "customer" && (
+          <PointsActivity userPoints={userPoints} />
+        )}
 
         {/* Tabs */}
         <div className="flex border-b gap-6">
@@ -332,9 +314,19 @@ function ProfileContent() {
           ))}
         </div>
 
-        {/* Orders or Payments */}
+        {/* Tab Content */}
         {activeTab === "payments" ? (
           <PaymentsHistory />
+        ) : activeTab === "reviews" ? (
+          isReviewsLoading ? (
+            <Loader title=" reviews..." />
+          ) : (
+            <ReviewsTab
+              userReviews={userReviews}
+              onEditReview={openReviewModal}
+              onDeleteReview={deleteReview}
+            />
+          )
         ) : isLoading ? (
           <Loader title=" orders..." />
         ) : filteredOrders.length === 0 ? (
@@ -347,10 +339,13 @@ function ProfileContent() {
               {filteredOrders.map((order) => (
                 <div
                   key={order._id}
-                  className="rounded-xl p-5 bg-gradient-to-br from-green-50 to-white shadow-lg border border-green-100 hover:shadow-xl transition-all duration-300"
+                  className="rounded-xl p-5 bg-gradient-to-br from-green-50 to-white shadow-lg border border-green-100 hover:shadow-xl transition-all duration-300 hover:cursor-pointer"
                 >
                   {/* Header with Order Info */}
-                  <div className="flex justify-between items-start mb-4">
+                  <div
+                    onClick={() => router.push(`/pickup/tracking/${order._id}`)}
+                    className="flex justify-between items-start mb-4"
+                  >
                     <div className="text-sm text-gray-600">
                       <p className="font-medium text-gray-800 mb-1">
                         Order #{order._id.slice(-8).toUpperCase()}
@@ -361,7 +356,7 @@ function ProfileContent() {
                       </p>
                     </div>
 
-                    {/* Enhanced Status Badge with Collected Status */}
+                    {/* Status Badge */}
                     <div className="flex items-center gap-2">
                       {["assigntocourier"].includes(order.status) && (
                         <div className="flex items-center gap-1 bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium">
@@ -396,7 +391,7 @@ function ProfileContent() {
                     </div>
                   </div>
 
-                  {/* Address with Icon */}
+                  {/* Address */}
                   <div className="flex items-start gap-2 mb-4 p-3 bg-gray-50 rounded-lg">
                     <MapPin
                       size={16}
@@ -414,50 +409,15 @@ function ProfileContent() {
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex justify-between items-center pt-3 border-t border-gray-200">
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() =>
-                          openItemsModal(order.items, order.status)
-                        }
-                        className="text-sm text-green-600 hover:text-green-800 font-medium hover:underline transition-colors duration-200"
-                      >
-                        {t("profile.orders.viewDetails")}
-                      </button>
-
-                      {/* Enhanced Receipt Link - Show for collected and completed orders */}
-                      {["collected", "completed"].includes(order.status) && (
-                        <ReceiptLink orderId={order._id} variant="compact" />
-                      )}
-
-                      {/* NEW: Tracking Link - Show for orders in transit */}
-                      {[
-                        "assigntocourier",
-                        "enroute",
-                        "arrived",
-                        "collected",
-                      ].includes(order.status) && (
-                        <Link
-                          href={`/pickup/tracking/${order._id}`}
-                          className="text-sm text-blue-600 hover:text-blue-800 font-medium hover:underline transition-colors duration-200"
-                        >
-                          Track Order
-                        </Link>
-                      )}
-                    </div>
-
-                    {/* Cancel Button - Only for pending orders */}
-                    {order.status === "pending" &&
-                      user?.role === "customer" && (
-                        <button
-                          onClick={() => handleCancelOrder(order._id)}
-                          className="text-sm text-red-500 hover:text-red-700 font-medium hover:underline transition-colors duration-200"
-                        >
-                          {t("profile.orders.cancelOrder")}
-                        </button>
-                      )}
-                  </div>
+                  {/* Order Actions - Now using the extracted component */}
+                  <OrderActions
+                    order={order}
+                    userRole={user?.role}
+                    userReviews={userReviews}
+                    onViewDetails={openItemsModal}
+                    onRateOrder={openReviewModal}
+                    onCancelOrder={handleCancelOrder}
+                  />
                 </div>
               ))}
             </div>
@@ -489,7 +449,7 @@ function ProfileContent() {
   );
 }
 
-// Updated StatBox to handle loading state
+// StatBox component remains the same
 function StatBox({
   label,
   value,

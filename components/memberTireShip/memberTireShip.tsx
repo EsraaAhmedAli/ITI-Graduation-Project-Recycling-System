@@ -1,62 +1,50 @@
-const tiers = [
-  { name: "Eco Newbie", min: 0, max: 199 },
-  { name: "Eco Warrior", min: 200, max: 499 },
-  { name: "Eco Champion", min: 500, max: 999 },
-  { name: "Green Guardian", min: 1000, max: Infinity },
-];
+import Link from "next/link";
+import { Info } from "lucide-react";
+import { rewardLevels } from "@/constants/rewardsTiers";
 
-function getUserTier(points: number) {
-  return tiers.find((tier) => points >= tier.min && points <= tier.max);
+export function getUserTier(points: number) {
+  return rewardLevels.find(
+    (tier) => points >= tier.minPoints && points <= tier.maxPoints
+  );
 }
 
-function getNextTier(currentTierName: string) {
-  const index = tiers.findIndex((t) => t.name === currentTierName);
-  return tiers[index + 1]; // could be undefined if in last tier
-}
-
-export default function MembershipTier({
-  totalPoints,
-}: {
-  totalPoints: number;
-}) {
+export default function TierStatBox({ totalPoints }: { totalPoints: number }) {
   const tier = getUserTier(totalPoints);
-  const nextTier = tier ? getNextTier(tier.name) : null;
 
-  // progress only if there's a next tier
-  const progress =
-    nextTier && tier?.max !== Infinity
-      ? ((totalPoints - tier.min) / (tier.max - tier.min)) * 100
-      : 100;
+  if (!tier) return null;
 
   return (
-    <div className="bg-green-100 text-green-800 p-4 rounded-xl shadow-sm">
-      <h3 className="text-lg font-semibold text-green-700 mb-2">
-        Membership Tier
-      </h3>
-      <p className="text-gray-800 text-sm mb-1">
-        <span className="font-bold"> {tier?.name}</span>
-      </p>
-      <p className="text-gray-600 text-xs mb-2">
-        {tier
-          ? `${tier.min} - ${tier.max === Infinity ? "∞" : tier.max} points`
-          : "No tier"}
-      </p>
-      {nextTier && (
-        <div className="mt-4">
-          <p className="text-gray-600 text-xs mb-1">
-            Next Tier: <span className="font-bold">{nextTier.name}</span>
-          </p>
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div
-              className="bg-green-500 h-2.5 rounded-full"
-              style={{ width: `${progress}%` }}
-            ></div>
-          </div>
-          <p className="text-xs text-gray-500 mt-1">
-            {Math.round(progress)}% to next tier
-          </p>
+    <div
+      className={`
+    p-4 rounded-xl shadow-sm flex flex-row flex-nowrap items-center justify-between border
+    ${tier.color} gap-4
+    w-full max-w-full
+    transition-[max-width] duration-500 ease-in-out overflow-hidden
+  `}
+      style={{ borderColor: tier.color }}
+    >
+      {/* Left: Tier Name */}
+      <div className="flex-grow min-w-0">
+        <p className="text-xl font-bold text-left truncate">{tier.name}</p>
+      </div>
+
+      {/* Right: Badge + Icon Link */}
+      <div className="flex items-center gap-3 flex-shrink-0">
+        <div
+          className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-xl font-bold shadow-md border-2 border-current animate-spin-slow hover:[animation-play-state:paused]"
+          style={{ color: tier.color }}
+        >
+          {tier.badge}
         </div>
-      )}
+
+        <Link
+          href="/rewarding"
+          className="p-2 rounded-full hover:bg-white/40 transition-colors"
+          title="View Rewards Program"
+        >
+          <Info className="w-5 h-5" />
+        </Link>
+      </div>
     </div>
   );
 }

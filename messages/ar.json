@@ -173,7 +173,9 @@
       "incoming": "قيد التنفيذ",
       "completed": "مكتملة",
       "cancelled": "ملغاة",
-      "payments": "عمليات الدفع"
+      "payments": "عمليات الدفع",
+            "reviews" : "الاراء"
+
     },
     "orders": {
       "loading": "جاري تحميل الطلبات...",

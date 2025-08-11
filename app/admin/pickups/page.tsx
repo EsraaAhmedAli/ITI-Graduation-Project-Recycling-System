@@ -17,6 +17,10 @@ import Button from "@/components/common/Button";
 import ProofOfDeliveryModal from "../../../components/proofDeliveryDetails";
 import api from "../../../lib/axios";
 import { Modal, ModalBody, ModalHeader } from "flowbite-react";
+import { get } from "http";
+import { useUserPoints } from "@/context/UserPointsContext";
+import { useNotification } from "@/context/notificationContext";
+import { queryClient } from "@/lib/queryClient";
 
 type UserRole = "customer" | "buyer";
 const STATUS = {
@@ -88,7 +92,8 @@ export default function Page() {
       active: [],
     },
   ]);
-
+  const { getUserPoints, fetchCompletedOrdersCount } = useUserPoints();
+  const { refetchNotifications } = useNotification();
   const [activeTab, setActiveTab] = useState<UserRole>("customer");
   const { currentPage, itemsPerPage, handlePageChange } = usePagination(1, 5);
   const [isProofModalOpen, setIsProofModalOpen] = useState(false);
@@ -120,74 +125,89 @@ export default function Page() {
     });
     setIsProofModalOpen(true);
   };
-const checkAndUpdateCourierOrders = async (courierId, isApproved) => {
-  console.log('hhhhiii');
-  
-  if (!isApproved) {
-    try {
-      const response = await api.get(`/orders/courier/${courierId}`);
-      const assignedOrders = response.data.filter(
-        (order) => order.status.toLowerCase() === "assigntocourier" || 
-                   order.status.toLowerCase() === "assignedtocourier"
-      );
+  const checkAndUpdateCourierOrders = async (courierId, isApproved) => {
+    console.log("hhhhiii");
 
-      const updatePromises = assignedOrders.map((order) =>
-        // FIXED: Use the correct endpoint for updating order status
-        api.put(`admin/orders/${order._id}/status`, {
-          status: "pending",
-          reason: "Courier status changed to not approved"
-        })
-      );
-
-      await Promise.all(updatePromises);
-      
-      if (assignedOrders.length > 0) {
-        toast.info(`${assignedOrders.length} orders moved back to pending due to courier status change`);
-      }
-      
-      return assignedOrders.length;
-    } catch (error) {
-      console.error("Failed to update courier orders:", error);
-      return 0;
-    }
-  }
-  return 0;
-};
-const cleanupRevokedCourierOrders = async () => {
-  console.log("🧹 Cleaning up orders assigned to revoked couriers...");
-  
-  if (!couriers || !Array.isArray(couriers)) return;
-  
-  let totalUpdated = 0;
-  
-  for (const courier of couriers) {
-    const isApproved = courier.attachments?.status === "approved";
-    
     if (!isApproved) {
-      console.log(`🔍 Checking orders for revoked courier: ${courier.name} (${courier.attachments?.status})`);
-      
       try {
-        const updatedCount = await checkAndUpdateCourierOrders(courier._id, false);
-        totalUpdated += updatedCount;
-        
-        if (updatedCount > 0) {
-          console.log(`✅ Updated ${updatedCount} orders for revoked courier ${courier.name}`);
+        const response = await api.get(`/orders/courier/${courierId}`);
+        const assignedOrders = response.data.filter(
+          (order) =>
+            order.status.toLowerCase() === "assigntocourier" ||
+            order.status.toLowerCase() === "assignedtocourier"
+        );
+
+        const updatePromises = assignedOrders.map((order) =>
+          // FIXED: Use the correct endpoint for updating order status
+          api.put(`admin/orders/${order._id}/status`, {
+            status: "pending",
+            reason: "Courier status changed to not approved",
+          })
+        );
+
+        await Promise.all(updatePromises);
+
+        if (assignedOrders.length > 0) {
+          toast.info(
+            `${assignedOrders.length} orders moved back to pending due to courier status change`
+          );
         }
+
+        return assignedOrders.length;
       } catch (error) {
-        console.error(`❌ Error updating orders for courier ${courier.name}:`, error);
+        console.error("Failed to update courier orders:", error);
+        return 0;
       }
     }
-  }
-  
-  if (totalUpdated > 0) {
-    toast.success(`Cleanup complete: ${totalUpdated} orders moved back to pending from revoked couriers`);
-    refetch();
-  } else {
-    toast.info("Cleanup complete: No orders assigned to revoked couriers");
-  }
-  
-  return totalUpdated;
-};
+    return 0;
+  };
+  const cleanupRevokedCourierOrders = async () => {
+    console.log("🧹 Cleaning up orders assigned to revoked couriers...");
+
+    if (!couriers || !Array.isArray(couriers)) return;
+
+    let totalUpdated = 0;
+
+    for (const courier of couriers) {
+      const isApproved = courier.attachments?.status === "approved";
+
+      if (!isApproved) {
+        console.log(
+          `🔍 Checking orders for revoked courier: ${courier.name} (${courier.attachments?.status})`
+        );
+
+        try {
+          const updatedCount = await checkAndUpdateCourierOrders(
+            courier._id,
+            false
+          );
+          totalUpdated += updatedCount;
+
+          if (updatedCount > 0) {
+            console.log(
+              `✅ Updated ${updatedCount} orders for revoked courier ${courier.name}`
+            );
+          }
+        } catch (error) {
+          console.error(
+            `❌ Error updating orders for courier ${courier.name}:`,
+            error
+          );
+        }
+      }
+    }
+
+    if (totalUpdated > 0) {
+      toast.success(
+        `Cleanup complete: ${totalUpdated} orders moved back to pending from revoked couriers`
+      );
+      refetch();
+    } else {
+      toast.info("Cleanup complete: No orders assigned to revoked couriers");
+    }
+
+    return totalUpdated;
+  };
 
   const activeFilters = useMemo(() => {
     const status = filters.find((f) => f.name === "status")?.active || [];
@@ -228,7 +248,7 @@ const cleanupRevokedCourierOrders = async () => {
     return rawOrders;
   }, [rawOrders, activeTab]);
   const courierStatusRef = useRef(new Map());
-const isFirstLoadRef = useRef(true); // Track if this is the first load
+  const isFirstLoadRef = useRef(true); // Track if this is the first load
 
   const totalItems = orders.length; // Use filtered count
   const totalPages = data?.totalPages || 1;
@@ -279,92 +299,114 @@ const isFirstLoadRef = useRef(true); // Track if this is the first load
 
   const { data: couriers } = useUsers("delivery");
 
+  useEffect(() => {
+    if (couriers && Array.isArray(couriers)) {
+      console.log("🔍 Checking courier statuses...");
 
-useEffect(() => {
-  if (couriers && Array.isArray(couriers)) {
-    console.log("🔍 Checking courier statuses...");
-    
-    const processStatusChanges = async () => {
-      for (const courier of couriers) {
-        const isApproved = courier.attachments?.status === "approved";
-        const previousStatus = courierStatusRef.current.get(courier._id);
-        
-        console.log(`Courier ${courier._id} (${courier.name}):`, {
-          currentStatus: courier.attachments?.status,
-          isApproved,
-          previousStatus,
-          isFirstLoad: isFirstLoadRef.current,
-          shouldCheckChange: !isFirstLoadRef.current && previousStatus !== undefined
-        });
-        
-        // Only check for status changes after the first load
-        // and only if we have a previous status recorded
-        if (!isFirstLoadRef.current && previousStatus !== undefined) {
-          // If courier status changed from approved to not approved
-          if (previousStatus === true && !isApproved) {
-            console.log(`🚨 DETECTED STATUS CHANGE: Courier ${courier._id} (${courier.name}) changed from approved to ${courier.attachments?.status}`);
-            
-            // Show immediate feedback
-            toast.warning(`Courier ${courier.name} status changed to ${courier.attachments?.status}. Checking assigned orders...`);
-            
-            try {
-              const updatedCount = await checkAndUpdateCourierOrders(courier._id, isApproved);
-              if (updatedCount > 0) {
-                console.log(`✅ Successfully updated ${updatedCount} orders for courier ${courier.name}`);
-                refetch(); // Refresh the orders list
-              } else {
-                console.log(`ℹ️ No assigned orders found for courier ${courier.name}`);
-                toast.info(`Courier ${courier.name} has no assigned orders to update.`);
+      const processStatusChanges = async () => {
+        for (const courier of couriers) {
+          const isApproved = courier.attachments?.status === "approved";
+          const previousStatus = courierStatusRef.current.get(courier._id);
+
+          console.log(`Courier ${courier._id} (${courier.name}):`, {
+            currentStatus: courier.attachments?.status,
+            isApproved,
+            previousStatus,
+            isFirstLoad: isFirstLoadRef.current,
+            shouldCheckChange:
+              !isFirstLoadRef.current && previousStatus !== undefined,
+          });
+
+          // Only check for status changes after the first load
+          // and only if we have a previous status recorded
+          if (!isFirstLoadRef.current && previousStatus !== undefined) {
+            // If courier status changed from approved to not approved
+            if (previousStatus === true && !isApproved) {
+              console.log(
+                `🚨 DETECTED STATUS CHANGE: Courier ${courier._id} (${courier.name}) changed from approved to ${courier.attachments?.status}`
+              );
+
+              // Show immediate feedback
+              toast.warning(
+                `Courier ${courier.name} status changed to ${courier.attachments?.status}. Checking assigned orders...`
+              );
+
+              try {
+                const updatedCount = await checkAndUpdateCourierOrders(
+                  courier._id,
+                  isApproved
+                );
+                if (updatedCount > 0) {
+                  console.log(
+                    `✅ Successfully updated ${updatedCount} orders for courier ${courier.name}`
+                  );
+                  refetch(); // Refresh the orders list
+                } else {
+                  console.log(
+                    `ℹ️ No assigned orders found for courier ${courier.name}`
+                  );
+                  toast.info(
+                    `Courier ${courier.name} has no assigned orders to update.`
+                  );
+                }
+              } catch (error) {
+                console.error(
+                  `❌ Error updating orders for courier ${courier.name}:`,
+                  error
+                );
+                toast.error(
+                  `Failed to update orders for courier ${courier.name}`
+                );
               }
-            } catch (error) {
-              console.error(`❌ Error updating orders for courier ${courier.name}:`, error);
-              toast.error(`Failed to update orders for courier ${courier.name}`);
+            }
+
+            // Also check for approved to approved changes (no action needed, just log)
+            if (previousStatus === isApproved) {
+              console.log(
+                `📝 No status change for courier ${courier.name} (still ${courier.attachments?.status})`
+              );
+            } else if (previousStatus === false && isApproved) {
+              console.log(
+                `✅ Courier ${courier.name} was re-approved (${courier.attachments?.status})`
+              );
             }
           }
-          
-          // Also check for approved to approved changes (no action needed, just log)
-          if (previousStatus === isApproved) {
-            console.log(`📝 No status change for courier ${courier.name} (still ${courier.attachments?.status})`);
-          } else if (previousStatus === false && isApproved) {
-            console.log(`✅ Courier ${courier.name} was re-approved (${courier.attachments?.status})`);
-          }
+
+          // Always update the stored status
+          courierStatusRef.current.set(courier._id, isApproved);
         }
-        
-        // Always update the stored status
-        courierStatusRef.current.set(courier._id, isApproved);
-      }
-      
-      // After first load, mark that we're no longer on first load
-      if (isFirstLoadRef.current) {
-        isFirstLoadRef.current = false;
-        console.log("📊 Initial courier statuses recorded:", 
-          Array.from(courierStatusRef.current.entries()).map(([id, status]) => ({
-            courierId: id,
-            isApproved: status
-          }))
-        );
-      }
-    };
 
-    processStatusChanges();
-  }
-}, [couriers, refetch]);
+        // After first load, mark that we're no longer on first load
+        if (isFirstLoadRef.current) {
+          isFirstLoadRef.current = false;
+          console.log(
+            "📊 Initial courier statuses recorded:",
+            Array.from(courierStatusRef.current.entries()).map(
+              ([id, status]) => ({
+                courierId: id,
+                isApproved: status,
+              })
+            )
+          );
+        }
+      };
 
+      processStatusChanges();
+    }
+  }, [couriers, refetch]);
 
+  const testStatusChange = () => {
+    console.log("🧪 Testing status change detection...");
+    const testCourierId = "688c9fe0a4c2a5046aa4c371"; // Sarah's ID from your log
 
-const testStatusChange = () => {
-  console.log("🧪 Testing status change detection...");
-  const testCourierId = "688c9fe0a4c2a5046aa4c371"; // Sarah's ID from your log
-  
-  // Simulate changing from approved to revoked
-  courierStatusRef.current.set(testCourierId, true); // Set as previously approved
-  
-  // Now trigger the useEffect to detect the change
-  console.log("Current courier with revoked status should now be detected as changed");
-};
+    // Simulate changing from approved to revoked
+    courierStatusRef.current.set(testCourierId, true); // Set as previously approved
 
-
-
+    // Now trigger the useEffect to detect the change
+    console.log(
+      "Current courier with revoked status should now be detected as changed"
+    );
+  };
 
   const handleTabChange = (tab: UserRole) => {
     setActiveTab(tab);
@@ -411,33 +453,35 @@ const testStatusChange = () => {
     }
   };
 
-const handleAssignToCourier = async (orderId, courierId) => {
-  try {
-    const selectedCourier = couriers?.find((courier) => courier._id === courierId);
-    if (!selectedCourier) {
-      toast.error("Selected courier not found");
-      return;
-    }
+  const handleAssignToCourier = async (orderId, courierId) => {
+    try {
+      const selectedCourier = couriers?.find(
+        (courier) => courier._id === courierId
+      );
+      if (!selectedCourier) {
+        toast.error("Selected courier not found");
+        return;
+      }
 
-    // CHANGED: Check attachments.status instead of status
-    if (selectedCourier.attachments?.status !== "approved") {
-      toast.error("Cannot assign order to non-approved courier");
-      return;
-    }
+      // CHANGED: Check attachments.status instead of status
+      if (selectedCourier.attachments?.status !== "approved") {
+        toast.error("Cannot assign order to non-approved courier");
+        return;
+      }
 
-    await api.put(`/orders/${orderId}/assign-courier`, {
-      courierId,
-      status: "assignToCourier",
-    });
-    toast.success("Order assigned to courier successfully");
-    setIsCourierModalOpen(false);
-    setSelectedOrderForCourier(null);
-    refetch();
-  } catch (err) {
-    console.error("Failed to assign courier:", err);
-    toast.error("Failed to assign courier to order");
-  }
-};
+      await api.put(`/orders/${orderId}/assign-courier`, {
+        courierId,
+        status: "assignToCourier",
+      });
+      toast.success("Order assigned to courier successfully");
+      setIsCourierModalOpen(false);
+      setSelectedOrderForCourier(null);
+      refetch();
+    } catch (err) {
+      console.error("Failed to assign courier:", err);
+      toast.error("Failed to assign courier to order");
+    }
+  };
   const handleCancelOrder = async (orderId: string) => {
     const { value: reason } = await Swal.fire({
       title: "Cancel Order",
@@ -491,8 +535,22 @@ const handleAssignToCourier = async (orderId, courierId) => {
         await api.put(`/admin/orders/${orderId}/status`, {
           status: "completed",
         });
+
         toast.success("Order marked as completed successfully");
+
         refetch();
+        // refetch both points and orders count
+        // await refetch();
+        // await refetchNotifications();
+        // await getUserPoints();
+        // await fetchCompletedOrdersCount();
+        // await Promise.all([
+        //   refetch(),
+        //   getUserPoints(),
+        //   fetchCompletedOrdersCount(),
+        //   refetchNotifications(),
+        // ]);
+        // await Promise.all([getUserPoints(), fetchCompletedOrdersCount()]);
       } catch (err) {
         console.error("Failed to mark order as completed:", err);
         toast.error("Failed to mark order as completed");

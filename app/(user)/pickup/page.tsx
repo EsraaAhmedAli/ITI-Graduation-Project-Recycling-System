@@ -31,6 +31,7 @@ import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import { deliveryFees } from "@/constants/deliveryFees";
 import TrackingStep from "./tracking/[id]/page";
+import TrackingStepWrapper from "@/components/pickup/trackingStepWrapper";
 
 enum Steps {
   ADDRESS = 1,
@@ -736,13 +737,15 @@ onBack={() => {
         />
       )}
 
-      {currentStep === Steps.TRACKING && createdOrderId && (
-        <TrackingStep 
-          orderId={createdOrderId} 
-          onDelivered={() => router.push("/profile")}
-          embedded={true}
-        />
-      )}
+
+{currentStep === Steps.TRACKING && createdOrderId && (
+  <TrackingStepWrapper
+    key={`tracking-${createdOrderId}`}
+    orderId={createdOrderId} 
+    onDelivered={() => router.push("/profile")}
+    embedded={true}
+  />
+)}
     </div>
   );
 }
