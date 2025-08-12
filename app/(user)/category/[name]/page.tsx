@@ -119,8 +119,8 @@ export default function UserCategoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
-      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-6">
+    <div className="min-h-screen bg-gradient-to-br from-black-100 via-black-100 to-black-100 ">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-6 ">
         {/* Header Section */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-2">
@@ -128,7 +128,7 @@ export default function UserCategoryPage() {
               <Recycle className="w-6 h-6 text-emerald-600" />
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+              <h1 className="text-2xl md:text-3xl font-bold text-white-900 tracking-tight">
                 {t("collectionsOfCategory", {
                   collections: t("common.collectionsPlural"),
                   category: t(
@@ -138,7 +138,7 @@ export default function UserCategoryPage() {
                   ),
                 })}
               </h1>
-              <p className="text-slate-600 mt-1 text-sm md:text-base">
+              <p className="text-slate-500 mt-1 text-sm md:text-base">
                 {t("staticCategories.discoverMoreSub")}
               </p>
             </div>
