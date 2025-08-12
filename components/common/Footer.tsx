@@ -43,7 +43,7 @@ export default function Footer() {
                 { href: "/about", label: t("footer.about") },
                 { href: "/category", label: t("navbar.categories") },
                 { href: "/cart", label: t("footer.cart") },
-                { href: "/rewarding", label: t("footer.rewarding") },
+                { href: "/profile/rewarding", label: t("footer.rewarding") },
               ].map((link) => (
                 <li key={link.href}>
                   <Link

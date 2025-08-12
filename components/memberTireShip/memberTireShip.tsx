@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Info } from "lucide-react";
 import { rewardLevels } from "@/constants/rewardsTiers";
+import { useLanguage } from "@/context/LanguageContext";
 
 export function getUserTier(points: number) {
   return rewardLevels.find(
@@ -10,13 +11,13 @@ export function getUserTier(points: number) {
 
 export default function TierStatBox({ totalPoints }: { totalPoints: number }) {
   const tier = getUserTier(totalPoints);
-
+  const { t } = useLanguage();
   if (!tier) return null;
 
   return (
     <div
       className={`
-    p-4 rounded-xl shadow-sm flex flex-row flex-nowrap items-center justify-between border
+    p-4 rounded-xl shadow-sm flex flex-row flex-nowrap items-center justify-center border
     ${tier.color} gap-4
     w-full max-w-full
     transition-[max-width] duration-500 ease-in-out overflow-hidden
@@ -25,7 +26,9 @@ export default function TierStatBox({ totalPoints }: { totalPoints: number }) {
     >
       {/* Left: Tier Name */}
       <div className="flex-grow min-w-0">
-        <p className="text-xl font-bold text-left truncate">{tier.name}</p>
+        <p className="text-xl font-bold text-left truncate">
+          {t(`profile.tires.${tier.name.replace(" ", "").toLowerCase()}`)}
+        </p>
       </div>
 
       {/* Right: Badge + Icon Link */}
@@ -38,7 +41,7 @@ export default function TierStatBox({ totalPoints }: { totalPoints: number }) {
         </div>
 
         <Link
-          href="/rewarding"
+          href="/profile/rewarding"
           className="p-2 rounded-full hover:bg-white/40 transition-colors"
           title="View Rewards Program"
         >
