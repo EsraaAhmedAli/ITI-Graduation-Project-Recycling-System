@@ -158,11 +158,11 @@ const {user} = useUserAuth()
   const uniqueCategories = Array.from(new Set(items.map((item) => item.categoryName))).sort();
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className=" dark:bg-black-200  min-h-screen ">
       {/* Hero Slider */}
       <PromotionSlider />
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8  dark:bg-black-200">
         {/* ... header, search bar, banner, top materials ... */}
 
         {/* Items Section */}

@@ -10,6 +10,15 @@
   --foreground: #171717;
 }
 
+.dark {
+  --background: #000000;
+  --foreground: #ededed;
+  --color-base-100: #1a1a1a;
+  --color-base-200: #222;
+  --color-base-300: #333;
+  --color-base-content: #e0e0e0;
+}
+
 @theme {
   --color-primary: #0e9f6e;
   --color-secondary: #8bc34a;
@@ -41,12 +50,12 @@
   --radius-box: 0.5rem;
 }
 
-@media (prefers-color-scheme: dark) {
+/* @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
-}
+} */
 
 body {
   background: var(--background);
