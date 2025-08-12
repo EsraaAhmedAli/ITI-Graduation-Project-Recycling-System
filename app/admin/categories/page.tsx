@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 import React from "react";
 import api from "@/lib/axios";
-import Loader from "@/components/common/loader";
+import Loader from "@/components/common/Loader";
 import Image from "next/image";
 import Button from "@/components/common/Button";
 import { useCategories } from "@/hooks/useGetCategories";
@@ -26,8 +26,8 @@ export default function Page() {
         <Image
           src={item.image}
           alt={item.name}
-          width={34}
-          height={34}
+          width={70}
+          height={70}
           className="rounded-full object-cover cursor-pointer"
           onClick={() =>
             router.push(`/admin/categories/${item.name}/get-sub-category`)
@@ -90,8 +90,7 @@ export default function Page() {
           <div className="flex justify-center">
             <Button
               onClick={handleAddNewCategory}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition-all duration-300"
-            >
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition-all duration-300">
               Start adding new category
             </Button>
           </div>

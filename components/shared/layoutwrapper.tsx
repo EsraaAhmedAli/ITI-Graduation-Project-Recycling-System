@@ -25,6 +25,10 @@ export default function LayoutWrapper({ children }: { children: ReactNode }) {
     "/waiting-for-approval",
     // Add any specific routes that buyers should NOT access
   ];
+const approvedDeliveryAllowedRoutes = [
+  "/deilveryDashboard",
+  "/edit-profile"
+];
 
   // Define routes that are considered "entry points" where we should redirect buyers to /home
   const entryRoutes = ["/", "/login", "/register", "/auth"];
@@ -86,18 +90,30 @@ export default function LayoutWrapper({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Handle delivery routing
-    if (isDelivery) {
-      if (isPendingOrDeclined && !pathname.startsWith("/waiting-for-approval")) {
-        router.push("/waiting-for-approval");
-        return;
-      }
+ // Handle delivery routing
+if (isDelivery) {
+  if (isPendingOrDeclined && !pathname.startsWith("/waiting-for-approval")) {
+    router.push("/waiting-for-approval");
+    return;
+  }
 
-      if (isApprovedDelivery && !pathname.startsWith("/deilveryDashboard")) {
-        router.push("/deilveryDashboard");
-        return;
-      }
+  if (isApprovedDelivery) {
+    const approvedDeliveryAllowedRoutes = [
+      "/deilveryDashboard",
+      "/editprofile"
+    ];
+    
+    const isAllowedRoute = approvedDeliveryAllowedRoutes.some(route =>
+      pathname.startsWith(route)
+    );
+
+    if (!isAllowedRoute) {
+      router.push("/deilveryDashboard");
+      return;
     }
+  }
+}
+
     
   }, [
     user,

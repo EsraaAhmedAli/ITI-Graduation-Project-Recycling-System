@@ -3,12 +3,13 @@ import { Metadata } from "next";
 import { Suspense } from "react";
 import MarketplaceClient from "./components/MarketPlaceClient";
 import api from "@/lib/axios";
-import Loader from "@/components/common/loader";
+import Loader from "@/components/common/Loader";
 
 // SEO: Static metadata
 export const metadata: Metadata = {
   title: "Sustainable Marketplace - Eco-Friendly Products",
-  description: "Browse our sustainable marketplace with eco-friendly products. Find recycled items, green alternatives, and sustainable solutions.",
+  description:
+    "Browse our sustainable marketplace with eco-friendly products. Find recycled items, green alternatives, and sustainable solutions.",
   keywords: "sustainable, marketplace, eco-friendly, recycling, green products",
   openGraph: {
     title: "Sustainable Marketplace",
@@ -45,13 +46,13 @@ async function getServerData(): Promise<ServerData> {
   try {
     // Fetch initial data on server (no user context yet)
     const [itemsResponse, categoriesResponse] = await Promise.all([
-      api.get('/categories/get-items?page=1&limit=10'),
-      api.get('/categories/get-items?page=1&limit=50') // Get all for categories
+      api.get("/categories/get-items?page=1&limit=10"),
+      api.get("/categories/get-items?page=1&limit=50"), // Get all for categories
     ]);
 
     const items = itemsResponse.data?.data || [];
     const allItems = categoriesResponse.data?.data || [];
-    
+
     const categories = Array.from(
       new Set(allItems.map((item: Item) => item.categoryName))
     ).sort();
@@ -66,10 +67,10 @@ async function getServerData(): Promise<ServerData> {
         totalPages: 1,
         hasNextPage: false,
         hasPreviousPage: false,
-      }
+      },
     };
   } catch (error) {
-    console.error('Server data fetch error:', error);
+    console.error("Server data fetch error:", error);
     return {
       items: [],
       categories: [],
@@ -80,7 +81,7 @@ async function getServerData(): Promise<ServerData> {
         totalPages: 1,
         hasNextPage: false,
         hasPreviousPage: false,
-      }
+      },
     };
   }
 }
@@ -108,5 +109,3 @@ export default async function MarketplacePage() {
     </div>
   );
 }
-
-

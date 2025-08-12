@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import Loader from "./loader";
+import Loader from "./Loader";
 import api from "@/lib/axios";
 import { toast } from "react-toastify";
 import Image from "next/image";
@@ -73,8 +73,7 @@ export default function NavbarSearch() {
       {/* Small Search Trigger */}
       <button
         onClick={handleOpen}
-        className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-      >
+        className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
         <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 20 20">
           <path
             stroke="currentColor"
@@ -88,16 +87,14 @@ export default function NavbarSearch() {
       {isOpen && (
         <div
           className="fixed inset-0  z-50 bg-white p-4 overflow-y-auto"
-          style={{ height: "100vh" }}
-        >
+          style={{ height: "100vh" }}>
           {/* Header with close button */}
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold">Search Items</h2>
             <button
               onClick={handleClose}
               className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-              aria-label="Close search"
-            >
+              aria-label="Close search">
               <X className="w-6 h-6" />
             </button>
           </div>
@@ -117,8 +114,7 @@ export default function NavbarSearch() {
               <svg
                 className="w-6 h-6 text-gray-500"
                 fill="none"
-                viewBox="0 0 20 20"
-              >
+                viewBox="0 0 20 20">
                 <path
                   stroke="currentColor"
                   strokeWidth="2"
@@ -175,8 +171,7 @@ export default function NavbarSearch() {
                       availableLetters.has(letter)
                         ? `Click to see items starting with "${letter}"`
                         : `No items start with "${letter}"`
-                    }
-                  >
+                    }>
                     {letter}
                   </button>
                 ))}
@@ -219,8 +214,7 @@ export default function NavbarSearch() {
                         onClick={() => {
                           // Handle item selection
                           handleClose();
-                        }}
-                      >
+                        }}>
                         <div className="relative w-16 h-16 flex-shrink-0 mr-4">
                           <Image
                             src={item.image}
@@ -247,8 +241,7 @@ export default function NavbarSearch() {
                     </p>
                     <button
                       onClick={() => setSearchQuery("")}
-                      className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-                    >
+                      className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
                       Clear search and browse letters
                     </button>
                   </div>

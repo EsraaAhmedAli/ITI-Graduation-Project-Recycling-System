@@ -109,11 +109,11 @@ export default function EditItemPage() {
 
       router.push(`/admin/categories/${name}/get-sub-category`);
     } catch (err) {
-      console.error(err);
+      console.error(err.response.data.message);
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: "Failed to update item",
+        text: err.response.data.message,
         confirmButtonColor: "#10b981",
       });
     } finally {

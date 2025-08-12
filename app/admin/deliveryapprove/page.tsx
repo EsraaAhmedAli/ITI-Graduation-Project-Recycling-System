@@ -7,18 +7,17 @@ import DynamicTable from "@/components/shared/dashboardTable";
 import DeliveryAttachments from "@/components/shared/DeliveryAttachements";
 import { toast } from "react-hot-toast";
 import { Modal, ModalBody, ModalHeader, TextInput } from "flowbite-react";
-import Loader from "@/components/common/loader";
+import Loader from "@/components/common/Loader";
 import { useQuery } from "@tanstack/react-query";
 import ReviewsModal, { RatingModal } from "@/components/ratingModal";
 
-
-const ActionModal = ({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
-  userName, 
+const ActionModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  userName,
   isLoading,
-  actionType = "decline"
+  actionType = "decline",
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -54,7 +53,9 @@ const ActionModal = ({
                 {isRevoke ? "Revoke Access" : "Decline Application"}
               </h3>
               <p className="text-sm text-gray-600">
-                {isRevoke ? "Revoke" : "Decline"} <span className="font-medium">{userName}</span>'s {isRevoke ? "delivery access" : "application"}?
+                {isRevoke ? "Revoke" : "Decline"}{" "}
+                <span className="font-medium">{userName}</span>'s{" "}
+                {isRevoke ? "delivery access" : "application"}?
               </p>
               {isRevoke && (
                 <p className="text-xs text-orange-600 mt-1">
@@ -81,8 +82,7 @@ const ActionModal = ({
                 type="button"
                 onClick={handleClose}
                 disabled={isLoading}
-                className="flex-1"
-              >
+                className="flex-1">
                 Cancel
               </Button>
               <Button
@@ -90,8 +90,9 @@ const ActionModal = ({
                 onClick={handleSubmit}
                 isProcessing={isLoading}
                 disabled={isLoading || (isRevoke && !reason.trim())}
-                className={`flex-1 ${isRevoke ? "bg-orange-600" : "bg-red-600"}`}
-              >
+                className={`flex-1 ${
+                  isRevoke ? "bg-orange-600" : "bg-red-600"
+                }`}>
                 {isRevoke ? "Revoke" : "Decline"}
               </Button>
             </div>
@@ -105,35 +106,38 @@ const ActionModal = ({
 export default function Page() {
   const [activeAttachments, setActiveAttachments] = useState<any | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  
+
   // Modal state
   const [showActionModal, setShowActionModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [actionType, setActionType] = useState<"decline" | "revoke">("decline");
-  
+
   // Reviews modal state
   const [showReviewsModal, setShowReviewsModal] = useState(false);
-  const [selectedCourier, setSelectedCourier] = useState<{ id: string; name: string } | null>(null);
+  const [selectedCourier, setSelectedCourier] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   const handleApprove = async (item: any) => {
     const userId = item.userId;
     setActionLoading(userId);
-    
+
     try {
       const response = await api.patch(`/delivery/approve/${userId}`);
       await refetch();
 
       toast.success(`${item.name} has been approved successfully!`, {
         duration: 4000,
-        position: 'top-right',
+        position: "top-right",
       });
-      
     } catch (error: any) {
       console.error("Error approving delivery user:", error);
-      const errorMessage = error.response?.data?.message || "Failed to approve user";
+      const errorMessage =
+        error.response?.data?.message || "Failed to approve user";
       toast.error(`Error: ${errorMessage}`, {
         duration: 5000,
-        position: 'top-right',
+        position: "top-right",
       });
     } finally {
       setActionLoading(null);
@@ -152,52 +156,53 @@ export default function Page() {
     setShowActionModal(true);
   };
 
-
-
   const handleActionConfirm = async (reason: string) => {
     if (!selectedUser) return;
-    
+
     const userId = selectedUser.userId;
     setActionLoading(userId);
-    
+
     try {
       let response;
       let successMessage;
 
       if (actionType === "revoke") {
         response = await api.patch(`/delivery/revoke/${userId}`, {
-          reason: reason || "Access revoked by admin"
+          reason: reason || "Access revoked by admin",
         });
         successMessage = `${selectedUser.name} has been revoked successfully!`;
       } else {
         response = await api.patch(`/delivery/decline/${userId}`, {
-          reason: reason || undefined
+          reason: reason || undefined,
         });
         successMessage = `${selectedUser.name} has been declined successfully!`;
       }
-      
+
       await refetch();
       toast.success(successMessage, {
         duration: 4000,
-        position: 'top-right',
+        position: "top-right",
       });
-      
+
       if (actionType === "revoke" && response.data.activeOrdersCount > 0) {
-        toast.error(`User has ${response.data.activeOrdersCount} active orders that will be preserved`, {
-          duration: 6000,
-          position: 'top-right',
-        });
+        toast.error(
+          `User has ${response.data.activeOrdersCount} active orders that will be preserved`,
+          {
+            duration: 6000,
+            position: "top-right",
+          }
+        );
       }
 
       setShowActionModal(false);
       setSelectedUser(null);
-      
     } catch (error: any) {
       console.error(`Error ${actionType}ing delivery user:`, error);
-      const errorMessage = error.response?.data?.message || `Failed to ${actionType} user`;
+      const errorMessage =
+        error.response?.data?.message || `Failed to ${actionType} user`;
       toast.error(`Error: ${errorMessage}`, {
         duration: 5000,
-        position: 'top-right',
+        position: "top-right",
       });
     } finally {
       setActionLoading(null);
@@ -225,12 +230,12 @@ export default function Page() {
       console.error("Error fetching delivery attachments:", err);
       toast.error("Failed to fetch delivery data", {
         duration: 5000,
-        position: 'top-right',
+        position: "top-right",
       });
     },
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-    staleTime: 2000
+    staleTime: 2000,
   });
 
   const columns = [
@@ -259,24 +264,25 @@ export default function Page() {
         const rating = item.rating || 0;
         const totalReviews = item.totalReviews || 0;
         const currentStatus = item.currentStatus || "pending";
-        
+
         // Only show ratings for approved couriers or those who have reviews
         if (currentStatus !== "approved" && totalReviews === 0) {
-          return (
-            <span className="text-gray-400 text-sm">Not available</span>
-          );
+          return <span className="text-gray-400 text-sm">Not available</span>;
         }
-        
+
         return (
- <>
-          <div className="flex items-center gap-2">
-        <button           className="text-green-500 hover:text-green-700 underline text-sm"
-onClick={() => {
-  setSelectedCourier({ id: item.userId, name: item.name });
-  setShowReviewsModal(true);
-}}>view ratings</button>
-          </div>
- </>
+          <>
+            <div className="flex items-center gap-2">
+              <button
+                className="text-green-500 hover:text-green-700 underline text-sm"
+                onClick={() => {
+                  setSelectedCourier({ id: item.userId, name: item.name });
+                  setShowReviewsModal(true);
+                }}>
+                view ratings
+              </button>
+            </div>
+          </>
         );
       },
     },
@@ -285,7 +291,7 @@ onClick={() => {
       label: "Status",
       render: (item: any) => {
         const status = item.currentStatus || "pending";
-        
+
         return (
           <span
             className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -296,8 +302,7 @@ onClick={() => {
                 : status === "revoked"
                 ? "bg-orange-100 text-orange-800"
                 : "bg-yellow-100 text-yellow-800"
-            }`}
-          >
+            }`}>
             {status === "approved"
               ? "Approved"
               : status === "declined"
@@ -329,28 +334,25 @@ onClick={() => {
             }}
             className={`border border-gray-300 rounded-md px-3 py-1.5 text-sm text-gray-700 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
               isProcessing ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-          >
+            }`}>
             <option value="" disabled>
               {isProcessing ? "Processing..." : "Select Action"}
             </option>
-            
+
             {currentStatus !== "approved" && (
               <option value="approve">
-                {currentStatus === "declined" || currentStatus === "revoked" ? "Re-approve" : "Approve"}
-              </option>
-            )}
-            
-            {currentStatus !== "declined" && currentStatus !== "revoked" && (
-              <option value="decline">
-                Decline
+                {currentStatus === "declined" || currentStatus === "revoked"
+                  ? "Re-approve"
+                  : "Approve"}
               </option>
             )}
 
+            {currentStatus !== "declined" && currentStatus !== "revoked" && (
+              <option value="decline">Decline</option>
+            )}
+
             {currentStatus === "approved" && (
-              <option value="revoke">
-                Revoke Access
-              </option>
+              <option value="revoke">Revoke Access</option>
             )}
           </select>
         );
@@ -362,7 +364,7 @@ onClick={() => {
       render: (item: any) => {
         const currentStatus = item.currentStatus || "pending";
         const canReapply = item.canReapply;
-        
+
         if (canReapply) {
           return (
             <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -403,8 +405,7 @@ onClick={() => {
       render: (item: any) => (
         <button
           className="text-green-500 hover:text-green-700 underline text-sm"
-          onClick={() => setActiveAttachments(item.attachments)}
-        >
+          onClick={() => setActiveAttachments(item.attachments)}>
           View Documents
         </button>
       ),
@@ -414,48 +415,61 @@ onClick={() => {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Delivery Applications</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Delivery Applications
+        </h1>
         <p className="text-gray-600 mt-1">
           Manage delivery driver applications, approvals, reviews, and access
         </p>
       </div>
 
       {loading ? (
-        <Loader title="delivery data"/>
+        <Loader title="delivery data" />
       ) : (
         <>
           {/* Enhanced Summary stats */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <div className="text-sm font-medium text-yellow-800">Pending</div>
               <div className="text-2xl font-bold text-yellow-900">
-                {deliveryData.filter(item => (item.currentStatus || "pending") === "pending").length}
+                {
+                  deliveryData.filter(
+                    (item) => (item.currentStatus || "pending") === "pending"
+                  ).length
+                }
               </div>
             </div>
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <div className="text-sm font-medium text-green-800">Approved</div>
               <div className="text-2xl font-bold text-green-900">
-                {deliveryData.filter(item => item.currentStatus === "approved").length}
+                {
+                  deliveryData.filter(
+                    (item) => item.currentStatus === "approved"
+                  ).length
+                }
               </div>
             </div>
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <div className="text-sm font-medium text-red-800">Declined</div>
               <div className="text-2xl font-bold text-red-900">
-                {deliveryData.filter(item => item.currentStatus === "declined").length}
+                {
+                  deliveryData.filter(
+                    (item) => item.currentStatus === "declined"
+                  ).length
+                }
               </div>
             </div>
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
               <div className="text-sm font-medium text-orange-800">Revoked</div>
               <div className="text-2xl font-bold text-orange-900">
-                {deliveryData.filter(item => item.currentStatus === "revoked").length}
+                {
+                  deliveryData.filter(
+                    (item) => item.currentStatus === "revoked"
+                  ).length
+                }
               </div>
             </div>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <div className="text-sm font-medium text-blue-800">With Reviews</div>
-              <div className="text-2xl font-bold text-blue-900">
-                {deliveryData.filter(item => (item.totalReviews || 0) > 0).length}
-              </div>
-            </div>
+       
           </div>
 
           <DynamicTable
@@ -494,7 +508,6 @@ onClick={() => {
             courierId={selectedCourier?.id || ""}
             courierName={selectedCourier?.name || ""}
           />
-
         </>
       )}
     </div>

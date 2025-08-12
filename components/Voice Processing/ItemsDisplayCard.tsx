@@ -274,6 +274,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
   //   setShowSuccess(true);
   //   setTimeout(() => setShowSuccess(false), 3000);
   // };
+
   const addAllToCart = async () => {
     for (const item of localItems) {
       // Validate quantity before adding

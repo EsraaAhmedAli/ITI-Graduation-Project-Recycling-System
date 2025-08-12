@@ -17,6 +17,7 @@
       "pickupScheduling": "تحديد موعد",
       "earnorshare": "اكسب أو شارك"
     },
+
     "steps": {
       "howItWorks": "كيف تعمل منصتنا",
       "step1": {
@@ -72,7 +73,7 @@
   "footer": {
     "title": "بدلها",
     "FAQ": "الاسئلة الأكثر شيوعا",
-
+    "rewarding": "مكافآت إعادة التدوير",
     "slogan": "أعد التدوير بذكاء، وعيش بنظافة.",
     "quickLinks": "روابط سريعة",
     "home": "الرئيسية",
@@ -103,7 +104,8 @@
     "login": "تسجيل الدخول",
     "signup": "إنشاء حساب",
     "dashboard": "لوحة التحكم",
-    "editProfile": "تعديل الملف الشخصي"
+    "editProfile": "تعديل الملف الشخصي",
+    "rewarding": "برنامج المكافآت"
   },
   "ecoAssist": {
     "welcome": {
@@ -169,13 +171,20 @@
       "recycles": "إجمالي عمليات التدوير",
       "points": "النقاط المجمعة"
     },
+    "tires": {
+      "ecostarter": "الاخضر",
+      "greenhelper": "الحكمدار",
+      "silverrecycler": "الملك",
+      "goldguardian": "الذهبي",
+      "platinumpioneer": "الزئبقي",
+      "diamondelite": "التنين"
+    },
     "tabs": {
       "incoming": "قيد التنفيذ",
       "completed": "مكتملة",
       "cancelled": "ملغاة",
       "payments": "عمليات الدفع",
-            "reviews" : "الاراء"
-
+      "reviews": "الاراء"
     },
     "orders": {
       "loading": "جاري تحميل الطلبات...",
@@ -188,8 +197,7 @@
         "completed": "مكتملة",
         "cancelled": "ملغاة",
         "pending": "قيد الانتظار",
-                "collected" : "في المخزن"
-
+        "collected": "في المخزن"
       },
       "viewDetails": "عرض التفاصيل",
       "cancelConfirm": "هل أنت متأكد من إلغاء هذا الطلب؟",
@@ -211,8 +219,8 @@
     "unnamedItem": "عنصر بدون اسم",
     "perKg": "لكل كجم",
     "perItem": "لكل قطعة",
-    "OriginalQuantity" : "الكمية الأصلية",
-"quantityByDelivery" : "الكمية بواسطه عامل التوصيل",
+    "OriginalQuantity": "الكمية الأصلية",
+    "quantityByDelivery": "الكمية بواسطه عامل التوصيل",
 
     "orderTotal": "إجمالي الطلب",
     "totalPrice": "{{total}} جنيه",
