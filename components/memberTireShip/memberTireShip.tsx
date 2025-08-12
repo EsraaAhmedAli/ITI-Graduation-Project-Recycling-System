@@ -1,18 +1,35 @@
 import Link from "next/link";
-import { Info } from "lucide-react";
+import { Info, Loader2 } from "lucide-react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation"; // App Router
 import { rewardLevels } from "@/constants/rewardsTiers";
 import { useLanguage } from "@/context/LanguageContext";
 
-export function getUserTier(points: number) {
+export function getUserTier(reycles: number) {
   return rewardLevels.find(
-    (tier) => points >= tier.minPoints && points <= tier.maxPoints
+    (tier) => reycles >= tier.minRecycles && reycles <= tier.maxRecycles
   );
 }
 
-export default function TierStatBox({ totalPoints }: { totalPoints: number }) {
-  const tier = getUserTier(totalPoints);
+export default function TierStatBox({ totalRecycles }: { totalRecycles: number }) {
+  const tier = getUserTier(totalRecycles);
   const { t } = useLanguage();
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [isNavigating, setIsNavigating] = useState(false);
+  
   if (!tier) return null;
+
+  const handleNavigation = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsNavigating(true);
+    
+    startTransition(() => {
+      router.push("/profile/rewarding");
+      // Reset after a delay since we can't easily detect when navigation completes
+      setTimeout(() => setIsNavigating(false), 1000);
+    });
+  };
 
   return (
     <div
@@ -40,13 +57,18 @@ export default function TierStatBox({ totalPoints }: { totalPoints: number }) {
           {tier.badge}
         </div>
 
-        <Link
-          href="/profile/rewarding"
-          className="p-2 rounded-full hover:bg-white/40 transition-colors"
+        <button
+          onClick={handleNavigation}
+          disabled={isNavigating || isPending}
+          className="p-2 rounded-full hover:bg-white/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           title="View Rewards Program"
         >
-          <Info className="w-5 h-5" />
-        </Link>
+          {(isNavigating || isPending) ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : (
+            <Info className="w-5 h-5" />
+          )}
+        </button>
       </div>
     </div>
   );

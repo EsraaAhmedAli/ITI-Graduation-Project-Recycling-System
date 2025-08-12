@@ -20,10 +20,10 @@ const RecyclingRewardsSystem = () => {
   const { userPoints, totalCompletedOrders } = useUserPoints();
 
   // Function to calculate current level based on points
-  const calculateCurrentLevel = (points) => {
+  const calculateCurrentLevel = (recycles) => {
     for (const level of rewardLevels) {
-      console.log(`${level.minPoints} Vs  ${points} Vs ${level.maxPoints}`);
-      if (points >= level.minPoints && points <= level.maxPoints) {
+      // console.log(`${level.minRecycles} Vs  ${points} Vs ${level.maxPoints}`);
+      if (recycles >= level.minRecycles && recycles <= level.maxRecycles) {
         return level;
       }
     }
@@ -33,16 +33,16 @@ const RecyclingRewardsSystem = () => {
   // Function to calculate next level based on current points
   const calculateNextLevel = (points) => {
     const currentLevelIndex = rewardLevels.findIndex(
-      (level) => points >= level.minPoints && points <= level.maxPoints
+      (level) => points >= level.minRecycles && points <= level.maxRecycles
     );
     return rewardLevels[currentLevelIndex + 1] || null;
   };
 
   // Function to calculate points needed for next level
-  const calculatePointsToNext = (points) => {
-    const nextLevel = calculateNextLevel(points);
+  const calculatePointsToNext = (orders) => {
+    const nextLevel = calculateNextLevel(orders);
     if (nextLevel) {
-      return nextLevel.minPoints - points;
+      return nextLevel.minRecycles - orders;
     }
     return 0; // Already at max level
   };
@@ -67,16 +67,16 @@ const RecyclingRewardsSystem = () => {
   const getCurrentLevel = () => {
     return rewardLevels.find(
       (level) =>
-        customerData.currentPoints >= level.minPoints &&
-        customerData.currentPoints <= level.maxPoints
+        customerData.totalOrders >= level.minRecycles &&
+        customerData.totalOrders <= level.maxRecycles
     );
   };
 
   const getNextLevel = () => {
     const currentLevelIndex = rewardLevels.findIndex(
       (level) =>
-        customerData.currentPoints >= level.minPoints &&
-        customerData.currentPoints <= level.maxPoints
+        customerData.totalOrders >= level.minRecycles &&
+        customerData.totalOrders <= level.maxRecycles
     );
     return rewardLevels[currentLevelIndex + 1] || null;
   };
@@ -84,8 +84,8 @@ const RecyclingRewardsSystem = () => {
   const currentLevel = getCurrentLevel();
   const nextLevel = getNextLevel();
   const progressPercentage = currentLevel
-    ? ((customerData.currentPoints - currentLevel.minPoints) /
-        (currentLevel.maxPoints - currentLevel.minPoints)) *
+    ? ((customerData.totalOrders - currentLevel.minRecycles) /
+        (currentLevel.maxRecycles - currentLevel.minRecycles)) *
       100
     : 0;
 
@@ -141,7 +141,7 @@ const RecyclingRewardsSystem = () => {
                 ></div>
               </div>
               <p className="text-sm text-gray-600 mt-2 text-center">
-                {nextLevel.minPoints - customerData.currentPoints} points to
+                {nextLevel.minRecycles - customerData.totalOrders} Recycles to
                 reach {nextLevel.name}
               </p>
             </div>
@@ -174,7 +174,7 @@ const RecyclingRewardsSystem = () => {
             {rewardLevels.map((level, index) => {
               const IconComponent = level.icon;
               const isCurrentLevel = level.name === currentLevel?.name;
-              const isUnlocked = customerData.currentPoints >= level.minPoints;
+              const isUnlocked = customerData.totalOrders >= level.minRecycles;
 
               return (
                 <div
@@ -208,11 +208,11 @@ const RecyclingRewardsSystem = () => {
                     <div
                       className={`inline-flex px-3 py-1 rounded-full text-sm font-medium mb-4 ${level.color}`}
                     >
-                      {level.minPoints.toLocaleString()} -{" "}
-                      {level.maxPoints === 999999
+                      {level.minRecycles.toLocaleString()} -{" "}
+                      {level.maxRecycles === 999999
                         ? "∞"
-                        : level.maxPoints.toLocaleString()}{" "}
-                      points
+                        : level.maxRecycles.toLocaleString()}{" "}
+                      Recycles
                     </div>
 
                     <div className="space-y-2">

@@ -53,6 +53,7 @@
     "ecoAssist": "Eco-Assist",
     "collection": "Collection",
     "myCollection": "My Collection",
+    "ewallet": "E-Wallet",
     "items": "items",
     "totalItems": "Total Items:",
     "viewFullCollection": "View Full Collection",
@@ -106,9 +107,9 @@
     "dashboard": "Dashboard",
     "editProfile": "Edit Profile",
     "rewarding": "Points Program",
-    "pickup" : "Pickup"
+    "pickup": "Pickup"
   },
-  
+
   "ecoAssist": {
     "welcome": {
       "title": "How can I help you recycle today?",
@@ -174,13 +175,13 @@
       "points": "Points Collected"
     },
     "tires": {
-    "ecostarter": "Eco Starter",
-    "greenhelper": "Green Helper",
-    "silverrecycler": "Silver Recycler",
-    "goldguardian": "Gold Guardian",
-    "platinumpioneer": "Platinum Pioneer",
-    "diamondelite": "Diamond Elite"
-  },
+      "ecostarter": "Eco Starter",
+      "greenhelper": "Green Helper",
+      "silverrecycler": "Silver Recycler",
+      "goldguardian": "Gold Guardian",
+      "platinumpioneer": "Platinum Pioneer",
+      "diamondelite": "Diamond Elite"
+    },
     "method": {
       "card": "Visa",
       "link": "Visa",
@@ -208,6 +209,11 @@
       },
       "cancelOrder": "cancel order",
       "viewDetails": "View Details",
+      "track": "Track Order",
+      "rate": "Rate your order",
+      "editRate": "Edit Review",
+      "recipt" : "View Recipt",
+
       "cancelConfirm": "Are you sure you want to cancel this order?",
       "confirmYes": "Yes",
       "confirmNo": "No",
@@ -408,5 +414,10 @@
       "question": "Is there a cost for buyers?",
       "answer": "Buyers pay for the items plus a small service fee that covers quality inspection, cleaning, and delivery. Our prices are typically 40-70% less than buying new, making quality second-hand materials affordable while supporting sustainability."
     }
+    ,  "recentPointsActivity": "Recent Points Activity",
+  "pointsAwarded": "Points awarded",
+  "pointsDeducted": "Points deducted",
+  "pts": "pts",
+  "viewFullHistory": "View full history"
   }
 }

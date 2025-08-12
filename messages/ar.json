@@ -68,7 +68,8 @@
     "logout": "تسجيل خروج",
     "title": "بدلها",
     "searchplaceholder": "ابحث عن شيء...",
-    "myCart": "عربة التسوق"
+    "myCart": "عربة التسوق",
+    "ewallet": "محفظتي"
   },
   "footer": {
     "title": "بدلها",
@@ -106,8 +107,7 @@
     "dashboard": "لوحة التحكم",
     "editProfile": "تعديل الملف الشخصي",
     "rewarding": "برنامج المكافآت",
-        "pickup" : "استلام"
-
+    "pickup": "استلام"
   },
   "ecoAssist": {
     "welcome": {
@@ -193,6 +193,10 @@
       "empty": "لا توجد طلبات في هذا التبويب بعد.",
       "date": "التاريخ",
       "cancelOrder": "الغاء الطلب",
+      "track": "تتبع الطلب",
+      "rate": "قيم طلبك",
+      "editRate": " عدل التقييم",
+      "recipt": "عرض الإيصال ",
 
       "status": {
         "inTransit": "قيد التوصيل",
@@ -401,5 +405,11 @@
     },
     "title": "الأسئلة الشائعة",
     "slogan": "                كل ما تحتاج إلى معرفته حول عملية تبادل المواد لدينا"
-  }
+  },
+
+  "recentPointsActivity": "نشاط النقاط الأخير",
+  "pointsAwarded": "منح نقاط",
+  "pointsDeducted": "خصم نقاط",
+  "pts": "نقطة",
+  "viewFullHistory": "عرض التاريخ الكامل"
 }

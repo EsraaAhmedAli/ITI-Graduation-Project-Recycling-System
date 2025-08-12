@@ -323,8 +323,8 @@ function ProfileContent({
   const tier = useMemo(() => {
     return rewardLevels.find(
       (tier) =>
-        userPoints?.totalPoints >= tier.minPoints &&
-        userPoints?.totalPoints <= tier.maxPoints
+        totalCompletedOrders >= tier.minRecycles &&
+        totalCompletedOrders <= tier.maxRecycles
     );
   }, [userPoints?.totalPoints]);
 
@@ -415,7 +415,7 @@ function ProfileContent({
           )}
 
           {user.role === "customer" && (
-            <MembershipTier totalPoints={userPoints?.totalPoints} />
+            <MembershipTier totalRecycles={totalCompletedOrders} />
           )}
         </div>
 

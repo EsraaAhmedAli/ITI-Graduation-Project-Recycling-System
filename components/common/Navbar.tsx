@@ -16,6 +16,7 @@ import {
   User,
   ChevronDown,
   Globe,
+  Wallet,
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { FaRobot } from "react-icons/fa";
@@ -468,6 +469,16 @@ export default function Navbar() {
                         <Settings className="w-4 h-4" />
                         <span className="text-xs font-medium">
                           {t("navbar.settings")}
+                        </span>
+                      </Link>
+                      <Link
+                        href="/profile/ewallet"
+                        onClick={() => setIsProfileOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                      >
+                        <Wallet className="w-4 h-4" />
+                        <span className="text-xs font-medium">
+                          {t("navbar.ewallet")}
                         </span>
                       </Link>
                       <div className="border-t border-gray-100 my-1"></div>{" "}

@@ -65,7 +65,9 @@ export default function OrderActions({
             href={`/pickup/tracking/${order._id}`}
             className="text-sm text-blue-600 hover:text-blue-800 font-medium hover:underline transition-colors duration-200"
           >
-            Track Order
+            {
+              t('profile.orders.track')
+            }
           </Link>
         )}
 
@@ -76,7 +78,7 @@ export default function OrderActions({
             className="text-sm text-purple-600 hover:text-purple-800 font-medium hover:underline transition-colors duration-200 flex items-center gap-1"
           >
             <Star size={14} />
-            {hasExistingReview ? "Edit Review" : "Rate Order"}
+            {hasExistingReview ? t('profile.orders.editRate') : t('profile.orders.rate')}
           </button>
         )}
       </div>
