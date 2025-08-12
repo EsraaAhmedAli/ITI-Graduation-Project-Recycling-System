@@ -3,7 +3,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import DynamicTable from "@/components/shared/dashboardTable";
-import Loader from "@/components/common/loader";
 import UserModal from "@/components/shared/userModal";
 import ItemsModal from "@/components/shared/itemsModal";
 import CourierSelectionModal from "../../../components/courierSelectionModal";
@@ -17,6 +16,10 @@ import Button from "@/components/common/Button";
 import ProofOfDeliveryModal from "../../../components/proofDeliveryDetails";
 import api from "../../../lib/axios";
 import { Modal, ModalBody, ModalHeader } from "flowbite-react";
+import { get } from "http";
+import { useUserPoints } from "@/context/UserPointsContext";
+import { useNotification } from "@/context/notificationContext";
+import { queryClient } from "@/lib/queryClient";
 
 type UserRole = "customer" | "buyer";
 const STATUS = {
@@ -54,12 +57,14 @@ const fetchOrders = async (
   page: number,
   limit: number,
   userRole?: UserRole,
-  filters?: Record<string, any>
+  filters?: Record<string, any>,
+  search?: string // Add search parameter
 ) => {
   const params: any = { page, limit };
   if (userRole) params.userRole = userRole;
   if (filters?.status?.length) params.status = filters.status.join(",");
   if (filters?.date?.[0]) params.date = filters.date[0];
+  if (search && search.trim()) params.search = search.trim(); // Add search to params
 
   const { data } = await api.get("/admin/orders", { params });
   return data;
@@ -88,8 +93,9 @@ export default function Page() {
       active: [],
     },
   ]);
-
   const [activeTab, setActiveTab] = useState<UserRole>("customer");
+  const [searchTerm, setSearchTerm] = useState(""); // Add search term state
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(""); // Add debounced search term
   const { currentPage, itemsPerPage, handlePageChange } = usePagination(1, 5);
   const [isProofModalOpen, setIsProofModalOpen] = useState(false);
   const [selectedCompletedOrder, setSelectedCompletedOrder] =
@@ -120,74 +126,87 @@ export default function Page() {
     });
     setIsProofModalOpen(true);
   };
-const checkAndUpdateCourierOrders = async (courierId, isApproved) => {
-  console.log('hhhhiii');
-  
-  if (!isApproved) {
-    try {
-      const response = await api.get(`/orders/courier/${courierId}`);
-      const assignedOrders = response.data.filter(
-        (order) => order.status.toLowerCase() === "assigntocourier" || 
-                   order.status.toLowerCase() === "assignedtocourier"
-      );
-
-      const updatePromises = assignedOrders.map((order) =>
-        // FIXED: Use the correct endpoint for updating order status
-        api.put(`admin/orders/${order._id}/status`, {
-          status: "pending",
-          reason: "Courier status changed to not approved"
-        })
-      );
-
-      await Promise.all(updatePromises);
-      
-      if (assignedOrders.length > 0) {
-        toast.info(`${assignedOrders.length} orders moved back to pending due to courier status change`);
-      }
-      
-      return assignedOrders.length;
-    } catch (error) {
-      console.error("Failed to update courier orders:", error);
-      return 0;
-    }
-  }
-  return 0;
-};
-const cleanupRevokedCourierOrders = async () => {
-  console.log("🧹 Cleaning up orders assigned to revoked couriers...");
-  
-  if (!couriers || !Array.isArray(couriers)) return;
-  
-  let totalUpdated = 0;
-  
-  for (const courier of couriers) {
-    const isApproved = courier.attachments?.status === "approved";
-    
+  const checkAndUpdateCourierOrders = async (courierId, isApproved) => {
     if (!isApproved) {
-      console.log(`🔍 Checking orders for revoked courier: ${courier.name} (${courier.attachments?.status})`);
-      
       try {
-        const updatedCount = await checkAndUpdateCourierOrders(courier._id, false);
-        totalUpdated += updatedCount;
-        
-        if (updatedCount > 0) {
-          console.log(`✅ Updated ${updatedCount} orders for revoked courier ${courier.name}`);
+        const response = await api.get(`/orders/courier/${courierId}`);
+        const assignedOrders = response.data.filter(
+          (order) =>
+            order.status.toLowerCase() === "assigntocourier" ||
+            order.status.toLowerCase() === "assignedtocourier"
+        );
+
+        const updatePromises = assignedOrders.map((order) =>
+          // FIXED: Use the correct endpoint for updating order status
+          api.put(`admin/orders/${order._id}/status`, {
+            status: "pending",
+            reason: "Courier status changed to not approved",
+          })
+        );
+
+        await Promise.all(updatePromises);
+
+        if (assignedOrders.length > 0) {
+          toast.info(
+            `${assignedOrders.length} orders moved back to pending due to courier status change`
+          );
         }
+
+        return assignedOrders.length;
       } catch (error) {
-        console.error(`❌ Error updating orders for courier ${courier.name}:`, error);
+        console.error("Failed to update courier orders:", error);
+        return 0;
       }
     }
-  }
-  
-  if (totalUpdated > 0) {
-    toast.success(`Cleanup complete: ${totalUpdated} orders moved back to pending from revoked couriers`);
-    refetch();
-  } else {
-    toast.info("Cleanup complete: No orders assigned to revoked couriers");
-  }
-  
-  return totalUpdated;
-};
+    return 0;
+  };
+  const cleanupRevokedCourierOrders = async () => {
+    console.log("🧹 Cleaning up orders assigned to revoked couriers...");
+
+    if (!couriers || !Array.isArray(couriers)) return;
+
+    let totalUpdated = 0;
+
+    for (const courier of couriers) {
+      const isApproved = courier.attachments?.status === "approved";
+
+      if (!isApproved) {
+        console.log(
+          `🔍 Checking orders for revoked courier: ${courier.name} (${courier.attachments?.status})`
+        );
+
+        try {
+          const updatedCount = await checkAndUpdateCourierOrders(
+            courier._id,
+            false
+          );
+          totalUpdated += updatedCount;
+
+          if (updatedCount > 0) {
+            console.log(
+              `✅ Updated ${updatedCount} orders for revoked courier ${courier.name}`
+            );
+          }
+        } catch (error) {
+          console.error(
+            `❌ Error updating orders for courier ${courier.name}:`,
+            error
+          );
+        }
+      }
+    }
+
+    if (totalUpdated > 0) {
+      toast.success(
+        `Cleanup complete: ${totalUpdated} orders moved back to pending from revoked couriers`
+      );
+      refetch();
+    } else {
+      toast.info("Cleanup complete: No orders assigned to revoked couriers");
+    }
+
+    return totalUpdated;
+  };
 
   const activeFilters = useMemo(() => {
     const status = filters.find((f) => f.name === "status")?.active || [];
@@ -203,13 +222,26 @@ const cleanupRevokedCourierOrders = async () => {
   }, [filters, activeTab]);
 
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
-    queryKey: ["adminOrders", currentPage, activeTab, activeFilters],
+    queryKey: [
+      "adminOrders",
+      currentPage,
+      activeTab,
+      activeFilters,
+      debouncedSearchTerm,
+    ], // Use debounced search term
     queryFn: () =>
-      fetchOrders(currentPage, itemsPerPage, activeTab, activeFilters),
-    keepPreviousData: true,
+      fetchOrders(
+        currentPage,
+        itemsPerPage,
+        activeTab,
+        activeFilters,
+        debouncedSearchTerm
+      ),
+    // Remove keepPreviousData to show fresh data immediately
+    // keepPreviousData: true,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-    staleTime: 2000,
+    staleTime: 0, // Always fetch fresh data
   });
 
   const { user } = useUserAuth();
@@ -228,7 +260,7 @@ const cleanupRevokedCourierOrders = async () => {
     return rawOrders;
   }, [rawOrders, activeTab]);
   const courierStatusRef = useRef(new Map());
-const isFirstLoadRef = useRef(true); // Track if this is the first load
+  const isFirstLoadRef = useRef(true); // Track if this is the first load
 
   const totalItems = orders.length; // Use filtered count
   const totalPages = data?.totalPages || 1;
@@ -247,6 +279,7 @@ const isFirstLoadRef = useRef(true); // Track if this is the first load
   const [selectedOrderItems, setSelectedOrderItems] = useState<null | any[]>(
     null
   );
+  const [selectedOrder, setSelectedOrder] = useState<null | any[]>(null);
   const [isCourierModalOpen, setIsCourierModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState<string | null>(null);
   const [showCancelReasonModal, setShowCancelReasonModal] = useState(false);
@@ -279,113 +312,122 @@ const isFirstLoadRef = useRef(true); // Track if this is the first load
 
   const { data: couriers } = useUsers("delivery");
 
+  useEffect(() => {
+    if (couriers && Array.isArray(couriers)) {
+      console.log("🔍 Checking courier statuses...");
 
-useEffect(() => {
-  if (couriers && Array.isArray(couriers)) {
-    console.log("🔍 Checking courier statuses...");
-    
-    const processStatusChanges = async () => {
-      for (const courier of couriers) {
-        const isApproved = courier.attachments?.status === "approved";
-        const previousStatus = courierStatusRef.current.get(courier._id);
-        
-        console.log(`Courier ${courier._id} (${courier.name}):`, {
-          currentStatus: courier.attachments?.status,
-          isApproved,
-          previousStatus,
-          isFirstLoad: isFirstLoadRef.current,
-          shouldCheckChange: !isFirstLoadRef.current && previousStatus !== undefined
-        });
-        
-        // Only check for status changes after the first load
-        // and only if we have a previous status recorded
-        if (!isFirstLoadRef.current && previousStatus !== undefined) {
-          // If courier status changed from approved to not approved
-          if (previousStatus === true && !isApproved) {
-            console.log(`🚨 DETECTED STATUS CHANGE: Courier ${courier._id} (${courier.name}) changed from approved to ${courier.attachments?.status}`);
-            
-            // Show immediate feedback
-            toast.warning(`Courier ${courier.name} status changed to ${courier.attachments?.status}. Checking assigned orders...`);
-            
-            try {
-              const updatedCount = await checkAndUpdateCourierOrders(courier._id, isApproved);
-              if (updatedCount > 0) {
-                console.log(`✅ Successfully updated ${updatedCount} orders for courier ${courier.name}`);
-                refetch(); // Refresh the orders list
-              } else {
-                console.log(`ℹ️ No assigned orders found for courier ${courier.name}`);
-                toast.info(`Courier ${courier.name} has no assigned orders to update.`);
+      const processStatusChanges = async () => {
+        for (const courier of couriers) {
+          const isApproved = courier.attachments?.status === "approved";
+          const previousStatus = courierStatusRef.current.get(courier._id);
+
+          console.log(`Courier ${courier._id} (${courier.name}):`, {
+            currentStatus: courier.attachments?.status,
+            isApproved,
+            previousStatus,
+            isFirstLoad: isFirstLoadRef.current,
+            shouldCheckChange:
+              !isFirstLoadRef.current && previousStatus !== undefined,
+          });
+
+          // Only check for status changes after the first load
+          // and only if we have a previous status recorded
+          if (!isFirstLoadRef.current && previousStatus !== undefined) {
+            // If courier status changed from approved to not approved
+            if (previousStatus === true && !isApproved) {
+              console.log(
+                `🚨 DETECTED STATUS CHANGE: Courier ${courier._id} (${courier.name}) changed from approved to ${courier.attachments?.status}`
+              );
+
+              // Show immediate feedback
+              toast.warning(
+                `Courier ${courier.name} status changed to ${courier.attachments?.status}. Checking assigned orders...`
+              );
+
+              try {
+                const updatedCount = await checkAndUpdateCourierOrders(
+                  courier._id,
+                  isApproved
+                );
+                if (updatedCount > 0) {
+                  console.log(
+                    `✅ Successfully updated ${updatedCount} orders for courier ${courier.name}`
+                  );
+                  refetch(); // Refresh the orders list
+                } else {
+                  console.log(
+                    `ℹ️ No assigned orders found for courier ${courier.name}`
+                  );
+                  toast.info(
+                    `Courier ${courier.name} has no assigned orders to update.`
+                  );
+                }
+              } catch (error) {
+                console.error(
+                  `❌ Error updating orders for courier ${courier.name}:`,
+                  error
+                );
+                toast.error(
+                  `Failed to update orders for courier ${courier.name}`
+                );
               }
-            } catch (error) {
-              console.error(`❌ Error updating orders for courier ${courier.name}:`, error);
-              toast.error(`Failed to update orders for courier ${courier.name}`);
+            }
+
+            // Also check for approved to approved changes (no action needed, just log)
+            if (previousStatus === isApproved) {
+              console.log(
+                `📝 No status change for courier ${courier.name} (still ${courier.attachments?.status})`
+              );
+            } else if (previousStatus === false && isApproved) {
+              console.log(
+                `✅ Courier ${courier.name} was re-approved (${courier.attachments?.status})`
+              );
             }
           }
-          
-          // Also check for approved to approved changes (no action needed, just log)
-          if (previousStatus === isApproved) {
-            console.log(`📝 No status change for courier ${courier.name} (still ${courier.attachments?.status})`);
-          } else if (previousStatus === false && isApproved) {
-            console.log(`✅ Courier ${courier.name} was re-approved (${courier.attachments?.status})`);
-          }
+
+          // Always update the stored status
+          courierStatusRef.current.set(courier._id, isApproved);
         }
-        
-        // Always update the stored status
-        courierStatusRef.current.set(courier._id, isApproved);
-      }
-      
-      // After first load, mark that we're no longer on first load
-      if (isFirstLoadRef.current) {
-        isFirstLoadRef.current = false;
-        console.log("📊 Initial courier statuses recorded:", 
-          Array.from(courierStatusRef.current.entries()).map(([id, status]) => ({
-            courierId: id,
-            isApproved: status
-          }))
-        );
-      }
+
+        // After first load, mark that we're no longer on first load
+        if (isFirstLoadRef.current) {
+          isFirstLoadRef.current = false;
+          console.log(
+            "📊 Initial courier statuses recorded:",
+            Array.from(courierStatusRef.current.entries()).map(
+              ([id, status]) => ({
+                courierId: id,
+                isApproved: status,
+              })
+            )
+          );
+        }
+      };
+
+      processStatusChanges();
+    }
+  }, [couriers, refetch]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
     };
-
-    processStatusChanges();
-  }
-}, [couriers, refetch]);
-
-
-
-const testStatusChange = () => {
-  console.log("🧪 Testing status change detection...");
-  const testCourierId = "688c9fe0a4c2a5046aa4c371"; // Sarah's ID from your log
-  
-  // Simulate changing from approved to revoked
-  courierStatusRef.current.set(testCourierId, true); // Set as previously approved
-  
-  // Now trigger the useEffect to detect the change
-  console.log("Current courier with revoked status should now be detected as changed");
-};
-
-
-
+  }, [searchTerm]);
 
   const handleTabChange = (tab: UserRole) => {
     setActiveTab(tab);
-    handlePageChange(1);
+    handlePageChange(1); // Reset to first page when changing tabs
+    setSearchTerm(""); // Clear search when changing tabs
+  };
 
-    // Clear collected filter when switching to buyers tab
-    if (tab === "buyer") {
-      setFilters((prev) =>
-        prev.map((f) => {
-          if (f.name === "status") {
-            return {
-              ...f,
-              active: f.active.filter(
-                (status: string) => status !== "collected"
-              ),
-            };
-          }
-          return f;
-        })
-      );
-    }
+  // Add search handler function
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    handlePageChange(1); // Reset to first page when searching
   };
 
   const handleDeleteOrder = async (orderId: string) => {
@@ -411,33 +453,35 @@ const testStatusChange = () => {
     }
   };
 
-const handleAssignToCourier = async (orderId, courierId) => {
-  try {
-    const selectedCourier = couriers?.find((courier) => courier._id === courierId);
-    if (!selectedCourier) {
-      toast.error("Selected courier not found");
-      return;
-    }
+  const handleAssignToCourier = async (orderId, courierId) => {
+    try {
+      const selectedCourier = couriers?.find(
+        (courier) => courier._id === courierId
+      );
+      if (!selectedCourier) {
+        toast.error("Selected courier not found");
+        return;
+      }
 
-    // CHANGED: Check attachments.status instead of status
-    if (selectedCourier.attachments?.status !== "approved") {
-      toast.error("Cannot assign order to non-approved courier");
-      return;
-    }
+      // CHANGED: Check attachments.status instead of status
+      if (selectedCourier.attachments?.status !== "approved") {
+        toast.error("Cannot assign order to non-approved courier");
+        return;
+      }
 
-    await api.put(`/orders/${orderId}/assign-courier`, {
-      courierId,
-      status: "assignToCourier",
-    });
-    toast.success("Order assigned to courier successfully");
-    setIsCourierModalOpen(false);
-    setSelectedOrderForCourier(null);
-    refetch();
-  } catch (err) {
-    console.error("Failed to assign courier:", err);
-    toast.error("Failed to assign courier to order");
-  }
-};
+      await api.put(`/orders/${orderId}/assign-courier`, {
+        courierId,
+        status: "assignToCourier",
+      });
+      toast.success("Order assigned to courier successfully");
+      setIsCourierModalOpen(false);
+      setSelectedOrderForCourier(null);
+      refetch();
+    } catch (err) {
+      console.error("Failed to assign courier:", err);
+      toast.error("Failed to assign courier to order");
+    }
+  };
   const handleCancelOrder = async (orderId: string) => {
     const { value: reason } = await Swal.fire({
       title: "Cancel Order",
@@ -491,8 +535,22 @@ const handleAssignToCourier = async (orderId, courierId) => {
         await api.put(`/admin/orders/${orderId}/status`, {
           status: "completed",
         });
+
         toast.success("Order marked as completed successfully");
+
         refetch();
+        // refetch both points and orders count
+        // await refetch();
+        // await refetchNotifications();
+        // await getUserPoints();
+        // await fetchCompletedOrdersCount();
+        // await Promise.all([
+        //   refetch(),
+        //   getUserPoints(),
+        //   fetchCompletedOrdersCount(),
+        //   refetchNotifications(),
+        // ]);
+        // await Promise.all([getUserPoints(), fetchCompletedOrdersCount()]);
       } catch (err) {
         console.error("Failed to mark order as completed:", err);
         toast.error("Failed to mark order as completed");
@@ -529,9 +587,10 @@ const handleAssignToCourier = async (orderId, courierId) => {
     }
   };
 
-  if (isLoading) {
-    return <Loader title="orders" />;
-  }
+  // Remove all loading states - just show data as it arrives
+  // if (isLoading && !searchTerm) {
+  //   return <Loader title="orders" />;
+  // }
 
   if (isError) {
     return (
@@ -541,8 +600,7 @@ const handleAssignToCourier = async (orderId, courierId) => {
             className="w-8 h-8 text-red-600"
             fill="none"
             stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
+            viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -559,19 +617,31 @@ const handleAssignToCourier = async (orderId, courierId) => {
         </p>
         <button
           onClick={() => refetch()}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
-        >
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
           Try Again
         </button>
       </div>
     );
   }
 
+  // Remove search loading state - just show data as it arrives
+  // if (
+  //   searchTerm &&
+  //   debouncedSearchTerm !== searchTerm &&
+  //   isFetching &&
+  //   !data?.data?.length
+  // ) {
+  //   return (
+  //     // ... search loading UI
+  //   );
+  // }
+
   const transformedData = orders.map((order: any) => ({
     orderId: order._id,
     onClickItemsId: () => {
       setOrderStatus(order.status);
       setSelectedOrderItems(order.items);
+      setSelectedOrder(order);
       setIsItemsModalOpen(true);
     },
     status: order.status,
@@ -607,8 +677,7 @@ const handleAssignToCourier = async (orderId, courierId) => {
         <div className="flex flex-col">
           <button
             onClick={row.onClickUser}
-            className="text-green-600 hover:underline font-medium text-left"
-          >
+            className="text-green-600 hover:underline font-medium text-left">
             {row.userName}
           </button>
 
@@ -624,8 +693,7 @@ const handleAssignToCourier = async (orderId, courierId) => {
       render: (row: any) => (
         <button
           onClick={row.onClickItemsId}
-          className="text-green-600 hover:underline font-medium"
-        >
+          className="text-green-600 hover:underline font-medium">
           {row.orderId}
         </button>
       ),
@@ -653,8 +721,7 @@ const handleAssignToCourier = async (orderId, courierId) => {
           return (
             <Button
               onClick={() => handleOpenCompletedDetails(order)}
-              className="px-5 py-2 text-xs font-semibold rounded-md bg-green-100 text-green-800 hover:bg-green-200 transition-colors"
-            >
+              className="px-5 py-2 text-xs font-semibold rounded-md bg-green-100 text-green-800 hover:bg-green-200 transition-colors">
               Completed
             </Button>
           );
@@ -665,8 +732,7 @@ const handleAssignToCourier = async (orderId, courierId) => {
           return (
             <button
               onClick={() => handleShowCancelReason(order.statusHistory)}
-              className="px-5 py-2 text-xs font-semibold rounded-md bg-red-100 text-red-800 hover:bg-red-200 transition-colors"
-            >
+              className="px-5 py-2 text-xs font-semibold rounded-md bg-red-100 text-red-800 hover:bg-red-200 transition-colors">
               Cancelled
             </button>
           );
@@ -678,16 +744,14 @@ const handleAssignToCourier = async (orderId, courierId) => {
             <div className="flex items-center gap-2">
               <Button
                 onClick={() => handleOpenCompletedDetails(order)}
-                className="px-3 py-1 text-xs font-semibold rounded-md bg-purple-500 text-purple-800 hover:bg-purple-200 transition-colors"
-              >
-                Collected
+                className="px-3 py-2 text-sm font-semibold rounded-md bg-purple-500 text-purple-800 hover:bg-purple-200 transition-colors">
+                see collection info
               </Button>
               <button
                 onClick={() => handleMarkAsCompleted(order.orderId)}
-                className="px-3 py-1 text-xs font-semibold rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors"
-                title="Mark as completed"
-              >
-                Complete
+                className="px-3 py-2 text-sm font-semibold rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors"
+                title="Mark as completed">
+                click to complete
               </button>
             </div>
           );
@@ -762,8 +826,7 @@ const handleAssignToCourier = async (orderId, courierId) => {
             className={`px-2 py-1 rounded border ${getStatusColor(
               currentStatus
             )}`}
-            onClick={(e) => e.stopPropagation()}
-          >
+            onClick={(e) => e.stopPropagation()}>
             <option value={currentStatus}>
               {currentStatus === "assigntocourier"
                 ? "Assigned to Courier"
@@ -796,8 +859,7 @@ const handleAssignToCourier = async (orderId, courierId) => {
                 activeTab === "customer"
                   ? "border-green-500 text-green-600"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
+              }`}>
               Customer Orders
               {activeTab === "customer" && (
                 <span className="ml-2 bg-green-100 text-green-600 py-0.5 px-2.5 rounded-full text-xs font-medium">
@@ -811,8 +873,7 @@ const handleAssignToCourier = async (orderId, courierId) => {
                 activeTab === "buyer"
                   ? "border-green-500 text-green-600"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
+              }`}>
               Buyer Orders
               {activeTab === "buyer" && (
                 <span className="ml-2 bg-green-100 text-green-600 py-0.5 px-2.5 rounded-full text-xs font-medium">
@@ -831,18 +892,20 @@ const handleAssignToCourier = async (orderId, courierId) => {
             No {activeTab} Orders Found
           </h3>
           <p className="text-gray-600 mb-6 max-w-md mx-auto">
-            There are currently no {activeTab} orders in the system. Orders will
-            appear here once {activeTab}s start placing them.
+            {searchTerm
+              ? `No orders found matching "${searchTerm}"`
+              : `There are currently no ${activeTab} orders in the system. Orders will appear here once ${activeTab}s start placing them.`}
           </p>
           <button
             onClick={() => refetch()}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
-          >
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
             Refresh
           </button>
         </div>
       ) : (
         <>
+      
+
           <DynamicTable
             data={transformedData}
             columns={columns}
@@ -852,6 +915,9 @@ const handleAssignToCourier = async (orderId, courierId) => {
             itemsPerPage={itemsPerPage}
             showAddButton={false}
             showFilter
+            showSearch={true} // Enable search
+            searchTerm={searchTerm} // Pass search term
+            onSearchChange={handleSearchChange} // Pass search handler
             filtersConfig={getFilteredFilters()}
             externalFilters={activeFilters}
             onExternalFiltersChange={(updated) => {
@@ -874,6 +940,7 @@ const handleAssignToCourier = async (orderId, courierId) => {
                 })
               );
               handlePageChange(1);
+              setSearchTerm(""); // Clear search when filters change
             }}
             activeFiltersCount={filters.reduce(
               (acc, f) => acc + (f.active?.length || 0),
@@ -894,6 +961,7 @@ const handleAssignToCourier = async (orderId, courierId) => {
       />
       <ItemsModal
         selectedOrderItems={selectedOrderItems}
+        selectedOrder={selectedOrder}
         show={isItemsModalOpen}
         orderStatus={orderStatus}
         onclose={() => setIsItemsModalOpen(false)}
@@ -923,8 +991,7 @@ const handleAssignToCourier = async (orderId, courierId) => {
         show={showCancelReasonModal}
         size="md"
         popup={true}
-        onClose={() => setShowCancelReasonModal(false)}
-      >
+        onClose={() => setShowCancelReasonModal(false)}>
         <ModalHeader />
         <ModalBody>
           <div className="text-center">
@@ -935,8 +1002,7 @@ const handleAssignToCourier = async (orderId, courierId) => {
             <div className="mt-6">
               <button
                 onClick={() => setShowCancelReasonModal(false)}
-                className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
-              >
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
                 Close
               </button>
             </div>

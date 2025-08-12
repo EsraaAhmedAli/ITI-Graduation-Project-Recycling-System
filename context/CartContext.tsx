@@ -375,7 +375,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
         // Show success message
         if (guestCart.length > 0) {
-    
         } else {
           toast.success("Welcome back! Your cart has been loaded.");
         }
@@ -456,7 +455,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }
       }
     },
-    [loadCartFromSession, loadCartFromDatabase, loadCart, performCartMerge]
+    [
+      loadCartFromSession,
+      loadCartFromDatabase,
+      loadCart,
+      performCartMerge,
+      clearCartFromSession,
+      mergingOptions?.showMergeDialog,
+    ]
   );
 
   // Handle user authentication changes with improved logic and cart merging
@@ -488,7 +494,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           // Customer logged out - preserve cart in session
           console.log("Customer logged out - saving cart to session");
           saveCartToSession(cart);
-        } else if (currentUserRole === "buyer") {
+        } else {
           // Buyer logged out - completely clear cart
           console.log("Buyer logged out - clearing cart completely");
           setCart([]);

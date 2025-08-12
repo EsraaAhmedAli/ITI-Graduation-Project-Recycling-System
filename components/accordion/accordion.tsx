@@ -1,10 +1,14 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function PointsActivity({ userPoints }: { userPoints: any }) {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
 
   if (!userPoints || !userPoints.pointsHistory?.length) return null;
+  console.log(userPoints.pointsHistory , 'hhhiss');
+  
 
   return (
     <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-xl shadow-sm">
@@ -13,7 +17,7 @@ export default function PointsActivity({ userPoints }: { userPoints: any }) {
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between"
       >
-        <h3 className="text-lg font-semibold text-green-800">Recent Points Activity</h3>
+        <h3 className="text-lg font-semibold text-green-800">{t('recentPointsActivity')}</h3>
         <ChevronDown
           className={`w-5 h-5 text-green-700 transition-transform duration-300 ${
             isOpen ? "rotate-180" : ""
@@ -26,12 +30,15 @@ export default function PointsActivity({ userPoints }: { userPoints: any }) {
         <>
           <div className="space-y-2 max-h-64 overflow-y-auto mt-4">
             {userPoints.pointsHistory.map((entry: any, index: number) => (
-              <div
+            entry.reason == 'Points awarded' || entry.reason == 'Points deducted' ?   <div
                 key={index}
                 className="flex items-center justify-between bg-white p-3 rounded-lg shadow-sm"
               >
+           
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-800">{entry.reason}</p>
+                  <p className="text-sm font-medium text-gray-800">
+                    {entry.reason === 'Points awarded' ? t('pointsAwarded') : t('pointsDeducted')}
+                  </p>
                   <p className="text-xs text-gray-500">
                     {new Date(entry.timestamp).toLocaleDateString()}
                   </p>
@@ -42,16 +49,16 @@ export default function PointsActivity({ userPoints }: { userPoints: any }) {
                   }`}
                 >
                   {entry.points > 0 ? "+" : ""}
-                  {entry.points} pts
+                  {entry.points} {t('pts')}
                 </div>
-              </div>
+              </div> :''
             ))}
           </div>
 
           {/* Optional: View All button could be repurposed to open a modal or scroll */}
           {userPoints.pointsHistory.length > 3 && (
             <button className="mt-3 text-sm text-green-600 hover:text-green-700 font-medium">
-              View full history →
+              {t('viewFullHistory')} →
             </button>
           )}
         </>

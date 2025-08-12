@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation";
 import { useState, useMemo } from "react";
 import { CartItem, useCart } from "@/context/CartContext";
-import Loader from "@/components/common/loader";
+import Loader from "@/components/common/Loader";
 import { Recycle, Plus, Sparkles } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios";
@@ -110,9 +110,7 @@ export default function UserCategoryPage() {
   };
 
   const getMeasurementText = (unit: number) => {
-    return unit === 1
-      ? t("itemsModal.perKg")
-      : t("itemsModal.perItem");
+    return unit === 1 ? t("itemsModal.perKg") : t("itemsModal.perItem");
   };
   if (isLoading) return <Loader />;
   if (error) {
@@ -178,8 +176,7 @@ export default function UserCategoryPage() {
           {data!.map((item) => (
             <div
               key={item._id}
-              className="group bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300 hover:-translate-y-1"
-            >
+              className="group bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300 hover:-translate-y-1">
               {/* Image Container */}
               <div className="relative bg-gradient-to-br from-slate-100 to-slate-50">
                 <div className="relative w-full h-40">
@@ -226,8 +223,7 @@ export default function UserCategoryPage() {
                 <button
                   onClick={() => handleAddToCollection(item)}
                   disabled={loadingItemId === item._id}
-                  className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white py-2 px-3 rounded-xl font-semibold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm hover:shadow-md group/button"
-                >
+                  className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white py-2 px-3 rounded-xl font-semibold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm hover:shadow-md group/button">
                   {loadingItemId === item._id ? (
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (

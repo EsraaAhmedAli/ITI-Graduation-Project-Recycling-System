@@ -433,21 +433,23 @@ export default function CartPage() {
         </div>
       ) : (
         <>
-          <div className="bg-green-50 rounded-xl p-4 mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className={`bg-green-50 rounded-xl p-4 mb-6 grid grid-cols-1 ${user.role == 'customer' ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
             <div className="bg-white p-4 rounded-lg shadow-sm text-center">
               <div className="text-gray-500 text-sm">Total Items</div>
               <div className="text-2xl font-bold text-green-600">
                 {totalItems}
               </div>
             </div>
-            <div className="bg-white p-4 rounded-lg shadow-sm text-center">
+        {
+          user?.role == 'customer' &&     <div className="bg-white p-4 rounded-lg shadow-sm text-center">
               <div className="text-gray-500 text-sm">Earned Points</div>
               <div className="text-2xl font-bold text-blue-600">
                 {totalPoints}
               </div>
             </div>
+        }
             <div className="bg-white p-4 rounded-lg shadow-sm text-center">
-              <div className="text-gray-500 text-sm">Earned Money</div>
+              <div className="text-gray-500 text-sm">{user?.role == 'customer' ? 'Earned Money' : 'Payed Money'} </div>
               <div className="text-2xl font-bold text-emerald-600">
                 {totalPrice.toFixed(2)} EGP
               </div>
@@ -544,12 +546,8 @@ export default function CartPage() {
                           <Scale className="w-4 h-4 mr-1" />
                           {item.measurement_unit === 1 ? "By Kilo" : "By Piece"}
                         </div>
-                        <div className="text-green-600 font-medium">
-                          {item.points} points each
-                        </div>
-                        <div className="text-blue-600">
-                          Saves {item.co2_saved || 0} kg CO₂
-                        </div>
+                      
+                   
                       </div>
 
                       {userRole === "buyer" && (

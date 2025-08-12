@@ -25,6 +25,10 @@ export interface User {
   createdAt?: string;
   updatedAt?: string;
   lastActiveAt?: string;
-  deliveryStatus:string
-  declineReason:string
+  deliveryStatus: string;
+  declineReason: string;
+}
+export interface UserRewards {
+  currentPoints: number;
+  totalOrders: number;
 }

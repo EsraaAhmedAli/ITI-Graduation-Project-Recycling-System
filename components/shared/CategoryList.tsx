@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import CategoryCard from "./CategoryCard";
-import Loader from "../common/loader";
+import Loader from "../common/Loader";
 
 import { useState, useMemo, useCallback } from "react";
 import { useCategories } from "@/hooks/useGetCategories";
@@ -17,9 +17,9 @@ interface CategoryListProps {
   horizontal?: boolean;
 }
 
-export default function CategoryList({ 
-  maxToShow, 
-  horizontal = false 
+export default function CategoryList({
+  maxToShow,
+  horizontal = false,
 }: CategoryListProps) {
   const [showAll, setShowAll] = useState(false);
   const { t } = useLanguage();
@@ -28,7 +28,7 @@ export default function CategoryList({
   // Memoize the categories to show to avoid recalculation on every render
   const categoriesToShow = useMemo(() => {
     if (!data?.data) return [];
-    
+
     if (showAll) return data.data;
     if (maxToShow) return data?.data.slice(0, maxToShow);
     return data.data;
@@ -45,18 +45,27 @@ export default function CategoryList({
   }, []);
 
   // Memoized category rendering function
-  const renderCategory = useCallback((category: Category) => (
-    <div
-      key={category._id}
-      className={horizontal ? "min-w-[200px]" : "transform transition-transform duration-300 hover:scale-105"}
-    >
-      <CategoryCard name={category?.name} image={category?.image} />
-    </div>
-  ), [horizontal]);
+  const renderCategory = useCallback(
+    (category: Category) => (
+      <div
+        key={category._id}
+        className={
+          horizontal
+            ? "min-w-[200px]"
+            : "transform transition-transform duration-300 hover:scale-105"
+        }>
+        <CategoryCard name={category?.name} image={category?.image} />
+      </div>
+    ),
+    [horizontal]
+  );
 
   // Early returns for loading and error states
   if (isLoading) return <Loader title="categories" />;
-  if (error) return <p className="text-red-500 text-center">Error loading categories.</p>;
+  if (error)
+    return (
+      <p className="text-red-500 text-center">Error loading categories.</p>
+    );
 
   return (
     <div>
@@ -64,8 +73,7 @@ export default function CategoryList({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}
-        className="mb-16 px-2 sm:px-4"
-      >
+        className="mb-16 px-2 sm:px-4">
         <div className="pl-18 mb-8 mt-16">
           <h2 className="text-3xl md:text-3xl font-bold text-start text-accent-content mb-2">
             {t("staticCategories.recyclingCategories")}
@@ -76,13 +84,17 @@ export default function CategoryList({
         </div>
 
         {horizontal ? (
-          <Marquee speed={100} gradient={false} pauseOnHover className="overflow-hidden">
+          <Marquee
+            speed={100}
+            gradient={false}
+            pauseOnHover
+            className="overflow-hidden">
             <div className="flex gap-6 pl-4">
               {categoriesToShow.map(renderCategory)}
             </div>
           </Marquee>
         ) : (
-          <div className="flex flex-wrap justify-start items-start gap-6 pl-18">
+          <div className="flex flex-wrap justify-start items-start gap-6 pl-10">
             {categoriesToShow.map(renderCategory)}
           </div>
         )}
@@ -91,8 +103,7 @@ export default function CategoryList({
           <div className="flex justify-center mt-8">
             <button
               onClick={handleSeeMoreClick}
-              className="px-6 py-2 rounded-full bg-green-500 hover:bg-green-600 text-white font-semibold transition-all duration-300 shadow-md"
-            >
+              className="px-6 py-2 rounded-full bg-green-500 hover:bg-green-600 text-white font-semibold transition-all duration-300 shadow-md">
               {t("staticCategories.seeMore")}
             </button>
           </div>
@@ -107,4 +118,3 @@ export default function CategoryList({
     </div>
   );
 }
-

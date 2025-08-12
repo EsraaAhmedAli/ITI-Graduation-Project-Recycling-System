@@ -14,6 +14,7 @@ import GuestSessionProvider from "@/lib/GuestSessionProvider";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { OfflineProvider } from "@/context/OfflineContext"; // Add this import
 import UserPointsWrapper from "@/components/shared/pointsWrapper";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -44,26 +45,28 @@ export default function RootLayout({
           <UserAuthProvider>
             <ReactQueryProvider>
               <UserPointsWrapper>
-
-              <CartProvider>
-                <OfflineProvider>
-                  {" "}
-                  {/* Add OfflineProvider here */}
-                  <Toaster />
-                  <NotificationProvider>
-                    <ToastContainer />
-                    <GuestSessionProvider>
-                      <GoogleOAuthProvider
-                        clientId={process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID!}
-                      >
-                        <LayoutWrapper>{children}</LayoutWrapper>
-                      </GoogleOAuthProvider>
-                    </GuestSessionProvider>
-                  </NotificationProvider>
-                </OfflineProvider>
-              </CartProvider>
-                            </UserPointsWrapper>
-
+                <CartProvider>
+                  <OfflineProvider>
+                    {" "}
+                    {/* Add OfflineProvider here */}
+                    <Toaster />
+                    <NotificationProvider>
+                      <ToastContainer />
+                      <GuestSessionProvider>
+                        <GoogleOAuthProvider
+                          clientId={
+                            process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID!
+                          }
+                        >
+                          <ThemeProvider defaultTheme="system">
+                          <LayoutWrapper>{children}</LayoutWrapper>
+                          </ThemeProvider>
+                        </GoogleOAuthProvider>
+                      </GuestSessionProvider>
+                    </NotificationProvider>
+                  </OfflineProvider>
+                </CartProvider>
+              </UserPointsWrapper>
             </ReactQueryProvider>
           </UserAuthProvider>
         </LanguageProvider>

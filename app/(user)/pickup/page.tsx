@@ -9,7 +9,7 @@ import Button from "@/components/common/Button";
 import AddressStep from "./AddressStep";
 import { toast } from "react-toastify";
 import { UserAuthContext } from "@/context/AuthFormContext";
-import Loader from "@/components/common/loader";
+import Loader from "@/components/common/Loader";
 import { CartItem, useCart } from "@/context/CartContext";
 import Link from "next/link";
 import api from "@/lib/axios";
@@ -41,7 +41,7 @@ enum Steps {
   DELIVERY_REVIEW,
 }
 
-type PaymentMethod = 'cash' | 'credit_card' | 'wallet';
+type PaymentMethod = "cash" | "credit_card" | "wallet";
 
 export default function PickupConfirmation() {
   const { t } = useLanguage();
@@ -52,9 +52,12 @@ export default function PickupConfirmation() {
   const [selectedCity, setSelectedCity] = useState<City | "">("");
   const [formData, setFormData] = useState<FormInputs | null>(null);
   const [addresses, setAddresses] = useState<FormInputs[]>([]);
-  const [selectedAddress, setSelectedAddress] = useState<FormInputs | null>(null);
+  const [selectedAddress, setSelectedAddress] = useState<FormInputs | null>(
+    null
+  );
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] =
+    useState<PaymentMethod | null>(null);
 
   const [isEditing, setIsEditing] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
@@ -62,13 +65,16 @@ export default function PickupConfirmation() {
   const [loadingBtn, setLoadingBtn] = useState<boolean>(false);
 
   const { user } = useContext(UserAuthContext) ?? {};
-  
+
   const getTotalCartPrice = (cart: CartItem[]) => {
     return cart.reduce((total, item) => total + item.price * item.quantity, 0);
   };
-  
   const { cart, clearCart } = useCart();
   const totalPrice = getTotalCartPrice(cart);
+  const deliveryFee = selectedAddress?.city
+    ? deliveryFees[selectedAddress.city] || 0
+    : 0;
+      const totalAmount = totalPrice + deliveryFee;
 
   const { createOrder } = useCreateOrder({
     clearCart,
@@ -105,29 +111,29 @@ export default function PickupConfirmation() {
     reValidateMode: "onChange",
   });
 
-useEffect(() => {
-  if (user) {
-    fetchAddresses();
-    setIsEditing(false);
-    // Set default payment method for customers (since they skip payment step)
-    if (user.role === "customer") {
-      setSelectedPaymentMethod('cash');
+  useEffect(() => {
+    if (user) {
+      fetchAddresses();
+      setIsEditing(false);
+      // Set default payment method for customers (since they skip payment step)
+      if (user.role === "customer") {
+        setSelectedPaymentMethod("cash");
+      }
     }
-  }
-}, [reset, user]);
+  }, [reset, user]);
 
- const handleNextStep = () => {
-  if (!selectedAddress) {
-    toast.error("please select address");
-  } else {
-    // Only buyers go to payment step, customers skip directly to review
-    if (user?.role === "buyer") {
-      goToStep(Steps.PAYMENT);
+  const handleNextStep = () => {
+    if (!selectedAddress) {
+      toast.error("please select address");
     } else {
-      goToStep(Steps.REVIEW);
+      // Only buyers go to payment step, customers skip directly to review
+      if (user?.role === "buyer") {
+        goToStep(Steps.PAYMENT);
+      } else {
+        goToStep(Steps.REVIEW);
+      }
     }
-  }
-};
+  };
 
   const goToStep = (step: Steps) => {
     if (step > currentStep) {
@@ -145,58 +151,69 @@ useEffect(() => {
       goToStep(Steps.REVIEW);
     }
   };
-const handleConfirm = async () => {
-  setLoadingBtn(true);
-  try {
-    if (user?.role === "buyer") {
-      const deliveryFee = selectedAddress?.city
-        ? deliveryFees[selectedAddress.city] || 0
-        : 0;
+  const handleConfirm = async () => {
+    setLoadingBtn(true);
+    try {
+      if (user?.role === "buyer") {
+        const deliveryFee = selectedAddress?.city
+          ? deliveryFees[selectedAddress.city] || 0
+          : 0;
 
-      const finalTotal = totalPrice + deliveryFee;
+        const finalTotal = totalPrice + deliveryFee;
 
-      sessionStorage.setItem(
-        "checkoutData",
-        JSON.stringify({
-          cart,
-          selectedAddress,
-          deliveryFee,
-          totalPrice: finalTotal,
-          paymentMethod: selectedPaymentMethod,
-          user: {
-            id: user._id,
-            name: user.name,
-            email: user.email,
-            phoneNumber: user.phoneNumber,
-          },
-        })
-      );
+        sessionStorage.setItem(
+          "checkoutData",
+          JSON.stringify({
+            cart,
+            selectedAddress,
+            deliveryFee,
+            totalPrice: totalAmount,
+            paymentMethod: selectedPaymentMethod,
+            user: {
+              id: user._id,
+              name: user.name,
+              email: user.email,
+              phoneNumber: user.phoneNumber,
+            },
+          })
+        );
 
-      if (selectedPaymentMethod === 'credit_card') {
-        router.push(`/payment?total=${finalTotal}`);
-        return; // Exit early for credit card payment
+        if (selectedPaymentMethod === "credit_card") {
+
+          router.push(`/payment?total=${finalTotal}?deliveryFee=${deliveryFee}`);
+          return; // Exit early for credit card payment
+        } else {
+          const result = await createOrder(
+            selectedAddress,
+            cart,
+            user,
+            deliveryFee,
+            selectedPaymentMethod,
+          );
+          if (result.success) {
+            console.log("Order created successfully:", result.orderId);
+            setCurrentStep(Steps.TRACKING);
+          }
+        }
       } else {
-        const result = await createOrder(selectedAddress, cart, user, selectedPaymentMethod);
+        // Handle customer orders
+        const result = await createOrder(
+          selectedAddress,
+          cart,
+          user,
+        );
         if (result.success) {
           console.log("Order created successfully:", result.orderId);
           setCurrentStep(Steps.TRACKING);
         }
       }
-    } else {
-      // Handle customer orders
-      const result = await createOrder(selectedAddress, cart, user, selectedPaymentMethod);
-      if (result.success) {
-        console.log("Order created successfully:", result.orderId);
-        setCurrentStep(Steps.TRACKING);
-      }
+    } catch (error) {
+      console.error("Error during order confirmation:", error);
+      toast.error("Failed to confirm order. Please try again.");
+    } finally {
+      setLoadingBtn(false);
     }
-  } catch (error) {
-    console.error("Error during order confirmation:", error);
-    toast.error("Failed to confirm order. Please try again.");
-  } finally {
-    setLoadingBtn(false);
-  }
-};
+  };
 
   const handleSaveAddress = async (data: FormInputs) => {
     try {
@@ -258,18 +275,17 @@ const handleConfirm = async () => {
   // Payment method options
   const paymentMethods = [
     {
-      id: 'cash' as PaymentMethod,
-      name: 'Cash on Delivery',
-      description: 'Pay when your order arrives',
+      id: "cash" as PaymentMethod,
+      name: "Cash on Delivery",
+      description: "Pay when your order arrives",
       icon: Banknote,
     },
     {
-      id: 'credit_card' as PaymentMethod,
-      name: 'Credit/Debit Card',
-      description: 'Pay securely with your card',
+      id: "credit_card" as PaymentMethod,
+      name: "Credit/Debit Card",
+      description: "Pay securely with your card",
       icon: CreditCard,
     },
-    
   ];
 
   if (loading) {
@@ -285,8 +301,7 @@ const handleConfirm = async () => {
         </p>
         <Link
           href="/auth"
-          className="inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg"
-        >
+          className="inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg">
           Go to Login
         </Link>
       </div>
@@ -296,35 +311,51 @@ const handleConfirm = async () => {
   return (
     <div className="lg:w-3xl w-full mx-auto md:p-8 p-5 bg-white rounded-2xl shadow-lg border border-green-100">
       <div className="flex my-3 flex-col md:flex-row items-start md:items-center gap-4 md:gap-0">
-   <Step
-  label={t("pickup.steps.address")}
-  direction={direction}
-  isCurrent={currentStep === Steps.ADDRESS}
-  active={currentStep >= Steps.ADDRESS}
-/>
+        <Step
+          label={t("pickup.steps.address")}
+          direction={direction}
+          isCurrent={currentStep === Steps.ADDRESS}
+          active={currentStep >= Steps.ADDRESS}
+        />
 
-{/* Only show payment step and connectors for buyers */}
-{user?.role === "buyer" && (
-  <>
-    <div className={`hidden md:flex flex-grow h-0.5 mx-2 ${currentStep >= Steps.PAYMENT ? "bg-green-700" : "bg-gray-300"}`} />
-    <div className={`flex md:hidden w-0.5 h-6 ${currentStep >= Steps.PAYMENT ? "bg-green-700" : "bg-gray-300"}`} />
-    <Step
-      label="Payment"
-      direction={direction}
-      isCurrent={currentStep === Steps.PAYMENT}
-      active={currentStep >= Steps.PAYMENT}
-    />
-  </>
-)}
+        {/* Only show payment step and connectors for buyers */}
+        {user?.role === "buyer" && (
+          <>
+            <div
+              className={`hidden md:flex flex-grow h-0.5 mx-2 ${
+                currentStep >= Steps.PAYMENT ? "bg-green-700" : "bg-gray-300"
+              }`}
+            />
+            <div
+              className={`flex md:hidden w-0.5 h-6 ${
+                currentStep >= Steps.PAYMENT ? "bg-green-700" : "bg-gray-300"
+              }`}
+            />
+            <Step
+              label="Payment"
+              direction={direction}
+              isCurrent={currentStep === Steps.PAYMENT}
+              active={currentStep >= Steps.PAYMENT}
+            />
+          </>
+        )}
 
-<div className={`hidden md:flex flex-grow h-0.5 mx-2 ${currentStep >= Steps.REVIEW ? "bg-green-700" : "bg-gray-300"}`} />
-<div className={`flex md:hidden w-0.5 h-6 ${currentStep >= Steps.REVIEW ? "bg-green-700" : "bg-gray-300"}`} />
-<Step
-  label={t("pickup.steps.review")}
-  direction={direction}
-  isCurrent={currentStep === Steps.REVIEW}
-  active={currentStep >= Steps.REVIEW}
-/>
+        <div
+          className={`hidden md:flex flex-grow h-0.5 mx-2 ${
+            currentStep >= Steps.REVIEW ? "bg-green-700" : "bg-gray-300"
+          }`}
+        />
+        <div
+          className={`flex md:hidden w-0.5 h-6 ${
+            currentStep >= Steps.REVIEW ? "bg-green-700" : "bg-gray-300"
+          }`}
+        />
+        <Step
+          label={t("pickup.steps.review")}
+          direction={direction}
+          isCurrent={currentStep === Steps.REVIEW}
+          active={currentStep >= Steps.REVIEW}
+        />
         <div
           className={`hidden md:flex flex-grow h-0.5 mx-2 ${
             currentStep >= Steps.TRACKING ? "bg-green-700" : "bg-gray-300"
@@ -343,12 +374,16 @@ const handleConfirm = async () => {
         />
         <div
           className={`hidden md:flex flex-grow h-0.5 mx-2 ${
-            currentStep >= Steps.DELIVERY_REVIEW ? "bg-green-700" : "bg-gray-300"
+            currentStep >= Steps.DELIVERY_REVIEW
+              ? "bg-green-700"
+              : "bg-gray-300"
           }`}
         />
         <div
           className={`flex md:hidden w-0.5 h-6 ${
-            currentStep >= Steps.DELIVERY_REVIEW ? "bg-green-700" : "bg-gray-300"
+            currentStep >= Steps.DELIVERY_REVIEW
+              ? "bg-green-700"
+              : "bg-gray-300"
           }`}
         />
         <Step
@@ -413,8 +448,7 @@ const handleConfirm = async () => {
                           ? "border-emerald-300 bg-gradient-to-r from-emerald-50 via-white to-emerald-50 shadow-emerald-100 shadow-lg"
                           : "border-gray-200 bg-white hover:border-blue-200 hover:shadow-blue-100"
                       }`}
-                      onClick={() => handleSelectAddress(addr)}
-                    >
+                      onClick={() => handleSelectAddress(addr)}>
                       {/* Selection Indicator */}
                       <div
                         className={`absolute top-0 left-0 right-0 h-1 transition-all duration-300 ${
@@ -434,16 +468,14 @@ const handleConfirm = async () => {
                                 selectedAddress?._id === addr._id
                                   ? "bg-emerald-100 text-emerald-600 scale-110"
                                   : "bg-gray-100 text-gray-600 group-hover:bg-blue-100 group-hover:text-blue-600"
-                              }`}
-                            >
+                              }`}>
                               <Home className="w-5 h-5" />
                               {selectedAddress?._id === addr._id && (
                                 <div className="absolute -top-1 -right-1 bg-emerald-500 rounded-full p-0.5">
                                   <svg
                                     className="w-3 h-3 text-white"
                                     fill="currentColor"
-                                    viewBox="0 0 20 20"
-                                  >
+                                    viewBox="0 0 20 20">
                                     <path
                                       fillRule="evenodd"
                                       d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -497,8 +529,7 @@ const handleConfirm = async () => {
                                 handleEditAddress(addr);
                               }}
                               className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200 opacity-0 group-hover:opacity-100"
-                              title="Edit Address"
-                            >
+                              title="Edit Address">
                               <Edit3 className="w-4 h-4" />
                             </button>
                             <button
@@ -507,8 +538,7 @@ const handleConfirm = async () => {
                                 handleDeleteAddress(addr._id);
                               }}
                               className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200 opacity-0 group-hover:opacity-100"
-                              title="Delete Address"
-                            >
+                              title="Delete Address">
                               <Trash2 className="w-4 h-4" />
                             </button>
 
@@ -518,8 +548,7 @@ const handleConfirm = async () => {
                                 selectedAddress?._id === addr._id
                                   ? "border-emerald-500 bg-emerald-500"
                                   : "border-gray-300 group-hover:border-blue-400"
-                              }`}
-                            >
+                              }`}>
                               {selectedAddress?._id === addr._id && (
                                 <div className="w-2 h-2 bg-white rounded-full" />
                               )}
@@ -550,8 +579,7 @@ const handleConfirm = async () => {
                     });
                     setSelectedCity("");
                   }}
-                  className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 bg-white border-2 border-dashed border-gray-300 text-gray-700 rounded-2xl font-semibold hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300 group hover:shadow-md"
-                >
+                  className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 bg-white border-2 border-dashed border-gray-300 text-gray-700 rounded-2xl font-semibold hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300 group hover:shadow-md">
                   <div className="p-1 rounded-lg bg-gray-100 group-hover:bg-blue-100 transition-colors duration-300">
                     <Plus className="w-5 h-5" />
                   </div>
@@ -565,8 +593,7 @@ const handleConfirm = async () => {
                     selectedAddress
                       ? " text-white  "
                       : "bg-gray-200 text-gray-500 cursor-not-allowed"
-                  }`}
-                >
+                  }`}>
                   Continue
                   <ChevronRight className="w-5 h-5" />
                 </Button>
@@ -611,28 +638,32 @@ const handleConfirm = async () => {
             {paymentMethods.map((method) => {
               const IconComponent = method.icon;
               const isSelected = selectedPaymentMethod === method.id;
-              
+
               return (
                 <div
                   key={method.id}
                   className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 ${
                     isSelected
-                      ? 'border-green-500 bg-green-50 shadow-md'
-                      : 'border-gray-200 hover:border-blue-300'
+                      ? "border-green-500 bg-green-50 shadow-md"
+                      : "border-gray-200 hover:border-blue-300"
                   }`}
-                  onClick={() => setSelectedPaymentMethod(method.id)}
-                >
+                  onClick={() => setSelectedPaymentMethod(method.id)}>
                   <div className="flex items-center gap-4">
-                    <div className={`p-3 rounded-lg ${
-                      method.id === 'cash' ? 'bg-green-100 text-green-600' :
-                      method.id === 'credit_card' ? 'bg-blue-100 text-blue-600' :
-                      'bg-purple-100 text-purple-600'
-                    }`}>
+                    <div
+                      className={`p-3 rounded-lg ${
+                        method.id === "cash"
+                          ? "bg-green-100 text-green-600"
+                          : method.id === "credit_card"
+                          ? "bg-blue-100 text-blue-600"
+                          : "bg-purple-100 text-purple-600"
+                      }`}>
                       <IconComponent className="w-6 h-6" />
                     </div>
                     <div className="flex-1">
                       <h3 className="font-bold text-lg">{method.name}</h3>
-                      <p className="text-gray-600 text-sm">{method.description}</p>
+                      <p className="text-gray-600 text-sm">
+                        {method.description}
+                      </p>
                     </div>
                     {isSelected && (
                       <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
@@ -647,12 +678,11 @@ const handleConfirm = async () => {
             {user?.walletBalance && user.walletBalance > 0 && (
               <div
                 className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 ${
-                  selectedPaymentMethod === 'wallet'
-                    ? 'border-green-500 bg-green-50 shadow-md'
-                    : 'border-gray-200 hover:border-blue-300'
+                  selectedPaymentMethod === "wallet"
+                    ? "border-green-500 bg-green-50 shadow-md"
+                    : "border-gray-200 hover:border-blue-300"
                 }`}
-                onClick={() => setSelectedPaymentMethod('wallet')}
-              >
+                onClick={() => setSelectedPaymentMethod("wallet")}>
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-purple-100 rounded-lg text-purple-600">
                     <Wallet className="w-6 h-6" />
@@ -660,10 +690,11 @@ const handleConfirm = async () => {
                   <div className="flex-1">
                     <h3 className="font-bold text-lg">Wallet Balance</h3>
                     <p className="text-gray-600 text-sm">
-                      Use your wallet balance (${user.walletBalance.toFixed(2)} available)
+                      Use your wallet balance (${user.walletBalance.toFixed(2)}{" "}
+                      available)
                     </p>
                   </div>
-                  {selectedPaymentMethod === 'wallet' && (
+                  {selectedPaymentMethod === "wallet" && (
                     <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
                       <Check className="w-3 h-3 text-white" />
                     </div>
@@ -691,7 +722,13 @@ const handleConfirm = async () => {
             <div className="border-t pt-3 flex justify-between font-semibold text-lg">
               <span>Total</span>
               <span>
-                EGP{(totalPrice + (selectedAddress?.city ? deliveryFees[selectedAddress.city] || 0 : 0)).toFixed(2)}
+                EGP
+                {(
+                  totalPrice +
+                  (selectedAddress?.city
+                    ? deliveryFees[selectedAddress.city] || 0
+                    : 0)
+                ).toFixed(2)}
               </span>
             </div>
           </div>
@@ -700,8 +737,7 @@ const handleConfirm = async () => {
           <div className="flex justify-between pt-8 border-t border-gray-200">
             <Button
               onClick={() => goToStep(Steps.ADDRESS)}
-              className="px-6 py-3 bg-gray-200 text-gray-700 hover:bg-gray-300"
-            >
+              className="px-6 py-3 bg-gray-200 text-gray-700 hover:bg-gray-300">
               Back
             </Button>
             <Button
@@ -711,8 +747,7 @@ const handleConfirm = async () => {
                 selectedPaymentMethod
                   ? "bg-green-600 hover:bg-green-700 text-white"
                   : "bg-gray-200 text-gray-500 cursor-not-allowed"
-              }`}
-            >
+              }`}>
               Continue
               <ChevronRight className="w-5 h-5" />
             </Button>
@@ -725,27 +760,27 @@ const handleConfirm = async () => {
           cartItems={cart}
           formData={formData}
           paymentMethod={selectedPaymentMethod}
-onBack={() => {
-  if (user?.role === "customer") {
-    setCurrentStep(Steps.ADDRESS);
-  } else {
-    setCurrentStep(Steps.PAYMENT);
-  }
-}}          onConfirm={handleConfirm}
+          onBack={() => {
+            if (user?.role === "customer") {
+              setCurrentStep(Steps.ADDRESS);
+            } else {
+              setCurrentStep(Steps.PAYMENT);
+            }
+          }}
+          onConfirm={handleConfirm}
           loading={loadingBtn}
           userRole={user?.role}
         />
       )}
 
-
-{currentStep === Steps.TRACKING && createdOrderId && (
-  <TrackingStepWrapper
-    key={`tracking-${createdOrderId}`}
-    orderId={createdOrderId} 
-    onDelivered={() => router.push("/profile")}
-    embedded={true}
-  />
-)}
+      {currentStep === Steps.TRACKING && createdOrderId && (
+        <TrackingStepWrapper
+          key={`tracking-${createdOrderId}`}
+          orderId={createdOrderId}
+          onDelivered={() => router.push("/profile")}
+          embedded={true}
+        />
+      )}
     </div>
   );
 }

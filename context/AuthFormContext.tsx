@@ -10,7 +10,7 @@ import React, {
 } from "react";
 import { useRouter } from "next/navigation";
 import api, { setAccessToken } from "@/lib/axios";
-import { User } from "@/components/Types/Auser.type";
+import { User, UserRewards } from "@/components/Types/Auser.type";
 
 interface UserAuthContextType {
   user: User | null;
@@ -28,6 +28,8 @@ interface UserAuthContextType {
   isDelivery: boolean;
   isApprovedDelivery: boolean;
   isPendingOrDeclinedDelivery: boolean;
+  userRewards: UserRewards | null;
+  setUserRewards: (rewards: UserRewards | null) => void;
 }
 
 export const UserAuthContext = createContext<UserAuthContextType | undefined>(
@@ -42,10 +44,13 @@ export const UserAuthProvider = ({
   const [user, setUserState] = useState<User | null>(null);
   const [token, setTokenState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [deliveryStatus, setDeliveryStatusState] = useState<string | null>(null);
+  const [deliveryStatus, setDeliveryStatusState] = useState<string | null>(
+    null
+  );
+  const [userRewards, setUserRewards] = useState<UserRewards>(null);
   const router = useRouter();
-    const [lastRefreshTime, setLastRefreshTime] = useState(0); // ✅ ADD: Prevent rapid refreshes
- const determineDeliveryStatus = useCallback((userData: User) => {
+  const [lastRefreshTime, setLastRefreshTime] = useState(0); // ✅ ADD: Prevent rapid refreshes
+  const determineDeliveryStatus = useCallback((userData: User) => {
     if (userData.role !== "delivery") return null;
 
     // Check attachments for status information
@@ -62,32 +67,42 @@ export const UserAuthProvider = ({
     const approveTimestamp = approvedAt ? new Date(approvedAt).getTime() : 0;
 
     // Find most recent action
-    const mostRecentTimestamp = Math.max(declineTimestamp, revokeTimestamp, approveTimestamp);
+    const mostRecentTimestamp = Math.max(
+      declineTimestamp,
+      revokeTimestamp,
+      approveTimestamp
+    );
 
     if (mostRecentTimestamp === revokeTimestamp && revokeReason) {
       return "revoked";
     } else if (mostRecentTimestamp === declineTimestamp && declineReason) {
       return "declined";
-    } else if (userData.isApproved === true && (mostRecentTimestamp === approveTimestamp || approveTimestamp > 0)) {
+    } else if (
+      userData.isApproved === true &&
+      (mostRecentTimestamp === approveTimestamp || approveTimestamp > 0)
+    ) {
       return "approved";
     } else {
       return "pending";
     }
   }, []);
 
- const setUser = useCallback((user: User | null) => {
-    if (user) localStorage.setItem("user", JSON.stringify(user));
-    else localStorage.removeItem("user");
-    setUserState(user);
+  const setUser = useCallback(
+    (user: User | null) => {
+      if (user) localStorage.setItem("user", JSON.stringify(user));
+      else localStorage.removeItem("user");
+      setUserState(user);
 
-    if (!user || user.role !== "delivery") {
-      setDeliveryStatusState(null);
-    } else {
-      // ✅ ENHANCED: Use better status determination
-      const status = determineDeliveryStatus(user);
-      setDeliveryStatusState(status);
-    }
-  }, [determineDeliveryStatus]);
+      if (!user || user.role !== "delivery") {
+        setDeliveryStatusState(null);
+      } else {
+        // ✅ ENHANCED: Use better status determination
+        const status = determineDeliveryStatus(user);
+        setDeliveryStatusState(status);
+      }
+    },
+    [determineDeliveryStatus]
+  );
 
   const setToken = useCallback((token: string | null) => {
     if (token) localStorage.setItem("token", token);
@@ -107,7 +122,7 @@ export const UserAuthProvider = ({
     sessionStorage.removeItem("deliveryUserData");
     setUserState(null);
     setTokenState(null);
-        setLastRefreshTime(0); // ✅ ADD: Reset refresh time
+    setLastRefreshTime(0); // ✅ ADD: Reset refresh time
 
     setDeliveryStatusState(null);
     setAccessToken(null);
@@ -119,20 +134,20 @@ export const UserAuthProvider = ({
   const checkPublicDeliveryStatus = useCallback(async (email: string) => {
     try {
       console.log("📡 Checking public delivery status for:", email);
-      
-      const response = await api.post('/auth/check-delivery-status', { email });
+
+      const response = await api.post("/auth/check-delivery-status", { email });
       console.log("📡 Public API returned:", response.data);
-      
+
       return response.data;
     } catch (error) {
       console.error("❌ Public API error:", error);
-      
+
       if (error.response) {
         console.log(error.response.statusText);
-        
+
         // throw new Error(`HTTP ${error.response.status}: ${error.response.data?.message || error.response.statusText}`);
       } else if (error.request) {
-        throw new Error('Network error: No response received');
+        throw new Error("Network error: No response received");
       } else {
         throw error;
       }
@@ -156,14 +171,15 @@ export const UserAuthProvider = ({
   }, [logout, setToken]);
 
   // ✅ IMPROVED: Better delivery status refresh with public API fallback
- const refreshDeliveryStatus = useCallback(async () => {
+  const refreshDeliveryStatus = useCallback(async () => {
     if (!user || user.role !== "delivery") {
       return Promise.resolve(null);
     }
 
     // ✅ ADD: Rate limiting to prevent rapid refreshes
     const now = Date.now();
-    if (now - lastRefreshTime < 3000) { // Minimum 3 seconds between refreshes
+    if (now - lastRefreshTime < 3000) {
+      // Minimum 3 seconds between refreshes
       console.log("⏰ Skipping refresh - too soon since last refresh");
       return Promise.resolve(null);
     }
@@ -184,13 +200,16 @@ export const UserAuthProvider = ({
           statusData = response.data;
           console.log("📡 Auth API returned:", statusData);
         } catch (authError) {
-          console.warn("⚠️ Auth API failed, falling back to public API:", authError.response?.status);
-          
+          console.warn(
+            "⚠️ Auth API failed, falling back to public API:",
+            authError.response?.status
+          );
+
           // Clear invalid token
           if (authError.response?.status === 401) {
             setToken(null);
           }
-          
+
           // Fallback to public API
           statusData = await checkPublicDeliveryStatus(user.email);
         }
@@ -201,8 +220,12 @@ export const UserAuthProvider = ({
 
       const newStatus = statusData.deliveryStatus;
       const currentStatus = deliveryStatus;
-      
-      console.log("🔄 Status comparison:", { newStatus, currentStatus, userApproved: user.isApproved });
+
+      console.log("🔄 Status comparison:", {
+        newStatus,
+        currentStatus,
+        userApproved: user.isApproved,
+      });
 
       // ✅ FIXED: Only update if status actually changed
       if (newStatus !== currentStatus) {
@@ -211,12 +234,15 @@ export const UserAuthProvider = ({
       }
 
       // ✅ ENHANCED: Handle all status changes without triggering more refreshes
-      if (newStatus === "approved" && (currentStatus !== "approved" || !user.isApproved)) {
+      if (
+        newStatus === "approved" &&
+        (currentStatus !== "approved" || !user.isApproved)
+      ) {
         console.log("🎉 User was approved! Updating session data only...");
-        
+
         const approvedData = {
-          user: { 
-            ...user, 
+          user: {
+            ...user,
             isApproved: true,
             declineReason: undefined,
             declinedAt: undefined,
@@ -227,8 +253,8 @@ export const UserAuthProvider = ({
               revokeReason: undefined,
               revokedAt: undefined,
               approvedAt: statusData.approvedAt,
-              status: "approved"
-            }
+              status: "approved",
+            },
           },
           deliveryStatus: "approved",
           declineReason: "",
@@ -236,28 +262,31 @@ export const UserAuthProvider = ({
           revokeReason: "",
           revokedAt: "",
           canReapply: false,
-          message: "Application approved"
+          message: "Application approved",
         };
-        
-        sessionStorage.setItem("deliveryUserData", JSON.stringify(approvedData));
+
+        sessionStorage.setItem(
+          "deliveryUserData",
+          JSON.stringify(approvedData)
+        );
       }
       // ✅ ADD: Handle revoked status
       else if (newStatus === "revoked" && currentStatus !== "revoked") {
         console.log("🚫 User was revoked! Updating session data...");
-        
-        const updatedUser = { 
-          ...user, 
+
+        const updatedUser = {
+          ...user,
           isApproved: false,
           attachments: {
             ...user.attachments,
             revokeReason: statusData.revokeReason,
             revokedAt: statusData.revokedAt,
-            status: "revoked"
-          }
+            status: "revoked",
+          },
         };
-        
+
         setUser(updatedUser);
-        
+
         const revokeData = {
           user: updatedUser,
           deliveryStatus: "revoked",
@@ -265,16 +294,15 @@ export const UserAuthProvider = ({
           revokedAt: statusData.revokedAt,
           activeOrdersCount: statusData.activeOrdersCount || 0,
           canReapply: statusData.canReapply || true,
-          message: "Access revoked"
+          message: "Access revoked",
         };
-        
+
         sessionStorage.setItem("deliveryUserData", JSON.stringify(revokeData));
-      }
-      else if (newStatus === "declined" && currentStatus !== "declined") {
+      } else if (newStatus === "declined" && currentStatus !== "declined") {
         console.log("❌ User was declined! Updating session data...");
-        
-        const updatedUser = { 
-          ...user, 
+
+        const updatedUser = {
+          ...user,
           isApproved: false,
           declineReason: statusData.declineReason,
           declinedAt: statusData.declinedAt,
@@ -282,33 +310,32 @@ export const UserAuthProvider = ({
             ...user.attachments,
             declineReason: statusData.declineReason,
             declinedAt: statusData.declinedAt,
-            status: "declined"
-          }
+            status: "declined",
+          },
         };
-        
+
         setUser(updatedUser);
-        
+
         // Clear token for declined users
         if (token) {
           setToken(null);
         }
-        
+
         const declineData = {
           user: updatedUser,
           deliveryStatus: "declined",
           declineReason: statusData.declineReason,
           declinedAt: statusData.declinedAt,
           canReapply: statusData.canReapply || true,
-          message: "Application declined"
+          message: "Application declined",
         };
-        
+
         sessionStorage.setItem("deliveryUserData", JSON.stringify(declineData));
-      }
-      else if (newStatus === "pending" && currentStatus !== "pending") {
+      } else if (newStatus === "pending" && currentStatus !== "pending") {
         console.log("⏳ Status changed to pending");
-        
-        const updatedUser = { 
-          ...user, 
+
+        const updatedUser = {
+          ...user,
           isApproved: false,
           // Clear previous decline/revoke data
           declineReason: undefined,
@@ -319,12 +346,12 @@ export const UserAuthProvider = ({
             declinedAt: undefined,
             revokeReason: undefined,
             revokedAt: undefined,
-            status: "pending"
-          }
+            status: "pending",
+          },
         };
-        
+
         setUser(updatedUser);
-        
+
         const pendingData = {
           user: updatedUser,
           deliveryStatus: "pending",
@@ -333,19 +360,27 @@ export const UserAuthProvider = ({
           revokeReason: "",
           revokedAt: "",
           canReapply: false,
-          message: "Application pending"
+          message: "Application pending",
         };
-        
+
         sessionStorage.setItem("deliveryUserData", JSON.stringify(pendingData));
       }
 
       return statusData;
-      
     } catch (err) {
       console.error("❌ Failed to refresh delivery status:", err);
       throw err;
     }
-  }, [user, token, deliveryStatus, setUser, setToken, setDeliveryStatus, checkPublicDeliveryStatus, lastRefreshTime]);
+  }, [
+    user,
+    token,
+    deliveryStatus,
+    setUser,
+    setToken,
+    setDeliveryStatus,
+    checkPublicDeliveryStatus,
+    lastRefreshTime,
+  ]);
 
   const validateSession = useCallback(async () => {
     const storedUser = localStorage.getItem("user");
@@ -385,13 +420,16 @@ export const UserAuthProvider = ({
       if (e.key === "user") {
         const newUser = e.newValue ? JSON.parse(e.newValue) : null;
         setUserState(newUser);
-        
+
         if (newUser?.role === "delivery") {
           // Determine status from user data
           let status = "pending";
           if (newUser.isApproved === true) {
             status = "approved";
-          } else if (newUser.declineReason || newUser.attachments?.declineReason) {
+          } else if (
+            newUser.declineReason ||
+            newUser.attachments?.declineReason
+          ) {
             status = "declined";
           }
           setDeliveryStatus(status);
@@ -406,11 +444,12 @@ export const UserAuthProvider = ({
   }, [setToken, setDeliveryStatus]);
 
   // ✅ IMPROVED: Better focus-based refresh
- useEffect(() => {
+  useEffect(() => {
     const handleFocus = async () => {
       if (user?.role === "delivery" && !isLoading) {
         const now = Date.now();
-        if (now - lastRefreshTime > 5000) { // Only refresh if last refresh was more than 5 seconds ago
+        if (now - lastRefreshTime > 5000) {
+          // Only refresh if last refresh was more than 5 seconds ago
           console.log("👀 Window focused - refreshing delivery status");
           setTimeout(() => {
             refreshDeliveryStatus().catch(console.error);
@@ -423,12 +462,12 @@ export const UserAuthProvider = ({
     return () => window.removeEventListener("focus", handleFocus);
   }, [user, isLoading, refreshDeliveryStatus, lastRefreshTime]);
 
-
   const computedValues = useMemo(
     () => ({
       isAdmin: user?.role === "admin",
       isDelivery: user?.role === "delivery",
-      isApprovedDelivery: user?.role === "delivery" && user?.isApproved === true,
+      isApprovedDelivery:
+        user?.role === "delivery" && user?.isApproved === true,
       isPendingOrDeclinedDelivery:
         user?.role === "delivery" && user?.isApproved !== true,
     }),
@@ -448,6 +487,8 @@ export const UserAuthProvider = ({
       setDeliveryStatus,
       refreshDeliveryStatus,
       checkPublicDeliveryStatus,
+userRewards,
+    setUserRewards,
       ...computedValues,
     }),
     [

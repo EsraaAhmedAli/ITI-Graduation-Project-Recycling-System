@@ -1,7 +1,6 @@
 "use client";
 
 import { ReactNode } from "react";
-import { ProtectedRoute } from "@/lib/userProtectedRoute";
 
 export default function DeliveryLayout({ children }: { children: ReactNode }) {
   return (

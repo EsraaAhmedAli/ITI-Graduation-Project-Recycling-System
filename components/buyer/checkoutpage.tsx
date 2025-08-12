@@ -45,6 +45,7 @@ interface CheckoutPageProps {
 }
 
 const CheckoutPage = ({ amount, checkoutData }: CheckoutPageProps) => {
+  
   const { clearCart } = useCart();
   const stripe = useStripe();
   const elements = useElements();
@@ -178,7 +179,8 @@ const CheckoutPage = ({ amount, checkoutData }: CheckoutPageProps) => {
           email: localCheckoutData.user.email,
           imgUrl: user?.imgUrl || "",
         },
-        "card" // Payment method
+        checkoutData.deliveryFee,
+        "credit-card" // Payment method
       );
 
       if (result.success) {

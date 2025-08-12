@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState, useContext, useMemo, useRef } from "react";
+import { useEffect, useState, useContext, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { UserAuthContext } from "@/context/AuthFormContext";
 import api from "@/lib/axios";
 import { Pencil } from "lucide-react";
 import { Avatar } from "flowbite-react";
 import { toast } from "react-toastify";
+import Image from "next/image";
 
 export default function EditProfilePage() {
   const { user, setUser } = useContext(UserAuthContext) ?? {};
@@ -17,21 +18,29 @@ export default function EditProfilePage() {
     user?.phoneNumber?.padStart(11, "0").slice(1) || ""
   ); // remove +20
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState(user?.imgUrl || "");
-  const [isSaving, setIsSaving] = useState(false);
+const [previewUrl, setPreviewUrl] = useState(
+  user?.role === "delivery"
+    ? user?.attachments?.deliveryImage || ""
+    : user?.imgUrl || ""
+);  const [isSaving, setIsSaving] = useState(false);
   const [imageError, setImageError] = useState("");
 
   const [nameError, setNameError] = useState("");
   const [phoneNumberError, setPhoneNumberError] = useState("");
-  const initialValuesRef = useRef({
-    name: user?.name || "",
-    phoneNumber: user?.phoneNumber || "",
-    imgUrl: user?.imgUrl || "",
-  });
+const initialValuesRef = useRef({
+  name: user?.name || "",
+  phoneNumber: user?.phoneNumber || "",
+  imgUrl:
+    user?.role === "delivery"
+      ? user?.attachments?.deliveryImage || ""
+      : user?.imgUrl || "",
+});
   const isChanged =
     name !== initialValuesRef.current.name ||
     phoneNumber.padStart(11, "0") !== initialValuesRef.current.phoneNumber ||
     (imageFile !== null && previewUrl !== initialValuesRef.current.imgUrl);
+
+    
 
   const isFormInvalid = !!nameError || !!phoneNumberError;
 
@@ -89,27 +98,34 @@ export default function EditProfilePage() {
     setPreviewUrl(URL.createObjectURL(file));
   };
 
-  const handleSubmit = async () => {
-    if (!isChanged || isFormInvalid) return;
-    setIsSaving(true);
+const handleSubmit = async () => {
+  if (!isChanged || isFormInvalid) return;
+  setIsSaving(true);
 
-    try {
-      const formData = new FormData();
-      formData.append("name", name);
-      formData.append("phoneNumber", `0${phoneNumber}`);
-      if (imageFile) formData.append("image", imageFile);
+  try {
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("phoneNumber", `0${phoneNumber}`);
+    if (imageFile) formData.append("image", imageFile);
 
-      const res = await api.put("/profile", formData);
-      setUser?.(res.data);
-      console.log(res);
+    const res = await api.put("/profile", formData);
+    setUser?.(res.data);
+    
+    // Role-based navigation
+    if (res.data.role === "delivery") {
+      router.push("/deilveryDashboard");
+    } else {
       router.push("/profile");
-      toast.success("updaitng profile successfully");
-    } catch (err) {
-      console.error("Error updating profile:", err);
-    } finally {
-      setIsSaving(false);
     }
-  };
+    
+    toast.success("Profile updated successfully");
+  } catch (err) {
+    console.error("Error updating profile:", err?.response);
+    toast.error(err.response?.data?.message || "Failed to update profile");
+  } finally {
+    setIsSaving(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-green-50 py-10 px-4 flex items-center justify-center">
@@ -122,11 +138,14 @@ export default function EditProfilePage() {
         <div className="flex flex-col items-center">
           <div className="relative w-[300px] h-[300px]">
             {previewUrl ? (
-              <img
-                src={previewUrl}
-                alt="Avatar Preview"
-                className="w-full h-full rounded-full object-cover border-2 border-gray-300"
-              />
+           <Image
+  fill
+  priority
+  sizes="(max-width: 768px) 150px, (max-width: 1024px) 200px, 250px"
+  src={previewUrl}
+  alt="Avatar Preview"
+  className="w-full h-full rounded-full object-cover border-2 border-gray-300"
+/>
             ) : (
               <Avatar img={undefined} rounded className="w-full h-full" />
             )}
@@ -203,7 +222,7 @@ export default function EditProfilePage() {
         {/* Buttons */}
         <div className="flex justify-between items-center pt-4 space-x-4">
           <button
-            onClick={() => router.push("/profile")}
+            onClick={() => user.role =='delivery' ? router.push("/deilveryDashboard") : router.push("/profile")}
             className="w-1/2 py-3 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 cursor-pointer"
           >
             Cancel
