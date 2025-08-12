@@ -69,9 +69,12 @@ export default function PickupConfirmation() {
   const getTotalCartPrice = (cart: CartItem[]) => {
     return cart.reduce((total, item) => total + item.price * item.quantity, 0);
   };
-
   const { cart, clearCart } = useCart();
   const totalPrice = getTotalCartPrice(cart);
+  const deliveryFee = selectedAddress?.city
+    ? deliveryFees[selectedAddress.city] || 0
+    : 0;
+      const totalAmount = totalPrice + deliveryFee;
 
   const { createOrder } = useCreateOrder({
     clearCart,
@@ -164,7 +167,7 @@ export default function PickupConfirmation() {
             cart,
             selectedAddress,
             deliveryFee,
-            totalPrice: finalTotal,
+            totalPrice: totalAmount,
             paymentMethod: selectedPaymentMethod,
             user: {
               id: user._id,
@@ -176,14 +179,16 @@ export default function PickupConfirmation() {
         );
 
         if (selectedPaymentMethod === "credit_card") {
-          router.push(`/payment?total=${finalTotal}`);
+
+          router.push(`/payment?total=${finalTotal}?deliveryFee=${deliveryFee}`);
           return; // Exit early for credit card payment
         } else {
           const result = await createOrder(
             selectedAddress,
             cart,
             user,
-            selectedPaymentMethod
+            deliveryFee,
+            selectedPaymentMethod,
           );
           if (result.success) {
             console.log("Order created successfully:", result.orderId);
@@ -196,7 +201,6 @@ export default function PickupConfirmation() {
           selectedAddress,
           cart,
           user,
-          selectedPaymentMethod
         );
         if (result.success) {
           console.log("Order created successfully:", result.orderId);

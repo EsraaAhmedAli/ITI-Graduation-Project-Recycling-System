@@ -94,7 +94,7 @@ export default function CategoryList({
             </div>
           </Marquee>
         ) : (
-          <div className="flex flex-wrap justify-start items-start gap-6 pl-18">
+          <div className="flex flex-wrap justify-start items-start gap-6 pl-10">
             {categoriesToShow.map(renderCategory)}
           </div>
         )}

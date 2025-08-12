@@ -16,7 +16,12 @@ export function useReviews() {
     }
 
     try {
-      const response = await api.get("/reviews/my-reviews");
+      const response = await api.get("/reviews/my-reviews",{
+        params:{
+          page:1,
+          limit:50
+        }
+      });
       return response.data.reviews || [];
     } catch (error) {
       console.error("Failed to fetch user reviews:", error);

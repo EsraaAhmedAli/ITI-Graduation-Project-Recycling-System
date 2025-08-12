@@ -105,7 +105,9 @@
     "signup": "إنشاء حساب",
     "dashboard": "لوحة التحكم",
     "editProfile": "تعديل الملف الشخصي",
-    "rewarding": "برنامج المكافآت"
+    "rewarding": "برنامج المكافآت",
+        "pickup" : "استلام"
+
   },
   "ecoAssist": {
     "welcome": {

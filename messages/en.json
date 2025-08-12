@@ -105,7 +105,8 @@
     "signup": "Sign Up",
     "dashboard": "Dashboard",
     "editProfile": "Edit Profile",
-    "rewarding": "Points Program"
+    "rewarding": "Points Program",
+    "pickup" : "Pickup"
   },
   
   "ecoAssist": {

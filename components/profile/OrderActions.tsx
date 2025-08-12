@@ -48,7 +48,7 @@ export default function OrderActions({
       <div className="flex gap-3">
         {/* View Details */}
         <button
-          onClick={() => onViewDetails(order.items, order.status)}
+          onClick={() => onViewDetails(order.items, order.status,order)}
           className="text-sm text-green-600 hover:text-green-800 font-medium hover:underline transition-colors duration-200"
         >
           {t("profile.orders.viewDetails")}
