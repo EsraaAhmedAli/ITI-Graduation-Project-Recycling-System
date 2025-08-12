@@ -5,7 +5,7 @@
 import { useEffect, useState } from "react";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { Avatar } from "flowbite-react";
-import Loader from "@/components/common/loader";
+import Loader from "@/components/common/Loader";
 import api from "@/lib/axios";
 import { ProtectedRoute } from "@/lib/userProtectedRoute";
 import Link from "next/link";
@@ -33,11 +33,10 @@ import MembershipTier, {
 import { useLanguage } from "@/context/LanguageContext";
 import useOrders from "@/hooks/useGetOrders";
 import { useUserPoints } from "@/context/UserPointsContext";
-import Header from "@/components/profile/header";
 import { rewardLevels } from "@/constants/rewardsTiers";
 import ReviewsTab from "@/components/profile/ReviewTabs";
 import { useRouter } from "next/navigation";
-import { useNotification } from "@/context/notificationContext";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function ProfilePage() {
   return (
@@ -67,10 +66,10 @@ function ProfileContent({
   userReviews: any[];
   isReviewsLoading: boolean;
 }) {
-  const { user, token } = useUserAuth();
+  const { user } = useUserAuth();
 
-  // CHANGED: Use context hook instead of custom hook with parameters
-  const { userPoints, pointsLoading, getUserPoints } = useUserPoints();
+  // Use context hook with the new refreshUserData function
+  const { userPoints, pointsLoading, refreshUserData } = useUserPoints();
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState("incoming");
   const [isRecyclingModalOpen, setIsRecyclingModalOpen] = useState(false);
@@ -80,8 +79,7 @@ function ProfileContent({
     null
   );
   const router = useRouter();
-  const [totalCompletedOrders, setTotalCompletedOrders] = useState(0);
-  // const { refetchNotifications } = useNotification();
+  const queryClient = useQueryClient();
 
   // Map activeTab to status parameter
   const getStatusParam = (tab: string) => {
@@ -110,28 +108,29 @@ function ProfileContent({
     }
   };
 
+  // Updated refresh function that also refreshes user data
   const refreshPoints = async () => {
-    await getUserPoints();
+    await refreshUserData(); // Use the new combined refresh function
+    // Also invalidate React Query caches
+    queryClient.invalidateQueries({ queryKey: ["completedOrdersCount"] });
+    queryClient.invalidateQueries({ queryKey: ["userPoints"] });
   };
-  // Fetch total completed orders count for stats
-  useEffect(() => {
-    const fetchCompletedOrdersCount = async () => {
-      try {
-        const res = await api.get("/orders?status=completed&limit=1");
-        setTotalCompletedOrders(res.data.totalCount || 0);
-      } catch (error) {
-        console.error("Failed to fetch completed orders count:", error);
-      }
-    };
 
-    if (user && token) {
-      fetchCompletedOrdersCount();
-    }
-  }, [user, token]);
+  const { data: totalCompletedOrders = 0, isLoading: completedOrdersLoading } =
+    useQuery({
+      queryKey: ["completedOrdersCount", user?._id],
+      queryFn: async () => {
+        const res = await api.get("/orders?status=completed&limit=1");
+        return res.data.totalCount || 0;
+      },
+      enabled: !!user?._id, // only run when user is loaded
+    });
 
   const handleCancelOrder = async (orderId: string) => {
     await hookHandleCancelOrder(orderId);
     await refetch();
+    // Refresh user data in case cancellation affects points/stats
+    await refreshUserData();
   };
 
   const openItemsModal = (items: any[], orderStatus: string) => {
@@ -146,21 +145,34 @@ function ProfileContent({
     setIsItemsModalOpen(false);
   };
 
-  // // Fetch total completed orders count for stats
-  // useEffect(() => {
-  //   const fetchCompletedOrdersCount = async () => {
-  //     try {
-  //       const res = await api.get("/orders?status=completed&limit=1");
-  //       setTotalCompletedOrders(res.data.totalCount || 0);
-  //     } catch (error) {
-  //       console.error("Failed to fetch completed orders count:", error);
-  //     }
-  //   };
+  // NEW: Add effect to listen for order status changes and refresh data
+  useEffect(() => {
+    // If we're viewing completed orders, periodically refresh to catch status updates
+    if (activeTab === "completed") {
+      const interval = setInterval(() => {
+        refreshUserData();
+        queryClient.invalidateQueries({ queryKey: ["completedOrdersCount"] });
+      }, 30000); // Check every 30 seconds
 
-  //   if (user && token) {
-  //     fetchCompletedOrdersCount();
-  //   }
-  // }, [user, token]);
+      return () => clearInterval(interval);
+    }
+  }, [activeTab, refreshUserData, queryClient]);
+
+  // NEW: Add effect to refresh data when returning to the page
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        // Page became visible again, refresh data
+        refreshUserData();
+        refetch();
+        queryClient.invalidateQueries({ queryKey: ["completedOrdersCount"] });
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [refreshUserData, refetch, queryClient]);
 
   // Filter orders for buyer role (hide cancelled orders)
   const filteredOrders = allOrders.filter((order) => {
@@ -225,12 +237,10 @@ function ProfileContent({
                 <div
                   className={`absolute bottom-0 right-0 transform translate-x-1/4 translate-y-1/4
                size-10 rounded-full flex items-center justify-center
-               text-2xl font-bold shadow-md border-2 animate-spin-slow hover:[animation-play-state:paused] bg-amber-100`}
-                >
+               text-2xl font-bold shadow-md border-2 animate-spin-slow hover:[animation-play-state:paused] bg-amber-100`}>
                   <span
                     className="size-6 flex items-center justify-center"
-                    style={{ backgroundColor: tier.color, color: "white" }}
-                  >
+                    style={{ backgroundColor: tier.color, color: "white" }}>
                     {tier.badge}
                   </span>
                 </div>
@@ -253,16 +263,14 @@ function ProfileContent({
             {user?.role !== "buyer" && (
               <button
                 onClick={() => setIsRecyclingModalOpen(true)}
-                className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-700 text-white px-5 py-2 rounded-full shadow-md hover:scale-105 transition-transform duration-200"
-              >
+                className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-700 text-white px-5 py-2 rounded-full shadow-md hover:scale-105 transition-transform duration-200">
                 <RefreshCcw size={18} />
                 {t("profile.returnEarn")}
               </button>
             )}
             <Link
               href="/editprofile"
-              className="flex items-center gap-2 bg-white border border-green-600 text-green-700 px-4 py-2 rounded-full hover:bg-green-100 transition-colors duration-200"
-            >
+              className="flex items-center gap-2 bg-white border border-green-600 text-green-700 px-4 py-2 rounded-full hover:bg-green-100 transition-colors duration-200">
               <Pencil size={16} />
               {t("profile.editProfile")}
             </Link>
@@ -279,15 +287,16 @@ function ProfileContent({
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
           <StatBox
             label={t("profile.stats.recycles")}
-            value={stats.totalRecycles}
+            value={totalCompletedOrders}
           />
           {user?.role !== "buyer" && (
             <StatBox
               label={t("profile.stats.points")}
-              value={stats.points}
+              value={userPoints?.totalPoints}
               loading={pointsLoading}
             />
           )}
+
           {user.role === "customer" && (
             <MembershipTier totalPoints={userPoints?.totalPoints} />
           )}
@@ -307,8 +316,7 @@ function ProfileContent({
                   ? "border-green-600 text-green-800"
                   : "border-transparent text-gray-500 hover:text-green-700"
               }`}
-              onClick={() => setActiveTab(tab)}
-            >
+              onClick={() => setActiveTab(tab)}>
               {t(`profile.tabs.${tab}`) || tab}
             </button>
           ))}
@@ -339,13 +347,11 @@ function ProfileContent({
               {filteredOrders.map((order) => (
                 <div
                   key={order._id}
-                  className="rounded-xl p-5 bg-gradient-to-br from-green-50 to-white shadow-lg border border-green-100 hover:shadow-xl transition-all duration-300 hover:cursor-pointer"
-                >
+                  className="rounded-xl p-5 bg-gradient-to-br from-green-50 to-white shadow-lg border border-green-100 hover:shadow-xl transition-all duration-300 hover:cursor-pointer">
                   {/* Header with Order Info */}
                   <div
                     onClick={() => router.push(`/pickup/tracking/${order._id}`)}
-                    className="flex justify-between items-start mb-4"
-                  >
+                    className="flex justify-between items-start mb-4">
                     <div className="text-sm text-gray-600">
                       <p className="font-medium text-gray-800 mb-1">
                         Order #{order._id.slice(-8).toUpperCase()}
@@ -428,8 +434,7 @@ function ProfileContent({
                 <button
                   onClick={loadMoreOrders}
                   disabled={isFetchingNextPage}
-                  className="bg-green-600 text-white px-6 py-2 rounded-full hover:bg-green-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
+                  className="bg-green-600 text-white px-6 py-2 rounded-full hover:bg-green-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
                   {isFetchingNextPage ? "Loading more..." : "See More"}
                 </button>
               </div>
@@ -508,8 +513,7 @@ function PaymentsHistory() {
         payments.map((payment, index) => (
           <div
             key={payment._id || index}
-            className="rounded-xl p-4 bg-green-50 shadow-sm flex flex-col justify-between"
-          >
+            className="rounded-xl p-4 bg-green-50 shadow-sm flex flex-col justify-between">
             <div className="flex justify-between items-center mb-2 text-sm text-gray-600">
               <span>
                 Date:{" "}
@@ -536,8 +540,7 @@ function PaymentsHistory() {
                 href={payment.receipt_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 inline-block text-sm text-green-600 hover:underline"
-              >
+                className="mt-3 inline-block text-sm text-green-600 hover:underline">
                 View Receipt
               </a>
             )}

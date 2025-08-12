@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import Loader from "@/components/common/loader";
+import Loader from "@/components/common/Loader";
 import api from "@/lib/axios";
 
 interface Item {
@@ -104,8 +104,7 @@ export default function SearchPage() {
               validStartChars.has(char)
                 ? "bg-green-100 text-green-700"
                 : "bg-red-100 text-red-700"
-            }`}
-          >
+            }`}>
             {char.toUpperCase()}
           </span>
         ))}
@@ -120,8 +119,7 @@ export default function SearchPage() {
             <li
               key={item._id}
               className="flex items-center gap-4 p-2 hover:bg-gray-100 cursor-pointer rounded"
-              onClick={() => router.push(`/category/${item.categoryName}`)}
-            >
+              onClick={() => router.push(`/category/${item.categoryName}`)}>
               <Image
                 width={200}
                 height={200}

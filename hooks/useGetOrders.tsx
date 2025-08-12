@@ -17,6 +17,7 @@ export const useOrders = (params: Omit<GetOrdersParams, "page"> = {}) => {
     isLoading,
     isError,
     error,
+    isFetching,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
@@ -34,6 +35,7 @@ export const useOrders = (params: Omit<GetOrdersParams, "page"> = {}) => {
     refetchOnMount: true,
     refetchOnWindowFocus: true,
   });
+console.log(data,'fromcontext');
 
   const allOrders: Order[] = data?.pages.flatMap((page) => page.data) ?? [];
   const totalOrders = data?.pages[0]?.pagination?.totalOrders ?? 0;
@@ -126,6 +128,7 @@ export const useOrders = (params: Omit<GetOrdersParams, "page"> = {}) => {
     isLoading,
     isError,
     error,
+    isFetching,
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,

@@ -57,6 +57,8 @@ export default function ProofOfDeliveryModal({
   };
 
   const currentStatus = getCurrentStatus();
+  console.log(orderDetails , 'orddeer');
+  
 
   return (
     <Modal show={show} onClose={onClose} dismissible size="2xl">

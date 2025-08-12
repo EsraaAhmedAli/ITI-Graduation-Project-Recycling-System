@@ -4,18 +4,19 @@ import DynamicTable from '@/components/shared/dashboardTable'
 import api from '@/lib/axios'
 import Image from 'next/image'
 import React, { useEffect, useState, useRef } from 'react'
-import { Camera, CheckCircle, Upload, X, Package, Clock, User, MapPin, Truck, LogOut, Edit3, Save } from 'lucide-react'
+import { Camera, CheckCircle, Upload, X, Package, Clock, User, MapPin, Truck, LogOut, Edit3, Save, RotateCw, Settings } from 'lucide-react'
 import { Modal, ModalBody, ModalHeader } from 'flowbite-react'
 import Button from '@/components/common/Button'
 import { useUserAuth } from '@/context/AuthFormContext'
 import toast from 'react-hot-toast'
+import { useQuery } from '@tanstack/react-query'
+import { useRouter } from 'next/navigation'
 
 export default function Page() {
-  const [orders, setOrders] = useState([])
+  // const [orders, setOrders] = useState([])
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedOrderDetails, setSelectedOrderDetails] = useState<any>(null);
   const [userRole, setUserRole] = useState<any>(null);
-  const{user} = useUserAuth()
   // Photo proof modal states
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
@@ -30,17 +31,25 @@ export default function Page() {
   const [showQuantityForm, setShowQuantityForm] = useState(false);
   const [quantityNotes, setQuantityNotes] = useState('');
  const{logout}= useUserAuth()
+  const { data: orders = [], isLoading, isError, refetch,isFetching } = useQuery({
+    queryKey: ["my-orders"],
+    queryFn: async () => {
+      const res = await api.get("my-orders");
+      return res.data.orders;
+    },
+    refetchOnMount:true,
+    refetchOnWindowFocus:true,
+    staleTime:2000
+  });
 
-  const getAssignedOrdersToDelivery = async () => {
-    const res = api.get('my-orders').then(res => {
-      setOrders(res.data.orders)
-      console.log(res.data.orders)
-    }).catch(err => console.log(err))
-  }
+const router = useRouter()
+const handleNavigateToEditProfile = ()=>{
+  router.push('/editprofile')
+}
 
-  useEffect(() => {
-    getAssignedOrdersToDelivery()
-  }, [])
+  // useEffect(() => {
+  //   getAssignedOrdersToDelivery()
+  // }, [])
 
   // Handler for opening the modal with order details
   const handleViewOrderDetails = (order: any) => {
@@ -213,7 +222,8 @@ export default function Page() {
         toast('Order completed successfully!');
         setShowCompleteModal(false);
         resetModal();
-        getAssignedOrdersToDelivery(); // Refresh orders
+        refetch()
+        // getAssignedOrdersToDelivery(); // Refresh orders
       }
     } catch (error: any) {
       console.error('Error completing order:', error);
@@ -394,9 +404,13 @@ export default function Page() {
               </div>
             </div>
             <div className="flex items-center gap-4">
+                  <button onClick={handleNavigateToEditProfile}>
+              <Settings/>
+              </button>
               <button onClick={logout}>
               <LogOut/>
               </button>
+          
             </div>
           </div>
         </div>
@@ -404,7 +418,24 @@ export default function Page() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+<button
+  onClick={() => refetch()}
+  disabled={isFetching}
+  className={`
+    my-2
+    flex items-center gap-2 px-4 py-2 rounded-lg
+    bg-gradient-to-r from-blue-600 to-blue-700
+    text-white font-medium shadow-sm
+    hover:from-blue-700 hover:to-blue-800 hover:shadow-md
+    active:scale-95 transition-all duration-200
+    disabled:opacity-70 disabled:cursor-not-allowed
+  `}
+>
+  <RotateCw
+    className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`}
+  />
+  {isFetching ? "Refreshing..." : "Refresh"}
+</button>        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
           {orders.length === 0 ? (
             <div className="py-20 flex flex-col items-center justify-center text-gray-500">
               <Truck className="mb-4 w-12 h-12 text-gray-400" />

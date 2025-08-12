@@ -8,7 +8,7 @@ import { useCart } from "@/context/CartContext";
 import { CartItem } from "@/models/cart";
 import { Recycle, Leaf, Package, Minus, Plus } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
-import Loader from "@/components/common/loader";
+import Loader from "@/components/common/Loader";
 import { useCategories } from "@/hooks/useGetCategories";
 import toast from "react-hot-toast";
 
@@ -247,8 +247,7 @@ export default function ItemDetailsPage() {
           </p>
           <button
             onClick={() => window.history.back()}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-          >
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
             {t("common.goBack")}
           </button>
         </div>
@@ -379,8 +378,7 @@ export default function ItemDetailsPage() {
                       : isLowStock
                       ? "text-amber-600"
                       : "text-green-600"
-                  }`}
-                >
+                  }`}>
                   {isOutOfStock
                     ? t("common.outOfStock")
                     : `${item?.quantity} ${getMeasurementText(
@@ -400,8 +398,7 @@ export default function ItemDetailsPage() {
                         ? "bg-amber-400"
                         : "bg-green-500"
                     }`}
-                    style={{ width: `${stockPercentage}%` }}
-                  ></div>
+                    style={{ width: `${stockPercentage}%` }}></div>
                 </div>
                 <div className="flex justify-between text-xs text-gray-500 mt-1">
                   <span>
@@ -429,8 +426,7 @@ export default function ItemDetailsPage() {
                   <svg
                     className="w-3 h-3 mr-1"
                     fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
+                    viewBox="0 0 20 20">
                     <path
                       fillRule="evenodd"
                       d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
@@ -462,8 +458,7 @@ export default function ItemDetailsPage() {
                         selectedQuantity <=
                         (item.measurement_unit === 1 ? 0.25 : 1)
                       }
-                      className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
+                      className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
                       <Minus className="w-4 h-4" />
                     </button>
 
@@ -486,8 +481,7 @@ export default function ItemDetailsPage() {
                     <button
                       onClick={() => handleOperation("+")}
                       disabled={selectedQuantity >= item.quantity}
-                      className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
+                      className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
                       <Plus className="w-4 h-4" />
                     </button>
                     <span className="text-sm text-gray-500">
@@ -527,8 +521,7 @@ export default function ItemDetailsPage() {
                       : isInCart
                       ? "bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg"
                       : "bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg"
-                  }`}
-                >
+                  }`}>
                   {loadingItemId === item._id ? (
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                   ) : (

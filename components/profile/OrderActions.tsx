@@ -36,7 +36,7 @@ export default function OrderActions({
 
   const canTrack = [
     "assigntocourier",
-    "enroute", 
+    "pending", 
     "arrived",
     "collected"
   ].includes(order.status);

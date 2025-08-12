@@ -1,24 +1,21 @@
 "use client";
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import DynamicTable from "@/components/shared/dashboardTable";
 import api from "@/lib/axios";
 import { User } from "@/components/Types/Auser.type";
 import EditUserRoleModal from "./EditUserRoleModal";
 import Image from "next/image";
-import Loader from "@/components/common/loader";
+import Loader from "@/components/common/Loader";
 import { useUsers } from "@/hooks/useGetUsers";
 import { useQueryClient } from "@tanstack/react-query";
-import FilterDrawer from "@/components/shared/dashboard/filter/FilterArea";
-import { CloudHail } from "lucide-react";
+
 
 const AdminUsersPage = () => {
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   const { data: users, isLoading, error } = useUsers();
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [ setIsFilterOpen] = useState(false);
   const [userFilters, setUserFilters] = useState([
     {
       name: "role",
@@ -56,9 +53,7 @@ const AdminUsersPage = () => {
     },
   ]);
 
-  console.log("-------------USERS----------------");
-  console.log(users);
-  console.log("-----------------------------..");
+
 
   const filteredUsers = users?.filter((user) => {
     // === Role Filter ===
@@ -171,11 +166,11 @@ const AdminUsersPage = () => {
         if (user.imgUrl) {
           return (
             <Image
-              width={30}
-              height={30}
+              width={50}
+              height={50}
               src={user.imgUrl}
               alt={user.name}
-              className=" rounded-full object-cover"
+              className=" rounded-full object-fit"
             />
           );
         } else if (user.role == "delivery") {
@@ -239,8 +234,7 @@ const AdminUsersPage = () => {
               isOnline
                 ? "bg-green-100 text-green-700"
                 : "bg-gray-100 text-gray-500"
-            }`}
-          >
+            }`}>
             {isOnline ? "Online" : "Offline"}
           </span>
         );

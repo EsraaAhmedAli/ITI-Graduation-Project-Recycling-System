@@ -5,10 +5,8 @@ import React, {
   useCallback,
   useEffect,
 } from "react";
-// import { UserPointsResponse, UserPointsType } from "@/types/user";
 import api from "@/lib/axios";
 import { getSocket } from "@/lib/socket";
-// types/user.ts
 
 // A single history entry for points earned or used
 export interface UserPointsHistoryEntry {
@@ -50,6 +48,7 @@ interface UserPointsContextType {
   fetchCompletedOrdersCount: () => Promise<void>;
   updateUserPoints: (points: Partial<UserPointsType>) => void;
   clearUserPoints: () => void;
+  refreshUserData: () => Promise<void>; // NEW: Combined refresh function
 }
 
 const UserPointsContext = createContext<UserPointsContextType | undefined>(
@@ -109,6 +108,7 @@ export function UserPointsProvider({
       setPointsLoading(false);
     }
   }, [userId, name, email]);
+
   const fetchCompletedOrdersCount = useCallback(async () => {
     try {
       const res = await api.get("/orders?status=completed&limit=1");
@@ -117,6 +117,18 @@ export function UserPointsProvider({
       console.error("Failed to fetch completed orders count:", error);
     }
   }, []);
+
+  // NEW: Combined refresh function
+  const refreshUserData = useCallback(async () => {
+    const promises = [getUserPoints()];
+    
+    if (role === "customer" && token) {
+      promises.push(fetchCompletedOrdersCount());
+    }
+    
+    await Promise.all(promises);
+  }, [getUserPoints, fetchCompletedOrdersCount, role, token]);
+
   // Auto-fetch points on mount or when userId changes
   useEffect(() => {
     console.log("😜😜😜😜😜POINTS😜😜😜😜😜");
@@ -148,6 +160,7 @@ export function UserPointsProvider({
       return;
     }
 
+    // Enhanced socket listeners
     socket.on("points:updated", (data) => {
       console.log("Received points:updated event:", data);
       setUserPoints((prev) =>
@@ -155,10 +168,28 @@ export function UserPointsProvider({
       );
     });
 
+    // NEW: Listen for order completion events
+    socket.on("order:completed", (data) => {
+      console.log("Received order:completed event:", data);
+      // Refresh both points and completed orders count
+      refreshUserData();
+    });
+
+    // NEW: Listen for order status updates
+    socket.on("order:status:updated", (data) => {
+      console.log("Received order:status:updated event:", data);
+      if (data.status === "completed") {
+        // Refresh user data when any order is completed
+        refreshUserData();
+      }
+    });
+
     return () => {
       socket.off("points:updated");
+      socket.off("order:completed");
+      socket.off("order:status:updated");
     };
-  }, [userId]);
+  }, [userId, refreshUserData]);
 
   const updateUserPoints = useCallback((updates: Partial<UserPointsType>) => {
     setUserPoints((prev) => (prev ? { ...prev, ...updates } : null));
@@ -178,6 +209,7 @@ export function UserPointsProvider({
     updateUserPoints,
     clearUserPoints,
     fetchCompletedOrdersCount,
+    refreshUserData, // NEW: Expose the combined refresh function
   };
 
   return (

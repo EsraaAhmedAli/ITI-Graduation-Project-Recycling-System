@@ -5,6 +5,8 @@ export default function PointsActivity({ userPoints }: { userPoints: any }) {
   const [isOpen, setIsOpen] = useState(false);
 
   if (!userPoints || !userPoints.pointsHistory?.length) return null;
+  console.log(userPoints.pointsHistory , 'hhhiss');
+  
 
   return (
     <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-xl shadow-sm">
@@ -26,10 +28,11 @@ export default function PointsActivity({ userPoints }: { userPoints: any }) {
         <>
           <div className="space-y-2 max-h-64 overflow-y-auto mt-4">
             {userPoints.pointsHistory.map((entry: any, index: number) => (
-              <div
+            entry.reason == 'Points awarded' || entry.reason == 'Points deducted' ?   <div
                 key={index}
                 className="flex items-center justify-between bg-white p-3 rounded-lg shadow-sm"
               >
+           
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-800">{entry.reason}</p>
                   <p className="text-xs text-gray-500">
@@ -44,7 +47,7 @@ export default function PointsActivity({ userPoints }: { userPoints: any }) {
                   {entry.points > 0 ? "+" : ""}
                   {entry.points} pts
                 </div>
-              </div>
+              </div> :''
             ))}
           </div>
 
