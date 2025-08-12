@@ -210,8 +210,8 @@ function ProfileContent({
   const tabs = getTabsForUser();
   const tier = rewardLevels.find(
     (tier) =>
-      userPoints?.totalPoints >= tier.minPoints &&
-      userPoints?.totalPoints <= tier.maxPoints
+      totalCompletedOrders >= tier.minRecycles &&
+      totalCompletedOrders <= tier.maxRecycles
   );
 
   return (
@@ -298,7 +298,7 @@ function ProfileContent({
           )}
 
           {user.role === "customer" && (
-            <MembershipTier totalPoints={userPoints?.totalPoints} />
+            <MembershipTier totalRecycles={totalCompletedOrders} />
           )}
         </div>
 

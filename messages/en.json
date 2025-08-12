@@ -53,6 +53,7 @@
     "ecoAssist": "Eco-Assist",
     "collection": "Collection",
     "myCollection": "My Collection",
+    "ewallet": "E-Wallet",
     "items": "items",
     "totalItems": "Total Items:",
     "viewFullCollection": "View Full Collection",
@@ -107,7 +108,7 @@
     "editProfile": "Edit Profile",
     "rewarding": "Points Program"
   },
-  
+
   "ecoAssist": {
     "welcome": {
       "title": "How can I help you recycle today?",
@@ -173,13 +174,13 @@
       "points": "Points Collected"
     },
     "tires": {
-    "ecostarter": "Eco Starter",
-    "greenhelper": "Green Helper",
-    "silverrecycler": "Silver Recycler",
-    "goldguardian": "Gold Guardian",
-    "platinumpioneer": "Platinum Pioneer",
-    "diamondelite": "Diamond Elite"
-  },
+      "ecostarter": "Eco Starter",
+      "greenhelper": "Green Helper",
+      "silverrecycler": "Silver Recycler",
+      "goldguardian": "Gold Guardian",
+      "platinumpioneer": "Platinum Pioneer",
+      "diamondelite": "Diamond Elite"
+    },
     "method": {
       "card": "Visa",
       "link": "Visa",

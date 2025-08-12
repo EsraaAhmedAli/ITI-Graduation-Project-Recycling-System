@@ -3,14 +3,14 @@ import { Info } from "lucide-react";
 import { rewardLevels } from "@/constants/rewardsTiers";
 import { useLanguage } from "@/context/LanguageContext";
 
-export function getUserTier(points: number) {
+export function getUserTier(reycles: number) {
   return rewardLevels.find(
-    (tier) => points >= tier.minPoints && points <= tier.maxPoints
+    (tier) => reycles >= tier.minRecycles && reycles <= tier.maxRecycles
   );
 }
 
-export default function TierStatBox({ totalPoints }: { totalPoints: number }) {
-  const tier = getUserTier(totalPoints);
+export default function TierStatBox({ totalRecycles }: { totalRecycles: number }) {
+  const tier = getUserTier(totalRecycles);
   const { t } = useLanguage();
   if (!tier) return null;
 

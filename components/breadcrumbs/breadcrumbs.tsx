@@ -48,6 +48,7 @@ export default function DynamicBreadcrumbs() {
       rewarding: t("breadcrumbs.rewarding") || "Rewards Program",
       "rewarding-program": t("breadcrumbs.rewarding") || "Rewards Program",
       history: t("breadcrumbs.history") || "History",
+      ewallet: t("navbar.ewallet"),
     };
 
     if (pathTranslations[decodedSegment]) {
