@@ -138,25 +138,11 @@ export default function ProofOfDeliveryModal({
               </p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">
-                Collected By (Courier)
-              </label>
-              <div className="bg-gray-50 p-3 rounded-md">
-                <p className="text-sm font-medium text-gray-900">
-                  {orderDetails.courier || "Unknown Courier"}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Courier ID: {orderDetails.courier || "N/A"}
-                </p>
-                {/* Show collection notes from status history */}
-                {orderDetails.statusHistory?.find(h => h.status === 'collected')?.notes && (
-                  <p className="text-xs text-gray-600 mt-1">
-                    Notes: {orderDetails.statusHistory.find(h => h.status === 'collected')?.notes}
-                  </p>
-                )}
-              </div>
-            </div>
+<div>
+  <h2>Collected By:</h2>
+  <p>courier name : {orderDetails.courier.name}</p>
+</div>
+   
 
             {orderDetails.deliveryProof?.uploadedAt && (
               <div>

@@ -39,23 +39,13 @@ export const clearDebugInfo = () => {
 };
 
 interface User {
+  _id?: string;
   phoneNumber?: string;
   name?: string;
   email?: string;
   imgUrl?: string;
+  role?: string;
 }
-
-// interface CartItem {
-//   id: string;
-//   quantity: number;
-//   price: number;
-//   categoryId: string;
-//   itemName: string;
-//   image: string;
-//   points: number;
-//   categoryName: string;
-//   measurement_unit: number;
-// }
 
 interface Address {
   _id: string;
@@ -92,7 +82,9 @@ interface UseCreateOrderReturn {
   createOrder: (
     selectedAddress: Address | null,
     cart: CartItem[],
-    user: User | null
+    user: User | null,
+    deliveryFee?: number,
+    paymentMethod?: string
   ) => Promise<CreateOrderResult>;
   isLoading: boolean;
 }
@@ -107,7 +99,9 @@ export const useCreateOrder = ({
   const createOrder = async (
     selectedAddress: Address | null,
     cart: CartItem[],
-    user: User | null
+    user: User | null,
+    deliveryFee: number = 0,
+    paymentMethod: string = "cash"
   ): Promise<CreateOrderResult> => {
     saveDebugInfo({
       action: "ORDER_START",
@@ -115,6 +109,8 @@ export const useCreateOrder = ({
       cartItems: cart,
       hasAddress: !!selectedAddress,
       hasUser: !!user,
+      deliveryFee,
+      paymentMethod
     });
 
     // Validation
@@ -134,14 +130,30 @@ export const useCreateOrder = ({
     saveDebugInfo({ action: "API_CALL_START" });
 
     try {
-      const response = await api.post<OrderResponse>("orders", {
+      // Calculate total amount
+      const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const totalAmount = subtotal + deliveryFee;
+
+      const orderData = {
         address: selectedAddress,
         items: cart,
         phoneNumber: user?.phoneNumber,
         userName: user?.name,
         email: user?.email,
         imageUrl: user?.imgUrl,
+        deliveryFee,
+        paymentMethod,
+        subtotal,
+        totalAmount,
+        userId: user?._id
+      };
+
+      saveDebugInfo({
+        action: "ORDER_DATA",
+        orderData
       });
+
+      const response = await api.post<OrderResponse>("orders", orderData);
 
       const orderId = response.data.data._id;
 

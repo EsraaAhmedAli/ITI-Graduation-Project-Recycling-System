@@ -135,7 +135,7 @@ markAsRead ,   loadMoreNotifications,
                   return (
                     <div
                       key={notification._id}
-                      onClick={markAsRead }
+                      onClick={()=>markAsRead(notification._id) }
                       className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors border-l-4 ${
                         !notification.isRead 
                           ? 'bg-blue-50 border-l-blue-500' 

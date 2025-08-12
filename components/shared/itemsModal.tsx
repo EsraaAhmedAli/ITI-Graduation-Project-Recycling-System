@@ -3,8 +3,9 @@ import { Modal, ModalBody, ModalHeader } from 'flowbite-react';
 import Image from 'next/image';
 import { priceWithMarkup } from '@/utils/priceUtils';
 
-export default function ItemsModal({ show, onclose, selectedOrderItems, userRole , orderStatus }) {
+export default function ItemsModal({ show, onclose, selectedOrderItems, userRole , orderStatus,selectedOrder }) {
   const { t, locale } = useLanguage();
+  console.log(selectedOrder,'sss');
   
 
   const count = selectedOrderItems?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0;
@@ -129,6 +130,7 @@ export default function ItemsModal({ show, onclose, selectedOrderItems, userRole
                             </p>
                           </div>
                           <p className="text-gray-800 font-semibold text-lg">
+                          
                             {locale === 'ar' ? `${price} ${currencyLabel}` : `${currencyLabel}${price}`}
                           </p>
                         </div>
@@ -186,10 +188,17 @@ export default function ItemsModal({ show, onclose, selectedOrderItems, userRole
                 <div className="text-right">
                   <p className="text-2xl font-bold text-green-600">
                     {t('itemsModal.totalPrice', { total: formattedTotal })}
+                  {selectedOrder?.deliveryFee != 0 && <span className=''> + {selectedOrder.deliveryFee} Fee</span>}
                   </p>
-                  <p className="text-sm font-semibold text-green-700">
+                {
+                  userRole == 'customer' &&   <p className="text-sm font-semibold text-green-700">
                     {t('itemsModal.totalPoints', { points: totalPoints.toLocaleString() })}
                   </p>
+                }
+                  {
+                    selectedOrder?.paymentMethod !== null &&                   <p  className="text-sm font-semibold text-green-700">payment Method: {selectedOrder.paymentMethod}</p>
+
+                  }
                 </div>
               </div>
             </div>
