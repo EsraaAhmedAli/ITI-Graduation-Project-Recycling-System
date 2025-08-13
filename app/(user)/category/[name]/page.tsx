@@ -22,19 +22,20 @@ import { useCategories } from "@/hooks/useGetCategories";
 // }
 
 export default function UserCategoryPage() {
-  const { t } = useLanguage();
-
+  const { t,locale } = useLanguage();
+  const { name: rawName } = useParams();
+  const categoryKey = decodeURIComponent(rawName || "");
   const params = useParams();
   const categoryName = decodeURIComponent(params.name as string);
   const { addToCart, loadingItemId } = useCart();
   const { getCategoryIdByItemName } = useCategories();
 
   const { data, isLoading, error } = useQuery<CartItem[]>({
-    queryKey: ["subcategory", categoryName],
+    queryKey: ["subcategory", categoryName,locale],
     queryFn: async () => {
-      const res = await api.get(
-        `/categories/get-items/${encodeURIComponent(categoryName)}`
-      );
+  
+    const res = await api.get(`categories/get-items/${categoryKey}?lang=${locale}`);
+      
       const normalizedItems = res.data.data.map((item: any) => ({
         ...item,
         itemName: item.name,
@@ -43,8 +44,9 @@ export default function UserCategoryPage() {
       }));
       return normalizedItems;
     },
-    staleTime: 60 * 1000,
-    refetchOnMount: false,
+    staleTime: 2000,
+    refetchOnMount: true,
+    refetchOnWindowFocus:true
   });
 
   const getPointsRange = (points: number[]) => {
@@ -90,6 +92,8 @@ export default function UserCategoryPage() {
   const handleAddToCollection = async (item: CartItem) => {
     try {
       const categoryId = getCategoryIdByItemName(item.name);
+      console.log(categoryId,'caaatt');
+      
 
       const cartItem: CartItem = {
         _id: item._id,
@@ -197,11 +201,9 @@ export default function UserCategoryPage() {
               {/* Content */}
               <div className="p-4">
                 <h3 className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide leading-tight">
-                  {t(
-                    `categories.subcategories.${item.name
-                      .toLowerCase()
-                      .replace(/\s+/g, "-")}`
-                  )}
+             {
+              item.name
+             }
                 </h3>
 
                 {/* Price and Unit Info */}

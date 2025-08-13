@@ -5,6 +5,7 @@ import { useDashboardData } from "../../../hooks/useDashboardData";
 import { StatCard } from "./component/StatCard";
 import { ErrorBoundary } from "./component/errorboundary";
 import Loader from "@/components/common/loader";
+import { useLanguage } from "@/context/LanguageContext";
 
 // Lazy load chart components
 const UserGrowthChart = lazy(() => import("./charts/UserGrowthChart"));
@@ -26,7 +27,6 @@ const OrdersIcon = () => (
     <path d="M7 7V5a2 2 0 012-2h6a2 2 0 012 2v2" strokeWidth={2} />
   </svg>
 );
-
 const UsersIcon = () => (
   <svg
     className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6"
@@ -53,6 +53,7 @@ const MaterialsIcon = () => (
 
 export default function DashboardCharts() {
   const { data, loading, error, refetch } = useDashboardData();
+const {t,locale} = useLanguage()
 
   const globalLoading = Object.values(loading).some(Boolean);
   const allFailed =
@@ -88,47 +89,48 @@ export default function DashboardCharts() {
         <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-center sm:text-left">
             <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-green-900">
-              Dashboard Insights
+            {t('charts.insight')}
             </h1>
-            <p className="text-xs sm:text-sm md:text-base text-green-700 mt-1">
-              {new Date().toLocaleDateString("en-US", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </p>
+      <p className="text-xs sm:text-sm md:text-base text-green-700 mt-1">
+  {new Date().toLocaleDateString(locale === "ar" ? "ar-EG" : "en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  })}
+</p>
+
           </div>
         </div>
 
         {/* Stat Cards */}
-        <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-          <StatCard
-            title="Total Orders"
-            value={data.totalOrders?.toLocaleString() || "0"}
-            icon={<OrdersIcon />}
-            trend="up"
-            trendValue="8%"
-            loading={loading.analytics}
-          />
-          <StatCard
-            title="Active Users"
-            value={data.topUsers?.length?.toLocaleString() || "0"}
-            icon={<UsersIcon />}
-            trend="steady"
-            loading={loading.users}
-          />
-          <div className="xs:col-span-2 lg:col-span-1">
-            <StatCard
-              title="Materials Tracked"
-              value={data.topMaterials?.length?.toLocaleString() || "0"}
-              icon={<MaterialsIcon />}
-              trend="up"
-              trendValue="5%"
-              loading={loading.materials}
-            />
-          </div>
-        </div>
+   <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+  <StatCard
+    title={t("totalOrders")}
+    value={data.totalOrders?.toLocaleString(locale === "ar" ? "ar-EG" : "en-US") || "0"}
+    icon={<OrdersIcon />}
+    trend="up"
+    trendValue="8%"
+    loading={loading.analytics}
+  />
+  <StatCard
+    title={t("activeUsers")}
+    value={data.topUsers?.length?.toLocaleString(locale === "ar" ? "ar-EG" : "en-US") || "0"}
+    icon={<UsersIcon />}
+    trend="steady"
+    loading={loading.users}
+  />
+  <div className="xs:col-span-2 lg:col-span-1">
+    <StatCard
+      title={t("materialsTracked")}
+      value={data.topMaterials?.length?.toLocaleString(locale === "ar" ? "ar-EG" : "en-US") || "0"}
+      icon={<MaterialsIcon />}
+      trend="up"
+      trendValue="5%"
+      loading={loading.materials}
+    />
+  </div>
+</div>
 
         {/* Analytics Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
@@ -147,10 +149,13 @@ export default function DashboardCharts() {
               }
             >
               <div className="h-64 sm:h-72 md:h-80 lg:h-96">
-                <UserGrowthChart
-                  userGrowth={data.userGrowth || []}
-                  loading={loading.userStats}
-                />
+          <UserGrowthChart
+  title={t("charts.userGrowth")}
+  userGrowth={data.userGrowth || []}
+  loading={loading.userStats}
+  locale={locale}
+/>
+
               </div>
             </Suspense>
           </ErrorBoundary>

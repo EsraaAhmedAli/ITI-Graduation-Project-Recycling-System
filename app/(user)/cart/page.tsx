@@ -433,7 +433,7 @@ export default function CartPage() {
         </div>
       ) : (
         <>
-          <div className={`bg-green-50 rounded-xl p-4 mb-6 grid grid-cols-1 ${user.role == 'customer' ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
+          <div className={`bg-green-50 rounded-xl p-4 mb-6 grid grid-cols-1 ${user?.role == 'customer' ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
             <div className="bg-white p-4 rounded-lg shadow-sm text-center">
               <div className="text-gray-500 text-sm">Total Items</div>
               <div className="text-2xl font-bold text-green-600">

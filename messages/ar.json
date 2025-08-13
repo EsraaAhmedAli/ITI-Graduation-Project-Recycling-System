@@ -71,6 +71,17 @@
     "myCart": "عربة التسوق",
     "ewallet": "محفظتي"
   },
+  "admin": {
+    "categories": {
+      "title": "الفئات",
+      "addNew": "اضف فئة",
+      "categoryName": "اسم الفئة",
+      "image": "صورة الفئة",
+      "description": "وصف الفئة",
+      "loading": "الفئات",
+      "itemsIn": "العناصر الموجودة في فئة"
+    }
+  },
   "footer": {
     "title": "بدلها",
     "FAQ": "الاسئلة الأكثر شيوعا",
@@ -203,7 +214,9 @@
         "completed": "مكتملة",
         "cancelled": "ملغاة",
         "pending": "قيد الانتظار",
-        "collected": "في المخزن"
+        "collected": "في المخزن",
+        "assigntocourier": "تم تعيينه للمندوب",
+        "incoming": "قيد التنفيذ"
       },
       "viewDetails": "عرض التفاصيل",
       "cancelConfirm": "هل أنت متأكد من إلغاء هذا الطلب؟",
@@ -411,5 +424,59 @@
   "pointsAwarded": "منح نقاط",
   "pointsDeducted": "خصم نقاط",
   "pts": "نقطة",
-  "viewFullHistory": "عرض التاريخ الكامل"
+  "viewFullHistory": "عرض التاريخ الكامل",
+  "dashboard": "لوحة التحكم",
+  "users": "المستخدمين",
+  "orders": "الطلبات",
+  "transactions": "المعاملات",
+  "approve": "الموافقة",
+  "globe": "العالم",
+  "logout": "تسجيل خروج",
+  "Categories": "الفئات",
+  "charts": {
+    "insight": "رؤى لوحة التحكم",
+    "userGrowth": "نمو المستخدمين",
+    "orderStatus": "حالة الطلبات",
+    "topRecyclers": "أفضل المساهمين",
+    "materials": "المواد المتعقبة",
+    "cities": "توزيع المدن",
+    "weeklyOrders": "الطلبات الأسبوعية"
+  },
+  "totalOrders": "إجمالي الطلبات",
+  "activeUsers": "المستخدمون النشطون",
+  "materialsTracked": "المواد المتعقبة",
+  "steady": "ثابت",
+  "vsLastPeriod": "مقارنة بالفترة السابقة",
+  "month": "الشهر",
+  "months": "أشهر",
+  "monthNames": {
+    "Jan": "يناير",
+    "Feb": "فبراير",
+    "Mar": "مارس",
+    "Apr": "أبريل",
+    "May": "مايو",
+    "Jun": "يونيو",
+    "Jul": "يوليو",
+    "Aug": "أغسطس",
+    "Sep": "سبتمبر",
+    "Oct": "أكتوبر",
+    "Nov": "نوفمبر",
+    "Dec": "ديسمبر"
+  },
+  "loadingChart": "جارٍ تحميل بيانات الرسم البياني...",
+  "noData": "لا توجد بيانات متاحة",
+  "userGrowth": "نمو المستخدمين",
+  "overview": "نظرة عامة",
+  "mostCommon": "الأكثر شيوعاً",
+  "total": "الإجمالي",
+  "nA": "غير متوفر",
+  "orderStatuses": {
+    "pending": "قيد الانتظار",
+    "completed": "مكتملة",
+    "cancelled": "ملغاة",
+    "inTransit": "قيد التوصيل",
+    "collected": "في المخزن",
+    "assigntocourier": "تم تعيينه للمندوب",
+    "incoming": "قيد التنفيذ"
+  }
 }

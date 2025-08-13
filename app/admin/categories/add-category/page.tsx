@@ -9,12 +9,24 @@ import Button from '@/components/common/Button';
 
 export default function AddCategoryPage() {
     const router = useRouter();
-    const [name, setName] = useState('');
-    const [description, setDescription] = useState('');
+    
+    // Multilingual state
+    const [nameEn, setNameEn] = useState('');
+    const [nameAr, setNameAr] = useState('');
+    const [descriptionEn, setDescriptionEn] = useState('');
+    const [descriptionAr, setDescriptionAr] = useState('');
+    
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-const isFormValid = name.trim() !== '' && description.trim() !== '' && imageFile !== null;
+    
+    // Form validation - require both English and Arabic names/descriptions
+    const isFormValid = 
+        nameEn.trim() !== '' && 
+        nameAr.trim() !== '' && 
+        descriptionEn.trim() !== '' && 
+        descriptionAr.trim() !== '' && 
+        imageFile !== null;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -33,8 +45,12 @@ const isFormValid = name.trim() !== '' && description.trim() !== '' && imageFile
 
         try {
             const formData = new FormData();
-            formData.append('name', name);
-            formData.append('description', description);
+            
+            // Add multilingual data
+            formData.append('name', nameEn);
+            formData.append('nameAr', nameAr);
+            formData.append('description', descriptionEn);
+            formData.append('descriptionAr', descriptionAr);
             formData.append('image', imageFile);
 
             await api.post('/categories', formData, {
@@ -73,30 +89,68 @@ const isFormValid = name.trim() !== '' && description.trim() !== '' && imageFile
                 <div className="bg-white rounded-lg shadow-md overflow-hidden">
                     <div className="p-6 bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
                         <h1 className="text-2xl font-bold">Add New Category</h1>
-                        <p className="mt-1 opacity-90">Fill in the details below to create a new category</p>
+                        <p className="mt-1 opacity-90">Fill in the details below to create a new multilingual category</p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                        {/* English Name */}
                         <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700">Category Name *</label>
+                            <label className="block text-sm font-medium text-gray-700">
+                                Category Name (English) *
+                            </label>
                             <input
                                 type="text"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
+                                value={nameEn}
+                                onChange={(e) => setNameEn(e.target.value)}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
-                                placeholder="Enter category name"
+                                placeholder="Enter category name in English"
                                 required
                             />
                         </div>
 
+                        {/* Arabic Name */}
                         <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700">Description *</label>
+                            <label className="block text-sm font-medium text-gray-700">
+                                Category Name (Arabic) *
+                            </label>
+                            <input
+                                type="text"
+                                value={nameAr}
+                                onChange={(e) => setNameAr(e.target.value)}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition text-right"
+                                placeholder="أدخل اسم الفئة بالعربية"
+                                dir="rtl"
+                                required
+                            />
+                        </div>
+
+                        {/* English Description */}
+                        <div className="space-y-2">
+                            <label className="block text-sm font-medium text-gray-700">
+                                Description (English) *
+                            </label>
                             <textarea
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
+                                value={descriptionEn}
+                                onChange={(e) => setDescriptionEn(e.target.value)}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
                                 rows={3}
-                                placeholder="Enter category description"
+                                placeholder="Enter category description in English"
+                                required
+                            />
+                        </div>
+
+                        {/* Arabic Description */}
+                        <div className="space-y-2">
+                            <label className="block text-sm font-medium text-gray-700">
+                                Description (Arabic) *
+                            </label>
+                            <textarea
+                                value={descriptionAr}
+                                onChange={(e) => setDescriptionAr(e.target.value)}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition text-right"
+                                rows={3}
+                                placeholder="أدخل وصف الفئة بالعربية"
+                                dir="rtl"
                                 required
                             />
                         </div>
@@ -149,39 +203,37 @@ const isFormValid = name.trim() !== '' && description.trim() !== '' && imageFile
                                 </div>
                             </div>
 
-                      {imageFile && (
-  <div className="mt-2 flex items-center space-x-4">
-    <p className="text-sm text-gray-500">
-      <span className="font-medium">Selected:</span> {imageFile.name}
-    </p>
-    <button
-      type="button"
-      onClick={() => {
-        setImageFile(null);
-        setPreviewUrl(null);
-        // Also clear the file input value to allow re-upload of same file if needed
-        const input = document.getElementById('file-upload') as HTMLInputElement;
-        if (input) input.value = '';
-      }}
-      className="px-2 py-1 text-sm text-red-600 hover:text-red-800 rounded-md border border-red-600 hover:bg-red-100 transition"
-    >
-      Remove
-    </button>
-  </div>
-)}
+                            {imageFile && (
+                                <div className="mt-2 flex items-center space-x-4">
+                                    <p className="text-sm text-gray-500">
+                                        <span className="font-medium">Selected:</span> {imageFile.name}
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setImageFile(null);
+                                            setPreviewUrl(null);
+                                            const input = document.getElementById('file-upload') as HTMLInputElement;
+                                            if (input) input.value = '';
+                                        }}
+                                        className="px-2 py-1 text-sm text-red-600 hover:text-red-800 rounded-md border border-red-600 hover:bg-red-100 transition"
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+                            )}
 
-{previewUrl && (
-  <div className="mt-4">
-    <Image
-    width={64}
-    height={64}
-      src={previewUrl}
-      alt="Preview"
-      className=" object-cover rounded-lg border border-gray-300 shadow"
-    />
-  </div>
-)}
-
+                            {previewUrl && (
+                                <div className="mt-4">
+                                    <Image
+                                        width={64}
+                                        height={64}
+                                        src={previewUrl}
+                                        alt="Preview"
+                                        className="object-cover rounded-lg border border-gray-300 shadow"
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">

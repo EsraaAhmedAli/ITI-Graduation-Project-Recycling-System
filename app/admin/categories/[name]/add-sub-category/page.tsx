@@ -25,6 +25,7 @@ export default function AddSubCategoryPage() {
     price: "",
     quantity: "",
     measurement_unit: "",
+    itemNameAr:'',
     image: null as File | null,
   });
   const [loading, setLoading] = useState(false);
@@ -52,6 +53,7 @@ export default function AddSubCategoryPage() {
     try {
       const form = new FormData();
       form.append("itemName", formData.itemName);
+      form.append("itemNameAr", formData.itemNameAr);
       form.append("points", formData.points);
       form.append("price", Math.floor(formData.points/19));
       form.append("quantity", formData.quantity);
@@ -106,6 +108,20 @@ export default function AddSubCategoryPage() {
                 onChange={handleChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
                 placeholder="Enter sub-category name"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Sub-Category Name In AR*
+              </label>
+              <input
+                type="text"
+                name="itemNameAr"
+                value={formData.itemNameAr}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
+                placeholder="أدخل اسم العنصر"
                 required
               />
             </div>

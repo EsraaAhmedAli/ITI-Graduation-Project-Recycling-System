@@ -117,7 +117,7 @@ export default function PickupConfirmation() {
       setIsEditing(false);
       // Set default payment method for customers (since they skip payment step)
       if (user.role === "customer") {
-        setSelectedPaymentMethod("cash");
+        setSelectedPaymentMethod(null);
       }
     }
   }, [reset, user]);

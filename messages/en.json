@@ -70,6 +70,17 @@
     "searchplaceholder": "Search items...",
     "myCart": "Cart"
   },
+  "admin": {
+    "categories": {
+      "title": "Categories",
+      "addNew": "Add New Category",
+      "categoryName": "Category Name",
+      "image": "Category Image",
+      "description": "Category Description",
+      "loading" : "Categories",
+      "itemsIn" : "Items in Category"
+    }
+  },
 
   "footer": {
     "title": "XChange",
@@ -205,14 +216,16 @@
         "completed": "Completed",
         "cancelled": "Cancelled",
         "pending": "Pending",
-        "collected": "Collected"
+        "collected": "Collected",
+        "assigntocourier": "Assigned to Courier",
+        "incoming": "Incoming"
       },
       "cancelOrder": "cancel order",
       "viewDetails": "View Details",
       "track": "Track Order",
       "rate": "Rate your order",
       "editRate": "Edit Review",
-      "recipt" : "View Recipt",
+      "recipt": "View Recipt",
 
       "cancelConfirm": "Are you sure you want to cancel this order?",
       "confirmYes": "Yes",
@@ -413,11 +426,65 @@
     "buyerCost": {
       "question": "Is there a cost for buyers?",
       "answer": "Buyers pay for the items plus a small service fee that covers quality inspection, cleaning, and delivery. Our prices are typically 40-70% less than buying new, making quality second-hand materials affordable while supporting sustainability."
-    }
-    ,  "recentPointsActivity": "Recent Points Activity",
-  "pointsAwarded": "Points awarded",
-  "pointsDeducted": "Points deducted",
-  "pts": "pts",
-  "viewFullHistory": "View full history"
+    },
+    "recentPointsActivity": "Recent Points Activity",
+    "pointsAwarded": "Points awarded",
+    "pointsDeducted": "Points deducted",
+    "pts": "pts",
+    "viewFullHistory": "View full history"
+  },
+  "dashboard": "Dashboard",
+  "users": "Users",
+  "orders": "Orders",
+  "transactions": "Transactions",
+  "approve": "Approve",
+  "globe": "Globe",
+  "logout": "Logout",
+  "Categories": "Categories",
+  "charts": {
+    "insight": "Dashboard insights",
+    "userGrowth": "User Growth",
+    "orderStatus": "Order Status",
+    "topRecyclers": "Top Recyclers",
+    "materials": "Materials Tracked",
+    "cities": "Cities Distribution",
+    "weeklyOrders": "Weekly Orders"
+  },
+  "totalOrders": "Total Orders",
+  "activeUsers": "Active Users",
+  "materialsTracked": "Materials Tracked",
+  "steady": "Steady",
+  "vsLastPeriod": "vs last period",
+  "month": "Month",
+  "months": "months",
+  "monthNames": {
+    "Jan": "January",
+    "Feb": "February",
+    "Mar": "March",
+    "Apr": "April",
+    "May": "May",
+    "Jun": "June",
+    "Jul": "July",
+    "Aug": "August",
+    "Sep": "September",
+    "Oct": "October",
+    "Nov": "November",
+    "Dec": "December"
+  },
+  "loadingChart": "Loading chart data...",
+  "noData": "No data available",
+  "userGrowth": "User Growth",
+  "overview": "Overview",
+  "mostCommon": "Most Common",
+  "total": "Total",
+  "nA": "N/A",
+  "orderStatuses": {
+    "pending": "Pending",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "inTransit": "In Transit",
+    "collected": "Collected",
+    "assigntocourier": "Assigned to Courier",
+    "incoming": "Incoming"
   }
 }

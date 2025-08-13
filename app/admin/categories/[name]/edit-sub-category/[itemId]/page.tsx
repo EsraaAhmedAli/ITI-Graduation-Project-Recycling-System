@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 import api from "@/lib/axios";
 import Image from "next/image";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function EditItemPage() {
   const { name: rawName, itemId } = useParams();
@@ -12,53 +13,61 @@ export default function EditItemPage() {
 
   const router = useRouter();
 
-  const [formData, setFormData] = useState({
-    name: "",
-    points: "",
-    price: "",
-    quantity: "",
-    measurement_unit: "1", // 1 => KG, 2 => Pieces
-    image: null as File | null,
-    currentImage: "",
-  });
+const [formData, setFormData] = useState({
+  name: "",
+  nameAr: "",      // <-- add this
+  points: "",
+  price: "",
+  quantity: "",
+  measurement_unit: "1",
+  image: null as File | null,
+  currentImage: "",
+});
 
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const {locale}=useLanguage()
 
-  useEffect(() => {
-    const fetchItem = async () => {
-      try {
-        const res = await api.get(
-          `categories/get-items/${name}`
-        );
-        const data = res.data
-        const item = data.data.find((i: any) => i._id === itemId);
-        if (item) {
-          setFormData({
-            name: item.name,
-            points: item.points,
-            price: item.price,
-            quantity: item.quantity,
-            measurement_unit: item.measurement_unit.toString(),
-            image: null,
-            currentImage: item.image || "",
-          });
-        }
-      } catch (err) {
-        console.error(err);
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "Failed to fetch item data",
-          confirmButtonColor: "#10b981",
+useEffect(() => {
+  const fetchItem = async () => {
+    try {
+      const res = await api.get(
+        `categories/get-items/${name}?lang=${locale}`
+      );
+
+      const data = res.data.data;
+      const item = data.find((i: any) => i._id === itemId);
+
+      if (item) {
+        setFormData({
+          name: locale === "en" ? item.name : "",
+          nameAr: locale === "ar" ? item.name : "",
+          points: item.points,
+          price: item.price,
+          quantity: item.quantity,
+          measurement_unit: item.measurement_unit.toString(),
+          image: null,
+          currentImage: item.image || "",
         });
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (err) {
+      console.error(err);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to fetch item data",
+        confirmButtonColor: "#10b981",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    if (name && itemId) fetchItem();
-  }, [name, itemId]);
+  if (name && itemId) fetchItem();
+}, [name, itemId, locale]);
+
+
+
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -86,6 +95,8 @@ export default function EditItemPage() {
     try {
       const data = new FormData();
       data.append("name", formData.name);
+          data.append("nameAr", formData.nameAr);  // Add this line
+
       data.append("points", formData.points);
       data.append("price",Math.floor( formData.points/19));
       data.append("quantity", formData.quantity);
@@ -141,20 +152,20 @@ export default function EditItemPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Item Name *
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
-                placeholder="Enter item name"
-                required
-              />
-            </div>
+    <div className="space-y-2">
+  <label className="block text-sm font-medium text-gray-700">
+    {locale === 'en' ? 'English Name *' : 'Arabic Name *'}
+  </label>
+  <input
+    type="text"
+    name={locale === 'en' ? 'name' : 'nameAr'}
+    value={locale === 'en' ? formData.name : formData.nameAr}
+    onChange={handleChange}
+    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
+    placeholder={locale === 'en' ? "Enter English name" : "Enter Arabic name"}
+    required
+  />
+</div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">

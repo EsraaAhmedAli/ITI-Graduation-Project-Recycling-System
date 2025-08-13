@@ -7,6 +7,7 @@ import {
   Layers,
   LogOutIcon,
   Check,
+  Globe,
   
 } from "lucide-react";
 import Link from "next/link";
@@ -15,22 +16,25 @@ import clsx from "clsx";
 import { useContext, useEffect, useState, useCallback, useMemo } from "react";
 import { UserAuthContext } from "@/context/AuthFormContext";
 import { FaMoneyBill } from "react-icons/fa";
+import { useLanguage } from "@/context/LanguageContext";
 
 const menuItems = [
-  { label: "Dashboard", icon: LayoutDashboard, href: "/admin/dashboard" },
-  { label: "Categories", icon: Layers, href: "/admin/categories" },
-  { label: "Users", icon: Users, href: "/admin/users" },
-  { label: "Orders", icon: ShoppingCart, href: "/admin/pickups" },
-  { label: "Transactions", icon: FaMoneyBill, href: "/admin/transactions" },
-  { label: "approve", icon: Check, href: "/admin/deliveryapprove" },
-  { label: "Logout", icon: LogOutIcon },
+  { key: "dashboard", icon: LayoutDashboard, href: "/admin/dashboard" },
+  { key: "Categories", icon: Layers, href: "/admin/categories" },
+  { key: "users", icon: Users, href: "/admin/users" },
+  { key: "orders", icon: ShoppingCart, href: "/admin/pickups" },
+  { key: "transactions", icon: FaMoneyBill, href: "/admin/transactions" },
+  { key: "approve", icon: Check, href: "/admin/deliveryapprove" },
+  { key: "globe", icon: Globe },
+  { key: "logout", icon: LogOutIcon },
 ];
+
 
 export default function AdminSidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(true);
   const [isHydrated, setIsHydrated] = useState(false);
-  
+  const {locale,setLocale,t} = useLanguage()
   const authContext = useContext(UserAuthContext);
   const logout = authContext?.logout;
 
@@ -54,51 +58,52 @@ export default function AdminSidebar() {
       return newState;
     });
   }, [isHydrated]);
+  
 
   // Memoize menu items to prevent re-rendering when props don't change
-  const renderedMenuItems = useMemo(() => {
-    return menuItems.map(({ label, icon: Icon, href }) => {
-      const isLogout = label === "Logout";
-      const isActive = pathname === href;
-      
-      const content = (
-        <>
-          <Icon size={20} />
-          {!collapsed && <span>{label}</span>}
-        </>
-      );
+const renderedMenuItems = useMemo(() => {
+  return menuItems.map(({ key, icon: Icon, href }) => {
+    const isLogout = key === "logout";
+    const isActive = pathname === href;
 
-      const baseClasses = clsx(
-        "flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors",
-        collapsed && "justify-center px-4"
-      );
+    const content = (
+      <>
+        <Icon size={20} />
+        {!collapsed && <span>{t(key)}</span>}
+      </>
+    );
 
-      return (
-        <li key={label}>
-          {isLogout ? (
-            <button
-              onClick={logout}
-              className={clsx(baseClasses, "cursor-pointer w-full")}
-              type="button"
-            >
-              {content}
-            </button>
-          ) : href ? (
-            <Link
-              href={href}
-              prefetch={true}
-              className={clsx(
-                baseClasses,
-                isActive && "bg-green-100 text-green-800 font-semibold"
-              )}
-            >
-              {content}
-            </Link>
-          ) : null}
-        </li>
-      );
-    });
-  }, [pathname, collapsed, logout]);
+    const baseClasses = clsx(
+      "flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors",
+      collapsed && "justify-center px-4"
+    );
+
+    return (
+      <li key={key}>
+        {isLogout ? (
+          <button
+            onClick={logout}
+            className={clsx(baseClasses, "cursor-pointer w-full")}
+            type="button"
+          >
+            {content}
+          </button>
+        ) : href ? (
+          <Link
+            href={href}
+            prefetch={true}
+            className={clsx(
+              baseClasses,
+              isActive && "bg-green-100 text-green-800 font-semibold"
+            )}
+          >
+            {content}
+          </Link>
+        ) : null}
+      </li>
+    );
+  });
+}, [pathname, collapsed, logout, t]);
 
   // Prevent hydration mismatch by showing consistent state initially
   if (!isHydrated) {
@@ -151,7 +156,40 @@ export default function AdminSidebar() {
           {collapsed ? "»" : "«"}
         </span>
       </div>
-
+     <div className="hidden lg:flex items-center gap-1.5 px-2 py-1 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
+              <span
+                className={`text-xs font-medium ${
+                  locale === "en"
+                    ? "text-blue-600 dark:text-blue-400"
+                    : "text-gray-400 dark:text-gray-500"
+                }`}
+              >
+                EN
+              </span>
+              <button
+                onClick={() => setLocale(locale === "en" ? "ar" : "en")}
+                className="relative w-8 h-4 bg-gray-200 dark:bg-gray-600 rounded-full transition-colors duration-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+             
+                title="Toggle Language"
+              >
+                <div
+                  className="absolute top-0.5 left-0.5 w-3 h-3 bg-white dark:bg-gray-200 rounded-full shadow-sm transform transition-transform duration-200"
+                  style={{
+                    transform:
+                      locale === "ar" ? "translateX(16px)" : "translateX(0)",
+                  }}
+                />
+              </button>
+              <span
+                className={`text-xs font-medium ${
+                  locale === "ar"
+                    ? "text-blue-600 dark:text-blue-400"
+                    : "text-gray-400 dark:text-gray-500"
+                }`}
+              >
+                AR
+              </span>
+            </div>
       <nav className="mt-4 flex-1 overflow-y-auto">
         <ul className="flex flex-col gap-1">
           {renderedMenuItems}

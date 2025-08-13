@@ -22,8 +22,9 @@ export default function CategoryList({
   horizontal = false,
 }: CategoryListProps) {
   const [showAll, setShowAll] = useState(false);
-  const { t } = useLanguage();
-  const { data, isLoading, error } = useCategories();
+    const { locale, t } = useLanguage(); // Get current language from context
+  
+  const { data, isLoading, error } = useCategories({ language: locale }); // Pass language to hook
 
   // Memoize the categories to show to avoid recalculation on every render
   const categoriesToShow = useMemo(() => {

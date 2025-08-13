@@ -3,6 +3,7 @@ import React, { memo } from 'react';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { StatCardProps } from '../../../../components/Types/dashboard.types';
 import { TREND_COLORS, TREND_BG_COLORS } from '../../../../constants/theme';
+import { useLanguage } from '@/context/LanguageContext';
 
 const TrendIcon = ({ trend }: { trend: 'up' | 'down' | 'steady' }) => {
   const iconProps = { size: 16, className: "animate-pulse" };
@@ -35,6 +36,8 @@ export const StatCard = memo<StatCardProps>(({
   trendValue, 
   loading = false 
 }) => {
+  const { locale, t } = useLanguage();
+
   if (loading) {
     return (
       <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg border-2 border-green-200">
@@ -72,20 +75,24 @@ export const StatCard = memo<StatCardProps>(({
         </div>
         
         {/* Trend Indicator */}
-        {trend && (
-          <div className={`mt-3 md:mt-4 flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 rounded-xl border transition-all duration-200 group-hover:scale-105 ${TREND_BG_COLORS[trend]}`}>
-            <div className={`flex items-center gap-2 ${TREND_COLORS[trend]}`}>
-              <TrendIcon trend={trend} />
-              <span className="text-xs md:text-sm font-bold">
-                {trend === 'steady' ? 'Steady' : trendValue}
-              </span>
-            </div>
-            <div className="h-3 md:h-4 w-px bg-current opacity-30" />
-            <span className="text-xs text-green-600 font-medium opacity-75">
-              vs last period
-            </span>
-          </div>
-        )}
+     {trend && (
+  <div
+    className={`mt-3 md:mt-4 flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 rounded-xl border transition-all duration-200 group-hover:scale-105 ${TREND_BG_COLORS[trend]}`}
+  >
+    <div className={`flex items-center gap-2 ${TREND_COLORS[trend]}`}>
+      <TrendIcon trend={trend} />
+      <span className="text-xs md:text-sm font-bold">
+        {trend === 'steady'
+          ? t("steady")
+          : trendValue?.toLocaleString(locale === "ar" ? "ar-EG" : "en-US")}
+      </span>
+    </div>
+    <div className="h-3 md:h-4 w-px bg-current opacity-30" />
+    <span className="text-xs text-green-600 font-medium opacity-75">
+      {t("vsLastPeriod")}
+    </span>
+  </div>
+)}
       </div>
     </div>
   );

@@ -10,17 +10,18 @@ import Image from "next/image";
 import Button from "@/components/common/Button";
 import { useCategories } from "@/hooks/useGetCategories";
 import { useQueryClient } from "@tanstack/react-query";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function Page() {
-  const { data, isLoading, error } = useCategories();
-  const queryClient = useQueryClient(); // 👈 init queryClient
-
+  const { locale, t } = useLanguage();
+  const { data, isLoading, error } = useCategories({ language: locale });
+  const queryClient = useQueryClient();
   const router = useRouter();
 
   const columns = [
     {
       key: "image",
-      label: "Image",
+      label: t("admin.categories.image") || "Image",
       type: "image",
       render: (item: any) => (
         <Image
@@ -29,14 +30,20 @@ export default function Page() {
           width={70}
           height={70}
           className="rounded-full object-cover cursor-pointer"
-          onClick={() =>
-            router.push(`/admin/categories/${item.name}/get-sub-category`)
-          }
+          onClick={() => handleImageClick(item)}
         />
       ),
     },
-    { key: "name", label: "Category Name", sortable: true },
-    { key: "description", label: "Description", sortable: true },
+    { 
+      key: "name", 
+      label: t("admin.categories.categoryName") || "Category Name", 
+      sortable: true 
+    },
+    { 
+      key: "description", 
+      label: t("admin.categories.description") || "Description", 
+      sortable: true 
+    },
   ];
 
   const handleAddNewCategory = () => {
@@ -45,23 +52,31 @@ export default function Page() {
 
   const handleDelete = async (item: any) => {
     const result = await Swal.fire({
-      title: "Are you sure?",
-      text: `You are about to delete "${item.name}". This action cannot be undone!`,
+      title: t("admin.categories.deleteConfirmTitle") || "Are you sure?",
+      text: t("admin.categories.deleteConfirmText", { name: item.name }) || 
+            `You are about to delete "${item.name}". This action cannot be undone!`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
       cancelButtonColor: "#aaa",
-      confirmButtonText: "Yes, delete it!",
+      confirmButtonText: t("admin.categories.deleteConfirm") || "Yes, delete it!",
+      cancelButtonText: t("admin.categories.deleteCancel") || "Cancel",
     });
 
     if (result.isConfirmed) {
       try {
-        await api.delete(`/categories/${encodeURIComponent(item.name)}`);
+        // Use original name or the current name for the API call
+        const nameForApi = item.originalName || item.name;
+        // Single encoding is enough - the backend middleware will handle decoding
+        await api.delete(`/categories/${encodeURIComponent(nameForApi)}`);
+        
         queryClient.invalidateQueries({ queryKey: ["categories list"] });
+        
         Swal.fire({
           icon: "success",
-          title: "Deleted!",
-          text: `"${item.name}" has been deleted.`,
+          title: t("admin.categories.deleteSuccess") || "Deleted!",
+          text: t("admin.categories.deleteSuccessText", { name: item.name }) || 
+                `"${item.name}" has been deleted.`,
           timer: 1500,
           showConfirmButton: false,
         });
@@ -69,56 +84,63 @@ export default function Page() {
         console.error(error);
         Swal.fire({
           icon: "error",
-          title: "Error",
-          text: "Something went wrong while deleting.",
+          title: t("admin.categories.deleteError") || "Error",
+          text: t("admin.categories.deleteErrorText") || "Something went wrong while deleting.",
         });
       }
     }
   };
 
+  const handleEdit = (item: any) => {
+    const nameForEdit = item.originalName || item.name;
+    // Single encoding - backend will decode properly
+    router.push(`/admin/categories/${encodeURIComponent(nameForEdit)}/edit`);
+  };
+
+  const handleAddSubCategory = (item: any) => {
+    const nameForSub = item.originalName || item.name;
+    router.push(`/admin/categories/${encodeURIComponent(nameForSub)}/add-sub-category`);
+  };
+
+  const handleImageClick = (item: any) => {
+    const nameForNav = item.originalName || item.name;
+    // This is the key fix - single encoding only
+    router.push(`/admin/categories/${encodeURIComponent(nameForNav)}/get-sub-category`);
+  };
+
   return (
     <>
       {isLoading ? (
-        <Loader title="categories" />
+        <Loader title={t("admin.categories.loading") || "categories"} />
       ) : error ? (
-        <p className="text-center text-red-500 py-10">{error}</p>
-      ) : data.data?.length === 0 ? (
+        <p className="text-center text-red-500 py-10">
+          {t("admin.categories.error") || error}
+        </p>
+      ) : data?.length === 0 ? (
         <>
           <p className="text-center text-gray-500 py-10">
-            No categories found.
+            {t("admin.categories.noCategories") || "No categories found."}
           </p>
           <div className="flex justify-center">
             <Button
               onClick={handleAddNewCategory}
               className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition-all duration-300">
-              Start adding new category
+              {t("admin.categories.startAdding") || "Start adding new category"}
             </Button>
           </div>
         </>
       ) : (
         <DynamicTable
-          data={data?.data}
+          data={data.data}
           columns={columns}
-          title="Categories"
+          title={t("admin.categories.title") || "Categories"}
           itemsPerPage={5}
-          addButtonText="Add New Category"
+          addButtonText={t("admin.categories.addNew") || "Add New Category"}
           onAdd={handleAddNewCategory}
-          onEdit={(item) =>
-            router.push(
-              `/admin/categories/${encodeURIComponent(item.name)}/edit`
-            )
-          }
+          onEdit={handleEdit}
           onDelete={handleDelete}
-          onAddSubCategory={(item) =>
-            router.push(
-              `/admin/categories/${encodeURIComponent(
-                item.name
-              )}/add-sub-category`
-            )
-          }
-          onImageClick={(item) =>
-            router.push(`/admin/categories/${item.name}/get-sub-category`)
-          }
+          onAddSubCategory={handleAddSubCategory}
+          onImageClick={handleImageClick}
         />
       )}
     </>
