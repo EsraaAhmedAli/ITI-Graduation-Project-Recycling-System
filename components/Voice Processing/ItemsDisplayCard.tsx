@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { CartItem, useCart } from "@/context/CartContext";
+import { useCart } from "@/context/CartContext";
+import { CartItem } from "@/models/cart";
 import api from "@/lib/axios";
 import Image from "next/image";
 import { toast } from "react-toastify";
-import { useCategories } from "@/hooks/useGetCategories";
 
 type ValidatedItem = {
   material: string;
@@ -21,6 +21,8 @@ interface DatabaseItem {
   points: number;
   price: number;
   measurement_unit: 1 | 2;
+  categoryId: string;
+  categoryName: string;
 }
 
 interface EnrichedItem extends ValidatedItem {
@@ -29,6 +31,8 @@ interface EnrichedItem extends ValidatedItem {
   points?: number;
   price?: number;
   measurement_unit?: 1 | 2;
+  categoryId?: string;
+  categoryName?: string;
   found: boolean;
 }
 
@@ -41,84 +45,251 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
   const [localItems, setLocalItems] = useState<EnrichedItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
-  const { addToCart } = useCart();
-  const { getCategoryIdByItemName } = useCategories();
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const { addToCart, cart, clearCart, updateCartState } = useCart();
   const router = useRouter();
 
-  // Function to fetch item details from database
-  const fetchItemDetails = async (
-    itemName: string
-  ): Promise<DatabaseItem | null> => {
+  // Debug: Monitor cart changes
+  useEffect(() => {
+    console.log(`🛒 Cart updated: ${cart.length} items`, cart.map(item => ({ name: item.name, quantity: item.quantity })));
+  }, [cart]);
+
+  // Function to get fresh cart state
+  const getFreshCartState = (): CartItem[] => {
+    // Try to get fresh cart state from localStorage first
     try {
-      // First, try to get all categories to find which one contains our item
-      const categoriesResponse = await api.get("/categories");
-      const categories = categoriesResponse.data;
+      const stored = localStorage.getItem('guest_cart'); // Correct key used by CartContext
+      const freshCart = stored ? JSON.parse(stored) : [];
+      console.log(`🔄 Fresh cart state from storage: ${freshCart.length} items`, freshCart.map((item: CartItem) => ({ name: item.name, quantity: item.quantity })));
+      return freshCart;
+    } catch (error) {
+      console.error("❌ Error getting fresh cart state:", error);
+      return cart; // Fallback to component state
+    }
+  };
 
-      for (const category of categories) {
-        try {
-          const itemsResponse = await api.get(
-            `/categories/get-items/${category.name}`
-          );
-          const categoryItems = itemsResponse.data;
+  // Clear cart before starting to add items (to ensure clean start)
+  const clearCartBeforeAdding = async () => {
+    const currentCart = getFreshCartState();
+    if (currentCart.length > 0) {
+      console.log("🧹 Clearing existing cart before adding voice items...");
+      await clearCart();
+      // Wait for cart to be cleared
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  };
 
-          // Look for exact match or close match
-          const foundItem = categoryItems.find(
-            (item: DatabaseItem) =>
-              item.name.toLowerCase() === itemName.toLowerCase() ||
-              item.name.toLowerCase().includes(itemName.toLowerCase()) ||
-              itemName.toLowerCase().includes(item.name.toLowerCase())
-          );
+  // Improved function to fetch all items at once
+  const fetchAllItemsFromDatabase = async (): Promise<DatabaseItem[]> => {
+    try {
+      console.log("🔍 Fetching all items from database...");
+      
+      // Use the get-items endpoint with a large limit to get all items at once
+      const response = await api.get("/categories/get-items?limit=1000&role=buyer");
+      const allItems = response.data?.data || [];
+      
+      console.log(`✅ Retrieved ${allItems.length} items from database`);
+      return allItems;
+    } catch (error) {
+      console.error("❌ Error fetching all items:", error);
+      return [];
+    }
+  };
 
-          if (foundItem) {
-            return foundItem;
-          }
-        } catch (error) {
-          console.error(
-            `Error fetching items for category ${category.name}:`,
-            error
+  // Improved item matching function with strict matching
+  const findMatchingItem = (itemName: string, allItems: DatabaseItem[]): DatabaseItem | null => {
+    const normalizedSearchName = itemName.toLowerCase().trim();
+    
+    console.log(`🔍 Searching for: "${itemName}" (normalized: "${normalizedSearchName}")`);
+    console.log(`📋 Available items: ${allItems.map(item => item.name).join(', ')}`);
+    
+    // Clean function to remove Arabic diacritics and normalize text
+    const cleanText = (text: string) => {
+      return text
+        .toLowerCase()
+        .trim()
+        // Remove Arabic diacritics (ً ٌ ٍ َ ُ ِ ّ ْ)
+        .replace(/[\u064B-\u0652]/g, '')
+        // Remove common prefixes that might cause issues
+        .replace(/^ً+/, '')
+        .trim();
+    };
+    
+    const cleanedSearchName = cleanText(normalizedSearchName);
+    
+    // Try EXACT match first (most reliable) - case insensitive
+    let found = allItems.find(item => 
+      cleanText(item.name) === cleanedSearchName
+    );
+    
+    if (found) {
+      console.log(`✅ Exact match found: ${itemName} -> ${found.name}`);
+      return found;
+    }
+    
+    // Try exact match with pluralization (add/remove 's')
+    const pluralVariations = [
+      cleanedSearchName.replace(/s$/, ''), // Remove plural 's' (books -> book)
+      cleanedSearchName + 's', // Add plural 's' (book -> books)
+    ];
+    
+    for (const variation of pluralVariations) {
+      if (variation !== cleanedSearchName && variation.length > 2) { // Don't repeat the same search and avoid very short strings
+        found = allItems.find(item => 
+          cleanText(item.name) === variation
+        );
+        if (found) {
+          console.log(`✅ Exact pluralization match found: ${itemName} -> ${found.name} (via "${variation}")`);
+          return found;
+        }
+      }
+    }
+    
+    // Try common word variations for specific items
+    const commonVariations: Record<string, string[]> = {
+      'newspaper': ['news paper'],
+      'news paper': ['newspaper'],
+      'powerbank': ['power bank'],
+      'power bank': ['powerbank'],
+      'solid plastic': ['solid plasitc', 'plastics'], // Handle the typo in database
+      'plastic': ['solid plastic', 'solid plasitc'],
+      'plastics': ['solid plastic', 'solid plasitc'],
+      'water colman': ['water colman'], // Handle Arabic diacritics
+      'colman': ['water colman'],
+    };
+    
+    if (commonVariations[cleanedSearchName]) {
+      for (const variation of commonVariations[cleanedSearchName]) {
+        found = allItems.find(item => 
+          cleanText(item.name) === cleanText(variation)
+        );
+        if (found) {
+          console.log(`✅ Common variation match found: ${itemName} -> ${found.name} (via "${variation}")`);
+          return found;
+        }
+      }
+    }
+    
+    // Try fuzzy matching for database typos (like "Solid Plasitc" -> "solid plastic")
+    found = allItems.find(item => {
+      const cleanItemName = cleanText(item.name);
+      const similarity = calculateSimilarity(cleanedSearchName, cleanItemName);
+      return similarity > 0.85; // 85% similarity threshold
+    });
+    
+    if (found) {
+      console.log(`✅ Fuzzy match found: ${itemName} -> ${found.name} (similarity match)`);
+      return found;
+    }
+    
+    // NO PARTIAL MATCHING - only exact matches allowed
+    // This prevents "laptop motherboard" from matching "laptop"
+    // If an item doesn't exist exactly in the database, it should be marked as "not in catalog"
+    
+    console.log(`❌ No exact match found for: ${itemName}`);
+    return null;
+  };
+
+  // Helper function to calculate string similarity
+  const calculateSimilarity = (str1: string, str2: string): number => {
+    const longer = str1.length > str2.length ? str1 : str2;
+    const shorter = str1.length > str2.length ? str2 : str1;
+    
+    if (longer.length === 0) return 1.0;
+    
+    const editDistance = getEditDistance(longer, shorter);
+    return (longer.length - editDistance) / longer.length;
+  };
+
+  // Helper function to calculate edit distance (Levenshtein distance)
+  const getEditDistance = (str1: string, str2: string): number => {
+    const matrix = [];
+    
+    for (let i = 0; i <= str2.length; i++) {
+      matrix[i] = [i];
+    }
+    
+    for (let j = 0; j <= str1.length; j++) {
+      matrix[0][j] = j;
+    }
+    
+    for (let i = 1; i <= str2.length; i++) {
+      for (let j = 1; j <= str1.length; j++) {
+        if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+          matrix[i][j] = matrix[i - 1][j - 1];
+        } else {
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j - 1] + 1,
+            matrix[i][j - 1] + 1,
+            matrix[i - 1][j] + 1
           );
         }
       }
-      return null;
-    } catch (error) {
-      console.error("Error fetching item details:", error);
-      return null;
     }
+    
+    return matrix[str2.length][str1.length];
   };
 
   // Function to enrich items with database details
   const enrichItems = useCallback(async () => {
     setIsLoading(true);
-    const enrichedItems: EnrichedItem[] = [];
+    console.log("🚀 Starting item enrichment process...");
+    
+    try {
+      // Fetch all items from database once
+      const allDatabaseItems = await fetchAllItemsFromDatabase();
+      
+      const enrichedItems: EnrichedItem[] = [];
 
-    for (const item of items) {
-      const dbItem = await fetchItemDetails(item.material);
+      for (const item of items) {
+        console.log(`🔍 Processing item: ${item.material}`);
+        
+        const dbItem = findMatchingItem(item.material, allDatabaseItems);
 
-      if (dbItem) {
-        enrichedItems.push({
-          ...item,
-          _id: dbItem._id,
-          image: dbItem.image,
-          points: dbItem.points,
-          price: dbItem.price,
-          measurement_unit: dbItem.measurement_unit,
-          found: true,
-        });
-      } else {
-        // If not found in database, create with default values
-        enrichedItems.push({
-          ...item,
-          points: item.unit === "KG" ? 5 : 2, // Default points
-          price: item.unit === "KG" ? 1.5 : 0.5, // Default price
-          measurement_unit: item.unit === "KG" ? 1 : 2,
-          image: "/placeholder-item.jpg", // Default image
-          found: false,
-        });
+        if (dbItem) {
+          console.log(`✅ Found in database: ${item.material}`, {
+            id: dbItem._id,
+            price: dbItem.price,
+            points: dbItem.points,
+            category: dbItem.categoryName
+          });
+          
+          enrichedItems.push({
+            ...item,
+            material: dbItem.name, // Use database name instead of AI name
+            _id: dbItem._id,
+            image: dbItem.image,
+            points: dbItem.points,
+            price: dbItem.price,
+            measurement_unit: dbItem.measurement_unit,
+            categoryId: dbItem.categoryId,
+            categoryName: dbItem.categoryName,
+            found: true,
+          });
+        } else {
+          console.log(`❌ Not found in database: ${item.material}, using defaults`);
+          
+          // If not found in database, create with default values
+          enrichedItems.push({
+            ...item,
+            points: item.unit === "KG" ? 5 : 2, // Default points
+            price: item.unit === "KG" ? 1.5 : 0.5, // Default price
+            measurement_unit: item.unit === "KG" ? 1 : 2,
+            image: "/placeholder-item.jpg", // Default image
+            categoryName: item.material,
+            found: false,
+          });
+        }
       }
-    }
 
-    setLocalItems(enrichedItems);
-    setIsLoading(false);
+      console.log(`✅ Enrichment complete. Found ${enrichedItems.filter(i => i.found).length}/${enrichedItems.length} items in database`);
+      setLocalItems(enrichedItems);
+    } catch (error) {
+      console.error("❌ Error during enrichment:", error);
+      toast.error("Failed to load item details");
+    } finally {
+      setIsLoading(false);
+    }
   }, [items]);
 
   useEffect(() => {
@@ -230,116 +401,289 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
     }
   };
 
-  // const addAllToCart = async () => {
-  //   for (const item of localItems) {
-  //     // Validate quantity before adding
-  //     if (!validateQuantityForCart(item.quantity, item.unit)) {
-  //       const message = item.unit === "KG"
-  //         ? `${item.material}: For KG items, quantity must be in 0.25 increments`
-  //         : `${item.material}: For Piece items, quantity must be whole numbers ≥ 1`;
-  //       toast.error(message);
-  //       return;
-  //     }
-
-  //     if (item.found && item._id) {
-  //       // For items found in database, use their actual data
-  //       const cartItem:CartItem = {
-  //         categoryId: item._id,
-  //         itemName: item.material,
-  //         image: item.image || "/placeholder-item.jpg",
-  //         points: item.points || 0,
-  //         price: item.price || 0,
-  //         measurement_unit: item.measurement_unit || (item.unit === "KG" ? 1 : 2),
-  //         quantity: item.quantity,
-  //         _id:item._id,
-  //         categoryName:item.material,
-  //         originalCategoryId:getCategoryIdByItemName(item.)
-
-  //       };
-  //       await addToCart(cartItem);
-  //     } else {
-  //       // For items not found in database, use default values but still add to cart
-  //       const cartItem = {
-  //         categoryId: `voice-order-${item.material.toLowerCase().replace(/\s+/g, '-')}`,
-  //         itemName: item.material,
-  //         image: "/placeholder-item.jpg",
-  //         points: item.points || (item.unit === "KG" ? 5 : 2),
-  //         price: item.price || (item.unit === "KG" ? 1.5 : 0.5),
-  //         measurement_unit: item.unit === "KG" ? 1 : 2,
-  //         quantity: item.quantity,
-  //       };
-  //       await addToCart(cartItem);
-  //     }
-  //   }
-  //   setShowSuccess(true);
-  //   setTimeout(() => setShowSuccess(false), 3000);
-  // };
-
-  const addAllToCart = async () => {
-    for (const item of localItems) {
-      // Validate quantity before adding
-      if (!validateQuantityForCart(item.quantity, item.unit)) {
-        const message =
-          item.unit === "KG"
-            ? `${item.material}: For KG items, quantity must be in 0.25 increments`
-            : `${item.material}: For Piece items, quantity must be whole numbers ≥ 1`;
-        toast.error(message);
-        return;
-      }
-
-      const measurement_unit = item.unit === "KG" ? 1 : 2;
-
-      const baseCartItem = {
-        itemName: item.material,
-        image: item.image || "/placeholder-item.jpg",
-        points: item.points ?? (measurement_unit === 1 ? 5 : 2),
-        price: item.price ?? (measurement_unit === 1 ? 1.5 : 0.5),
-        measurement_unit,
+  // Function to add multiple items to cart in batch (avoid race conditions)
+  const addItemsToCartBatch = async (items: any[]) => {
+    console.log("🛒 Starting batch add to cart...");
+    
+    // Clear cart first
+    await clearCartBeforeAdding();
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for clear to complete
+    
+    // Get fresh empty cart state
+    let currentCart = getFreshCartState();
+    console.log("🔍 Starting with fresh cart:", currentCart.length);
+    
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      console.log(`� Batch adding item ${i + 1}/${items.length}: ${item.name}`);
+      
+      // Create the cart item
+      const cartItem: CartItem = {
+        _id: item._id,
+        categoryId: item.categoryId!,
+        categoryName: item.categoryName!,
+        name: item.material,
+        image: item.image!,
+        points: item.points!,
+        price: item.price!,
+        measurement_unit: item.measurement_unit!,
         quantity: item.quantity,
-        categoryName: item.material,
+        paymentMethod: "cash",
+        deliveryFee: 0,
       };
-
-      if (item.found && item._id) {
-        const categoryId = getCategoryIdByItemName(item.material);
-
-        const cartItem: CartItem = {
-          ...baseCartItem,
-          _id: item._id,
-          categoryId,
-          name: baseCartItem.itemName,
-        };
-
-        await addToCart(cartItem);
-      } else {
-        // fallback for unknown items
-        const fallbackId = `voice-order-${item.material
-          .toLowerCase()
-          .replace(/\s+/g, "-")}`;
-        const cartItem: CartItem = {
-          ...baseCartItem,
-          _id: fallbackId,
-          categoryId: fallbackId,
-          name: baseCartItem.itemName,
-        };
-
-        await addToCart(cartItem);
+      
+      // Add to our local cart array
+      currentCart = [...currentCart, cartItem];
+      
+      // Save to localStorage directly
+      try {
+        localStorage.setItem('guest_cart', JSON.stringify(currentCart));
+        console.log(`💾 Saved item ${i + 1} to localStorage. Cart now has ${currentCart.length} items`);
+      } catch (error) {
+        console.error("❌ Failed to save to localStorage:", error);
+      }
+      
+      // Small delay between items
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    // Trigger a cart context update by calling addToCart with the last item
+    // This will sync the React state with our localStorage changes
+    if (items.length > 0) {
+      const lastItem = items[items.length - 1];
+      const lastCartItem: CartItem = {
+        _id: lastItem._id,
+        categoryId: lastItem.categoryId!,
+        categoryName: lastItem.categoryName!,
+        name: lastItem.material,
+        image: lastItem.image!,
+        points: lastItem.points!,
+        price: lastItem.price!,
+        measurement_unit: lastItem.measurement_unit!,
+        quantity: lastItem.quantity,
+        paymentMethod: "cash",
+        deliveryFee: 0,
+      };
+      
+      console.log("🔄 Triggering context sync with last item...");
+      // Force the cart context to reload from localStorage
+      try {
+        // First clear the context cart
+        clearCart();
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Then add one item to trigger reload
+        await addToCart(lastCartItem);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+      } catch (error) {
+        console.error("❌ Failed to sync context:", error);
       }
     }
-
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
+    
+    const finalCart = getFreshCartState();
+    console.log(`✅ Batch add complete. Final cart has ${finalCart.length} items:`, finalCart.map(item => ({ name: item.name, quantity: item.quantity })));
+    
+    return finalCart.length;
   };
 
-  const handleCheckout = () => {
-    addAllToCart();
-    router.push("/cart");
-    onClose();
+  // Direct updateCartState approach - merge with existing cart instead of clearing
+  const addAllToCart = async () => {
+    console.log("🛒 Starting cart addition using context updateCartState (merging mode)...");
+    setIsAddingToCart(true);
+    
+    try {
+      const itemsInCatalog = localItems.filter(item => item.found);
+      
+      if (itemsInCatalog.length === 0) {
+        toast.error("No items in catalog to add to cart");
+        return;
+      }
+      
+      console.log(`📦 Found ${itemsInCatalog.length} items in catalog to add`);
+      
+      // Validate all items first
+      const validItems = [];
+      for (const item of itemsInCatalog) {
+        if (!item.found || !item._id) {
+          console.log(`⏭️ Skipping ${item.material}: Not found in database`);
+          continue;
+        }
+        
+        if (!validateQuantityForCart(item.quantity, item.unit)) {
+          const message =
+            item.unit === "KG"
+              ? `${item.material}: For KG items, quantity must be in 0.25 increments`
+              : `${item.material}: For Piece items, quantity must be whole numbers ≥ 1`;
+          console.log(`❌ Invalid quantity for ${item.material}: ${item.quantity}`);
+          toast.error(message);
+          continue;
+        }
+        
+        validItems.push(item);
+      }
+      
+      if (validItems.length === 0) {
+        toast.error("No valid items to add to cart");
+        return;
+      }
+      
+      console.log(`✅ ${validItems.length} items passed validation`);
+      
+      // Get current cart state for merging
+      console.log("🔄 Getting current cart state for merging...");
+      const currentCart = getFreshCartState();
+      console.log(`📋 Current cart has ${currentCart.length} items`);
+      
+      // Build new cart items
+      const newCartItems: CartItem[] = [];
+      
+      for (let i = 0; i < validItems.length; i++) {
+        const item = validItems[i];
+        console.log(`🔄 Building cart item ${i + 1}/${validItems.length}: ${item.material}`);
+        
+        const cartItem: CartItem = {
+          _id: item._id,
+          categoryId: item.categoryId!,
+          categoryName: item.categoryName!,
+          name: item.material,
+          image: item.image!,
+          points: item.points!,
+          price: item.price!,
+          measurement_unit: item.measurement_unit!,
+          quantity: item.quantity,
+          paymentMethod: "cash",
+          deliveryFee: 0,
+        };
+        
+        newCartItems.push(cartItem);
+        console.log(`➕ Built cart item: ${item.material} (${item.quantity} ${item.unit})`);
+      }
+      
+      // Merge logic: Check for existing items and either update quantity or add new
+      const mergedCart = [...currentCart];
+      let addedCount = 0;
+      let updatedCount = 0;
+      
+      for (const newItem of newCartItems) {
+        const existingItemIndex = mergedCart.findIndex(
+          existingItem => existingItem._id === newItem._id
+        );
+        
+        if (existingItemIndex !== -1) {
+          // Item exists, update quantity
+          const existingItem = mergedCart[existingItemIndex];
+          const newQuantity = existingItem.quantity + newItem.quantity;
+          mergedCart[existingItemIndex] = {
+            ...existingItem,
+            quantity: newQuantity
+          };
+          console.log(`🔄 Updated existing item: ${newItem.name} (${existingItem.quantity} + ${newItem.quantity} = ${newQuantity})`);
+          updatedCount++;
+        } else {
+          // New item, add to cart
+          mergedCart.push(newItem);
+          console.log(`➕ Added new item: ${newItem.name} (${newItem.quantity} ${newItem.measurement_unit === 1 ? 'KG' : 'pieces'})`);
+          addedCount++;
+        }
+      }
+      
+      // Use the context's updateCartState method with merged cart
+      console.log(`💾 Using updateCartState to merge cart: ${mergedCart.length} total items (${addedCount} new, ${updatedCount} updated)...`);
+      await updateCartState(mergedCart);
+      
+      // Wait for the debounced save to complete
+      console.log("⏳ Waiting for cart state to fully sync...");
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Verify the cart state
+      const finalCart = getFreshCartState();
+      console.log(`📊 Final results: Cart has ${finalCart.length} items`);
+      console.log("🔍 Final cart contents:", finalCart.map(item => ({ name: item.name, quantity: item.quantity })));
+      
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+      
+      const message = addedCount > 0 && updatedCount > 0 
+        ? `Added ${addedCount} new items and updated ${updatedCount} existing items in cart!`
+        : addedCount > 0 
+        ? `Added ${addedCount} new items to cart!`
+        : `Updated ${updatedCount} items in cart!`;
+      
+      console.log(`🎉 ${message}`);
+      toast.success(message);
+      
+      return validItems.length;
+      
+    } catch (error) {
+      console.error("❌ Error in addAllToCart:", error);
+      toast.error("Failed to add items to cart");
+      return 0;
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
 
-  const handleBrowseMore = () => {
-    addAllToCart();
-    router.push("/category");
-    onClose();
+  const handleCheckout = async () => {
+    console.log("🚀 Starting checkout process...");
+    try {
+      await addAllToCart();
+      console.log("✅ All items added, waiting before navigation...");
+      
+      // Add much longer delay and check cart state before navigation
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Debug: Check fresh cart state before navigation
+      console.log("🔍 Checking fresh cart state before navigation...");
+      const freshCart = getFreshCartState();
+      console.log("🛒 Fresh cart before navigation:", freshCart.map(item => ({ name: item.name, quantity: item.quantity })));
+      
+      if (freshCart.length === 0) {
+        console.log("❌ Fresh cart is empty, not navigating");
+        toast.error("Cart is empty. Items may not have been added successfully.");
+        return;
+      }
+      
+      // Navigate to cart
+      console.log(`📍 Navigating to cart page with ${freshCart.length} items...`);
+      router.push("/cart");
+      
+      // Close modal after navigation starts
+      setTimeout(() => {
+        console.log("🚪 Closing modal...");
+        onClose();
+      }, 500);
+    } catch (error) {
+      console.error("❌ Error during checkout:", error);
+      onClose();
+    }
+  };
+
+  const handleBrowseMore = async () => {
+    console.log("🚀 Starting browse more process...");
+    try {
+      await addAllToCart();
+      console.log("✅ All items added, waiting before navigation...");
+      
+      // Add much longer delay and check cart state before navigation
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Debug: Check if cart is still populated before navigation
+      console.log("🔍 Checking cart state before navigation...");
+      
+      // Navigate to category
+      console.log("📍 Navigating to category page...");
+      router.push("/category");
+      
+      // Close modal after navigation starts
+      setTimeout(() => {
+        console.log("🚪 Closing modal...");
+        onClose();
+      }, 500);
+    } catch (error) {
+      console.error("❌ Error during browse more:", error);
+      onClose();
+    }
   };
 
   const handleCloseWithoutSaving = () => {
@@ -352,6 +696,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
     }
   };
 
+  // Loading state component remains the same
   if (isLoading) {
     return (
       <div
@@ -370,6 +715,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
     );
   }
 
+  // Empty state component remains the same
   if (localItems.length === 0) {
     return (
       <div
@@ -406,6 +752,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
     );
   }
 
+  // Rest of the component UI remains the same...
   return (
     <div
       className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-4"
@@ -473,23 +820,28 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
 
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {localItems.map((item, index) => {
-              const calculatedPoints = Math.floor(
-                item.quantity * (item.points || (item.unit === "KG" ? 5 : 2))
-              );
-              const calculatedPrice = (
-                item.quantity * (item.price || (item.unit === "KG" ? 1.5 : 0.5))
-              ).toFixed(2);
+              // Only show calculated values for items found in database
+              const calculatedPoints = item.found ? Math.floor(
+                item.quantity * (item.points || 0)
+              ) : 0;
+              const calculatedPrice = item.found ? (
+                item.quantity * (item.price || 0)
+              ).toFixed(2) : "0.00";
 
               return (
                 <div
                   key={index}
-                  className="bg-gradient-to-r from-primary/5 to-secondary/5 border border-primary/20 rounded-xl p-5 hover:from-primary/10 hover:to-secondary/10 transition-all duration-200"
+                  className={`border rounded-xl p-5 transition-all duration-200 ${
+                    item.found 
+                      ? "bg-gradient-to-r from-primary/5 to-secondary/5 border-primary/20 hover:from-primary/10 hover:to-secondary/10" 
+                      : "bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200 hover:from-gray-100 hover:to-gray-150"
+                  }`}
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-start space-x-4 flex-1">
-                      {/* Item Image */}
+                      {/* Item Image - only show for items in catalog */}
                       <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        {item.image &&
+                        {item.found && item.image &&
                         item.image !== "/placeholder-item.jpg" ? (
                           <Image
                             src={item.image}
@@ -508,7 +860,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                         ) : null}
                         <div
                           className={`${
-                            item.image && item.image !== "/placeholder-item.jpg"
+                            item.found && item.image && item.image !== "/placeholder-item.jpg"
                               ? "hidden"
                               : ""
                           } text-gray-400`}
@@ -538,6 +890,11 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                                 Not in catalog
                               </span>
                             )}
+                            {item.found && (
+                              <span className="ml-2 text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full">
+                                ✓ Found in catalog
+                              </span>
+                            )}
                           </h4>
                         </div>
                         <div className="flex items-center space-x-6 mb-2">
@@ -547,43 +904,54 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                               {item.unit === "KG" ? "Kilograms" : "Pieces"}
                             </span>
                           </p>
-                          <div className="flex items-center space-x-1">
-                            <span className="text-sm text-success font-semibold">
-                              {calculatedPoints} pts
-                            </span>
-                            <svg
-                              className="w-4 h-4 text-success"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                              />
-                            </svg>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <span className="text-sm text-blue-600 font-semibold">
-                              {calculatedPrice} EGP
-                            </span>
-                            <svg
-                              className="w-4 h-4 text-blue-600"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                              />
-                              <circle cx="12" cy="12" r="2" />
-                            </svg>
-                          </div>
+                          {/* Only show points and price for items found in catalog */}
+                          {item.found && (
+                            <>
+                              <div className="flex items-center space-x-1">
+                                <span className="text-sm text-success font-semibold">
+                                  {calculatedPoints} pts
+                                </span>
+                                <svg
+                                  className="w-4 h-4 text-success"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+                                  />
+                                </svg>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <span className="text-sm text-blue-600 font-semibold">
+                                  {calculatedPrice} EGP
+                                </span>
+                                <svg
+                                  className="w-4 h-4 text-blue-600"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+                                  />
+                                  <circle cx="12" cy="12" r="2" />
+                                </svg>
+                              </div>
+                            </>
+                          )}
+                          {/* Show message for items not in catalog */}
+                          {!item.found && (
+                            <div className="text-sm text-orange-600 italic">
+                              Price and points will be available when added to catalog
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -609,78 +977,93 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <button
-                        onClick={() => decreaseQuantity(index)}
-                        className="w-10 h-10 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={
-                          item.unit === "pieces"
-                            ? item.quantity <= 1
-                            : item.quantity <= 0.25
-                        }
-                      >
-                        <svg
-                          className="w-5 h-5 text-gray-700"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                    {/* Only show quantity controls for items in catalog */}
+                    {item.found ? (
+                      <div className="flex items-center space-x-4">
+                        <button
+                          onClick={() => decreaseQuantity(index)}
+                          className="w-10 h-10 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={
+                            item.unit === "pieces"
+                              ? item.quantity <= 1
+                              : item.quantity <= 0.25
+                          }
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M20 12H4"
-                          />
-                        </svg>
-                      </button>
+                          <svg
+                            className="w-5 h-5 text-gray-700"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M20 12H4"
+                            />
+                          </svg>
+                        </button>
 
-                      <div className="bg-white border border-gray-300 rounded-lg px-4 py-3 min-w-[100px] text-center">
-                        <input
-                          type="number"
-                          value={item.quantity}
-                          onChange={(e) =>
-                            handleQuantityChange(index, e.target.value)
-                          }
-                          onBlur={() => handleQuantityBlur(index)}
-                          className="w-full text-center font-semibold text-gray-800 text-lg bg-transparent border-none outline-none"
-                          min={
-                            item.unit === "pieces" || item.unit === "piece"
-                              ? "1"
-                              : "0.25"
-                          }
-                          step={
-                            item.unit === "pieces" || item.unit === "piece"
-                              ? "1"
-                              : "0.25"
-                          }
-                        />
+                        <div className="bg-white border border-gray-300 rounded-lg px-4 py-3 min-w-[100px] text-center">
+                          <input
+                            type="number"
+                            value={item.quantity}
+                            onChange={(e) =>
+                              handleQuantityChange(index, e.target.value)
+                            }
+                            onBlur={() => handleQuantityBlur(index)}
+                            className="w-full text-center font-semibold text-gray-800 text-lg bg-transparent border-none outline-none"
+                            min={
+                              item.unit === "pieces" || item.unit === "piece"
+                                ? "1"
+                                : "0.25"
+                            }
+                            step={
+                              item.unit === "pieces" || item.unit === "piece"
+                                ? "1"
+                                : "0.25"
+                            }
+                          />
+                        </div>
+
+                        <button
+                          onClick={() => increaseQuantity(index)}
+                          className="w-10 h-10 bg-primary hover:bg-primary/90 text-white rounded-full flex items-center justify-center transition-colors"
+                        >
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                            />
+                          </svg>
+                        </button>
                       </div>
-
-                      <button
-                        onClick={() => increaseQuantity(index)}
-                        className="w-10 h-10 bg-primary hover:bg-primary/90 text-white rounded-full flex items-center justify-center transition-colors"
-                      >
-                        <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                          />
-                        </svg>
-                      </button>
-                    </div>
+                    ) : (
+                      <div className="text-gray-500 italic">
+                        Item detected but not available in catalog
+                      </div>
+                    )}
 
                     <div className="text-right">
-                      <div className="text-sm text-gray-500">Total</div>
-                      <div className="font-semibold text-primary text-lg">
-                        {item.quantity} {item.unit}
-                      </div>
+                      {item.found ? (
+                        <>
+                          <div className="text-sm text-gray-500">Total</div>
+                          <div className="font-semibold text-primary text-lg">
+                            {item.quantity} {item.unit}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-sm text-gray-400 italic">
+                          Not available
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -689,6 +1072,20 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
           </div>
 
           <div className="border-t border-gray-200 p-6">
+            {/* Show notification if there are items not in catalog */}
+            {localItems.some(item => !item.found) && (
+              <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.5 0L4.232 15.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                  <span className="text-sm text-orange-700">
+                    {localItems.filter(item => !item.found).length} item(s) detected but not available in our catalog. Only items in catalog can be added to cart.
+                  </span>
+                </div>
+              </div>
+            )}
+            
             <div className="flex space-x-4 mb-6">
               <button
                 onClick={handleBrowseMore}
@@ -712,22 +1109,40 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
 
               <button
                 onClick={handleCheckout}
-                className="flex-1 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white font-medium py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2"
+                disabled={localItems.filter(item => item.found).length === 0 || isAddingToCart}
+                className="flex-1 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white font-medium py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5H17M9 19.5a1.5 1.5 0 103 0 1.5 1.5 0 00-3 0zM20.5 19.5a1.5 1.5 0 103 0 1.5 1.5 0 00-3 0z"
-                  />
-                </svg>
-                <span>Proceed to Checkout</span>
+                {isAddingToCart ? (
+                  <>
+                    <svg className="animate-spin w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Adding to Cart...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5H17M9 19.5a1.5 1.5 0 103 0 1.5 1.5 0 00-3 0zM20.5 19.5a1.5 1.5 0 103 0 1.5 1.5 0 00-3 0z"
+                      />
+                    </svg>
+                    <span>
+                      {localItems.filter(item => item.found).length === 0 
+                        ? "No Items to Checkout" 
+                        : "Proceed to Checkout"
+                      }
+                    </span>
+                  </>
+                )}
               </button>
             </div>
 
@@ -738,26 +1153,30 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                   <div className="text-xl font-semibold text-gray-800">
                     {localItems.length}
                   </div>
+                  <div className="text-xs text-gray-500">
+                    ({localItems.filter(item => item.found).length} in catalog)
+                  </div>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-600">Total Quantity</div>
+                  <div className="text-sm text-gray-600">Available Quantity</div>
                   <div className="text-xl font-semibold text-gray-800">
-                    {localItems.reduce((sum, item) => sum + item.quantity, 0)}
+                    {localItems.filter(item => item.found).reduce((sum, item) => sum + item.quantity, 0)}
                   </div>
                 </div>
                 <div>
                   <div className="text-sm text-gray-600">Total Points</div>
                   <div className="text-xl font-semibold text-success flex items-center justify-center space-x-1">
                     <span>
-                      {localItems.reduce(
-                        (sum, item) =>
-                          sum +
-                          Math.floor(
-                            item.quantity *
-                              (item.points || (item.unit === "KG" ? 5 : 2))
-                          ),
-                        0
-                      )}
+                      {localItems
+                        .filter(item => item.found)
+                        .reduce(
+                          (sum, item) =>
+                            sum +
+                            Math.floor(
+                              item.quantity * (item.points || 0)
+                            ),
+                          0
+                        )}
                     </span>
                     <svg
                       className="w-5 h-5"
@@ -779,11 +1198,10 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                   <div className="text-xl font-semibold text-blue-600 flex items-center justify-center space-x-1">
                     <span>
                       {localItems
+                        .filter(item => item.found)
                         .reduce(
                           (sum, item) =>
-                            sum +
-                            item.quantity *
-                              (item.price || (item.unit === "KG" ? 1.5 : 0.5)),
+                            sum + item.quantity * (item.price || 0),
                           0
                         )
                         .toFixed(2)}{" "}
