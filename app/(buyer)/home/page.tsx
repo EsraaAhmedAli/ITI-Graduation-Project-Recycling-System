@@ -7,7 +7,6 @@ import PromotionSlider from "@/components/buyer/PromotionSlider";
 import {   ChevronRight,  Frown, Leaf, Zap, Recycle, AlertTriangle  } from "lucide-react";
 import api from "@/lib/axios";
 import { useUserAuth } from "@/context/AuthFormContext";
-import { useUserPoints } from "@/context/UserPointsContext";
 
 
 interface Item {
@@ -38,8 +37,7 @@ export default function BuyerHomePage() {
   const [materialsLoading, setMaterialsLoading] = useState(true);
   const [userRole, setUserRole] = useState<string>("buyer"); // default fallback
 
-  const {userPoints}= useUserPoints()
-  console.log(userPoints);
+
   
 
   const getMeasurementText = (unit: number) => {
@@ -158,11 +156,11 @@ const {user} = useUserAuth()
   const uniqueCategories = Array.from(new Set(items.map((item) => item.categoryName))).sort();
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className=" dark:bg-black-200  min-h-screen ">
       {/* Hero Slider */}
       <PromotionSlider />
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8  dark:bg-black-200">
         {/* ... header, search bar, banner, top materials ... */}
 
         {/* Items Section */}
@@ -218,7 +216,7 @@ const {user} = useUserAuth()
                   whileHover={{ y: -5 }}
                   className="relative"
                 >
-                  <Link href={`/home/items/${encodeURIComponent(item.name)}`} passHref>
+                  <Link href={`/marketplace/${encodeURIComponent(item.name)}`} passHref>
                     <div className={`bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-emerald-200 transition-all hover:shadow-sm h-full relative ${
                       item.quantity === 0 ? 'opacity-75' : ''
                     }`}>

@@ -78,57 +78,88 @@ export default function DynamicBreadcrumbs() {
       .replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
-  const crumbs = segments
-    .filter((segment) => segment.toLowerCase() !== "tracking")
-    .map((segment, index, filteredSegments) => {
-      let href = "/";
-      let name = getTranslatedSegment(segment);
+ const crumbs = segments
+  .filter((segment) => segment.toLowerCase() !== "tracking")
+  .flatMap((segment, index, filteredSegments) => {
+    let href = "/";
+    let name = getTranslatedSegment(segment);
 
-      if (segment.toLowerCase() === "pickup") {
-        name = t("breadcrumbs.profile") || "Profile";
-        href = "/profile";
-      } else if (isOrderId(segment)) {
-        href = "#";
-      } else {
-        href = "/" + segments.slice(0, index + 1).join("/");
-      }
+    // Special handling for "pickup"
+    if (segment.toLowerCase() === "pickup") {
+      // First: disabled pickup breadcrumb
+      const pickupCrumb = {
+        name: t("breadcrumbs.pickup") || "Pickup",
+        href: "#",
+        isLast: false,
+        isClickable: false,
+        isOrderId: false,
+      };
 
-      const isClickable = !isOrderId(segment);
-      const isLast = index === filteredSegments.length - 1;
+      // Second: profile breadcrumb after pickup
+      const profileCrumb = {
+        name: t("breadcrumbs.profile") || "Profile",
+        href: "/profile",
+        isLast: index === filteredSegments.length - 1,
+        isClickable: true,
+        isOrderId: false,
+      };
 
-      return {
+      return [pickupCrumb, profileCrumb];
+    }
+
+    if (isOrderId(segment)) {
+      href = "#";
+    } else {
+      href = "/" + segments.slice(0, index + 1).join("/");
+    }
+
+    const isClickable = !isOrderId(segment);
+    const isLast = index === filteredSegments.length - 1;
+
+    return [
+      {
         name,
         href,
         isLast,
         isClickable,
         isOrderId: isOrderId(segment),
-      };
-    });
+      },
+    ];
+  });
+
 
   return (
     <Breadcrumb aria-label="Breadcrumb" className="mb-4">
       <BreadcrumbItem href="/">
-        <Home className="mr-2 h-4 w-4" />
-        {t("breadcrumbs.home")}
+        <div className="flex items-center text-secondary hover:text-primary transition-colors">
+          <Home className="mr-2 h-4 w-4" />
+          {t("breadcrumbs.home")}
+        </div>
       </BreadcrumbItem>
 
-      {crumbs.map((crumb, index) => (
-        <BreadcrumbItem key={crumb.href + index}>
-          {crumb.isLast || !crumb.isClickable ? (
-            <span
-              className={`${
-                crumb.isLast ? "text-green-600" : "text-gray-600"
-              } ${crumb.isOrderId ? "font-mono text-sm" : ""}`}
-            >
-              {crumb.name}
-            </span>
-          ) : (
-            <Link href={crumb.href} className="hover:underline">
-              {crumb.name}
-            </Link>
-          )}
-        </BreadcrumbItem>
-      ))}
+    {crumbs.map((crumb, index) => (
+  <BreadcrumbItem key={crumb.href + index}>
+    {crumb.isClickable && (crumb.name === t("breadcrumbs.profile") || !crumb.isLast) ? (
+      <Link
+        href={crumb.href}
+        className="text-secondary hover:text-primary hover:underline transition-colors"
+      >
+        {crumb.name}
+      </Link>
+    ) : (
+      <span
+        className={`transition-colors ${
+          crumb.isLast 
+            ? "text-primary font-medium" 
+            : "text-muted"
+        } ${crumb.isOrderId ? "font-mono text-sm" : ""}`}
+      >
+        {crumb.name}
+      </span>
+    )}
+  </BreadcrumbItem>
+))}
+
     </Breadcrumb>
   );
 }

@@ -3,7 +3,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import DynamicTable from "@/components/shared/dashboardTable";
-import Loader from "@/components/common/Loader";
 import UserModal from "@/components/shared/userModal";
 import ItemsModal from "@/components/shared/itemsModal";
 import CourierSelectionModal from "../../../components/courierSelectionModal";
@@ -58,12 +57,14 @@ const fetchOrders = async (
   page: number,
   limit: number,
   userRole?: UserRole,
-  filters?: Record<string, any>
+  filters?: Record<string, any>,
+  search?: string // Add search parameter
 ) => {
   const params: any = { page, limit };
   if (userRole) params.userRole = userRole;
   if (filters?.status?.length) params.status = filters.status.join(",");
   if (filters?.date?.[0]) params.date = filters.date[0];
+  if (search && search.trim()) params.search = search.trim(); // Add search to params
 
   const { data } = await api.get("/admin/orders", { params });
   return data;
@@ -92,9 +93,9 @@ export default function Page() {
       active: [],
     },
   ]);
-  const { getUserPoints, fetchCompletedOrdersCount } = useUserPoints();
-  const { refetchNotifications } = useNotification();
   const [activeTab, setActiveTab] = useState<UserRole>("customer");
+  const [searchTerm, setSearchTerm] = useState(""); // Add search term state
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(""); // Add debounced search term
   const { currentPage, itemsPerPage, handlePageChange } = usePagination(1, 5);
   const [isProofModalOpen, setIsProofModalOpen] = useState(false);
   const [selectedCompletedOrder, setSelectedCompletedOrder] =
@@ -126,7 +127,6 @@ export default function Page() {
     setIsProofModalOpen(true);
   };
   const checkAndUpdateCourierOrders = async (courierId, isApproved) => {
-
     if (!isApproved) {
       try {
         const response = await api.get(`/orders/courier/${courierId}`);
@@ -222,13 +222,26 @@ export default function Page() {
   }, [filters, activeTab]);
 
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
-    queryKey: ["adminOrders", currentPage, activeTab, activeFilters],
+    queryKey: [
+      "adminOrders",
+      currentPage,
+      activeTab,
+      activeFilters,
+      debouncedSearchTerm,
+    ], // Use debounced search term
     queryFn: () =>
-      fetchOrders(currentPage, itemsPerPage, activeTab, activeFilters),
-    keepPreviousData: true,
+      fetchOrders(
+        currentPage,
+        itemsPerPage,
+        activeTab,
+        activeFilters,
+        debouncedSearchTerm
+      ),
+    // Remove keepPreviousData to show fresh data immediately
+    // keepPreviousData: true,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-    staleTime: 2000,
+    staleTime: 0, // Always fetch fresh data
   });
 
   const { user } = useUserAuth();
@@ -266,6 +279,7 @@ export default function Page() {
   const [selectedOrderItems, setSelectedOrderItems] = useState<null | any[]>(
     null
   );
+  const [selectedOrder, setSelectedOrder] = useState<null | any[]>(null);
   const [isCourierModalOpen, setIsCourierModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState<string | null>(null);
   const [showCancelReasonModal, setShowCancelReasonModal] = useState(false);
@@ -394,27 +408,26 @@ export default function Page() {
     }
   }, [couriers, refetch]);
 
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm]);
 
   const handleTabChange = (tab: UserRole) => {
     setActiveTab(tab);
-    handlePageChange(1);
+    handlePageChange(1); // Reset to first page when changing tabs
+    setSearchTerm(""); // Clear search when changing tabs
+  };
 
-    // Clear collected filter when switching to buyers tab
-    if (tab === "buyer") {
-      setFilters((prev) =>
-        prev.map((f) => {
-          if (f.name === "status") {
-            return {
-              ...f,
-              active: f.active.filter(
-                (status: string) => status !== "collected"
-              ),
-            };
-          }
-          return f;
-        })
-      );
-    }
+  // Add search handler function
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    handlePageChange(1); // Reset to first page when searching
   };
 
   const handleDeleteOrder = async (orderId: string) => {
@@ -574,9 +587,10 @@ export default function Page() {
     }
   };
 
-  if (isLoading) {
-    return <Loader title="orders" />;
-  }
+  // Remove all loading states - just show data as it arrives
+  // if (isLoading && !searchTerm) {
+  //   return <Loader title="orders" />;
+  // }
 
   if (isError) {
     return (
@@ -610,11 +624,24 @@ export default function Page() {
     );
   }
 
+  // Remove search loading state - just show data as it arrives
+  // if (
+  //   searchTerm &&
+  //   debouncedSearchTerm !== searchTerm &&
+  //   isFetching &&
+  //   !data?.data?.length
+  // ) {
+  //   return (
+  //     // ... search loading UI
+  //   );
+  // }
+
   const transformedData = orders.map((order: any) => ({
     orderId: order._id,
     onClickItemsId: () => {
       setOrderStatus(order.status);
       setSelectedOrderItems(order.items);
+      setSelectedOrder(order);
       setIsItemsModalOpen(true);
     },
     status: order.status,
@@ -717,14 +744,14 @@ export default function Page() {
             <div className="flex items-center gap-2">
               <Button
                 onClick={() => handleOpenCompletedDetails(order)}
-                className="px-3 py-1 text-xs font-semibold rounded-md bg-purple-500 text-purple-800 hover:bg-purple-200 transition-colors">
-                Collected
+                className="px-3 py-2 text-sm font-semibold rounded-md bg-purple-500 text-purple-800 hover:bg-purple-200 transition-colors">
+                see collection info
               </Button>
               <button
                 onClick={() => handleMarkAsCompleted(order.orderId)}
-                className="px-3 py-1 text-xs font-semibold rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors"
+                className="px-3 py-2 text-sm font-semibold rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors"
                 title="Mark as completed">
-                Complete
+                click to complete
               </button>
             </div>
           );
@@ -865,8 +892,9 @@ export default function Page() {
             No {activeTab} Orders Found
           </h3>
           <p className="text-gray-600 mb-6 max-w-md mx-auto">
-            There are currently no {activeTab} orders in the system. Orders will
-            appear here once {activeTab}s start placing them.
+            {searchTerm
+              ? `No orders found matching "${searchTerm}"`
+              : `There are currently no ${activeTab} orders in the system. Orders will appear here once ${activeTab}s start placing them.`}
           </p>
           <button
             onClick={() => refetch()}
@@ -876,6 +904,8 @@ export default function Page() {
         </div>
       ) : (
         <>
+      
+
           <DynamicTable
             data={transformedData}
             columns={columns}
@@ -885,6 +915,9 @@ export default function Page() {
             itemsPerPage={itemsPerPage}
             showAddButton={false}
             showFilter
+            showSearch={true} // Enable search
+            searchTerm={searchTerm} // Pass search term
+            onSearchChange={handleSearchChange} // Pass search handler
             filtersConfig={getFilteredFilters()}
             externalFilters={activeFilters}
             onExternalFiltersChange={(updated) => {
@@ -907,6 +940,7 @@ export default function Page() {
                 })
               );
               handlePageChange(1);
+              setSearchTerm(""); // Clear search when filters change
             }}
             activeFiltersCount={filters.reduce(
               (acc, f) => acc + (f.active?.length || 0),
@@ -927,6 +961,7 @@ export default function Page() {
       />
       <ItemsModal
         selectedOrderItems={selectedOrderItems}
+        selectedOrder={selectedOrder}
         show={isItemsModalOpen}
         orderStatus={orderStatus}
         onclose={() => setIsItemsModalOpen(false)}

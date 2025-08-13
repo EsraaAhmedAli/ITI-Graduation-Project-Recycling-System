@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Wallet,
   CreditCard,
@@ -33,7 +33,6 @@ const EWallet = () => {
   const [paymentStep, setPaymentStep] = useState(1);
   const [selectedGateway, setSelectedGateway] = useState("");
   const { user } = useUserAuth();
-  // Sample transaction data organized by pages
   const [transactions, setTransactions] = useState([]);
 
   const paymentGateways = [
@@ -44,15 +43,6 @@ const EWallet = () => {
     { id: "cashapp", name: "Cash App", icon: DollarSign, fee: "1.5%" },
     { id: "wise", name: "Wise", icon: ArrowUpRight, fee: "0.5%" },
   ];
-
-  const handleWithdraw = () => {
-    const amount = parseFloat(withdrawAmount);
-    if (amount > 0 && amount <= balance) {
-      setShowWithdrawModal(false);
-      setShowPaymentGateway(true);
-      setPaymentStep(1);
-    }
-  };
 
   const chunkArray = (arr, size) => {
     // Sort newest → oldest (date + time respected)
@@ -68,42 +58,50 @@ const EWallet = () => {
     return result;
   };
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        if (!user || !user._id) {
-          console.error("User not found");
-          return;
-        }
-
-        // Fetch balance
-        const balanceRes = await api.get(`/users/${user._id}`);
-        const newBalance = balanceRes.data?.attachments?.balance ?? 0;
-        setBalance(newBalance);
-
-        // Fetch transactions
-        const transactionsRes = await api.get(
-          `/users/${user._id}/transactions`
-        );
-
-        const raw =
-          transactionsRes.data?.transactions || transactionsRes.data || [];
-
-        // Ensure it's an array
-        const transactionsArray = Array.isArray(raw) ? raw : [];
-
-        // Split into pages (e.g., 5 per page)
-        const paginated = chunkArray(transactionsArray, 5);
-
-        setTransactions(paginated);
-        // setTransactions(transactionsRes.data || []); // assuming you have state setTransactions
-      } catch (error) {
-        console.error("Error fetching user data:", error);
+  // Extract data fetching into a reusable function
+  const fetchUserData = useCallback(async () => {
+    try {
+      if (!user || !user._id) {
+        console.error("User not found");
+        return;
       }
-    };
 
+      // Fetch balance
+      const balanceRes = await api.get(`/users/${user._id}`);
+      const newBalance = balanceRes.data?.attachments?.balance ?? 0;
+      setBalance(newBalance);
+
+      // Fetch transactions
+      const transactionsRes = await api.get(`/users/${user._id}/transactions`);
+      console.log(transactionsRes, "resss");
+
+      const raw =
+        transactionsRes.data?.transactions || transactionsRes.data || [];
+
+      // Ensure it's an array
+      const transactionsArray = Array.isArray(raw) ? raw : [];
+
+      // Split into pages (e.g., 5 per page)
+      const paginated = chunkArray(transactionsArray, 5);
+
+      setTransactions(paginated);
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
+  }, [user]);
+
+  useEffect(() => {
     fetchUserData();
-  }, [user, user?._id]);
+  }, [fetchUserData]);
+
+  const handleWithdraw = () => {
+    const amount = parseFloat(withdrawAmount);
+    if (amount > 0 && amount <= balance) {
+      setShowWithdrawModal(false);
+      setShowPaymentGateway(true);
+      setPaymentStep(1);
+    }
+  };
 
   const processPayment = async () => {
     if (!selectedGateway || !withdrawAmount) return;
@@ -122,16 +120,20 @@ const EWallet = () => {
 
       await api.post(`users/${user._id}/transactions`, transaction);
 
+      // Update local balance immediately for better UX
       setBalance((prev) => prev - transaction.amount);
 
       setPaymentStep(3); // Show success step
 
       // Close modal after short delay and then show toast
-      setTimeout(() => {
+      setTimeout(async () => {
         setShowPaymentGateway(false);
         setWithdrawAmount("");
         setSelectedGateway("");
         setPaymentStep(1);
+
+        // Refetch transactions to get the updated list including the new withdrawal
+        await fetchUserData();
 
         toast.success("Withdrawal processed successfully!");
       }, 1000); // 1 second delay before closing modal

@@ -20,6 +20,7 @@ import { useParams } from "next/navigation";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { useReviews } from "@/hooks/useReviews";
 import DeliveryReviewModal from "../../DeliveryReview";
+import PickupAddressCard from "@/components/pickupAdress";
 
 const trackingSteps = [
   {
@@ -113,7 +114,7 @@ export default function TrackingStep({
       case "confirmed":
         return 5000; 
       case "assigntocourier":
-        return 3000; 
+        return 100000; 
       case "enroute":
       case "arrived":
         return 2000; // 2 seconds - more frequent when active
@@ -468,61 +469,25 @@ export default function TrackingStep({
         </div>
       )}
 
-      {/* Safety Button - Show only when not completed */}
-      {order.status !== "completed" && (
-        <div className="flex justify-center">
-          <button
-            onClick={() => setShowSafetyDialog(true)}
-            className="flex items-center justify-center gap-2 px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium transition-colors duration-200">
-            <Shield className="w-4 h-4" />
-            Report Safety Issue
-          </button>
-        </div>
-      )}
+    
 
-      {/* Driver Information */}
-      {order.driverName && (
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-              <User className="w-5 h-5 text-purple-600" />
-            </div>
-            <h2 className="text-xl font-semibold text-gray-900">
-              Driver Information
-            </h2>
-          </div>
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <User className="w-4 h-4 text-gray-500" />
-              <span className="text-gray-700">{order.driverName}</span>
-            </div>
-            {order.driverPhone && (
-              <div className="flex items-center gap-3">
-                <Phone className="w-4 h-4 text-gray-500" />
-                <span className="text-gray-700">{order.driverPhone}</span>
-              </div>
-            )}
-            {order.estimatedArrival && (
-              <div className="flex items-center gap-3">
-                <Clock className="w-4 h-4 text-gray-500" />
-                <span className="text-gray-700">
-                  ETA: {order.estimatedArrival}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Pickup Address */}
-      <div className="bg-white border border-gray-200 rounded-xl p-6">
-        <div className="flex items-center gap-3 mb-4">
+      <PickupAddressCard order={order}/>
+      {/* <div className="bg-white border border-gray-200 rounded-xl p-6">
+        <div className="flex items-center justify-between gap-3 mb-4">
           <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
             <MapPin className="w-5 h-5 text-green-600" />
-          </div>
-          <h2 className="text-xl font-semibold text-gray-900">
+                  <h2 className="text-xl font-semibold text-gray-900">
             Pickup Address
           </h2>
+          </div>
+    
+        <div className="courierInfo">
+          <h2>Delivery hero for today</h2>
+          <p>Name:{order?.courier?.name}</p>
+          <p>phone:{order?.courier?.phoneNumber}</p>
+        </div>
         </div>
         <div className="space-y-2 text-gray-700">
           <p>
@@ -540,7 +505,7 @@ export default function TrackingStep({
             </p>
           )}
         </div>
-      </div>
+      </div> */}
 
       {/* Items */}
       {order.items && order.items.length > 0 && (

@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function PointsActivity({ userPoints }: { userPoints: any }) {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
 
   if (!userPoints || !userPoints.pointsHistory?.length) return null;
@@ -15,7 +17,7 @@ export default function PointsActivity({ userPoints }: { userPoints: any }) {
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between"
       >
-        <h3 className="text-lg font-semibold text-green-800">Recent Points Activity</h3>
+        <h3 className="text-lg font-semibold text-green-800">{t('recentPointsActivity')}</h3>
         <ChevronDown
           className={`w-5 h-5 text-green-700 transition-transform duration-300 ${
             isOpen ? "rotate-180" : ""
@@ -34,7 +36,9 @@ export default function PointsActivity({ userPoints }: { userPoints: any }) {
               >
            
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-800">{entry.reason}</p>
+                  <p className="text-sm font-medium text-gray-800">
+                    {entry.reason === 'Points awarded' ? t('pointsAwarded') : t('pointsDeducted')}
+                  </p>
                   <p className="text-xs text-gray-500">
                     {new Date(entry.timestamp).toLocaleDateString()}
                   </p>
@@ -45,7 +49,7 @@ export default function PointsActivity({ userPoints }: { userPoints: any }) {
                   }`}
                 >
                   {entry.points > 0 ? "+" : ""}
-                  {entry.points} pts
+                  {entry.points} {t('pts')}
                 </div>
               </div> :''
             ))}
@@ -54,7 +58,7 @@ export default function PointsActivity({ userPoints }: { userPoints: any }) {
           {/* Optional: View All button could be repurposed to open a modal or scroll */}
           {userPoints.pointsHistory.length > 3 && (
             <button className="mt-3 text-sm text-green-600 hover:text-green-700 font-medium">
-              View full history →
+              {t('viewFullHistory')} →
             </button>
           )}
         </>

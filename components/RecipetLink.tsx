@@ -1,6 +1,8 @@
+'use client'
 import React from 'react';
 import Link from 'next/link';
 import { FileText, Download, ExternalLink, Receipt } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface ReceiptLinkProps {
   orderId: string;
@@ -14,7 +16,7 @@ export const ReceiptLink: React.FC<ReceiptLinkProps> = ({
   className = '' 
 }) => {
   const baseClasses = "inline-flex items-center gap-2 font-medium transition-all duration-300";
-  
+  const {t} = useLanguage()
   if (variant === 'compact') {
     return (
       <Link
@@ -22,7 +24,9 @@ export const ReceiptLink: React.FC<ReceiptLinkProps> = ({
         className={`${baseClasses} text-sm text-green-600 hover:text-green-800 hover:underline ${className}`}
       >
         <Receipt size={14} />
-        View Receipt
+       {
+        t('profile.orders.recipt')
+       }
       </Link>
     );
   }

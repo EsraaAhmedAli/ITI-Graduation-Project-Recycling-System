@@ -14,6 +14,7 @@ import GuestSessionProvider from "@/lib/GuestSessionProvider";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { OfflineProvider } from "@/context/OfflineContext"; // Add this import
 import UserPointsWrapper from "@/components/shared/pointsWrapper";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -57,7 +58,9 @@ export default function RootLayout({
                             process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID!
                           }
                         >
+                          <ThemeProvider defaultTheme="system">
                           <LayoutWrapper>{children}</LayoutWrapper>
+                          </ThemeProvider>
                         </GoogleOAuthProvider>
                       </GuestSessionProvider>
                     </NotificationProvider>

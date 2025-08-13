@@ -386,7 +386,7 @@ export default function CartPage() {
       <div className="p-4 sm:p-8 max-w-4xl mx-auto">
         <div className="flex items-center gap-3 mb-6">
           <Recycle className="w-8 h-8 text-green-600" />
-          <h1 className="text-2xl font-bold text-gray-800">
+          <h1 className="text-2xl font-bold text-white-900 tracking-tight">
             Confirm items you want to recycle
           </h1>
         </div>
@@ -402,7 +402,7 @@ export default function CartPage() {
     <div className="p-4 sm:p-8 max-w-4xl mx-auto">
       <div className="flex items-center gap-3 mb-6">
         <Recycle className="w-8 h-8 text-green-600" />
-        <h1 className="text-2xl font-bold text-gray-800">
+        <h1 className="text-2xl font-bold text-white-800 tracking-tight">
           Confirm items you want to recycle
         </h1>
         {userRole === "buyer" && (
@@ -433,21 +433,23 @@ export default function CartPage() {
         </div>
       ) : (
         <>
-          <div className="bg-green-50 rounded-xl p-4 mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className={`bg-green-50 rounded-xl p-4 mb-6 grid grid-cols-1 ${user.role == 'customer' ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
             <div className="bg-white p-4 rounded-lg shadow-sm text-center">
               <div className="text-gray-500 text-sm">Total Items</div>
               <div className="text-2xl font-bold text-green-600">
                 {totalItems}
               </div>
             </div>
-            <div className="bg-white p-4 rounded-lg shadow-sm text-center">
+        {
+          user?.role == 'customer' &&     <div className="bg-white p-4 rounded-lg shadow-sm text-center">
               <div className="text-gray-500 text-sm">Earned Points</div>
               <div className="text-2xl font-bold text-blue-600">
                 {totalPoints}
               </div>
             </div>
+        }
             <div className="bg-white p-4 rounded-lg shadow-sm text-center">
-              <div className="text-gray-500 text-sm">Earned Money</div>
+              <div className="text-gray-500 text-sm">{user?.role == 'customer' ? 'Earned Money' : 'Payed Money'} </div>
               <div className="text-2xl font-bold text-emerald-600">
                 {totalPrice.toFixed(2)} EGP
               </div>
@@ -544,12 +546,8 @@ export default function CartPage() {
                           <Scale className="w-4 h-4 mr-1" />
                           {item.measurement_unit === 1 ? "By Kilo" : "By Piece"}
                         </div>
-                        <div className="text-green-600 font-medium">
-                          {item.points} points each
-                        </div>
-                        <div className="text-blue-600">
-                          Saves {item.co2_saved || 0} kg CO₂
-                        </div>
+                      
+                   
                       </div>
 
                       {userRole === "buyer" && (
@@ -635,7 +633,7 @@ export default function CartPage() {
                                 disabled={outOfStockItems[item._id]}
                                 className={`w-16 px-2 py-1 text-center text-sm font-medium border rounded-md focus:outline-none focus:ring-2 ${
                                   outOfStockItems[item._id]
-                                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                    ? "bg-gray-100 text-gray-600 cursor-not-allowed"
                                     : inputErrors[item._id]
                                     ? "border-red-300 focus:ring-red-500 focus:border-red-500"
                                     : "border-gray-300 focus:ring-green-500 focus:border-green-500"
