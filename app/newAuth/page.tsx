@@ -6,6 +6,7 @@ import Wrapper from "@/components/auth/Wrapper";
 import { AuthenticationProvider } from "@/context/AuhenticationContext";
 import MainForm from "./Forms/MainForm";
 import { useRouter } from "next/navigation";
+import Loader from "@/components/common/Loader";
 
 export const roleConfig = {
   customer: {
@@ -49,6 +50,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     mode: "all",
   });
 
+  // if (!isOpen) return <Loader />;
   if (!isOpen) return null;
 
   return (

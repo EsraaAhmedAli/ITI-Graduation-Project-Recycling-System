@@ -69,24 +69,27 @@ function ProfileContent({
   isReviewsLoading: boolean;
 }) {
   const { user } = useUserAuth();
-  
+
   // Use the optimized context with silent refresh
-  const { 
-    userPoints, 
-    pointsLoading, 
+  const {
+    userPoints,
+    pointsLoading,
     totalCompletedOrders,
     silentRefresh,
-    refreshUserData 
+    refreshUserData,
+    totalPointsHistoryLength,
   } = useUserPoints();
-  
+
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState("incoming");
   const [isRecyclingModalOpen, setIsRecyclingModalOpen] = useState(false);
   const [isItemsModalOpen, setIsItemsModalOpen] = useState(false);
   const [selectedOrderItems, setSelectedOrderItems] = useState<any[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<any[]>([]);
-  const [selectedOrderStatus, setSelectedOrderStatus] = useState<string | null>(null);
-  
+  const [selectedOrderStatus, setSelectedOrderStatus] = useState<string | null>(
+    null
+  );
+
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -122,13 +125,13 @@ function ProfileContent({
   const handleRecyclingPointsUpdate = useCallback(async () => {
     // Use silent refresh to avoid loading states
     await silentRefresh();
-    
+
     // Invalidate and refetch orders to move completed orders between tabs
     queryClient.invalidateQueries({ queryKey: ["orders"] });
-    
+
     // Refetch current orders to reflect status changes
     await refetch();
-    
+
     // If we're on incoming tab, the completed order should disappear
     // If we're on completed tab, the new completed order should appear
     if (activeTab === "completed") {
@@ -140,16 +143,16 @@ function ProfileContent({
   // Enhanced real-time updates with order status changes
   useEffect(() => {
     const socket = getSocket();
-    
+
     if (!socket) return;
 
     // Handle order status updates to move orders between tabs
     const handleOrderStatusUpdate = (data: any) => {
       console.log("Profile: Received order status update:", data);
-      
+
       // Invalidate and refetch orders to move them between tabs
       queryClient.invalidateQueries({ queryKey: ["orders"] });
-      
+
       // If order completed, update stats immediately
       if (data.status === "completed") {
         // Update completed orders count in context (handled by context)
@@ -157,13 +160,13 @@ function ProfileContent({
         if (activeTab === "incoming") {
           refetch();
         }
-        
+
         // If we're on completed tab, refetch to show the new completed order
         if (activeTab === "completed") {
           setTimeout(() => refetch(), 500); // Small delay to ensure backend is updated
         }
       }
-      
+
       // For other status changes, just refetch current tab
       if (data.status !== "completed") {
         refetch();
@@ -173,10 +176,10 @@ function ProfileContent({
     // Handle points updates
     const handlePointsUpdate = (data: any) => {
       console.log("Profile: Received points update:", data);
-      
+
       // Context handles the points update, but we need to handle recycles count
       // If this is from order completion, the context will handle recycles count too
-      
+
       // Refetch current tab to ensure order appears in correct place
       setTimeout(() => refetch(), 200);
     };
@@ -184,15 +187,15 @@ function ProfileContent({
     // Handle recycling completion
     const handleRecyclingCompleted = (data: any) => {
       console.log("Profile: Received recycling completed:", data);
-      
+
       // Context handles points and recycles count
       // Refetch orders to move completed order to appropriate tab
       queryClient.invalidateQueries({ queryKey: ["orders"] });
-      
+
       if (activeTab === "incoming") {
         refetch(); // Refresh to remove completed order
       }
-      
+
       if (activeTab === "completed") {
         setTimeout(() => refetch(), 500); // Show new completed order
       }
@@ -214,17 +217,22 @@ function ProfileContent({
   // Optimized periodic refresh with intelligent intervals
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    
+
     // Only set up interval if user is active and data exists
     if (userPoints && !document.hidden) {
       // Use different intervals based on tab
-      const intervalTime = activeTab === "completed" ? 10000 : 
-                          activeTab === "incoming" ? 15000 : 30000; // More frequent for active tabs
-      
+      const intervalTime =
+        activeTab === "completed"
+          ? 10000
+          : activeTab === "incoming"
+          ? 15000
+          : 30000; // More frequent for active tabs
+
       interval = setInterval(() => {
-        if (!document.hidden) { // Only refresh if page is visible
+        if (!document.hidden) {
+          // Only refresh if page is visible
           silentRefresh();
-          
+
           // Refresh orders for active tabs more frequently
           if (activeTab === "incoming" || activeTab === "completed") {
             refetch();
@@ -239,24 +247,30 @@ function ProfileContent({
   }, [silentRefresh, activeTab, userPoints, refetch]);
 
   // Optimized cancel order function
-  const handleCancelOrder = useCallback(async (orderId: string) => {
-    try {
-      await hookHandleCancelOrder(orderId);
-      await refetch();
-      // Use silent refresh to avoid loading states
-      await silentRefresh();
-    } catch (error) {
-      console.error("Failed to cancel order:", error);
-    }
-  }, [hookHandleCancelOrder, refetch, silentRefresh]);
+  const handleCancelOrder = useCallback(
+    async (orderId: string) => {
+      try {
+        await hookHandleCancelOrder(orderId);
+        await refetch();
+        // Use silent refresh to avoid loading states
+        await silentRefresh();
+      } catch (error) {
+        console.error("Failed to cancel order:", error);
+      }
+    },
+    [hookHandleCancelOrder, refetch, silentRefresh]
+  );
 
   // Optimized modal handlers
-  const openItemsModal = useCallback((items: any[], orderStatus: string, order: any) => {
-    setSelectedOrderItems(items);
-    setSelectedOrderStatus(orderStatus);
-    setSelectedOrder(order);
-    setIsItemsModalOpen(true);
-  }, []);
+  const openItemsModal = useCallback(
+    (items: any[], orderStatus: string, order: any) => {
+      setSelectedOrderItems(items);
+      setSelectedOrderStatus(orderStatus);
+      setSelectedOrder(order);
+      setIsItemsModalOpen(true);
+    },
+    []
+  );
 
   const closeItemsModal = useCallback(() => {
     setSelectedOrderItems([]);
@@ -295,12 +309,15 @@ function ProfileContent({
   }, [allOrders, user?.role]);
 
   // Memoize stats calculation
-  const stats = useMemo(() => ({
-    totalRecycles: totalCompletedOrders,
-    points: userPoints?.totalPoints || 0,
-    categories: 4,
-    tier: 50,
-  }), [totalCompletedOrders, userPoints?.totalPoints]);
+  const stats = useMemo(
+    () => ({
+      totalRecycles: totalCompletedOrders,
+      points: userPoints?.totalPoints || 0,
+      categories: 4,
+      tier: 50,
+    }),
+    [totalCompletedOrders, userPoints?.totalPoints]
+  );
 
   // Memoize tabs calculation
   const tabs = useMemo(() => {
@@ -319,14 +336,6 @@ function ProfileContent({
     return baseTabs;
   }, [user?.role]);
 
-<<<<<<< HEAD
-  const tabs = getTabsForUser();
-  const tier = rewardLevels.find(
-    (tier) =>
-      totalCompletedOrders >= tier.minRecycles &&
-      totalCompletedOrders <= tier.maxRecycles
-  );
-=======
   // Memoize tier calculation
   const tier = useMemo(() => {
     return rewardLevels.find(
@@ -334,10 +343,9 @@ function ProfileContent({
         totalCompletedOrders >= tier.minRecycles &&
         totalCompletedOrders <= tier.maxRecycles
     );
-  }, [userPoints?.totalPoints]);
+  }, [totalCompletedOrders]);
 
   const shouldShowSeeMore = hasNextPage && filteredOrders.length >= 4;
->>>>>>> 791fec94efde91161bffce548dad83e7360e1ef8
 
   return (
     <div className="h-auto bg-green-50 px-4">
@@ -362,12 +370,9 @@ function ProfileContent({
                 <div
                   className={`absolute bottom-0 right-0 transform translate-x-1/4 translate-y-1/4
                size-10 rounded-full flex items-center justify-center
-               text-2xl font-bold shadow-md border-2 animate-spin-slow hover:[animation-play-state:paused] bg-amber-100`}>
-                  <span
-                    className="size-6 flex items-center justify-center"
-                    style={{ backgroundColor: tier.color, color: "white" }}>
-                    {tier.badge}
-                  </span>
+               text-2xl font-bold shadow-md border-2 animate-spin-slow hover:[animation-play-state:paused bg-base-100 border-none`}
+                >
+                  <tier.badge className="text-primary" />
                 </div>
               )}
             </div>
@@ -388,20 +393,22 @@ function ProfileContent({
             {user?.role !== "buyer" && (
               <button
                 onClick={() => setIsRecyclingModalOpen(true)}
-                className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-700 text-white px-5 py-2 rounded-full shadow-md hover:scale-105 transition-transform duration-200">
+                className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-700 text-white px-5 py-2 rounded-full shadow-md hover:scale-105 transition-transform duration-200"
+              >
                 <RefreshCcw size={18} />
                 {t("profile.returnEarn")}
               </button>
             )}
             <Link
               href="/editprofile"
-              className="flex items-center gap-2 bg-white border border-green-600 text-green-700 px-4 py-2 rounded-full hover:bg-green-100 transition-colors duration-200">
+              className="flex items-center gap-2 bg-white border border-green-600 text-green-700 px-4 py-2 rounded-full hover:bg-green-100 transition-colors duration-200"
+            >
               <Pencil size={16} />
               {t("profile.editProfile")}
             </Link>
           </div>
         </div>
-        
+
         <RecyclingModal
           onPointsUpdated={handleRecyclingPointsUpdate}
           modalOpen={isRecyclingModalOpen}
@@ -429,7 +436,10 @@ function ProfileContent({
         </div>
 
         {user?.role === "customer" && (
-          <PointsActivity userPoints={userPoints} />
+          <PointsActivity
+            userPoints={userPoints}
+            userPointsLength={totalPointsHistoryLength}
+          />
         )}
 
         {/* Tabs */}
@@ -442,7 +452,8 @@ function ProfileContent({
                   ? "border-green-600 text-green-800"
                   : "border-transparent text-gray-500 hover:text-green-700"
               }`}
-              onClick={() => setActiveTab(tab)}>
+              onClick={() => setActiveTab(tab)}
+            >
               {t(`profile.tabs.${tab}`) || tab}
             </button>
           ))}
@@ -479,7 +490,9 @@ function ProfileContent({
                   onViewDetails={openItemsModal}
                   onRateOrder={openReviewModal}
                   onCancelOrder={handleCancelOrder}
-                  onNavigate={(orderId) => router.push(`/pickup/tracking/${orderId}`)}
+                  onNavigate={(orderId) =>
+                    router.push(`/pickup/tracking/${orderId}`)
+                  }
                   t={t}
                 />
               ))}
@@ -491,7 +504,8 @@ function ProfileContent({
                 <button
                   onClick={loadMoreOrders}
                   disabled={isFetchingNextPage}
-                  className="bg-green-600 text-white px-6 py-2 rounded-full hover:bg-green-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                  className="bg-green-600 text-white px-6 py-2 rounded-full hover:bg-green-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                   {isFetchingNextPage ? "Loading more..." : "See More"}
                 </button>
               </div>
@@ -541,7 +555,8 @@ const OrderCard = React.memo(function OrderCard({
       {/* Header with Order Info */}
       <div
         onClick={handleNavigate}
-        className="flex justify-between items-start mb-4">
+        className="flex justify-between items-start mb-4"
+      >
         <div className="text-sm text-gray-600">
           <p className="font-medium text-gray-800 mb-1">
             Order #{order._id.slice(-8).toUpperCase()}
@@ -560,18 +575,12 @@ const OrderCard = React.memo(function OrderCard({
 
       {/* Address */}
       <div className="flex items-start gap-2 mb-4 p-3 bg-gray-50 rounded-lg">
-        <MapPin
-          size={16}
-          className="text-gray-500 mt-0.5 flex-shrink-0"
-        />
+        <MapPin size={16} className="text-gray-500 mt-0.5 flex-shrink-0" />
         <div className="text-sm text-gray-600">
-          <p className="font-medium text-gray-800 mb-1">
-            Pickup Location
-          </p>
+          <p className="font-medium text-gray-800 mb-1">Pickup Location</p>
           <p className="text-xs leading-relaxed">
-            {order.address.street}, Bldg {order.address.building},
-            Floor {order.address.floor}, {order.address.area},{" "}
-            {order.address.city}
+            {order.address.street}, Bldg {order.address.building}, Floor{" "}
+            {order.address.floor}, {order.address.area}, {order.address.city}
           </p>
         </div>
       </div>
@@ -590,40 +599,40 @@ const OrderCard = React.memo(function OrderCard({
 });
 
 // Memoized StatusBadge component
-const StatusBadge = React.memo(function StatusBadge({ 
-  status, 
-  t 
-}: { 
-  status: string; 
-  t: (key: string) => string; 
+const StatusBadge = React.memo(function StatusBadge({
+  status,
+  t,
+}: {
+  status: string;
+  t: (key: string) => string;
 }) {
   const statusConfig = useMemo(() => {
     const configs = {
       assigntocourier: {
         icon: <Truck size={14} />,
         className: "bg-yellow-100 text-yellow-800",
-        text: t("profile.orders.status.inTransit")
+        text: t("profile.orders.status.inTransit"),
       },
       pending: {
         icon: <Clock1 size={14} />,
         className: "bg-orange-100 text-orange-800",
-        text: t("profile.orders.status.pending")
+        text: t("profile.orders.status.pending"),
       },
       collected: {
         icon: <Package size={14} />,
         className: "bg-blue-100 text-blue-800",
-        text: t("profile.orders.status.collected") || "Collected"
+        text: t("profile.orders.status.collected") || "Collected",
       },
       completed: {
         icon: <CheckCircle size={14} />,
         className: "bg-green-100 text-green-800",
-        text: t("profile.orders.status.completed")
+        text: t("profile.orders.status.completed"),
       },
       cancelled: {
         icon: <XCircle size={14} />,
         className: "bg-red-100 text-red-800",
-        text: t("profile.orders.status.cancelled")
-      }
+        text: t("profile.orders.status.cancelled"),
+      },
     };
 
     return configs[status as keyof typeof configs];
@@ -632,7 +641,9 @@ const StatusBadge = React.memo(function StatusBadge({
   if (!statusConfig) return null;
 
   return (
-    <div className={`flex items-center gap-1 ${statusConfig.className} px-3 py-1 rounded-full text-xs font-medium`}>
+    <div
+      className={`flex items-center gap-1 ${statusConfig.className} px-3 py-1 rounded-full text-xs font-medium`}
+    >
       {statusConfig.icon}
       {statusConfig.text}
     </div>
@@ -704,7 +715,11 @@ const PaymentsHistory = React.memo(function PaymentsHistory() {
 });
 
 // Memoized PaymentCard component
-const PaymentCard = React.memo(function PaymentCard({ payment }: { payment: any }) {
+const PaymentCard = React.memo(function PaymentCard({
+  payment,
+}: {
+  payment: any;
+}) {
   return (
     <div className="rounded-xl p-4 bg-green-50 shadow-sm flex flex-col justify-between">
       <div className="flex justify-between items-center mb-2 text-sm text-gray-600">
@@ -733,7 +748,8 @@ const PaymentCard = React.memo(function PaymentCard({ payment }: { payment: any 
           href={payment.receipt_url}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-3 inline-block text-sm text-green-600 hover:underline">
+          className="mt-3 inline-block text-sm text-green-600 hover:underline"
+        >
           View Receipt
         </a>
       )}
