@@ -51,16 +51,25 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
 
   // Debug: Monitor cart changes
   useEffect(() => {
-    console.log(`🛒 Cart updated: ${cart.length} items`, cart.map(item => ({ name: item.name, quantity: item.quantity })));
+    console.log(
+      `🛒 Cart updated: ${cart.length} items`,
+      cart.map((item) => ({ name: item.name, quantity: item.quantity }))
+    );
   }, [cart]);
 
   // Function to get fresh cart state
   const getFreshCartState = (): CartItem[] => {
     // Try to get fresh cart state from localStorage first
     try {
-      const stored = localStorage.getItem('guest_cart'); // Correct key used by CartContext
+      const stored = localStorage.getItem("guest_cart"); // Correct key used by CartContext
       const freshCart = stored ? JSON.parse(stored) : [];
-      console.log(`🔄 Fresh cart state from storage: ${freshCart.length} items`, freshCart.map((item: CartItem) => ({ name: item.name, quantity: item.quantity })));
+      console.log(
+        `🔄 Fresh cart state from storage: ${freshCart.length} items`,
+        freshCart.map((item: CartItem) => ({
+          name: item.name,
+          quantity: item.quantity,
+        }))
+      );
       return freshCart;
     } catch (error) {
       console.error("❌ Error getting fresh cart state:", error);
@@ -75,20 +84,43 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
       console.log("🧹 Clearing existing cart before adding voice items...");
       await clearCart();
       // Wait for cart to be cleared
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
   };
 
-  // Improved function to fetch all items at once
+  // Improved function to fetch all items at once with role-based pricing
   const fetchAllItemsFromDatabase = async (): Promise<DatabaseItem[]> => {
     try {
       console.log("🔍 Fetching all items from database...");
-      
-      // Use the get-items endpoint with a large limit to get all items at once
-      const response = await api.get("/categories/get-items?limit=1000&role=buyer");
+
+      // Determine user role for pricing
+      let userRole = "customer"; // Default to customer pricing
+
+      try {
+        // Check if user is logged in and has buyer role
+        const token = localStorage.getItem("token");
+        if (token) {
+          // Decode token to check user role (you might need to adjust this based on your token structure)
+          const tokenPayload = JSON.parse(atob(token.split(".")[1]));
+          if (tokenPayload.role === "buyer") {
+            userRole = "buyer";
+          }
+        }
+      } catch (_error) {
+        console.log("🔍 Could not determine user role, using customer pricing");
+      }
+
+      console.log(`💰 Using ${userRole} pricing`);
+
+      // Use the get-items endpoint with role-based pricing
+      const response = await api.get(
+        `/categories/get-items?limit=1000&role=${userRole}`
+      );
       const allItems = response.data?.data || [];
-      
-      console.log(`✅ Retrieved ${allItems.length} items from database`);
+
+      console.log(
+        `✅ Retrieved ${allItems.length} items from database with ${userRole} pricing`
+      );
       return allItems;
     } catch (error) {
       console.error("❌ Error fetching all items:", error);
@@ -102,9 +134,9 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
     const calculateSimilarity = (str1: string, str2: string): number => {
       const longer = str1.length > str2.length ? str1 : str2;
       const shorter = str1.length > str2.length ? str2 : str1;
-      
+
       if (longer.length === 0) return 1.0;
-      
+
       const editDistance = getEditDistance(longer, shorter);
       return (longer.length - editDistance) / longer.length;
     };
@@ -112,15 +144,15 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
     // Helper function to calculate edit distance (Levenshtein distance)
     const getEditDistance = (str1: string, str2: string): number => {
       const matrix = [];
-      
+
       for (let i = 0; i <= str2.length; i++) {
         matrix[i] = [i];
       }
-      
+
       for (let j = 0; j <= str1.length; j++) {
         matrix[0][j] = j;
       }
-      
+
       for (let i = 1; i <= str2.length; i++) {
         for (let j = 1; j <= str1.length; j++) {
           if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
@@ -134,99 +166,116 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
           }
         }
       }
-      
+
       return matrix[str2.length][str1.length];
     };
 
-    return (itemName: string, allItems: DatabaseItem[]): DatabaseItem | null => {
+    return (
+      itemName: string,
+      allItems: DatabaseItem[]
+    ): DatabaseItem | null => {
       const normalizedSearchName = itemName.toLowerCase().trim();
-      
-      console.log(`🔍 Searching for: "${itemName}" (normalized: "${normalizedSearchName}")`);
-      console.log(`📋 Available items: ${allItems.map(item => item.name).join(', ')}`);
-      
+
+      console.log(
+        `🔍 Searching for: "${itemName}" (normalized: "${normalizedSearchName}")`
+      );
+      console.log(
+        `📋 Available items: ${allItems.map((item) => item.name).join(", ")}`
+      );
+
       // Clean function to remove Arabic diacritics and normalize text
       const cleanText = (text: string) => {
-        return text
-          .toLowerCase()
-          .trim()
-          // Remove Arabic diacritics (ً ٌ ٍ َ ُ ِ ّ ْ)
-          .replace(/[\u064B-\u0652]/g, '')
-          // Remove common prefixes that might cause issues
-          .replace(/^ً+/, '')
-          .trim();
+        return (
+          text
+            .toLowerCase()
+            .trim()
+            // Remove Arabic diacritics (ً ٌ ٍ َ ُ ِ ّ ْ)
+            .replace(/[\u064B-\u0652]/g, "")
+            // Remove common prefixes that might cause issues
+            .replace(/^ً+/, "")
+            .trim()
+        );
       };
-      
+
       const cleanedSearchName = cleanText(normalizedSearchName);
-      
+
       // Try EXACT match first (most reliable) - case insensitive
-      let found = allItems.find(item => 
-        cleanText(item.name) === cleanedSearchName
+      let found = allItems.find(
+        (item) => cleanText(item.name) === cleanedSearchName
       );
-      
+
       if (found) {
         console.log(`✅ Exact match found: ${itemName} -> ${found.name}`);
         return found;
       }
-      
+
       // Try exact match with pluralization (add/remove 's')
       const pluralVariations = [
-        cleanedSearchName.replace(/s$/, ''), // Remove plural 's' (books -> book)
-        cleanedSearchName + 's', // Add plural 's' (book -> books)
+        cleanedSearchName.replace(/s$/, ""), // Remove plural 's' (books -> book)
+        cleanedSearchName + "s", // Add plural 's' (book -> books)
       ];
-      
+
       for (const variation of pluralVariations) {
-        if (variation !== cleanedSearchName && variation.length > 2) { // Don't repeat the same search and avoid very short strings
-          found = allItems.find(item => 
-            cleanText(item.name) === variation
-          );
+        if (variation !== cleanedSearchName && variation.length > 2) {
+          // Don't repeat the same search and avoid very short strings
+          found = allItems.find((item) => cleanText(item.name) === variation);
           if (found) {
-            console.log(`✅ Exact pluralization match found: ${itemName} -> ${found.name} (via "${variation}")`);
+            console.log(
+              `✅ Exact pluralization match found: ${itemName} -> ${found.name} (via "${variation}")`
+            );
             return found;
           }
         }
       }
-      
+
       // Try common word variations for specific items
       const commonVariations: Record<string, string[]> = {
-        'newspaper': ['news paper'],
-        'news paper': ['newspaper'],
-        'powerbank': ['power bank'],
-        'power bank': ['powerbank'],
-        'solid plastic': ['solid plasitc', 'plastics'], // Handle the typo in database
-        'plastic': ['solid plastic', 'solid plasitc'],
-        'plastics': ['solid plastic', 'solid plasitc'],
-        'water colman': ['water colman'], // Handle Arabic diacritics
-        'colman': ['water colman'],
+        newspaper: ["news paper"],
+        "news paper": ["newspaper"],
+        powerbank: ["power bank"],
+        "power bank": ["powerbank"],
+        "solid plastic": ["solid plasitc", "plastics"], // Handle the typo in database
+        plastic: ["solid plastic", "solid plasitc"],
+        plastics: ["solid plastic", "solid plasitc"],
+        "water colman": ["water colman"], // Handle Arabic diacritics
+        colman: ["water colman"],
       };
-      
+
       if (commonVariations[cleanedSearchName]) {
         for (const variation of commonVariations[cleanedSearchName]) {
-          found = allItems.find(item => 
-            cleanText(item.name) === cleanText(variation)
+          found = allItems.find(
+            (item) => cleanText(item.name) === cleanText(variation)
           );
           if (found) {
-            console.log(`✅ Common variation match found: ${itemName} -> ${found.name} (via "${variation}")`);
+            console.log(
+              `✅ Common variation match found: ${itemName} -> ${found.name} (via "${variation}")`
+            );
             return found;
           }
         }
       }
-      
+
       // Try fuzzy matching for database typos (like "Solid Plasitc" -> "solid plastic")
-      found = allItems.find(item => {
+      found = allItems.find((item) => {
         const cleanItemName = cleanText(item.name);
-        const similarity = calculateSimilarity(cleanedSearchName, cleanItemName);
+        const similarity = calculateSimilarity(
+          cleanedSearchName,
+          cleanItemName
+        );
         return similarity > 0.85; // 85% similarity threshold
       });
-      
+
       if (found) {
-        console.log(`✅ Fuzzy match found: ${itemName} -> ${found.name} (similarity match)`);
+        console.log(
+          `✅ Fuzzy match found: ${itemName} -> ${found.name} (similarity match)`
+        );
         return found;
       }
-      
+
       // NO PARTIAL MATCHING - only exact matches allowed
       // This prevents "laptop motherboard" from matching "laptop"
       // If an item doesn't exist exactly in the database, it should be marked as "not in catalog"
-      
+
       console.log(`❌ No exact match found for: ${itemName}`);
       return null;
     };
@@ -236,16 +285,16 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
   const enrichItems = useCallback(async () => {
     setIsLoading(true);
     console.log("🚀 Starting item enrichment process...");
-    
+
     try {
       // Fetch all items from database once
       const allDatabaseItems = await fetchAllItemsFromDatabase();
-      
+
       const mergedItems = new Map<string, EnrichedItem>(); // Map to track items by database ID
 
       for (const item of items) {
         console.log(`🔍 Processing item: ${item.material}`);
-        
+
         const dbItem = findMatchingItem(item.material, allDatabaseItems);
 
         if (dbItem) {
@@ -253,9 +302,9 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
             id: dbItem._id,
             price: dbItem.price,
             points: dbItem.points,
-            category: dbItem.categoryName
+            category: dbItem.categoryName,
           });
-          
+
           const enrichedItem: EnrichedItem = {
             ...item,
             material: dbItem.name, // Use database name instead of AI name
@@ -272,22 +321,30 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
           // Check if we already have this database item (merge duplicates)
           if (mergedItems.has(dbItem._id)) {
             const existingItem = mergedItems.get(dbItem._id)!;
-            console.log(`🔄 Merging duplicate item: ${item.material} + ${existingItem.material} (both map to ${dbItem.name})`);
-            
+            console.log(
+              `🔄 Merging duplicate item: ${item.material} + ${existingItem.material} (both map to ${dbItem.name})`
+            );
+
             // Merge quantities
             existingItem.quantity += item.quantity;
-            console.log(`➕ Updated quantity: ${existingItem.quantity} ${existingItem.unit}`);
+            console.log(
+              `➕ Updated quantity: ${existingItem.quantity} ${existingItem.unit}`
+            );
           } else {
-            console.log(`➕ Adding new database item: ${dbItem.name} (${item.quantity} ${item.unit})`);
+            console.log(
+              `➕ Adding new database item: ${dbItem.name} (${item.quantity} ${item.unit})`
+            );
             mergedItems.set(dbItem._id, enrichedItem);
           }
         } else {
-          console.log(`❌ Not found in database: ${item.material}, using defaults`);
-          
+          console.log(
+            `❌ Not found in database: ${item.material}, using defaults`
+          );
+
           // If not found in database, create with default values
           // Use the original material name as a unique key for non-database items
           const defaultItemKey = `default_${item.material}`;
-          
+
           const defaultItem: EnrichedItem = {
             ...item,
             points: item.unit === "KG" ? 5 : 2, // Default points
@@ -300,15 +357,19 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
 
           // Check if we already have this default item type
           const existingDefault = Array.from(mergedItems.values()).find(
-            existing => !existing.found && existing.material === item.material
+            (existing) => !existing.found && existing.material === item.material
           );
 
           if (existingDefault) {
             console.log(`🔄 Merging duplicate default item: ${item.material}`);
             existingDefault.quantity += item.quantity;
-            console.log(`➕ Updated quantity: ${existingDefault.quantity} ${existingDefault.unit}`);
+            console.log(
+              `➕ Updated quantity: ${existingDefault.quantity} ${existingDefault.unit}`
+            );
           } else {
-            console.log(`➕ Adding new default item: ${item.material} (${item.quantity} ${item.unit})`);
+            console.log(
+              `➕ Adding new default item: ${item.material} (${item.quantity} ${item.unit})`
+            );
             mergedItems.set(defaultItemKey, defaultItem);
           }
         }
@@ -317,9 +378,15 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
       // Convert merged items map to array
       const finalEnrichedItems = Array.from(mergedItems.values());
 
-      console.log(`✅ Enrichment complete. Found ${finalEnrichedItems.filter(i => i.found).length}/${finalEnrichedItems.length} unique items in database`);
-      console.log(`🔄 Merged from ${items.length} original items to ${finalEnrichedItems.length} final items`);
-      
+      console.log(
+        `✅ Enrichment complete. Found ${
+          finalEnrichedItems.filter((i) => i.found).length
+        }/${finalEnrichedItems.length} unique items in database`
+      );
+      console.log(
+        `🔄 Merged from ${items.length} original items to ${finalEnrichedItems.length} final items`
+      );
+
       setLocalItems(finalEnrichedItems);
     } catch (error) {
       console.error("❌ Error during enrichment:", error);
@@ -441,19 +508,19 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
   // Function to add multiple items to cart in batch (avoid race conditions)
   const addItemsToCartBatch = async (items: any[]) => {
     console.log("🛒 Starting batch add to cart...");
-    
+
     // Clear cart first
     await clearCartBeforeAdding();
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for clear to complete
-    
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for clear to complete
+
     // Get fresh empty cart state
     let currentCart = getFreshCartState();
     console.log("🔍 Starting with fresh cart:", currentCart.length);
-    
+
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       console.log(`� Batch adding item ${i + 1}/${items.length}: ${item.name}`);
-      
+
       // Create the cart item
       const cartItem: CartItem = {
         _id: item._id,
@@ -468,22 +535,26 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
         paymentMethod: "cash",
         deliveryFee: 0,
       };
-      
+
       // Add to our local cart array
       currentCart = [...currentCart, cartItem];
-      
+
       // Save to localStorage directly
       try {
-        localStorage.setItem('guest_cart', JSON.stringify(currentCart));
-        console.log(`💾 Saved item ${i + 1} to localStorage. Cart now has ${currentCart.length} items`);
+        localStorage.setItem("guest_cart", JSON.stringify(currentCart));
+        console.log(
+          `💾 Saved item ${i + 1} to localStorage. Cart now has ${
+            currentCart.length
+          } items`
+        );
       } catch (error) {
         console.error("❌ Failed to save to localStorage:", error);
       }
-      
+
       // Small delay between items
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
-    
+
     // Trigger a cart context update by calling addToCart with the last item
     // This will sync the React state with our localStorage changes
     if (items.length > 0) {
@@ -501,44 +572,48 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
         paymentMethod: "cash",
         deliveryFee: 0,
       };
-      
+
       console.log("🔄 Triggering context sync with last item...");
       // Force the cart context to reload from localStorage
       try {
         // First clear the context cart
         clearCart();
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
         // Then add one item to trigger reload
         await addToCart(lastCartItem);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       } catch (error) {
         console.error("❌ Failed to sync context:", error);
       }
     }
-    
+
     const finalCart = getFreshCartState();
-    console.log(`✅ Batch add complete. Final cart has ${finalCart.length} items:`, finalCart.map(item => ({ name: item.name, quantity: item.quantity })));
-    
+    console.log(
+      `✅ Batch add complete. Final cart has ${finalCart.length} items:`,
+      finalCart.map((item) => ({ name: item.name, quantity: item.quantity }))
+    );
+
     return finalCart.length;
   };
 
   // Direct updateCartState approach - merge with existing cart instead of clearing
   const addAllToCart = async () => {
-    console.log("🛒 Starting cart addition using context updateCartState (merging mode)...");
+    console.log(
+      "🛒 Starting cart addition using context updateCartState (merging mode)..."
+    );
     setIsAddingToCart(true);
-    
+
     try {
-      const itemsInCatalog = localItems.filter(item => item.found);
-      
+      const itemsInCatalog = localItems.filter((item) => item.found);
+
       if (itemsInCatalog.length === 0) {
         toast.error("No items in catalog to add to cart");
         return;
       }
-      
+
       console.log(`📦 Found ${itemsInCatalog.length} items in catalog to add`);
-      
+
       // Validate all items first
       const validItems = [];
       for (const item of itemsInCatalog) {
@@ -546,39 +621,45 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
           console.log(`⏭️ Skipping ${item.material}: Not found in database`);
           continue;
         }
-        
+
         if (!validateQuantityForCart(item.quantity, item.unit)) {
           const message =
             item.unit === "KG"
               ? `${item.material}: For KG items, quantity must be in 0.25 increments`
               : `${item.material}: For Piece items, quantity must be whole numbers ≥ 1`;
-          console.log(`❌ Invalid quantity for ${item.material}: ${item.quantity}`);
+          console.log(
+            `❌ Invalid quantity for ${item.material}: ${item.quantity}`
+          );
           toast.error(message);
           continue;
         }
-        
+
         validItems.push(item);
       }
-      
+
       if (validItems.length === 0) {
         toast.error("No valid items to add to cart");
         return;
       }
-      
+
       console.log(`✅ ${validItems.length} items passed validation`);
-      
+
       // Get current cart state for merging
       console.log("🔄 Getting current cart state for merging...");
       const currentCart = getFreshCartState();
       console.log(`📋 Current cart has ${currentCart.length} items`);
-      
+
       // Build new cart items
       const newCartItems: CartItem[] = [];
-      
+
       for (let i = 0; i < validItems.length; i++) {
         const item = validItems[i];
-        console.log(`🔄 Building cart item ${i + 1}/${validItems.length}: ${item.material}`);
-        
+        console.log(
+          `🔄 Building cart item ${i + 1}/${validItems.length}: ${
+            item.material
+          }`
+        );
+
         const cartItem: CartItem = {
           _id: item._id,
           categoryId: item.categoryId!,
@@ -592,66 +673,79 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
           paymentMethod: "cash",
           deliveryFee: 0,
         };
-        
+
         newCartItems.push(cartItem);
-        console.log(`➕ Built cart item: ${item.material} (${item.quantity} ${item.unit})`);
+        console.log(
+          `➕ Built cart item: ${item.material} (${item.quantity} ${item.unit})`
+        );
       }
-      
+
       // Merge logic: Check for existing items and either update quantity or add new
       const mergedCart = [...currentCart];
       let addedCount = 0;
       let updatedCount = 0;
-      
+
       for (const newItem of newCartItems) {
         const existingItemIndex = mergedCart.findIndex(
-          existingItem => existingItem._id === newItem._id
+          (existingItem) => existingItem._id === newItem._id
         );
-        
+
         if (existingItemIndex !== -1) {
           // Item exists, update quantity
           const existingItem = mergedCart[existingItemIndex];
           const newQuantity = existingItem.quantity + newItem.quantity;
           mergedCart[existingItemIndex] = {
             ...existingItem,
-            quantity: newQuantity
+            quantity: newQuantity,
           };
-          console.log(`🔄 Updated existing item: ${newItem.name} (${existingItem.quantity} + ${newItem.quantity} = ${newQuantity})`);
+          console.log(
+            `🔄 Updated existing item: ${newItem.name} (${existingItem.quantity} + ${newItem.quantity} = ${newQuantity})`
+          );
           updatedCount++;
         } else {
           // New item, add to cart
           mergedCart.push(newItem);
-          console.log(`➕ Added new item: ${newItem.name} (${newItem.quantity} ${newItem.measurement_unit === 1 ? 'KG' : 'pieces'})`);
+          console.log(
+            `➕ Added new item: ${newItem.name} (${newItem.quantity} ${
+              newItem.measurement_unit === 1 ? "KG" : "pieces"
+            })`
+          );
           addedCount++;
         }
       }
-      
+
       // Use the context's updateCartState method with merged cart
-      console.log(`💾 Using updateCartState to merge cart: ${mergedCart.length} total items (${addedCount} new, ${updatedCount} updated)...`);
+      console.log(
+        `💾 Using updateCartState to merge cart: ${mergedCart.length} total items (${addedCount} new, ${updatedCount} updated)...`
+      );
       await updateCartState(mergedCart);
-      
+
       // Wait for the debounced save to complete
       console.log("⏳ Waiting for cart state to fully sync...");
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       // Verify the cart state
       const finalCart = getFreshCartState();
       console.log(`📊 Final results: Cart has ${finalCart.length} items`);
-      console.log("🔍 Final cart contents:", finalCart.map(item => ({ name: item.name, quantity: item.quantity })));
-      
+      console.log(
+        "🔍 Final cart contents:",
+        finalCart.map((item) => ({ name: item.name, quantity: item.quantity }))
+      );
+
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
-      
-      const message = addedCount > 0 && updatedCount > 0 
-        ? `Added ${addedCount} new items and updated ${updatedCount} existing items in cart!`
-        : addedCount > 0 
-        ? `Added ${addedCount} new items to cart!`
-        : `Updated ${updatedCount} items in cart!`;
-      
+
+      const message =
+        addedCount > 0 && updatedCount > 0
+          ? `Added ${addedCount} new items and updated ${updatedCount} existing items in cart!`
+          : addedCount > 0
+          ? `Added ${addedCount} new items to cart!`
+          : `Updated ${updatedCount} items in cart!`;
+
       console.log(`🎉 ${message}`);
       toast.success(message);
-      
+
       return validItems.length;
-      
     } catch (error) {
       console.error("❌ Error in addAllToCart:", error);
       toast.error("Failed to add items to cart");
@@ -665,31 +759,15 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
     console.log("🚀 Starting checkout process...");
     try {
       await addAllToCart();
-      console.log("✅ All items added, waiting before navigation...");
-      
-      // Add much longer delay and check cart state before navigation
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Debug: Check fresh cart state before navigation
-      console.log("🔍 Checking fresh cart state before navigation...");
-      const freshCart = getFreshCartState();
-      console.log("🛒 Fresh cart before navigation:", freshCart.map(item => ({ name: item.name, quantity: item.quantity })));
-      
-      if (freshCart.length === 0) {
-        console.log("❌ Fresh cart is empty, not navigating");
-        toast.error("Cart is empty. Items may not have been added successfully.");
-        return;
-      }
-      
-      // Navigate to cart
-      console.log(`📍 Navigating to cart page with ${freshCart.length} items...`);
+      console.log("✅ All items added, navigating immediately...");
+
+      // Navigate to cart immediately
+      console.log("📍 Navigating to cart page...");
       router.push("/cart");
-      
-      // Close modal after navigation starts
-      setTimeout(() => {
-        console.log("🚪 Closing modal...");
-        onClose();
-      }, 500);
+
+      // Close modal immediately
+      console.log("🚪 Closing modal...");
+      onClose();
     } catch (error) {
       console.error("❌ Error during checkout:", error);
       onClose();
@@ -700,23 +778,15 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
     console.log("🚀 Starting browse more process...");
     try {
       await addAllToCart();
-      console.log("✅ All items added, waiting before navigation...");
-      
-      // Add much longer delay and check cart state before navigation
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Debug: Check if cart is still populated before navigation
-      console.log("🔍 Checking cart state before navigation...");
-      
-      // Navigate to category
+      console.log("✅ All items added, navigating immediately...");
+
+      // Navigate to category immediately
       console.log("📍 Navigating to category page...");
       router.push("/category");
-      
-      // Close modal after navigation starts
-      setTimeout(() => {
-        console.log("🚪 Closing modal...");
-        onClose();
-      }, 500);
+
+      // Close modal immediately
+      console.log("🚪 Closing modal...");
+      onClose();
     } catch (error) {
       console.error("❌ Error during browse more:", error);
       onClose();
@@ -858,19 +928,19 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {localItems.map((item, index) => {
               // Only show calculated values for items found in database
-              const calculatedPoints = item.found ? Math.floor(
-                item.quantity * (item.points || 0)
-              ) : 0;
-              const calculatedPrice = item.found ? (
-                item.quantity * (item.price || 0)
-              ).toFixed(2) : "0.00";
+              const calculatedPoints = item.found
+                ? Math.floor(item.quantity * (item.points || 0))
+                : 0;
+              const calculatedPrice = item.found
+                ? (item.quantity * (item.price || 0)).toFixed(2)
+                : "0.00";
 
               return (
                 <div
                   key={index}
                   className={`border rounded-xl p-5 transition-all duration-200 ${
-                    item.found 
-                      ? "bg-gradient-to-r from-primary/5 to-secondary/5 border-primary/20 hover:from-primary/10 hover:to-secondary/10" 
+                    item.found
+                      ? "bg-gradient-to-r from-primary/5 to-secondary/5 border-primary/20 hover:from-primary/10 hover:to-secondary/10"
                       : "bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200 hover:from-gray-100 hover:to-gray-150"
                   }`}
                 >
@@ -878,7 +948,8 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                     <div className="flex items-start space-x-4 flex-1">
                       {/* Item Image - only show for items in catalog */}
                       <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        {item.found && item.image &&
+                        {item.found &&
+                        item.image &&
                         item.image !== "/placeholder-item.jpg" ? (
                           <Image
                             src={item.image}
@@ -897,7 +968,9 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                         ) : null}
                         <div
                           className={`${
-                            item.found && item.image && item.image !== "/placeholder-item.jpg"
+                            item.found &&
+                            item.image &&
+                            item.image !== "/placeholder-item.jpg"
                               ? "hidden"
                               : ""
                           } text-gray-400`}
@@ -986,7 +1059,8 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                           {/* Show message for items not in catalog */}
                           {!item.found && (
                             <div className="text-sm text-orange-600 italic">
-                              Price and points will be available when added to catalog
+                              Price and points will be available when added to
+                              catalog
                             </div>
                           )}
                         </div>
@@ -1110,19 +1184,31 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
 
           <div className="border-t border-gray-200 p-6">
             {/* Show notification if there are items not in catalog */}
-            {localItems.some(item => !item.found) && (
+            {localItems.some((item) => !item.found) && (
               <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
                 <div className="flex items-center space-x-2">
-                  <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.5 0L4.232 15.5c-.77.833.192 2.5 1.732 2.5z" />
+                  <svg
+                    className="w-5 h-5 text-orange-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.5 0L4.232 15.5c-.77.833.192 2.5 1.732 2.5z"
+                    />
                   </svg>
                   <span className="text-sm text-orange-700">
-                    {localItems.filter(item => !item.found).length} item(s) detected but not available in our catalog. Only items in catalog can be added to cart.
+                    {localItems.filter((item) => !item.found).length} item(s)
+                    detected but not available in our catalog. Only items in
+                    catalog can be added to cart.
                   </span>
                 </div>
               </div>
             )}
-            
+
             <div className="flex space-x-4 mb-6">
               <button
                 onClick={handleBrowseMore}
@@ -1146,14 +1232,33 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
 
               <button
                 onClick={handleCheckout}
-                disabled={localItems.filter(item => item.found).length === 0 || isAddingToCart}
+                disabled={
+                  localItems.filter((item) => item.found).length === 0 ||
+                  isAddingToCart
+                }
                 className="flex-1 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white font-medium py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isAddingToCart ? (
                   <>
-                    <svg className="animate-spin w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg
+                      className="animate-spin w-5 h-5"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
                     </svg>
                     <span>Adding to Cart...</span>
                   </>
@@ -1173,10 +1278,9 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                       />
                     </svg>
                     <span>
-                      {localItems.filter(item => item.found).length === 0 
-                        ? "No Items to Checkout" 
-                        : "Proceed to Checkout"
-                      }
+                      {localItems.filter((item) => item.found).length === 0
+                        ? "No Items to Checkout"
+                        : "Proceed to Checkout"}
                     </span>
                   </>
                 )}
@@ -1191,13 +1295,18 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                     {localItems.length}
                   </div>
                   <div className="text-xs text-gray-500">
-                    ({localItems.filter(item => item.found).length} in catalog)
+                    ({localItems.filter((item) => item.found).length} in
+                    catalog)
                   </div>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-600">Available Quantity</div>
+                  <div className="text-sm text-gray-600">
+                    Available Quantity
+                  </div>
                   <div className="text-xl font-semibold text-gray-800">
-                    {localItems.filter(item => item.found).reduce((sum, item) => sum + item.quantity, 0)}
+                    {localItems
+                      .filter((item) => item.found)
+                      .reduce((sum, item) => sum + item.quantity, 0)}
                   </div>
                 </div>
                 <div>
@@ -1205,13 +1314,11 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                   <div className="text-xl font-semibold text-success flex items-center justify-center space-x-1">
                     <span>
                       {localItems
-                        .filter(item => item.found)
+                        .filter((item) => item.found)
                         .reduce(
                           (sum, item) =>
                             sum +
-                            Math.floor(
-                              item.quantity * (item.points || 0)
-                            ),
+                            Math.floor(item.quantity * (item.points || 0)),
                           0
                         )}
                     </span>
@@ -1235,7 +1342,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                   <div className="text-xl font-semibold text-blue-600 flex items-center justify-center space-x-1">
                     <span>
                       {localItems
-                        .filter(item => item.found)
+                        .filter((item) => item.found)
                         .reduce(
                           (sum, item) =>
                             sum + item.quantity * (item.price || 0),
