@@ -46,7 +46,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
-  const { addToCart, cart, clearCart, updateCartState } = useCart();
+  const { cart, updateCartState } = useCart();
   const router = useRouter();
 
   // Debug: Monitor cart changes
@@ -77,17 +77,6 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
     }
   };
 
-  // Clear cart before starting to add items (to ensure clean start)
-  const clearCartBeforeAdding = async () => {
-    const currentCart = getFreshCartState();
-    if (currentCart.length > 0) {
-      console.log("🧹 Clearing existing cart before adding voice items...");
-      await clearCart();
-      // Wait for cart to be cleared
-      await new Promise((resolve) => setTimeout(resolve, 500));
-    }
-  };
-
   // Improved function to fetch all items at once with role-based pricing
   const fetchAllItemsFromDatabase = async (): Promise<DatabaseItem[]> => {
     try {
@@ -106,7 +95,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
             userRole = "buyer";
           }
         }
-      } catch (_error) {
+      } catch {
         console.log("🔍 Could not determine user role, using customer pricing");
       }
 
@@ -503,98 +492,6 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
       // Piece items must be whole numbers >= 1
       return Number.isInteger(quantity) && quantity >= 1;
     }
-  };
-
-  // Function to add multiple items to cart in batch (avoid race conditions)
-  const addItemsToCartBatch = async (items: any[]) => {
-    console.log("🛒 Starting batch add to cart...");
-
-    // Clear cart first
-    await clearCartBeforeAdding();
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for clear to complete
-
-    // Get fresh empty cart state
-    let currentCart = getFreshCartState();
-    console.log("🔍 Starting with fresh cart:", currentCart.length);
-
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      console.log(`� Batch adding item ${i + 1}/${items.length}: ${item.name}`);
-
-      // Create the cart item
-      const cartItem: CartItem = {
-        _id: item._id,
-        categoryId: item.categoryId!,
-        categoryName: item.categoryName!,
-        name: item.material,
-        image: item.image!,
-        points: item.points!,
-        price: item.price!,
-        measurement_unit: item.measurement_unit!,
-        quantity: item.quantity,
-        paymentMethod: "cash",
-        deliveryFee: 0,
-      };
-
-      // Add to our local cart array
-      currentCart = [...currentCart, cartItem];
-
-      // Save to localStorage directly
-      try {
-        localStorage.setItem("guest_cart", JSON.stringify(currentCart));
-        console.log(
-          `💾 Saved item ${i + 1} to localStorage. Cart now has ${
-            currentCart.length
-          } items`
-        );
-      } catch (error) {
-        console.error("❌ Failed to save to localStorage:", error);
-      }
-
-      // Small delay between items
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    }
-
-    // Trigger a cart context update by calling addToCart with the last item
-    // This will sync the React state with our localStorage changes
-    if (items.length > 0) {
-      const lastItem = items[items.length - 1];
-      const lastCartItem: CartItem = {
-        _id: lastItem._id,
-        categoryId: lastItem.categoryId!,
-        categoryName: lastItem.categoryName!,
-        name: lastItem.material,
-        image: lastItem.image!,
-        points: lastItem.points!,
-        price: lastItem.price!,
-        measurement_unit: lastItem.measurement_unit!,
-        quantity: lastItem.quantity,
-        paymentMethod: "cash",
-        deliveryFee: 0,
-      };
-
-      console.log("🔄 Triggering context sync with last item...");
-      // Force the cart context to reload from localStorage
-      try {
-        // First clear the context cart
-        clearCart();
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        // Then add one item to trigger reload
-        await addToCart(lastCartItem);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      } catch (error) {
-        console.error("❌ Failed to sync context:", error);
-      }
-    }
-
-    const finalCart = getFreshCartState();
-    console.log(
-      `✅ Batch add complete. Final cart has ${finalCart.length} items:`,
-      finalCart.map((item) => ({ name: item.name, quantity: item.quantity }))
-    );
-
-    return finalCart.length;
   };
 
   // Direct updateCartState approach - merge with existing cart instead of clearing
