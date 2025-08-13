@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { CartItem } from "@/models/cart";
@@ -96,139 +96,141 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
     }
   };
 
-  // Improved item matching function with strict matching
-  const findMatchingItem = (itemName: string, allItems: DatabaseItem[]): DatabaseItem | null => {
-    const normalizedSearchName = itemName.toLowerCase().trim();
-    
-    console.log(`🔍 Searching for: "${itemName}" (normalized: "${normalizedSearchName}")`);
-    console.log(`📋 Available items: ${allItems.map(item => item.name).join(', ')}`);
-    
-    // Clean function to remove Arabic diacritics and normalize text
-    const cleanText = (text: string) => {
-      return text
-        .toLowerCase()
-        .trim()
-        // Remove Arabic diacritics (ً ٌ ٍ َ ُ ِ ّ ْ)
-        .replace(/[\u064B-\u0652]/g, '')
-        // Remove common prefixes that might cause issues
-        .replace(/^ً+/, '')
-        .trim();
+  // Memoize the findMatchingItem function to avoid dependency issues
+  const findMatchingItem = useMemo(() => {
+    // Helper function to calculate string similarity
+    const calculateSimilarity = (str1: string, str2: string): number => {
+      const longer = str1.length > str2.length ? str1 : str2;
+      const shorter = str1.length > str2.length ? str2 : str1;
+      
+      if (longer.length === 0) return 1.0;
+      
+      const editDistance = getEditDistance(longer, shorter);
+      return (longer.length - editDistance) / longer.length;
     };
-    
-    const cleanedSearchName = cleanText(normalizedSearchName);
-    
-    // Try EXACT match first (most reliable) - case insensitive
-    let found = allItems.find(item => 
-      cleanText(item.name) === cleanedSearchName
-    );
-    
-    if (found) {
-      console.log(`✅ Exact match found: ${itemName} -> ${found.name}`);
-      return found;
-    }
-    
-    // Try exact match with pluralization (add/remove 's')
-    const pluralVariations = [
-      cleanedSearchName.replace(/s$/, ''), // Remove plural 's' (books -> book)
-      cleanedSearchName + 's', // Add plural 's' (book -> books)
-    ];
-    
-    for (const variation of pluralVariations) {
-      if (variation !== cleanedSearchName && variation.length > 2) { // Don't repeat the same search and avoid very short strings
-        found = allItems.find(item => 
-          cleanText(item.name) === variation
-        );
-        if (found) {
-          console.log(`✅ Exact pluralization match found: ${itemName} -> ${found.name} (via "${variation}")`);
-          return found;
+
+    // Helper function to calculate edit distance (Levenshtein distance)
+    const getEditDistance = (str1: string, str2: string): number => {
+      const matrix = [];
+      
+      for (let i = 0; i <= str2.length; i++) {
+        matrix[i] = [i];
+      }
+      
+      for (let j = 0; j <= str1.length; j++) {
+        matrix[0][j] = j;
+      }
+      
+      for (let i = 1; i <= str2.length; i++) {
+        for (let j = 1; j <= str1.length; j++) {
+          if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+            matrix[i][j] = matrix[i - 1][j - 1];
+          } else {
+            matrix[i][j] = Math.min(
+              matrix[i - 1][j - 1] + 1,
+              matrix[i][j - 1] + 1,
+              matrix[i - 1][j] + 1
+            );
+          }
         }
       }
-    }
-    
-    // Try common word variations for specific items
-    const commonVariations: Record<string, string[]> = {
-      'newspaper': ['news paper'],
-      'news paper': ['newspaper'],
-      'powerbank': ['power bank'],
-      'power bank': ['powerbank'],
-      'solid plastic': ['solid plasitc', 'plastics'], // Handle the typo in database
-      'plastic': ['solid plastic', 'solid plasitc'],
-      'plastics': ['solid plastic', 'solid plasitc'],
-      'water colman': ['water colman'], // Handle Arabic diacritics
-      'colman': ['water colman'],
+      
+      return matrix[str2.length][str1.length];
     };
-    
-    if (commonVariations[cleanedSearchName]) {
-      for (const variation of commonVariations[cleanedSearchName]) {
-        found = allItems.find(item => 
-          cleanText(item.name) === cleanText(variation)
-        );
-        if (found) {
-          console.log(`✅ Common variation match found: ${itemName} -> ${found.name} (via "${variation}")`);
-          return found;
-        }
+
+    return (itemName: string, allItems: DatabaseItem[]): DatabaseItem | null => {
+      const normalizedSearchName = itemName.toLowerCase().trim();
+      
+      console.log(`🔍 Searching for: "${itemName}" (normalized: "${normalizedSearchName}")`);
+      console.log(`📋 Available items: ${allItems.map(item => item.name).join(', ')}`);
+      
+      // Clean function to remove Arabic diacritics and normalize text
+      const cleanText = (text: string) => {
+        return text
+          .toLowerCase()
+          .trim()
+          // Remove Arabic diacritics (ً ٌ ٍ َ ُ ِ ّ ْ)
+          .replace(/[\u064B-\u0652]/g, '')
+          // Remove common prefixes that might cause issues
+          .replace(/^ً+/, '')
+          .trim();
+      };
+      
+      const cleanedSearchName = cleanText(normalizedSearchName);
+      
+      // Try EXACT match first (most reliable) - case insensitive
+      let found = allItems.find(item => 
+        cleanText(item.name) === cleanedSearchName
+      );
+      
+      if (found) {
+        console.log(`✅ Exact match found: ${itemName} -> ${found.name}`);
+        return found;
       }
-    }
-    
-    // Try fuzzy matching for database typos (like "Solid Plasitc" -> "solid plastic")
-    found = allItems.find(item => {
-      const cleanItemName = cleanText(item.name);
-      const similarity = calculateSimilarity(cleanedSearchName, cleanItemName);
-      return similarity > 0.85; // 85% similarity threshold
-    });
-    
-    if (found) {
-      console.log(`✅ Fuzzy match found: ${itemName} -> ${found.name} (similarity match)`);
-      return found;
-    }
-    
-    // NO PARTIAL MATCHING - only exact matches allowed
-    // This prevents "laptop motherboard" from matching "laptop"
-    // If an item doesn't exist exactly in the database, it should be marked as "not in catalog"
-    
-    console.log(`❌ No exact match found for: ${itemName}`);
-    return null;
-  };
-
-  // Helper function to calculate string similarity
-  const calculateSimilarity = (str1: string, str2: string): number => {
-    const longer = str1.length > str2.length ? str1 : str2;
-    const shorter = str1.length > str2.length ? str2 : str1;
-    
-    if (longer.length === 0) return 1.0;
-    
-    const editDistance = getEditDistance(longer, shorter);
-    return (longer.length - editDistance) / longer.length;
-  };
-
-  // Helper function to calculate edit distance (Levenshtein distance)
-  const getEditDistance = (str1: string, str2: string): number => {
-    const matrix = [];
-    
-    for (let i = 0; i <= str2.length; i++) {
-      matrix[i] = [i];
-    }
-    
-    for (let j = 0; j <= str1.length; j++) {
-      matrix[0][j] = j;
-    }
-    
-    for (let i = 1; i <= str2.length; i++) {
-      for (let j = 1; j <= str1.length; j++) {
-        if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
-          matrix[i][j] = matrix[i - 1][j - 1];
-        } else {
-          matrix[i][j] = Math.min(
-            matrix[i - 1][j - 1] + 1,
-            matrix[i][j - 1] + 1,
-            matrix[i - 1][j] + 1
+      
+      // Try exact match with pluralization (add/remove 's')
+      const pluralVariations = [
+        cleanedSearchName.replace(/s$/, ''), // Remove plural 's' (books -> book)
+        cleanedSearchName + 's', // Add plural 's' (book -> books)
+      ];
+      
+      for (const variation of pluralVariations) {
+        if (variation !== cleanedSearchName && variation.length > 2) { // Don't repeat the same search and avoid very short strings
+          found = allItems.find(item => 
+            cleanText(item.name) === variation
           );
+          if (found) {
+            console.log(`✅ Exact pluralization match found: ${itemName} -> ${found.name} (via "${variation}")`);
+            return found;
+          }
         }
       }
-    }
-    
-    return matrix[str2.length][str1.length];
-  };
+      
+      // Try common word variations for specific items
+      const commonVariations: Record<string, string[]> = {
+        'newspaper': ['news paper'],
+        'news paper': ['newspaper'],
+        'powerbank': ['power bank'],
+        'power bank': ['powerbank'],
+        'solid plastic': ['solid plasitc', 'plastics'], // Handle the typo in database
+        'plastic': ['solid plastic', 'solid plasitc'],
+        'plastics': ['solid plastic', 'solid plasitc'],
+        'water colman': ['water colman'], // Handle Arabic diacritics
+        'colman': ['water colman'],
+      };
+      
+      if (commonVariations[cleanedSearchName]) {
+        for (const variation of commonVariations[cleanedSearchName]) {
+          found = allItems.find(item => 
+            cleanText(item.name) === cleanText(variation)
+          );
+          if (found) {
+            console.log(`✅ Common variation match found: ${itemName} -> ${found.name} (via "${variation}")`);
+            return found;
+          }
+        }
+      }
+      
+      // Try fuzzy matching for database typos (like "Solid Plasitc" -> "solid plastic")
+      found = allItems.find(item => {
+        const cleanItemName = cleanText(item.name);
+        const similarity = calculateSimilarity(cleanedSearchName, cleanItemName);
+        return similarity > 0.85; // 85% similarity threshold
+      });
+      
+      if (found) {
+        console.log(`✅ Fuzzy match found: ${itemName} -> ${found.name} (similarity match)`);
+        return found;
+      }
+      
+      // NO PARTIAL MATCHING - only exact matches allowed
+      // This prevents "laptop motherboard" from matching "laptop"
+      // If an item doesn't exist exactly in the database, it should be marked as "not in catalog"
+      
+      console.log(`❌ No exact match found for: ${itemName}`);
+      return null;
+    };
+  }, []);
 
   // Function to enrich items with database details
   const enrichItems = useCallback(async () => {
@@ -239,7 +241,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
       // Fetch all items from database once
       const allDatabaseItems = await fetchAllItemsFromDatabase();
       
-      const enrichedItems: EnrichedItem[] = [];
+      const mergedItems = new Map<string, EnrichedItem>(); // Map to track items by database ID
 
       for (const item of items) {
         console.log(`🔍 Processing item: ${item.material}`);
@@ -254,7 +256,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
             category: dbItem.categoryName
           });
           
-          enrichedItems.push({
+          const enrichedItem: EnrichedItem = {
             ...item,
             material: dbItem.name, // Use database name instead of AI name
             _id: dbItem._id,
@@ -265,12 +267,28 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
             categoryId: dbItem.categoryId,
             categoryName: dbItem.categoryName,
             found: true,
-          });
+          };
+
+          // Check if we already have this database item (merge duplicates)
+          if (mergedItems.has(dbItem._id)) {
+            const existingItem = mergedItems.get(dbItem._id)!;
+            console.log(`🔄 Merging duplicate item: ${item.material} + ${existingItem.material} (both map to ${dbItem.name})`);
+            
+            // Merge quantities
+            existingItem.quantity += item.quantity;
+            console.log(`➕ Updated quantity: ${existingItem.quantity} ${existingItem.unit}`);
+          } else {
+            console.log(`➕ Adding new database item: ${dbItem.name} (${item.quantity} ${item.unit})`);
+            mergedItems.set(dbItem._id, enrichedItem);
+          }
         } else {
           console.log(`❌ Not found in database: ${item.material}, using defaults`);
           
           // If not found in database, create with default values
-          enrichedItems.push({
+          // Use the original material name as a unique key for non-database items
+          const defaultItemKey = `default_${item.material}`;
+          
+          const defaultItem: EnrichedItem = {
             ...item,
             points: item.unit === "KG" ? 5 : 2, // Default points
             price: item.unit === "KG" ? 1.5 : 0.5, // Default price
@@ -278,19 +296,38 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
             image: "/placeholder-item.jpg", // Default image
             categoryName: item.material,
             found: false,
-          });
+          };
+
+          // Check if we already have this default item type
+          const existingDefault = Array.from(mergedItems.values()).find(
+            existing => !existing.found && existing.material === item.material
+          );
+
+          if (existingDefault) {
+            console.log(`🔄 Merging duplicate default item: ${item.material}`);
+            existingDefault.quantity += item.quantity;
+            console.log(`➕ Updated quantity: ${existingDefault.quantity} ${existingDefault.unit}`);
+          } else {
+            console.log(`➕ Adding new default item: ${item.material} (${item.quantity} ${item.unit})`);
+            mergedItems.set(defaultItemKey, defaultItem);
+          }
         }
       }
 
-      console.log(`✅ Enrichment complete. Found ${enrichedItems.filter(i => i.found).length}/${enrichedItems.length} items in database`);
-      setLocalItems(enrichedItems);
+      // Convert merged items map to array
+      const finalEnrichedItems = Array.from(mergedItems.values());
+
+      console.log(`✅ Enrichment complete. Found ${finalEnrichedItems.filter(i => i.found).length}/${finalEnrichedItems.length} unique items in database`);
+      console.log(`🔄 Merged from ${items.length} original items to ${finalEnrichedItems.length} final items`);
+      
+      setLocalItems(finalEnrichedItems);
     } catch (error) {
       console.error("❌ Error during enrichment:", error);
       toast.error("Failed to load item details");
     } finally {
       setIsLoading(false);
     }
-  }, [items]);
+  }, [items, findMatchingItem]);
 
   useEffect(() => {
     enrichItems();
