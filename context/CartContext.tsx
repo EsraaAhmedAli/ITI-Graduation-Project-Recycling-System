@@ -22,6 +22,7 @@ type CartContextType = {
   removeFromCart: (item: CartItem) => Promise<void>;
   clearCart: () => Promise<void>;
   loadCart: () => Promise<void>;
+  refreshCart: () => Promise<void>;
   loadingItemId: string | null;
   updateQuantity: (item: CartItem) => void;
   checkInventory: (itemId: string, quantity: number) => Promise<boolean>;
@@ -126,7 +127,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
           { items: cartItems },
           { withCredentials: true }
         );
-        console.log(`Saved ${cartItems.length} items to database`);
+        console.log(
+          `Saved ${cartItems.length} items to database with language: ${locale}`
+        );
       } catch (error) {
         console.error("Failed to save cart to database:", error);
         // Save to local storage as backup
@@ -145,7 +148,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         withCredentials: true,
       });
       const items = res.data.items || [];
-      console.log(`Loaded ${items.length} items from database`);
+      console.log(
+        `Loaded ${items.length} items from database with language: ${locale}`
+      );
       return items;
     } catch (error) {
       console.error("Failed to load cart from database:", error);
@@ -237,6 +242,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [isLoggedIn, loadCartFromDatabase, loadCartFromSession]);
 
+  // Manual refresh cart function for language changes
+  const refreshCart = useCallback(async () => {
+    console.log("Manual cart refresh triggered");
+    try {
+      if (isLoggedIn) {
+        const cartItems = await loadCartFromDatabase();
+        setCart(cartItems);
+        console.log("Cart refreshed with new language:", locale);
+      }
+    } catch (error) {
+      console.error("Failed to refresh cart:", error);
+    }
+  }, [isLoggedIn, loadCartFromDatabase, locale]);
+
   // Validation helpers
   const validateQuantity = useCallback(
     (quantity: number, measurementUnit: number): boolean => {
@@ -251,7 +270,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
     },
     []
   );
-
+  useEffect(() => {
+    console.log("LANGUAGE CHANGED", locale);
+    if (isLoggedIn) {
+      const f = async () => {
+        try {
+          const cart = await loadCartFromDatabase();
+          setCart(cart);
+          console.log("Cart reloaded with new language:", locale);
+        } catch (error) {
+          console.error("Failed to reload cart with new language:", error);
+        }
+      };
+      f();
+    }
+  }, [locale, loadCartFromDatabase, isLoggedIn]);
   // Inventory checking
   const checkInventoryEnhanced = useCallback(
     async (item: CartItem, quantity: number): Promise<boolean> => {
@@ -820,6 +853,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     removeFromCart,
     clearCart,
     loadCart,
+    refreshCart,
     checkInventory,
     checkInventoryEnhanced,
     isItemInStock: (item) => (item.quantity ?? 0) > 0,
