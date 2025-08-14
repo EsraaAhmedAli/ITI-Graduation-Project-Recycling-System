@@ -25,7 +25,7 @@ export default function AddSubCategoryPage() {
     price: "",
     quantity: "",
     measurement_unit: "",
-    itemNameAr:'',
+    itemNameAr: "",
     image: null as File | null,
   });
   const [loading, setLoading] = useState(false);
@@ -55,7 +55,7 @@ export default function AddSubCategoryPage() {
       form.append("itemName", formData.itemName);
       form.append("itemNameAr", formData.itemNameAr);
       form.append("points", formData.points);
-      form.append("price", Math.floor(formData.points/19));
+      form.append("price", Math.floor(formData.points / 19));
       form.append("quantity", formData.quantity);
 
       // convert measurement_unit string to number enum here:
@@ -78,7 +78,7 @@ export default function AddSubCategoryPage() {
       router.push("/admin/categories");
     } catch (error) {
       console.log(error);
-      toast.error(error?.response?.data?.message)
+      toast.error(error?.response?.data?.message);
 
       // error toast...
     } finally {
@@ -147,10 +147,10 @@ export default function AddSubCategoryPage() {
                   Price *
                 </label>
                 <input
-                disabled
+                  disabled
                   type="number"
                   name="price"
-                  value={Math.floor(formData.points/19)}
+                  value={Math.floor(formData.points / 19)}
                   // onChange={handleChange}
                   className="w-full px-4 py-2 border bg-gray-300 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
                   placeholder="Enter price"
