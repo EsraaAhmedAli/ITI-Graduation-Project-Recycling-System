@@ -5,8 +5,8 @@ import toast from "react-hot-toast";
 import { useLanguage } from "@/context/LanguageContext";
 
 interface UseCategoriesOptions {
-  language?: 'en' | 'ar';
-  role?: 'buyer' | 'seller';
+  language?: "en" | "ar";
+  role?: "buyer" | "seller";
 }
 
 interface CategoriesResponse {
@@ -21,49 +21,67 @@ interface CategoriesResponse {
 }
 
 export function useCategories(options: UseCategoriesOptions = {}) {
-  const { language = 'en', role } = options;
-const{locale}=useLanguage()
+  const { language = "en", role } = options;
+  const { locale } = useLanguage();
+
+  // Use the language parameter from options, fallback to locale from context
+  const currentLanguage = language || locale || "en";
+
   const query = useQuery<CategoriesResponse>({
-    queryKey: ["categories list", language, role], // Include language and role in cache key
+    queryKey: ["categories list", currentLanguage, role], // Include language and role in cache key
     queryFn: async () => {
       try {
         const params = new URLSearchParams();
-        params.append('lang', language);
-        if (role) params.append('role', role);
+        params.append("lang", currentLanguage);
+        if (role) params.append("role", role);
 
-        console.log(`Fetching categories with language: ${language}, role: ${role || 'none'}`);
-        
-        const res = await api.get(`/categories?lang=${locale}`);
-        
+        console.log(
+          `Fetching categories with language: ${currentLanguage}, role: ${
+            role || "none"
+          }`
+        );
+
+        const res = await api.get(
+          `/categories?lang=${currentLanguage}${role ? `&role=${role}` : ""}`
+        );
+
         // Handle different response structures from your backend
         let responseData: CategoriesResponse;
-        
+
         if (res.data?.data) {
           // Paginated response from getCategoriesWithPagination
           responseData = {
             data: res.data.data,
-            pagination: res.data.pagination
+            pagination: res.data.pagination,
           };
         } else if (Array.isArray(res.data)) {
           // Direct array response from getAllCategories
           responseData = {
-            data: res.data
+            data: res.data,
           };
         } else {
-          console.warn('Unexpected response structure:', res.data);
+          console.warn("Unexpected response structure:", res.data);
           responseData = {
-            data: []
+            data: [],
           };
         }
-        
-        console.log(`Received ${responseData.data?.length || 0} categories in ${language}`);
-        console.log('Sample categories:', responseData.data?.slice(0, 2).map(c => ({ name: c.name, originalName: c.originalName })));
-        
+
+        console.log(
+          `Received ${
+            responseData.data?.length || 0
+          } categories in ${currentLanguage}`
+        );
+        console.log(
+          "Sample categories:",
+          responseData.data
+            ?.slice(0, 2)
+            .map((c) => ({ name: c.name, originalName: c.originalName }))
+        );
+
         return responseData;
-        
       } catch (error) {
-        console.error('Error fetching categories:', error);
-        toast.error('Failed to load categories');
+        console.error("Error fetching categories:", error);
+        toast.error("Failed to load categories");
         throw error;
       }
     },
@@ -74,23 +92,23 @@ const{locale}=useLanguage()
   });
 
   const getCategoryIdByItemName = (itemName: string): string => {
-    console.log(itemName,'itteemmnameeee');
-    
+    console.log(itemName, "itteemmnameeee");
+
     const categories = query.data?.data;
 
-    
     if (!Array.isArray(categories)) return "";
 
     for (const category of categories) {
       const foundItem = category.items?.find((item) => {
         console.log("in comparison");
         console.log(`${item.slug} Vs ${itemName} == ${item.slug === itemName}`);
-        console.log('wholeeeitem' , item);
-        
+        console.log("wholeeeitem", item);
+
         // Also check original name if it exists (for translated items)
         const nameMatches = item.slug === itemName;
-        const originalNameMatches = item.originalName && item.originalName === itemName;
-        
+        const originalNameMatches =
+          item.originalName && item.originalName === itemName;
+
         console.log("-------------------------");
         return nameMatches || originalNameMatches;
       });
@@ -109,7 +127,7 @@ const{locale}=useLanguage()
     const categories = query.data?.data;
     console.log("CATEGORIES");
     console.log(categories);
-    
+
     if (!Array.isArray(categories)) {
       toast.error("Categories NOT ARRAY");
       return -1;
@@ -120,40 +138,48 @@ const{locale}=useLanguage()
       toast.error(`Category with id ${categoryId} not Found`);
       return -1;
     }
-    
+
     const targetItem = category.items.find((item) => item._id === itemId);
     if (!targetItem) {
       toast.error(`Item with id ${itemId} not Found`);
       return -1;
     }
-    
+
     return targetItem.quantity || 0;
   };
 
   // Helper methods for working with translations
-  const getCategoryByOriginalName = (originalName: string): Category | undefined => {
+  const getCategoryByOriginalName = (
+    originalName: string
+  ): Category | undefined => {
     const categories = query.data?.data;
     if (!Array.isArray(categories)) return undefined;
-    
-    return categories.find(cat => 
-      cat.originalName === originalName || cat.name === originalName
+
+    return categories.find(
+      (cat) => cat.originalName === originalName || cat.name === originalName
     );
   };
 
-  const findItemByName = (itemName: string, searchMode: 'current' | 'original' | 'both' = 'both') => {
+  const findItemByName = (
+    itemName: string,
+    searchMode: "current" | "original" | "both" = "both"
+  ) => {
     const categories = query.data?.data;
     if (!Array.isArray(categories)) return null;
 
     for (const category of categories) {
       const foundItem = category.items?.find((item) => {
         switch (searchMode) {
-          case 'current':
+          case "current":
             return item.name === itemName;
-          case 'original':
+          case "original":
             return item.originalName === itemName;
-          case 'both':
+          case "both":
           default:
-            return item.name === itemName || (item.originalName && item.originalName === itemName);
+            return (
+              item.name === itemName ||
+              (item.originalName && item.originalName === itemName)
+            );
         }
       });
 
@@ -161,7 +187,7 @@ const{locale}=useLanguage()
         return {
           item: foundItem,
           category: category,
-          categoryId: category._id
+          categoryId: category._id,
         };
       }
     }
@@ -179,9 +205,9 @@ const{locale}=useLanguage()
     getItemQuantityInStock, // Fixed typo
     getCategoryByOriginalName,
     findItemByName,
-    currentLanguage: language,
-    isArabic: language === 'ar',
-    isEnglish: language === 'en',
+    currentLanguage: currentLanguage,
+    isArabic: currentLanguage === "ar",
+    isEnglish: currentLanguage === "en",
     refetch: query.refetch,
   };
 }
