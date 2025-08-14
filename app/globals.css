@@ -5,9 +5,15 @@
 @import "keen-slider/keen-slider.min.css";
 
 
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --section-gradient-start: #f0fdf4;
+  /* --section-gradient-end: #E3F2FD; */
+  --section-gradient-end:#f0fdfa;
+  --section-gradient-middle: #ecfdf5;
+  
 }
 
 .dark {
@@ -17,6 +23,10 @@
   --color-base-200: #222;
   --color-base-300: #333;
   --color-base-content: #e0e0e0;
+  --section-gradient-start: #15191f;
+   --section-gradient-middle: #111315;
+  --section-gradient-end: #131822;
+  
 }
 
 @theme {
