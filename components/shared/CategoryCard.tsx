@@ -8,13 +8,16 @@ import Link from "next/link";
 
 interface Props {
   name: string;
+  slug:string;
   image: string;
   onClick?: () => void;
 }
 
-export default function CategoryCard({ name, image, onClick }: Props) {
+export default function CategoryCard({ slug,name, image, onClick }: Props) {
+  console.log(name);
+  
   return (
-    <Link href={`/category/${encodeURIComponent(name)}`}>
+    <Link href={`/category/${encodeURIComponent(slug)}`}>
       <motion.div
         role="button"
         tabIndex={0}

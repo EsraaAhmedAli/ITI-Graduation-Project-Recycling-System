@@ -104,10 +104,11 @@ useEffect(() => {
       data.append("measurement_unit", formData.measurement_unit);
       if (formData.image) data.append("image", formData.image);
 
-      const res = await api.put(`/categories/item/${name}/${itemId}`, data, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+    const res = await api.put(`/categories/item/${name}/${itemId}`, data, {
+  headers: {
+    "Content-Type": "multipart/form-data",
+  },
+
       });
 
       await Swal.fire({

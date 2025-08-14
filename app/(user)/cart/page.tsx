@@ -26,6 +26,8 @@ export default function CartPage() {
     userRole,
     updateCartState,
   } = useCart();
+  console.log(cart,'ccc');
+  
   const router = useRouter();
   const [totalItems, setTotalItems] = useState(0);
   const [totalPoints, setTotalPoints] = useState(0);

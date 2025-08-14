@@ -82,7 +82,13 @@ export default function Navbar() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
+useEffect(() => {
+  if (isCartOpen) {
+    setIsCartOpen(false);
+    const timer = setTimeout(() => setIsCartOpen(true), 100);
+    return () => clearTimeout(timer);
+  }
+}, [locale]);
   const handleRemoveFromCart = async (item) => {
     try {
       await removeFromCart(item);
@@ -250,7 +256,7 @@ export default function Navbar() {
                               {item?.name}
                             </p>
                             <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">
-                              {t(`categories.${item?.categoryName}`)}
+                              {item?.categoryName}
                             </p>
                             <div className="flex items-center gap-2 mt-0.5">
                               <p className="text-gray-400 dark:text-gray-500 text-xs">

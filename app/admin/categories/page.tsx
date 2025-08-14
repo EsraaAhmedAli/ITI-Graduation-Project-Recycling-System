@@ -66,7 +66,7 @@ export default function Page() {
     if (result.isConfirmed) {
       try {
         // Use original name or the current name for the API call
-        const nameForApi = item.originalName || item.name;
+        const nameForApi = item.slug
         // Single encoding is enough - the backend middleware will handle decoding
         await api.delete(`/categories/${encodeURIComponent(nameForApi)}`);
         
@@ -92,22 +92,21 @@ export default function Page() {
   };
 
   const handleEdit = (item: any) => {
-    const nameForEdit = item.originalName || item.name;
+const idOrSlug = item.slug || item.originalName || item.name;
     // Single encoding - backend will decode properly
-    router.push(`/admin/categories/${encodeURIComponent(nameForEdit)}/edit`);
+    router.push(`/admin/categories/${encodeURIComponent(idOrSlug)}/edit`);
   };
 
   const handleAddSubCategory = (item: any) => {
-    const nameForSub = item.originalName || item.name;
+    const nameForSub = item.slug
     router.push(`/admin/categories/${encodeURIComponent(nameForSub)}/add-sub-category`);
   };
-
-  const handleImageClick = (item: any) => {
-    const nameForNav = item.originalName || item.name;
-    // This is the key fix - single encoding only
-    router.push(`/admin/categories/${encodeURIComponent(nameForNav)}/get-sub-category`);
-  };
-
+const handleImageClick = (item: any) => {
+  const nameForNav = item.slug.toString();
+  
+  // ✅ Correct way in App Router
+  router.push(`/admin/categories/${encodeURIComponent(nameForNav)}/get-sub-category?&name=${item.name}`);
+};
   return (
     <>
       {isLoading ? (

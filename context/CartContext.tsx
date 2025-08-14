@@ -12,6 +12,7 @@ import api from "@/lib/axios";
 import { toast } from "react-hot-toast";
 import { CartItem } from "@/models/cart";
 import { useUserAuth } from "@/context/AuthFormContext";
+import { useLanguage } from "./LanguageContext";
 
 type CartContextType = {
   cart: CartItem[];
@@ -76,6 +77,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const isInitialized = useRef(false);
   const pendingGuestCart = useRef<CartItem[]>([]);
   const pendingUserCart = useRef<CartItem[]>([]);
+  const {locale} = useLanguage()
 
   const userRole = user?.role === "buyer" ? "buyer" : "customer";
   const isLoggedIn = !!user?._id;
@@ -120,7 +122,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       try {
         await api.post(
-          "/cart/save",
+          `/cart/save?lang=${locale}`,
           { items: cartItems },
           { withCredentials: true }
         );
@@ -139,7 +141,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (!isLoggedIn) return [];
 
     try {
-      const res = await api.get("/cart", { withCredentials: true });
+      const res = await api.get(`/cart?lang=${locale}`, { withCredentials: true });
       const items = res.data.items || [];
       console.log(`Loaded ${items.length} items from database`);
       return items;
@@ -182,6 +184,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
             saveCartToSession(newCart);
           }
           setCartDirty(false);
+          console.log(newCart,'neeeww');
+          
           localStorage.removeItem(UNSYNCED_CART_KEY); // Clear backup on successful save
         } catch (error) {
           console.error("Failed to save cart:", error);
@@ -592,7 +596,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Cart operations with improved error handling
   const addToCart = useCallback(
     async (item: CartItem) => {
+      
       setLoadingItemId(item._id);
+            console.log(item,'yaraaaaaab');
+
       try {
         const validatedItem = { ...item };
 

@@ -30,6 +30,7 @@ export default function ItemDetailsPage() {
     typeof itemName === "string" ? decodeURIComponent(itemName) : "";
   const [selectedQuantity, setSelectedQuantity] = useState(1);
   const { addToCart, loadingItemId } = useCart();
+  
   const { t } = useLanguage();
   const { user } = useUserAuth();
   const { getCategoryIdByItemName, refetch } = useCategories();

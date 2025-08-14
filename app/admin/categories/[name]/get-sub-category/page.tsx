@@ -1,7 +1,7 @@
 "use client";
 
 import DynamicTable from "@/components/shared/dashboardTable";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Swal from "sweetalert2";
 import React, { useMemo } from "react";
 import api from "@/lib/axios";
@@ -11,6 +11,12 @@ import { useQuery } from "@tanstack/react-query";
 
 export default function Page() {
   const { name: rawName } = useParams();
+    const searchParams = useSearchParams();
+
+  const name = searchParams.get('name');
+  
+  
+  
   const categoryKey = decodeURIComponent(rawName || "");
   const router = useRouter();
   const { locale, t } = useLanguage();
@@ -25,8 +31,9 @@ export default function Page() {
   ];
 
   const fetchItems = async () => {
-    const res = await api.get(`categories/get-items/${categoryKey}?lang=${locale}`);
-    return res.data?.data.map((item: any) => ({
+    const res = await api.get(`/get-items/${categoryKey}?lang=${locale}`);
+    
+    return res.data?.items.map((item: any) => ({
       id: item._id,
       image: item.image,
       name: item.name || "No name",
@@ -95,7 +102,7 @@ export default function Page() {
   return (
     <>
       {isLoading ? (
-        <Loader title={`${t("admin.categories.itemsIn") || "Items in"} ${displayName}`} />
+        <Loader title={`${t("admin.categories.itemsIn") || "Items in"} ${name}`} />
       ) : isError ? (
         <p className="text-center text-red-500 py-10">{(error as any)?.message || t("admin.items.errorText")}</p>
       ) : items.length === 0 ? (
@@ -104,7 +111,7 @@ export default function Page() {
         <DynamicTable
           data={items}
           columns={columns}
-          title={`${t("admin.categories.itemsIn") || "Items in"} ${displayName}`}
+          title={`${t("admin.categories.itemsIn") || "Items in"} ${name}`}
           itemsPerPage={5}
           addButtonText={t("admin.items.addNew") || "Add New Item"}
           onAdd={() => router.push(`/admin/categories/${categoryKey}/add-sub-category`)}

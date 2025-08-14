@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import { Category } from "@/components/Types/categories.type";
 import toast from "react-hot-toast";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface UseCategoriesOptions {
   language?: 'en' | 'ar';
@@ -21,7 +22,7 @@ interface CategoriesResponse {
 
 export function useCategories(options: UseCategoriesOptions = {}) {
   const { language = 'en', role } = options;
-
+const{locale}=useLanguage()
   const query = useQuery<CategoriesResponse>({
     queryKey: ["categories list", language, role], // Include language and role in cache key
     queryFn: async () => {
@@ -32,7 +33,7 @@ export function useCategories(options: UseCategoriesOptions = {}) {
 
         console.log(`Fetching categories with language: ${language}, role: ${role || 'none'}`);
         
-        const res = await api.get(`/categories?${params.toString()}`);
+        const res = await api.get(`/categories?lang=${locale}`);
         
         // Handle different response structures from your backend
         let responseData: CategoriesResponse;
@@ -73,19 +74,21 @@ export function useCategories(options: UseCategoriesOptions = {}) {
   });
 
   const getCategoryIdByItemName = (itemName: string): string => {
+    console.log(itemName,'itteemmnameeee');
+    
     const categories = query.data?.data;
-    console.log("CATEGORIES");
-    console.log(categories);
+
     
     if (!Array.isArray(categories)) return "";
 
     for (const category of categories) {
       const foundItem = category.items?.find((item) => {
         console.log("in comparison");
-        console.log(`${item.name} Vs ${itemName} == ${item.name === itemName}`);
+        console.log(`${item.slug} Vs ${itemName} == ${item.slug === itemName}`);
+        console.log('wholeeeitem' , item);
         
         // Also check original name if it exists (for translated items)
-        const nameMatches = item.name === itemName;
+        const nameMatches = item.slug === itemName;
         const originalNameMatches = item.originalName && item.originalName === itemName;
         
         console.log("-------------------------");

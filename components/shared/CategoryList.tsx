@@ -55,7 +55,7 @@ export default function CategoryList({
             ? "min-w-[200px]"
             : "transform transition-transform duration-300 hover:scale-105"
         }>
-        <CategoryCard name={category?.name} image={category?.image} />
+        <CategoryCard slug={category?.slug} name={category?.name} image={category?.image} />
       </div>
     ),
     [horizontal]

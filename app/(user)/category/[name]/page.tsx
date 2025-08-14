@@ -90,16 +90,17 @@ export default function UserCategoryPage() {
   //   }
   // };
   const handleAddToCollection = async (item: CartItem) => {
+    console.log(item,'iiiteem');
+    
     try {
-      const categoryId = getCategoryIdByItemName(item.name);
-      console.log(categoryId,'caaatt');
+      const categoryId = getCategoryIdByItemName(item.slug);
       
 
       const cartItem: CartItem = {
         _id: item._id,
         categoryId: categoryId,
         categoryName: item.categoryName,
-        name: item.name,
+        name: item.slug,
         image: item.image,
         points: item.points,
         price: item.price,
