@@ -77,7 +77,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const isInitialized = useRef(false);
   const pendingGuestCart = useRef<CartItem[]>([]);
   const pendingUserCart = useRef<CartItem[]>([]);
-  const {locale} = useLanguage()
+  const { locale } = useLanguage();
 
   const userRole = user?.role === "buyer" ? "buyer" : "customer";
   const isLoggedIn = !!user?._id;
@@ -134,14 +134,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
         throw error;
       }
     },
-    [isLoggedIn]
+    [isLoggedIn, locale]
   );
 
   const loadCartFromDatabase = useCallback(async (): Promise<CartItem[]> => {
     if (!isLoggedIn) return [];
 
     try {
-      const res = await api.get(`/cart?lang=${locale}`, { withCredentials: true });
+      const res = await api.get(`/cart?lang=${locale}`, {
+        withCredentials: true,
+      });
       const items = res.data.items || [];
       console.log(`Loaded ${items.length} items from database`);
       return items;
@@ -159,7 +161,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
       throw error;
     }
-  }, [isLoggedIn]);
+  }, [isLoggedIn, locale]);
 
   // Improved updateCartState with better error handling
   const updateCartState = useCallback(
@@ -184,8 +186,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
             saveCartToSession(newCart);
           }
           setCartDirty(false);
-          console.log(newCart,'neeeww');
-          
+          console.log(newCart, "neeeww");
+
           localStorage.removeItem(UNSYNCED_CART_KEY); // Clear backup on successful save
         } catch (error) {
           console.error("Failed to save cart:", error);
@@ -200,6 +202,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
     },
     [isLoggedIn, saveCartToDatabase, saveCartToSession]
   );
+  useEffect(() => {
+    console.log("LANGUAGE CHANGED", locale);
+    const f = async () => {
+      const cart = await loadCartFromDatabase();
+      setCart(cart);
+    };
+    f();
+  }, [locale, loadCartFromDatabase]);
 
   // Load cart based on authentication state
   const loadCart = useCallback(async () => {
@@ -589,10 +599,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Cart operations with improved error handling
   const addToCart = useCallback(
     async (item: CartItem) => {
-      
-      
       setLoadingItemId(item._id);
-            console.log(item,'yaraaaaaab');
+      console.log(item, "yaraaaaaab");
 
       try {
         const validatedItem = { ...item };

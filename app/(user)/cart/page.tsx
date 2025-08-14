@@ -11,6 +11,7 @@ import { useUserAuth } from "@/context/AuthFormContext";
 import { CartItem } from "@/models/cart";
 import { toast } from "react-hot-toast";
 import { useGetItems } from "@/hooks/useGetItems"; // Import your hook
+import { useLanguage } from "@/context/LanguageContext";
 
 const itemVariants = {
   hidden: { opacity: 0, y: 10 },
@@ -726,7 +727,6 @@ export default function CartPage() {
                             {inputErrors[item._id]}
                           </div>
                         )}
-
 
                         {/* Helper text */}
                         <div className="text-xs text-gray-400">
