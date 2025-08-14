@@ -20,6 +20,13 @@ const itemVariants = {
 };
 
 export default function CartPage() {
+  const { t, locale } = useLanguage();
+  const formatNumber = (num) => {
+    if (locale === "ar") {
+      return num.toLocaleString("ar-EG"); // Arabic digits
+    }
+    return num.toLocaleString("en-US"); // English digits
+  };
   const { cart, removeFromCart, clearCart, userRole, updateCartState } =
     useCart();
   const router = useRouter();
@@ -409,7 +416,7 @@ export default function CartPage() {
         <div className="flex items-center gap-3 mb-6">
           <Recycle className="w-8 h-8 text-green-600" />
           <h1 className="text-2xl font-bold text-white-900 tracking-tight">
-            Confirm items you want to recycle
+            {t("cart.confirm")}
           </h1>
         </div>
         <div className="flex items-center justify-center py-12">
@@ -425,7 +432,7 @@ export default function CartPage() {
       <div className="flex items-center gap-3 mb-6">
         <Recycle className="w-8 h-8 text-green-600" />
         <h1 className="text-2xl font-bold text-white-800 tracking-tight">
-          Confirm items you want to recycle
+          {t("cart.confirm")}
         </h1>
         {userRole === "buyer" && (
           <div className="ml-auto flex items-center gap-2 text-sm text-green-600">
@@ -461,26 +468,37 @@ export default function CartPage() {
               user?.role == "customer" ? "md:grid-cols-3" : "md:grid-cols-2"
             } gap-4`}
           >
+            {/* Total Items */}
             <div className="bg-white p-4 rounded-lg shadow-sm text-center">
-              <div className="text-gray-500 text-sm">Total Items</div>
+              <div className="text-gray-500 text-sm">
+                {t("cart.totalItems")}
+              </div>
               <div className="text-2xl font-bold text-green-600">
-                {totalItems}
+                {formatNumber(totalItems)}
               </div>
             </div>
+
+            {/* Earned Points (only for customer) */}
             {user?.role == "customer" && (
               <div className="bg-white p-4 rounded-lg shadow-sm text-center">
-                <div className="text-gray-500 text-sm">Earned Points</div>
+                <div className="text-gray-500 text-sm">
+                  {t("cart.earnedPoints")}
+                </div>
                 <div className="text-2xl font-bold text-blue-600">
-                  {totalPoints}
+                  {formatNumber(totalPoints)}
                 </div>
               </div>
             )}
+
+            {/* Earned or Paid Money */}
             <div className="bg-white p-4 rounded-lg shadow-sm text-center">
               <div className="text-gray-500 text-sm">
-                {user?.role == "customer" ? "Earned Money" : "Payed Money"}{" "}
+                {user?.role == "customer"
+                  ? t("cart.earnedMoney")
+                  : t("cart.paidMoney")}
               </div>
               <div className="text-2xl font-bold text-emerald-600">
-                {totalPrice.toFixed(2)} EGP
+                {formatNumber(totalPrice.toFixed(2))} {t("cart.currency")}
               </div>
             </div>
           </div>
@@ -714,10 +732,6 @@ export default function CartPage() {
                             >
                               +
                             </button>
-
-                            <span className="text-xs text-gray-500">
-                              {item.measurement_unit === 1 ? "kg" : "items"}
-                            </span>
                           </div>
                         </div>
 
@@ -728,11 +742,10 @@ export default function CartPage() {
                           </div>
                         )}
 
-                        {/* Helper text */}
                         <div className="text-xs text-gray-400">
                           {item.measurement_unit === 1
-                            ? "Min: 0.25 kg, increments of 0.25 kg"
-                            : "Whole numbers only"}
+                            ? t("cart.minWeight")
+                            : t("cart.wholeNumbers")}
                         </div>
                       </div>
                     </div>
@@ -792,7 +805,7 @@ export default function CartPage() {
                 }}
                 className="border border-gray-300 text-gray-700 hover:bg-gray-50"
               >
-                Clear Collection
+                {t("cart.clear")}
               </Button>
 
               <div className="flex flex-col items-end">
@@ -818,7 +831,7 @@ export default function CartPage() {
                     }`}
                   >
                     <Truck className="w-5 h-5" />
-                    Schedule Pickup
+                    {t("cart.schedule")}
                   </Button>
                 </div>
                 {totalPrice < 100 && (

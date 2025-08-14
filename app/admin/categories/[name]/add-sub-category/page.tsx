@@ -29,6 +29,7 @@ export default function AddSubCategoryPage() {
     image: null as File | null,
   });
   const [loading, setLoading] = useState(false);
+console.log(name,'nnn');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, files } = e.target;

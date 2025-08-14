@@ -10,6 +10,7 @@ import { useLanguage } from "@/context/LanguageContext";
 export default function EditItemPage() {
   const { name: rawName, itemId } = useParams();
   const name = decodeURIComponent(rawName || "").toLowerCase();
+  
 
   const router = useRouter();
 

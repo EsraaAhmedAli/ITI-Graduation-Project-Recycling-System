@@ -102,10 +102,10 @@ const idOrSlug = item.slug || item.originalName || item.name;
     router.push(`/admin/categories/${encodeURIComponent(nameForSub)}/add-sub-category`);
   };
 const handleImageClick = (item: any) => {
-  const nameForNav = item.slug.toString();
+  const nameForNav = item.slug
   
   // ✅ Correct way in App Router
-  router.push(`/admin/categories/${encodeURIComponent(nameForNav)}/get-sub-category?&name=${item.name}`);
+  router.push(`/admin/categories/${encodeURIComponent(nameForNav)}/get-sub-category?&name=${item.slug}`);
 };
   return (
     <>
