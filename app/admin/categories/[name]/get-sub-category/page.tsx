@@ -3,7 +3,7 @@
 import DynamicTable from "@/components/shared/dashboardTable";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Swal from "sweetalert2";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import api from "@/lib/axios";
 import Loader from "@/components/common/Loader";
 import { useLanguage } from "@/context/LanguageContext";
@@ -15,9 +15,11 @@ export default function Page() {
 
   const name = searchParams.get('name');
   
-  
+  // const [displayName,setDisplayName] = useState('')
   
   const categoryKey = decodeURIComponent(rawName || "");
+    console.log(name,'namee',categoryKey,'kkkee');
+
   const router = useRouter();
   const { locale, t } = useLanguage();
 
@@ -32,6 +34,7 @@ export default function Page() {
 
   const fetchItems = async () => {
     const res = await api.get(`/get-items/${categoryKey}?lang=${locale}`);
+    
     
     return res.data?.items.map((item: any) => ({
       id: item._id,
@@ -58,12 +61,13 @@ export default function Page() {
 
   // Extract the translated category name from the first item (since all items have the same categoryName)
   const displayName = useMemo(() => {
+    
     if (items.length > 0 && items[0].categoryName) {
       return items[0].categoryName;
     }
-    // Fallback to categoryKey if no items or no categoryName
-    return categoryKey;
-  }, [items, categoryKey]);
+    // Fallback to name if no items or no categoryName
+    return name;
+  }, [items, name]);
 
   const handleDelete = async (item: any) => {
     const result = await Swal.fire({
@@ -102,7 +106,7 @@ export default function Page() {
   return (
     <>
       {isLoading ? (
-        <Loader title={`${t("admin.categories.itemsIn") || "Items in"} ${name}`} />
+        <Loader title={`${t("admin.categories.itemsIn") || "Items in"} ${displayName}`} />
       ) : isError ? (
         <p className="text-center text-red-500 py-10">{(error as any)?.message || t("admin.items.errorText")}</p>
       ) : items.length === 0 ? (
@@ -111,11 +115,11 @@ export default function Page() {
         <DynamicTable
           data={items}
           columns={columns}
-          title={`${t("admin.categories.itemsIn") || "Items in"} ${name}`}
+          title={`${t("admin.categories.itemsIn") || "Items in"} ${displayName}`}
           itemsPerPage={5}
           addButtonText={t("admin.items.addNew") || "Add New Item"}
-          onAdd={() => router.push(`/admin/categories/${categoryKey}/add-sub-category`)}
-          onEdit={(item) => router.push(`/admin/categories/${categoryKey}/edit-sub-category/${item.id}`)}
+          onAdd={() => router.push(`/admin/categories/${locale == 'ar' ? name : name}/add-sub-category`)}
+          onEdit={(item) => router.push(`/admin/categories/${locale == 'ar' ?name : name}/edit-sub-category/${item.id}`)}
           onDelete={handleDelete}
           onImageClick={() => router.push(`/admin/categories`)}
         />

@@ -70,6 +70,19 @@
     "searchplaceholder": "Search items...",
     "myCart": "Cart"
   },
+  "cart" :{
+    "confirm" : "Confirm items you want to recycle",
+        "totalItems": "Total Items",
+    "earnedPoints": "Earned Points",
+    "earnedMoney": "Earned Money",
+    "paidMoney": "Paid Money",
+    "currency": "EGP",
+    "schedule" : " Schedule Pickup",
+        "clear" : "clear collection",
+            "minWeight": "Min: 0.25 kg, increments of 0.25 kg",
+    "wholeNumbers": "Whole numbers only"
+
+  },
   "admin": {
     "categories": {
       "title": "Categories",
