@@ -22,7 +22,7 @@ import { useCategories } from "@/hooks/useGetCategories";
 // }
 
 export default function UserCategoryPage() {
-  const { t,locale } = useLanguage();
+  const { t, locale } = useLanguage();
   const { name: rawName } = useParams();
   const categoryKey = decodeURIComponent(rawName || "");
   const params = useParams();
@@ -31,11 +31,12 @@ export default function UserCategoryPage() {
   const { getCategoryIdByItemName } = useCategories();
 
   const { data, isLoading, error } = useQuery<CartItem[]>({
-    queryKey: ["subcategory", categoryName,locale],
+    queryKey: ["subcategory", categoryName, locale],
     queryFn: async () => {
-  
-    const res = await api.get(`categories/get-items/${categoryKey}?lang=${locale}`);
-      
+      const res = await api.get(
+        `categories/get-items/${categoryKey}?lang=${locale}`
+      );
+
       const normalizedItems = res.data.data.map((item: any) => ({
         ...item,
         itemName: item.name,
@@ -46,7 +47,7 @@ export default function UserCategoryPage() {
     },
     staleTime: 2000,
     refetchOnMount: true,
-    refetchOnWindowFocus:true
+    refetchOnWindowFocus: true,
   });
 
   const getPointsRange = (points: number[]) => {
@@ -90,17 +91,17 @@ export default function UserCategoryPage() {
   //   }
   // };
   const handleAddToCollection = async (item: CartItem) => {
-    console.log(item,'iiiteem');
-    
+    console.log(item, "iiiteem");
+
     try {
       const categoryId = getCategoryIdByItemName(item.slug);
-      
 
       const cartItem: CartItem = {
         _id: item._id,
         categoryId: categoryId,
         categoryName: item.categoryName,
-        name: item.slug,
+        name: item.name,
+        itemName:item.name,
         image: item.image,
         points: item.points,
         price: item.price,
@@ -202,9 +203,7 @@ export default function UserCategoryPage() {
               {/* Content */}
               <div className="p-4">
                 <h3 className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide leading-tight">
-             {
-              item.name
-             }
+                  {item.name}
                 </h3>
 
                 {/* Price and Unit Info */}

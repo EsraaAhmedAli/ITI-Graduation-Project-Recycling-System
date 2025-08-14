@@ -105,7 +105,7 @@ const OptimizedItemImage = ({
 export default function MarketplaceClient({
   initialData,
 }: MarketplaceClientProps) {
-  const { t } = useLanguage();
+  const { t,locale } = useLanguage();
   const { user } = useUserAuth();
   const queryClient = useQueryClient();
 
@@ -188,7 +188,7 @@ export default function MarketplaceClient({
 
     try {
       const res = await api.get(
-        `/categories/get-items?page=1&limit=50&role=${user?.role || ""}`
+        `/categories/get-items?page=1&limit=50&role=${user?.role}&lang=${locale}`
       );
       const allItems = res?.data.data || [];
       return Array.from(
@@ -405,11 +405,7 @@ export default function MarketplaceClient({
 
                     <div className="p-2 flex-1 flex flex-col">
                       <h3 className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide leading-tight">
-                        {t(
-                          `categories.subcategories.${item.name
-                            .toLowerCase()
-                            .replace(/\s+/g, "-")}`
-                        )}
+                        {item.name}
                       </h3>
                       <div className="flex justify-between items-center mt-auto">
                         <span className="text-xs font-bold text-green-600">

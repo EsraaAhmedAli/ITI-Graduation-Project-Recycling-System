@@ -52,6 +52,8 @@ async function getServerData(): Promise<ServerData> {
 
     const items = itemsResponse.data?.data || [];
     const allItems = categoriesResponse.data?.data || [];
+    console.log(allItems);
+    
 
     const categories = Array.from(
       new Set(allItems.map((item: Item) => item.categoryName))

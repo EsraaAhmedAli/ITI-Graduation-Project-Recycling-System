@@ -31,17 +31,38 @@ const [formData, setFormData] = useState({
 useEffect(() => {
   const fetchItem = async () => {
     try {
+      console.log('=== FETCHING ITEM FOR EDIT ===');
+      console.log('Category:', name, 'ItemId:', itemId, 'Locale:', locale);
+      
+      // Get the item data in the current locale
       const res = await api.get(
         `categories/get-items/${name}?lang=${locale}`
       );
 
-      const data = res.data.data;
+      const data = res.data.data || res.data;
       const item = data.find((i: any) => i._id === itemId);
 
       if (item) {
+        console.log('Found item:', item.name);
+        
+        // IMPROVED: Fetch item data in BOTH languages to populate both fields
+        const [enResponse, arResponse] = await Promise.all([
+          api.get(`categories/get-items/${name}?lang=en`),
+          api.get(`categories/get-items/${name}?lang=ar`)
+        ]);
+        
+        const enData = enResponse.data.data || enResponse.data;
+        const arData = arResponse.data.data || arResponse.data;
+        
+        const enItem = enData.find((i: any) => i._id === itemId);
+        const arItem = arData.find((i: any) => i._id === itemId);
+        
+        console.log('EN version:', enItem?.name);
+        console.log('AR version:', arItem?.name);
+        
         setFormData({
-          name: locale === "en" ? item.name : "",
-          nameAr: locale === "ar" ? item.name : "",
+          name: enItem?.name || item.name || "",           // Always get English name
+          nameAr: arItem?.name || item.name || "",         // Always get Arabic name
           points: item.points,
           price: item.price,
           quantity: item.quantity,
@@ -49,15 +70,42 @@ useEffect(() => {
           image: null,
           currentImage: item.image || "",
         });
+        
+        console.log('Form data set with EN:', enItem?.name, 'AR:', arItem?.name);
       }
     } catch (err) {
-      console.error(err);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Failed to fetch item data",
-        confirmButtonColor: "#10b981",
-      });
+      console.error('Fetch error:', err);
+      
+      // Fallback: Try to get the item by ID directly
+      try {
+        console.log('Trying fallback: get item by ID');
+        const fallbackRes = await api.get(`categories/item-by-id/${name}/${itemId}?lang=en`);
+        const item = fallbackRes.data;
+        
+        if (item) {
+          // If we only get one version, try to determine which language it is
+          const isArabic = item.name && item.name.match(/[\u0600-\u06FF]/);
+          
+          setFormData({
+            name: isArabic ? "" : item.name,           // If Arabic, leave English empty
+            nameAr: isArabic ? item.name : "",         // If Arabic, put in Arabic field
+            points: item.points,
+            price: item.price,
+            quantity: item.quantity,
+            measurement_unit: item.measurement_unit.toString(),
+            image: null,
+            currentImage: item.image || "",
+          });
+        }
+      } catch (fallbackErr) {
+        console.error('Fallback also failed:', fallbackErr);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Failed to fetch item data",
+          confirmButtonColor: "#10b981",
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -65,8 +113,26 @@ useEffect(() => {
 
   if (name && itemId) fetchItem();
 }, [name, itemId, locale]);
+// Test the API endpoints directly
+fetch('/api/categories/get-items/plastic?lang=en')
+  .then(r => r.json())
+  .then(data => {
+    console.log('EN data:', data);
+    const acrylic = data.data.find(item => 
+      item.name.includes('acrylic') || item.name.includes('اكريلك')
+    );
+    console.log('Acrylic in EN:', acrylic);
+  });
 
-
+fetch('/api/categories/get-items/plastic?lang=ar')
+  .then(r => r.json())
+  .then(data => {
+    console.log('AR data:', data);
+    const acrylic = data.data.find(item => 
+      item.name.includes('acrylic') || item.name.includes('اكريلك')
+    );
+    console.log('Acrylic in AR:', acrylic);
+  });
 
 
   const handleChange = (

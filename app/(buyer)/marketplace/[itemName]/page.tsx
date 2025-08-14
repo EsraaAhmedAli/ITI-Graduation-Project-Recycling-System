@@ -40,7 +40,7 @@ export default function ItemDetailsPage() {
     decreaseQty,
     updateCartState,
   } = useCart();
-  const { t } = useLanguage();
+  const { t,locale } = useLanguage();
   const { getCategoryIdByItemName } = useCategories();
 
   useEffect(() => {
@@ -68,7 +68,7 @@ export default function ItemDetailsPage() {
   // Fetch specific item by name using existing API (original prices only)
   const fetchItemByName = async () => {
     try {
-      const res = await api.get("/categories/get-items?limit=10000&role=buyer");
+      const res = await api.get(`/categories/get-items?limit=10000&role=buyer&lang=${locale}`);
       const allItems = res.data?.data || [];
 
       const foundItem = allItems.find(

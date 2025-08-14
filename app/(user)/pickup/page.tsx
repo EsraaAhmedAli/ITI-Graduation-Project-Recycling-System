@@ -70,6 +70,8 @@ export default function PickupConfirmation() {
     return cart.reduce((total, item) => total + item.price * item.quantity, 0);
   };
   const { cart, clearCart } = useCart();
+  console.log('ccccee',cart);
+  
   const totalPrice = getTotalCartPrice(cart);
   const deliveryFee = selectedAddress?.city
     ? deliveryFees[selectedAddress.city] || 0

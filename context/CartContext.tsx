@@ -494,17 +494,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       });
 
       if (wasLoggedOut) {
-        if (currentUserRole === "customer") {
-          // Customer logged out - preserve cart in session
-          console.log("Customer logged out - saving cart to session");
-          saveCartToSession(cart);
-        } else {
-          // Buyer logged out - completely clear cart
-          console.log("Buyer logged out - clearing cart completely");
-          setCart([]);
-          clearCartFromSession();
-          setCartDirty(false);
-        }
+        console.log("Buyer logged out - clearing cart completely");
+        setCart([]);
+        clearCartFromSession();
+        setCartDirty(false);
       } else if (wasLoggedIn) {
         // User logged in from guest - merge carts (with auto-merge enabled by default)
         if (newUserRole === "buyer") {
@@ -596,6 +589,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Cart operations with improved error handling
   const addToCart = useCallback(
     async (item: CartItem) => {
+      
       
       setLoadingItemId(item._id);
             console.log(item,'yaraaaaaab');

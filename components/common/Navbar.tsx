@@ -1,6 +1,3 @@
-
-
-
 "use client";
 
 import Link from "next/link";
@@ -19,12 +16,9 @@ import {
   User,
   ChevronDown,
   Globe,
-
   Sun,
   Moon,
-
   Wallet,
-
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { FaRobot } from "react-icons/fa";
@@ -135,9 +129,9 @@ useEffect(() => {
                 {t("navbar.title")}
               </div>
             </Link>
-            <div className="hidden md:block flex-1 max-w-md">
+            {/* <div className="hidden md:block flex-1 max-w-md">
               <NavbarSearch />
-            </div>
+            </div> */}
           </div>
 
           {/* Center: Navigation Links - Desktop */}
@@ -182,7 +176,9 @@ useEffect(() => {
             <button
               onClick={() => setDarkMode(!darkMode)}
               className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+              aria-label={
+                darkMode ? "Switch to light mode" : "Switch to dark mode"
+              }
             >
               {darkMode ? (
                 <Sun className="w-5 h-5 text-yellow-400" />
@@ -274,12 +270,11 @@ useEffect(() => {
                               handleRemoveFromCart(item);
                             }}
                             className="flex-shrink-0 w-5 h-5 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
-                        )
-                      )
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))
                     ) : (
                       <div className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
                         <Recycle className="w-10 h-10 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
@@ -343,7 +338,11 @@ useEffect(() => {
                 className="relative w-8 h-4 bg-gray-200 dark:bg-gray-600 rounded-full transition-colors duration-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 style={{
                   backgroundColor:
-                    locale === "ar" ? "#3B82F6" : darkMode ? "#4B5563" : "#D1D5DB",
+                    locale === "ar"
+                      ? "#3B82F6"
+                      : darkMode
+                      ? "#4B5563"
+                      : "#D1D5DB",
                 }}
                 title="Toggle Language"
               >
@@ -456,9 +455,7 @@ useEffect(() => {
                           {t("navbar.settings")}
                         </span>
                       </Link>
-
                       <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
-
                       <Link
                         href="/profile/ewallet"
                         onClick={() => setIsProfileOpen(false)}
@@ -471,7 +468,6 @@ useEffect(() => {
                       </Link>
                       <div className="border-t border-gray-100 my-1"></div>{" "}
                       {/* Reduced margin */}
-
                       <button
                         onClick={handleLogout}
                         className="flex items-center gap-3 px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-300 transition-colors w-full text-left"
@@ -516,11 +512,11 @@ useEffect(() => {
         </div>
 
         {/* Mobile Search Bar */}
-        {!isOpen && (
+        {/* {!isOpen && (
           <div className="md:hidden px-4 pb-3">
             <NavbarSearch />
           </div>
-        )}
+        )} */}
 
         {/* Mobile Menu */}
         {isOpen && (
@@ -563,7 +559,9 @@ useEffect(() => {
                       className="absolute top-0.5 left-0.5 w-3 h-3 bg-white dark:bg-gray-200 rounded-full shadow-sm transform transition-transform duration-200"
                       style={{
                         transform:
-                          locale === "ar" ? "translateX(16px)" : "translateX(0)",
+                          locale === "ar"
+                            ? "translateX(16px)"
+                            : "translateX(0)",
                       }}
                     />
                   </button>

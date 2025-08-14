@@ -7,6 +7,7 @@ import PromotionSlider from "@/components/buyer/PromotionSlider";
 import {   ChevronRight,  Frown, Leaf, Zap, Recycle, AlertTriangle  } from "lucide-react";
 import api from "@/lib/axios";
 import { useUserAuth } from "@/context/AuthFormContext";
+import { useLanguage } from "@/context/LanguageContext";
 
 
 interface Item {
@@ -38,7 +39,7 @@ export default function BuyerHomePage() {
   const [userRole, setUserRole] = useState<string>("buyer"); // default fallback
 
 
-  
+  const {locale} = useLanguage()
 
   const getMeasurementText = (unit: number) => {
     return unit === 1 ? "kg" : "pc";
@@ -67,7 +68,7 @@ const {user} = useUserAuth()
     try {
       // const response = await fetch(`http://localhost:5000/api/categories/get-items?page=1&limit=8&role=buyer`);
       // const data = await response.json();
-      const response = await api.get(`/categories/get-items?page=1&limit=8&role=buyer`)
+      const response = await api.get(`/categories/get-items?page=1&limit=8&role=buyer&role=${locale}`)
       const data = response.data
       setItems(data.data);
       setFilteredItems(data.data);
