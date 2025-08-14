@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
+import { useUserAuth } from "@/context/AuthFormContext";
 import { CartItem } from "@/models/cart";
 import api from "@/lib/axios";
 import Image from "next/image";
@@ -47,7 +48,10 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const { cart, updateCartState } = useCart();
+  const { user } = useUserAuth();
   const router = useRouter();
+
+  const isLoggedIn = !!user?._id;
 
   // Debug: Monitor cart changes
   useEffect(() => {
@@ -59,21 +63,33 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
 
   // Function to get fresh cart state
   const getFreshCartState = (): CartItem[] => {
-    // Try to get fresh cart state from localStorage first
-    try {
-      const stored = localStorage.getItem("guest_cart"); // Correct key used by CartContext
-      const freshCart = stored ? JSON.parse(stored) : [];
+    if (isLoggedIn) {
+      // For logged-in users, use the cart from context (which loads from database)
       console.log(
-        `🔄 Fresh cart state from storage: ${freshCart.length} items`,
-        freshCart.map((item: CartItem) => ({
+        `🔄 Fresh cart state from context (logged-in user): ${cart.length} items`,
+        cart.map((item: CartItem) => ({
           name: item.name,
           quantity: item.quantity,
         }))
       );
-      return freshCart;
-    } catch (error) {
-      console.error("❌ Error getting fresh cart state:", error);
-      return cart; // Fallback to component state
+      return cart;
+    } else {
+      // For guest users, get cart from localStorage
+      try {
+        const stored = localStorage.getItem("guest_cart"); // Correct key used by CartContext
+        const freshCart = stored ? JSON.parse(stored) : [];
+        console.log(
+          `🔄 Fresh cart state from storage (guest user): ${freshCart.length} items`,
+          freshCart.map((item: CartItem) => ({
+            name: item.name,
+            quantity: item.quantity,
+          }))
+        );
+        return freshCart;
+      } catch (error) {
+        console.error("❌ Error getting fresh cart state:", error);
+        return cart; // Fallback to component state
+      }
     }
   };
 
@@ -495,7 +511,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
   };
 
   // Direct updateCartState approach - merge with existing cart instead of clearing
-  const addAllToCart = async () => {
+  const addAllToCart = useCallback(async () => {
     console.log(
       "🛒 Starting cart addition using context updateCartState (merging mode)..."
     );
@@ -542,7 +558,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
       console.log(`✅ ${validItems.length} items passed validation`);
 
       // Get current cart state for merging
-      console.log("🔄 Getting current cart state for merging...");
+      console.log(`🔄 Getting current cart state for merging... (User logged in: ${isLoggedIn})`);
       const currentCart = getFreshCartState();
       console.log(`📋 Current cart has ${currentCart.length} items`);
 
@@ -650,7 +666,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
     } finally {
       setIsAddingToCart(false);
     }
-  };
+  }, [localItems, updateCartState, isLoggedIn, cart]);
 
   const handleCheckout = async () => {
     console.log("🚀 Starting checkout process...");
