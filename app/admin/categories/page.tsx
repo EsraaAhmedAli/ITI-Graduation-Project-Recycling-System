@@ -17,11 +17,15 @@ export default function Page() {
   const queryClient = useQueryClient();
   const { t } = useLanguage(); // Get translation function
   const router = useRouter();
-
+  console.log(data?.data);
+  
   // Helper function to get translated category name
-  const getTranslatedCategoryName = (categoryName: string) => {
+  const getTranslatedCategoryName = (categoryItem: any) => {
+    // Extract the English name from the category name object
+    const categoryName = typeof categoryItem.name === 'object' ? categoryItem.name.en : categoryItem.name;
+    
     // Convert category name to translation key format
-    const translationKey = `categories.${categoryName.toLowerCase()}.name`;
+    const translationKey = `categories.${categoryName?.toLowerCase()}.name`;
     
     // Try to get translation, fallback to original name if not found
     const translatedName = t(translationKey);
@@ -31,8 +35,13 @@ export default function Page() {
   };
 
   // Helper function to get translated description
-  const getTranslatedDescription = (categoryName: string) => {
-    const descriptionKey = `categories.${categoryName.toLowerCase().replace(/\s+/g, '-')}.description`;
+  const getTranslatedDescription = (categoryItem: any) => {
+    // Extract the English name from the category name object
+    const categoryName = typeof categoryItem.name === 'object' ? categoryItem.name.en : categoryItem.name;
+    console.log(categoryName,'ccaatname');
+    
+    
+    const descriptionKey = `categories.${categoryName?.toLowerCase()}.description`;
     const translatedDesc = t(descriptionKey);
     
     // Return translated description or fallback to empty string
@@ -47,13 +56,14 @@ export default function Page() {
       render: (item: any) => (
         <Image
           src={item.image}
-          alt={getTranslatedCategoryName(item.name)}
+          alt={getTranslatedCategoryName(item)}
           width={70}
           height={70}
           className="rounded-full object-cover cursor-pointer"
-          onClick={() =>
-            router.push(`/admin/categories/${item.name}/get-sub-category`)
-          }
+          onClick={() => {
+            const categoryName = typeof item.name === 'object' ? item.name.en : item.name;
+            router.push(`/admin/categories/${categoryName}/get-sub-category`);
+          }}
         />
       ),
     },
@@ -61,13 +71,13 @@ export default function Page() {
       key: "name", 
       label: "Category Name", 
       sortable: true,
-      render: (item: any) => getTranslatedCategoryName(item.name)
+      render: (item: any) => getTranslatedCategoryName(item)
     },
     { 
       key: "description", 
       label: "Description", 
       sortable: true,
-      render: (item: any) => getTranslatedDescription(item.name) || item.description
+      render: (item: any) => getTranslatedDescription(item) || item.description
     },
   ];
 
@@ -76,7 +86,7 @@ export default function Page() {
   };
 
   const handleDelete = async (item: any) => {
-    const translatedName = getTranslatedCategoryName(item.name);
+    const translatedName = getTranslatedCategoryName(item);
     
     const result = await Swal.fire({
       title: "Are you sure?",
@@ -90,7 +100,8 @@ export default function Page() {
 
     if (result.isConfirmed) {
       try {
-        await api.delete(`/categories/${encodeURIComponent(item.name)}`);
+        const categoryName = typeof item.name === 'object' ? item.name.en : item.name;
+        await api.delete(`/categories/${encodeURIComponent(categoryName)}`);
         queryClient.invalidateQueries({ queryKey: ["categories list"] });
         Swal.fire({
           icon: "success",
@@ -137,22 +148,19 @@ export default function Page() {
           itemsPerPage={5}
           addButtonText={t('staticCategories.addNewCategory') || 'Add New Category'}
           onAdd={handleAddNewCategory}
-          onEdit={(item) =>
-            router.push(
-              `/admin/categories/${encodeURIComponent(item.name)}/edit`
-            )
-          }
+          onEdit={(item) => {
+            const categoryName = typeof item.name === 'object' ? item.name.en : item.name;
+            router.push(`/admin/categories/${encodeURIComponent(categoryName)}/edit`);
+          }}
           onDelete={handleDelete}
-          onAddSubCategory={(item) =>
-            router.push(
-              `/admin/categories/${encodeURIComponent(
-                item.name
-              )}/add-sub-category`
-            )
-          }
-          onImageClick={(item) =>
-            router.push(`/admin/categories/${item.name}/get-sub-category`)
-          }
+          onAddSubCategory={(item) => {
+            const categoryName = typeof item.name === 'object' ? item.name.en : item.name;
+            router.push(`/admin/categories/${encodeURIComponent(categoryName)}/add-sub-category`);
+          }}
+          onImageClick={(item) => {
+            const categoryName = typeof item.name === 'object' ? item.name.en : item.name;
+            router.push(`/admin/categories/${categoryName}/get-sub-category`);
+          }}
         />
       )}
     </>

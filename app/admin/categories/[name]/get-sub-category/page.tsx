@@ -18,7 +18,7 @@ export default function Page() {
 
   // Helper function to get translated category name
   const getTranslatedCategoryName = (categoryName: string) => {
-    const translationKey = `categories.${categoryName.toLowerCase().replace(/\s+/g, '-')}`;
+    const translationKey = `categories.${categoryName.toLowerCase()}.name`;
     const translatedName = t(translationKey);
     return translatedName === translationKey ? categoryName : translatedName;
   };
@@ -26,7 +26,7 @@ export default function Page() {
   // Helper function to get translated item name
   const getTranslatedItemName = (itemName: string, categoryName: string) => {
     // First try specific category subcategory
-    const subcategoryKey = `categories.subcategories.${itemName.toLowerCase().replace(/\s+/g, '-')}`;
+    const subcategoryKey = `items.${categoryName}.${itemName}`;
     let translatedName = t(subcategoryKey);
     
     // If not found, try items structure

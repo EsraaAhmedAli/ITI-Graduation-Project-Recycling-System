@@ -246,36 +246,17 @@
     "metals": "Metals",
     "spare-parts": "Spare Parts",
     "home-appliances": "home appliances",
-    "subcategories": {
-      "shredded-paper": "Shredded Paper",
-      "books": "Books",
-      "news-paper": "Newspaper",
-      "router": "router",
-      "cooking-pan": "cooking pan",
-      "hammer": "hammer",
-      "car-battery": "cart battery",
-      "acrylic": "acryclic",
-      "solid-plastic": "solid plastic",
-      "water-colman": "Coleman Water",
-      "plastic-barrel": "plastic barrel",
-      "fan": "fan",
-      "mobile": "Mobile",
-      "laptop": "laptop",
-      "receiver": "receiver",
-      "powerbank": "powerbank",
-      "tea-pot": "tea pot"
+    "papers kteir gedan": {
+      "name": "papers kteir gedan",
+      "description": "english desc"
     },
     "paper": {
       "name": "paper",
-      "description": "variety of paper items"
+      "description": "eng"
     },
-    "plastic": {
-      "name": "plastic",
-      "description": "variety of plastic items"
-    },
-    "e wasted": {
-      "name": "e wasted",
-      "description": "e wasted items"
+    "papers": {
+      "name": "papers",
+      "description": "eng"
     }
   },
   "common": {
@@ -315,6 +296,8 @@
   "collectionsOfCategory": "{{category}} {{collections}}",
   "staticCategories": {
     "categories": "Categories",
+        "addNewCategory":"Add new category",
+
     "recyclingCategories": "Recycling Categories",
     "recyclingCategoriesSubtitle": "Having leftovers and want to earn money? Tell us what you have",
     "seeMore": "See more",
@@ -428,9 +411,13 @@
   "items": {
     "paper": {
       "shredded paper": "shredded paper"
-    },
-    "plastic": {
-      "chair": "chair"
     }
-  }
+  },
+  "dashboard": "Dashboard",
+  "Categories": "Categories",
+  "users": "Users",
+  "orders": "Orders",
+  "transactions": "Transactions",
+  "approve": "Approve",
+  "logout": "Logout"
 }

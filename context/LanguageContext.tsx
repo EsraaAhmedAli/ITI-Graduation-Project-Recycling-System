@@ -11,7 +11,8 @@ type Locale = 'en' | 'ar';
 interface LanguageContextType {
   locale: Locale;
   setLocale: (locale: Locale) => void;
-  t: (key: string) => string;
+  t: (key: string, params?: Record<string, any>) => string;
+  tAr: (key: string, params?: Record<string, any>) => string; // Add Arabic translation function
   dir: 'ltr' | 'rtl';
 }
 
@@ -24,6 +25,7 @@ const LanguageContext = createContext<LanguageContextType>({
   locale: 'en',
   setLocale: () => {},
   t: () => '',
+  tAr: () => '', // Add default
   dir: 'ltr'
 });
 
@@ -53,14 +55,36 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     for (const k of keys) {
       value = value?.[k];
     }
-      if (typeof value !== 'string') return key;
+    
+    if (typeof value !== 'string') return key;
 
-      if (params) {
-    Object.entries(params).forEach(([paramKey, paramValue]) => {
-      const regex = new RegExp(`{{\\s*${paramKey}\\s*}}`, 'g');
-      value = value.replace(regex, String(paramValue));
-    });
-  }
+    if (params) {
+      Object.entries(params).forEach(([paramKey, paramValue]) => {
+        const regex = new RegExp(`{{\\s*${paramKey}\\s*}}`, 'g');
+        value = value.replace(regex, String(paramValue));
+      });
+    }
+
+    return (value as string) || key;
+  };
+
+  // Add Arabic translation function that always returns Arabic
+  const tAr = (key: string, params?: Record<string, any>): string => {
+    const keys = key.split('.');
+    let value: any = translations.ar; // Always use Arabic translations
+    
+    for (const k of keys) {
+      value = value?.[k];
+    }
+    
+    if (typeof value !== 'string') return key;
+
+    if (params) {
+      Object.entries(params).forEach(([paramKey, paramValue]) => {
+        const regex = new RegExp(`{{\\s*${paramKey}\\s*}}`, 'g');
+        value = value.replace(regex, String(paramValue));
+      });
+    }
 
     return (value as string) || key;
   };
@@ -68,7 +92,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
 
   return (
-    <LanguageContext.Provider value={{ locale, setLocale, t, dir }}>
+    <LanguageContext.Provider value={{ locale, setLocale, t, tAr, dir }}>
       {children}
     </LanguageContext.Provider>
   );

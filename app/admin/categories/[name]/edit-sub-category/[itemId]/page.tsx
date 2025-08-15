@@ -88,7 +88,7 @@ export default function EditItemPage() {
     try {
       const data = new FormData();
       data.append("name", formData.name);
-      data.append("itemNameAr", formData.itemNameAr); // Include Arabic name in form data
+      data.append("nameAr", formData.itemNameAr); // Include Arabic name in form data
       data.append("points", formData.points);
       data.append("price", Math.floor(+formData.points / 19).toString());
       data.append("quantity", formData.quantity);

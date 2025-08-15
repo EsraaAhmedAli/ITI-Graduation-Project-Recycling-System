@@ -12,7 +12,7 @@ export default function Footer() {
   const { t } = useLanguage();
 
   return (
-    <footer className="sticky top-0 z-50 bg-yellow/95 dark:bg-yellow-500 backdrop-blur-lg  border-gray-200 dark:border-yellow-700 shadow-sm">
+<footer className="bg-yellow/95 dark:bg-yellow-500 backdrop-blur-lg border-gray-200 dark:border-yellow-700 shadow-sm">
       <div className="max-w-6xl mx-auto px-6 py-12">
         {/* Main Content */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">

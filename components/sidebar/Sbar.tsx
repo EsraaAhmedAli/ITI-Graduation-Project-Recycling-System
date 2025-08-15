@@ -18,17 +18,18 @@ import { FaMoneyBill } from "react-icons/fa";
 import { useLanguage } from "@/context/LanguageContext";
 
 const menuItems = [
-  { label: "Dashboard", icon: LayoutDashboard, href: "/admin/dashboard" },
-  { label: "Categories", icon: Layers, href: "/admin/categories" },
-  { label: "Users", icon: Users, href: "/admin/users" },
-  { label: "Orders", icon: ShoppingCart, href: "/admin/pickups" },
-  { label: "Transactions", icon: FaMoneyBill, href: "/admin/transactions" },
-  { label: "approve", icon: Check, href: "/admin/deliveryapprove" },
-  { label: "Logout", icon: LogOutIcon },
+  { key: "dashboard", icon: LayoutDashboard, href: "/admin/dashboard" },
+  { key: "Categories", icon: Layers, href: "/admin/categories" },
+  { key: "users", icon: Users, href: "/admin/users" },
+  { key: "orders", icon: ShoppingCart, href: "/admin/pickups" },
+  { key: "transactions", icon: FaMoneyBill, href: "/admin/transactions" },
+  { key: "approve", icon: Check, href: "/admin/deliveryapprove" },
+  { key: "logout", icon: LogOutIcon },
 ];
 
+
 export default function AdminSidebar() {
-  const {locale,setLocale} = useLanguage()
+  const {locale,setLocale,t} = useLanguage()
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(true);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -58,49 +59,50 @@ export default function AdminSidebar() {
   }, [isHydrated]);
 
   // Memoize menu items to prevent re-rendering when props don't change
-  const renderedMenuItems = useMemo(() => {
-    return menuItems.map(({ label, icon: Icon, href }) => {
-      const isLogout = label === "Logout";
-      const isActive = pathname === href;
-      
-      const content = (
-        <>
-          <Icon size={20} />
-          {!collapsed && <span>{label}</span>}
-        </>
-      );
+const renderedMenuItems = useMemo(() => {
+  return menuItems.map(({ key, icon: Icon, href }) => {
+    const label = t(key); // ✅ translate
+    const isLogout = key === "logout";
+    const isActive = pathname === href;
 
-      const baseClasses = clsx(
-        "flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors",
-        collapsed && "justify-center px-4"
-      );
+    const content = (
+      <>
+        <Icon size={20} />
+        {!collapsed && <span>{label}</span>}
+      </>
+    );
 
-      return (
-        <li key={label}>
-          {isLogout ? (
-            <button
-              onClick={logout}
-              className={clsx(baseClasses, "cursor-pointer w-full")}
-              type="button"
-            >
-              {content}
-            </button>
-          ) : href ? (
-            <Link
-              href={href}
-              prefetch={true}
-              className={clsx(
-                baseClasses,
-                isActive && "bg-green-100 text-green-800 font-semibold"
-              )}
-            >
-              {content}
-            </Link>
-          ) : null}
-        </li>
-      );
-    });
-  }, [pathname, collapsed, logout]);
+    const baseClasses = clsx(
+      "flex items-center gap-3 px-6 py-3 text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors",
+      collapsed && "justify-center px-4"
+    );
+
+    return (
+      <li key={key}>
+        {isLogout ? (
+          <button
+            onClick={logout}
+            className={clsx(baseClasses, "cursor-pointer w-full")}
+            type="button"
+          >
+            {content}
+          </button>
+        ) : href ? (
+          <Link
+            href={href}
+            prefetch={true}
+            className={clsx(
+              baseClasses,
+              isActive && "bg-green-100 text-green-800 font-semibold"
+            )}
+          >
+            {content}
+          </Link>
+        ) : null}
+      </li>
+    );
+  });
+}, [pathname, collapsed, logout, t])
 
   // Prevent hydration mismatch by showing consistent state initially
   if (!isHydrated) {

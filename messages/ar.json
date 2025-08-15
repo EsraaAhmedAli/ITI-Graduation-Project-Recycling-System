@@ -239,36 +239,25 @@
     "metals": "المعادن",
     "spare-parts": "قطع غيار",
     "home-appliances": "ادوات منزلية",
-    "subcategories": {
-      "shredded-paper": "ورق مقطع",
-      "books": "كتب",
-      "news-paper": "جرائد",
-      "router": "جهاز التوجيه",
-      "cooking-pan": "مقلاة الطبخ",
-      "hammer": "مطرقة",
-      "car-battery": "بطارية سيارة",
-      "solid-plastic": "البلاستيك الصلب",
-      "water-colman": "كولمان ",
-      "acrylic": "اكريليك",
-      "plastic-barrel": "برميل ",
-      "fan": "مروحة",
-      "mobile": "هاتف جوال",
-      "laptop": "كمبيوتر محمول",
-      "receiver": "جهاز استقبال",
-      "powerbank": "باور بانك",
-      "tea-pot": "براد"
-    },
     "paper": {
       "name": "ورق",
+      "description": "عربي"
+    },
+    "paper only": {
+      "name": "ورق بسسس",
       "description": "مجموعة من الورق"
     },
-    "plastic": {
-      "name": "بلاستيك",
-      "description": "بعض انواع البلاسيتك"
+    "paper only monly": {
+      "name": "ورق بسسس",
+      "description": "مجموعة من الورق"
     },
-    "e wasted": {
-      "name": "نفايات الكترونية",
-      "description": "نفايات الكترونيه متعدده"
+    "papers kteir gedan": {
+      "name": "ورق كتيؤ",
+      "description": "ترجمة"
+    },
+    "papers": {
+      "name": "ورق",
+      "description": "عربي"
     }
   },
   "collectionsOfCategory": "{{collections}}  {{category}}",
@@ -306,6 +295,7 @@
   },
   "staticCategories": {
     "categories": "الفئات",
+    "addNewCategory":"اضف فئة جديدة",
     "recyclingCategories": "فئات إعادة التدوير",
     "recyclingCategoriesSubtitle": "عندك بواقي وعايز تكسب فلوس؟ احكيلنا عندك إيه",
     "seeMore": "عرض المزيد",
@@ -418,10 +408,14 @@
   "viewFullHistory": "عرض التاريخ الكامل",
   "items": {
     "paper": {
-      "shredded paper": "ورق متقطع"
-    },
-    "plastic": {
-      "chair": "كرسي"
+      "shredded paper": "ورق بس"
     }
-  }
+  },
+  "dashboard": "لوحة التحكم",
+  "Categories": "الفئات",
+  "users": "المستخدمين",
+  "orders": "الطلبات",
+  "transactions": "المعاملات",
+  "approve": "الموافقة",
+  "logout": "تسجيل الخروج"
 }

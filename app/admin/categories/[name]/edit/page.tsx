@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Swal from 'sweetalert2';
 import api from '@/lib/axios';
 import { useQueryClient } from '@tanstack/react-query';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function EditCategoryPage() {
   const queryClient = useQueryClient();
@@ -14,37 +15,62 @@ const params = useParams();
 const name = decodeURIComponent(params.name as string);
   const [category, setCategory] = useState({ 
     name: '', 
+    nameAr:'',
+    descriptionAr:'',
     description: '', 
     image: '' 
   });
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const{t,tAr}= useLanguage()
+  
 
-  useEffect(() => {
-    const fetchCategory = async () => {
-      try {
-        const res = await api.get(`get-items/${encodeURIComponent(name)}`);
-        console.log(res.data);
-        
-        setCategory({
-          name: res.data.name,
-          description: res.data.description,
-          image: res.data.image,
-        });
-      } catch (err) {
-        console.error(err);
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Failed to fetch category',
-          confirmButtonColor: '#10b981',
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCategory();
-  }, [name]);
+  
+useEffect(() => {
+  const fetchCategory = async () => {
+    try {
+      const res = await api.get(`get-items/${encodeURIComponent(name)}`);
+      console.log(res.data);
+      
+      // Handle both string and object name formats
+      const categoryName = typeof res.data.name === 'object' 
+        ? res.data.name.en 
+        : res.data.name;
+
+      // Generate translation keys
+      const translationKey = `categories.${categoryName.toLowerCase()}.name`;
+      const translationDesc = `categories.${categoryName.toLowerCase()}.description`;
+      
+      // Always get Arabic translations using tAr
+      const arKey = tAr(translationKey);
+      const arDesc = tAr(translationDesc);
+      
+      console.log('Translation key:', translationKey);
+      console.log('Arabic translation:', arKey);
+      console.log('Arabic description:', arDesc);
+
+      setCategory({
+        name: categoryName,
+        nameAr: arKey,        // Always Arabic regardless of current language
+        description: res.data.description,
+        descriptionAr: arDesc, // Always Arabic regardless of current language
+        image: res.data.image,
+      });
+    } catch (err) {
+      console.error(err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Failed to fetch category',
+        confirmButtonColor: '#10b981',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  fetchCategory();
+}, [name, tAr]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setCategory({ ...category, [e.target.name]: e.target.value });
@@ -90,31 +116,43 @@ const name = decodeURIComponent(params.name as string);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-await api.put(`/categories/${encodeURIComponent(name)}`, category);
-      await Swal.fire({
-        icon: 'success',
-        title: 'Success!',
-        text: 'Category updated successfully',
-        showConfirmButton: false,
-        timer: 1500,
-      });
-      queryClient.invalidateQueries({ queryKey: ['categories list'] });
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  try {
+    // Prepare data for API - include Arabic fields
+    const updateData = {
+      name: category.name,
+      nameAr: category.nameAr,
+      description: category.description,
+      descriptionAr: category.descriptionAr,
+      image: category.image
+    };
 
-      router.push('/admin/categories');
-      
-    } catch (err) {
-      console.error(err);
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'Update failed',
-        confirmButtonColor: '#10b981',
-      });
-    }
-  };
+    await api.put(`/categories/${encodeURIComponent(name)}`, updateData);
+    
+    queryClient.invalidateQueries({ queryKey: ['categories list'] });
+    
+    await Swal.fire({
+      icon: 'success',
+      title: 'Success!',
+      text: 'Category updated successfully',
+      showConfirmButton: false,
+      timer: 1500,
+    });
+    
+    // Move navigation after SweetAlert
+    router.push('/admin/categories');
+    
+  } catch (err) {
+    console.error(err);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Update failed',
+      confirmButtonColor: '#10b981',
+    });
+  }
+};
 
   if (loading) {
     return (
@@ -148,6 +186,18 @@ await api.put(`/categories/${encodeURIComponent(name)}`, category);
               />
             </div>
 
+          {/* Arabic Name */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Arabic Name *</label>
+            <input
+              type="text"
+              name="nameAr"
+              value={category.nameAr}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition text-right dir-rtl"
+              required
+            />
+          </div>
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">Description</label>
               <textarea
@@ -158,6 +208,16 @@ await api.put(`/categories/${encodeURIComponent(name)}`, category);
                 rows={3}
               />
             </div>
+                 <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Arabic Description</label>
+            <textarea
+              name="descriptionAr"
+              value={category.descriptionAr}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition text-right dir-rtl"
+              rows={3}
+            />
+          </div>
 
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">Category Image</label>
