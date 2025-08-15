@@ -1,4 +1,3 @@
-// context/LanguageContext.tsx
 'use client';
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
@@ -12,8 +11,9 @@ interface LanguageContextType {
   locale: Locale;
   setLocale: (locale: Locale) => void;
   t: (key: string, params?: Record<string, any>) => string;
-  tAr: (key: string, params?: Record<string, any>) => string; // Add Arabic translation function
+  tAr: (key: string, params?: Record<string, any>) => string;
   dir: 'ltr' | 'rtl';
+  isLoaded: boolean; // Add this to track if context is ready
 }
 
 const translations = {
@@ -25,20 +25,24 @@ const LanguageContext = createContext<LanguageContextType>({
   locale: 'en',
   setLocale: () => {},
   t: () => '',
-  tAr: () => '', // Add default
-  dir: 'ltr'
+  tAr: () => '',
+  dir: 'ltr',
+  isLoaded: false
 });
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>('en');
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
+    // Only run on client side
     const savedLocale = localStorage.getItem('locale') as Locale;
-    if (savedLocale && (savedLocale === 'en' || savedLocale === 'ar')) {
-      setLocaleState(savedLocale);
-      document.documentElement.dir = savedLocale === 'ar' ? 'rtl' : 'ltr';
-      document.documentElement.lang = savedLocale;
-    }
+    const initialLocale = (savedLocale && (savedLocale === 'en' || savedLocale === 'ar')) ? savedLocale : 'en';
+    
+    setLocaleState(initialLocale);
+    document.documentElement.dir = initialLocale === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = initialLocale;
+    setIsLoaded(true); // Mark as loaded after setting initial values
   }, []);
 
   const setLocale = (newLocale: Locale) => {
@@ -68,10 +72,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     return (value as string) || key;
   };
 
-  // Add Arabic translation function that always returns Arabic
   const tAr = (key: string, params?: Record<string, any>): string => {
     const keys = key.split('.');
-    let value: any = translations.ar; // Always use Arabic translations
+    let value: any = translations.ar;
     
     for (const k of keys) {
       value = value?.[k];
@@ -92,7 +95,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
 
   return (
-    <LanguageContext.Provider value={{ locale, setLocale, t, tAr, dir }}>
+    <LanguageContext.Provider value={{ locale, setLocale, t, tAr, dir, isLoaded }}>
       {children}
     </LanguageContext.Provider>
   );

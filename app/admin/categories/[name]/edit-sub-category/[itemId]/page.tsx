@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 import api from "@/lib/axios";
 import Image from "next/image";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function EditItemPage() {
   const { name: rawName, itemId } = useParams();
@@ -14,30 +15,40 @@ export default function EditItemPage() {
 
   const [formData, setFormData] = useState({
     name: "",
-    itemNameAr: "", // Arabic name field
+    itemNameAr: "",
     points: "",
     price: "",
     quantity: "",
-    measurement_unit: "1", // 1 => KG, 2 => Pieces
+    measurement_unit: "1",
     image: null as File | null,
     currentImage: "",
   });
 
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const { t, tAr, isLoaded } = useLanguage();
+
+  console.log(name, 'nnn', formData.name, 'ttt');
 
   useEffect(() => {
+    // Wait for language context to be loaded before fetching data
+    if (!isLoaded) return;
+
     const fetchItem = async () => {
       try {
-        const res = await api.get(
-          `categories/get-items/${name}`
-        );
-        const data = res.data
+        const res = await api.get(`categories/get-items/${name}`);
+        const data = res.data;
         const item = data.data.find((i: any) => i._id === itemId);
+        
         if (item) {
+          // Generate translation key after item is fetched
+          const translationKey = `items.${name.toLowerCase()}.${item.name}`;
+          const arKey = tAr(translationKey);
+          console.log('Translation key:', translationKey, 'Arabic translation:', arKey);
+          
           setFormData({
             name: item.name,
-            itemNameAr: item.itemNameAr || "", // Handle Arabic name from API
+            itemNameAr: arKey !== translationKey ? arKey : "", // Only use translation if it exists
             points: item.points,
             price: item.price,
             quantity: item.quantity,
@@ -59,8 +70,10 @@ export default function EditItemPage() {
       }
     };
 
-    if (name && itemId) fetchItem();
-  }, [name, itemId]);
+    if (name && itemId) {
+      fetchItem();
+    }
+  }, [name, itemId, tAr, isLoaded]); // Include isLoaded in dependencies
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -69,12 +82,12 @@ export default function EditItemPage() {
 
     if (name === "image" && files && files[0]) {
       const newImage = files[0];
-      const previewURL = URL.createObjectURL(newImage); // Create preview URL
+      const previewURL = URL.createObjectURL(newImage);
 
       setFormData((prev) => ({
         ...prev,
         image: newImage,
-        currentImage: previewURL, // Set preview as currentImage
+        currentImage: previewURL,
       }));
     } else {
       setFormData({ ...formData, [name]: value });
@@ -88,7 +101,7 @@ export default function EditItemPage() {
     try {
       const data = new FormData();
       data.append("name", formData.name);
-      data.append("nameAr", formData.itemNameAr); // Include Arabic name in form data
+      data.append("nameAr", formData.itemNameAr);
       data.append("points", formData.points);
       data.append("price", Math.floor(+formData.points / 19).toString());
       data.append("quantity", formData.quantity);
@@ -96,7 +109,7 @@ export default function EditItemPage() {
       
       if (formData.image) data.append("image", formData.image);
 
-      const res = await api.put(`/categories/item/${name}/${itemId}`, data, {
+      await api.put(`/categories/item/${name}/${itemId}`, data, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -106,11 +119,11 @@ export default function EditItemPage() {
         icon: "success",
         title: "Success!",
         text: "Item updated successfully",
-        showConfirmButton: false,
-        timer: 1500,
+        confirmButtonColor: "#10b981",
       });
 
-      router.push(`/admin/categories/${name}/get-sub-category`);
+      window.location.href = `/admin/categories/${name}/get-sub-category`;
+      
     } catch (err: any) {
       console.error(err.response?.data?.message);
       Swal.fire({
@@ -124,7 +137,8 @@ export default function EditItemPage() {
     }
   };
 
-  if (loading) {
+  // Show loading while language context or data is loading
+  if (loading || !isLoaded) {
     return (
       <>
         <div className="flex justify-center items-center h-64">
@@ -143,7 +157,7 @@ export default function EditItemPage() {
             <p className="mt-1 opacity-90">Update the details of your item</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          <form onSubmit={handleSubmit} className="p-6 space-y-6" style={{background: "var(--background)"}}>
             {/* English Item Name */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">
@@ -172,7 +186,7 @@ export default function EditItemPage() {
                 onChange={handleChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition text-right"
                 placeholder="أدخل اسم العنصر بالعربية"
-                dir="rtl" // Right-to-left text direction for Arabic
+                dir="rtl"
               />
               <p className="text-xs text-gray-500">
                 Arabic name is optional but recommended for better user experience

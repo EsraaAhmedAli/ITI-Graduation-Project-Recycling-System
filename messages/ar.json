@@ -243,21 +243,9 @@
       "name": "ورق",
       "description": "عربي"
     },
-    "paper only": {
-      "name": "ورق بسسس",
-      "description": "مجموعة من الورق"
-    },
-    "paper only monly": {
-      "name": "ورق بسسس",
-      "description": "مجموعة من الورق"
-    },
-    "papers kteir gedan": {
-      "name": "ورق كتيؤ",
-      "description": "ترجمة"
-    },
-    "papers": {
-      "name": "ورق",
-      "description": "عربي"
+    "plastic": {
+      "name": "بلاسيتك",
+      "description": "مجموعة من العناصر"
     }
   },
   "collectionsOfCategory": "{{collections}}  {{category}}",
@@ -274,6 +262,8 @@
     "pointsAbbreviation": "نقاط",
     "allCategories": "جميع الفئات",
     "showing": "عرض",
+    "showings": "عرض {{start}} إلى {{end}} من أصل {{total}} نتيجة",
+    "showing_of": "عرض {{count}} من أصل {{total}}",
     "of": "من",
     "items": "عنصر",
     "page": "صفحة",
@@ -295,7 +285,7 @@
   },
   "staticCategories": {
     "categories": "الفئات",
-    "addNewCategory":"اضف فئة جديدة",
+    "addNewCategory": "اضف فئة جديدة",
     "recyclingCategories": "فئات إعادة التدوير",
     "recyclingCategoriesSubtitle": "عندك بواقي وعايز تكسب فلوس؟ احكيلنا عندك إيه",
     "seeMore": "عرض المزيد",
@@ -408,14 +398,17 @@
   "viewFullHistory": "عرض التاريخ الكامل",
   "items": {
     "paper": {
-      "shredded paper": "ورق بس"
+      "shredded papers": "ورق متقطع"
     }
   },
-  "dashboard": "لوحة التحكم",
-  "Categories": "الفئات",
-  "users": "المستخدمين",
-  "orders": "الطلبات",
-  "transactions": "المعاملات",
-  "approve": "الموافقة",
-  "logout": "تسجيل الخروج"
+  "sidebar": {
+    "dashboard": "لوحة التحكم",
+    "categories": "الفئات",
+    "users": "المستخدمون",
+    "orders": "الطلبات",
+    "transactions": "المعاملات",
+    "approve": "الموافقة",
+    "dark_mode": "الوضع الليلي",
+    "logout": "تسجيل الخروج"
+  }
 }

@@ -278,6 +278,7 @@ const AdminUsersPage = () => {
             (count, f) => count + (f.active?.length || 0),
             0
           )}
+          
         />
       )}
 

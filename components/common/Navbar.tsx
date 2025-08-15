@@ -19,7 +19,6 @@ import {
   User,
   ChevronDown,
   Globe,
-
   Sun,
   Moon,
 
@@ -34,6 +33,7 @@ import NavbarSearch from "./search";
 import Image from "next/image";
 import { NotificationBell } from "../notifications/notidication";
 import { useLanguage } from "@/context/LanguageContext";
+import { hover } from "framer-motion";
 
 export default function Navbar() {
   const authContext = useContext(UserAuthContext);
@@ -119,7 +119,7 @@ export default function Navbar() {
   );
 
   return (
-    <nav className="sticky top-0 z-50 bg-yellow/95 dark:bg-yellow-500 backdrop-blur-lg  border-gray-200 dark:border-yellow-700 shadow-sm">
+    <nav className="sticky top-0 z-50  bg--color-base-100-: #1a1a1a; border-gray-200 shadow-sm" style={{background:"var(--backeground)"}}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Left side: Logo + Search */}
@@ -150,6 +150,7 @@ export default function Navbar() {
               href={isBuyer ? "/marketplace" : "/category"}
               className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800 font-medium gap-2 px-3 py-2 rounded-md transition-all duration-200 text-sm"
             >
+              
               {isBuyer ? (
                 <Store className="w-4 h-4" />
               ) : (

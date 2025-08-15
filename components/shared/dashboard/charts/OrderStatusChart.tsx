@@ -118,7 +118,7 @@ const chartData = useMemo(() => {
 
     if (!chartData || totalOrders === 0) {
       return (
-        <div className="flex items-center justify-center h-full text-gray-500">
+        <div className="flex items-center justify-center h-full text-gray-500" style={{ background: "var(--background)" }}>
           <div className="text-center">
             <div className="text-2xl md:text-4xl mb-2">📊</div>
             <p className="text-xs md:text-sm">No order data</p>
@@ -130,7 +130,7 @@ const chartData = useMemo(() => {
     return (
       <>
         {/* Doughnut Chart with Center Text */}
-        <div className="relative w-[180px] md:w-[220px] h-[120px] md:h-[150px] mx-auto">
+        <div className="relative w-[180px] md:w-[220px] h-[120px] md:h-[150px] mx-auto" >
           <Doughnut data={chartData} options={chartOptions} />
           
          
@@ -154,7 +154,7 @@ const chartData = useMemo(() => {
   };
 
   return (
-    <div className="bg-white rounded-xl p-4 md:p-6 shadow border border-green-100 flex-1 flex flex-col">
+    <div className="bg-white rounded-xl p-4 md:p-6 shadow border border-green-100 flex-1 flex flex-col" style={{ background: "var(--background)"}}>
       <div className="flex justify-between items-center mb-2">
         <span className="text-sm md:text-base font-medium text-green-800">
           Order Status

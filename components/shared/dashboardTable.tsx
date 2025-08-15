@@ -1,3 +1,4 @@
+  'use client'
   import React, { useEffect, useMemo, useState } from "react";
 
   import {
@@ -20,6 +21,7 @@
     FilterOption,
     FilterType,
   } from "./dashboard/filter/FilterArea";
+import { useLanguage } from "@/context/LanguageContext";
 
   type Column<T> = {
     key: string;
@@ -116,7 +118,6 @@
     const updatePageGroupSize = () => {
       setPageGroupSize(window.innerWidth < 768 ? 3 : 5);
     };
-    
     updatePageGroupSize(); // Set initial value
     window.addEventListener('resize', updatePageGroupSize);
     
@@ -156,6 +157,7 @@
       const col = columns.find((c) => c.key === colKey);
       return (col?.sortKey as string) || colKey;
     };
+    const {t} = useLanguage()
 
     const sortedData = useMemo(() => {
       if (!sortColumn) return filteredData;
@@ -460,10 +462,12 @@
               <h1 className="text-xl md:text-2xl font-semibold text-green-800">
                 {title}
               </h1>
-              <span className="text-xs md:text-sm text-green-600 bg-green-100 px-2 py-1 rounded-full whitespace-nowrap">
-                Showing {Math.min(itemsPerPage, sortedData.length)} of{" "}
-                {sortedData.length}
-              </span>
+         <span className="text-xs md:text-sm text-green-600 bg-green-100 px-2 py-1 rounded-full whitespace-nowrap">
+  {t("common.showing_of", {
+    count: Math.min(itemsPerPage, sortedData.length),
+    total: sortedData.length
+  })}
+</span>
             </div>
 
             <div className="flex items-center gap-2 md:gap-3 overflow-x-auto">
@@ -702,11 +706,13 @@
         {totalPages > 1 && (
           <div className="px-4 md:px-6 py-4 border-t border-green-100 bg-green-25">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="text-xs md:text-sm text-green-700 order-2 sm:order-1">
-                Showing {startIndex + 1} to{" "}
-                {Math.min(endIndex, sortedData.length)} of {sortedData.length}{" "}
-                results
-              </div>
+         <div className="text-xs md:text-sm text-green-700 order-2 sm:order-1">
+  {t("common.showings", {
+    start: startIndex + 1,
+    end: Math.min(endIndex, sortedData.length),
+    total: sortedData.length,
+  })}
+</div>
 
               <div className="flex items-center gap-2 order-1 sm:order-2">
                 <button

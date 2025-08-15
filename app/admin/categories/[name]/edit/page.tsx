@@ -13,6 +13,8 @@ export default function EditCategoryPage() {
   const router = useRouter();
 const params = useParams();
 const name = decodeURIComponent(params.name as string);
+console.log(encodeURIComponent(name),'ttt');
+
   const [category, setCategory] = useState({ 
     name: '', 
     nameAr:'',
@@ -22,7 +24,7 @@ const name = decodeURIComponent(params.name as string);
   });
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const{t,tAr}= useLanguage()
+  const{tAr}= useLanguage()
   
 
   
@@ -96,13 +98,7 @@ useEffect(() => {
       if (!data.secure_url) throw new Error('Upload failed');
 
       setCategory((prev) => ({ ...prev, image: data.secure_url }));
-      await Swal.fire({
-        icon: 'success',
-        title: 'Uploaded!',
-        text: 'Image uploaded successfully',
-        showConfirmButton: false,
-        timer: 1500,
-      });
+  
     } catch (err) {
       console.error(err);
       Swal.fire({
@@ -115,11 +111,13 @@ useEffect(() => {
       setUploading(false);
     }
   };
+  
 
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
+  setLoading(true);
+
   try {
-    // Prepare data for API - include Arabic fields
     const updateData = {
       name: category.name,
       nameAr: category.nameAr,
@@ -130,19 +128,22 @@ const handleSubmit = async (e: React.FormEvent) => {
 
     await api.put(`/categories/${encodeURIComponent(name)}`, updateData);
     
-    queryClient.invalidateQueries({ queryKey: ['categories list'] });
-    
+    // Invalidate and refresh data
+    await queryClient.invalidateQueries({ queryKey: ['categories list'] });
+    await queryClient.refetchQueries({ queryKey: ['categories list'] });
+
+    // Show success message and handle navigation
     await Swal.fire({
       icon: 'success',
-      title: 'Success!',
-      text: 'Category updated successfully',
-      showConfirmButton: false,
-      timer: 1500,
+      title: 'Updated!',
+      text: 'Category has been updated successfully',
+      confirmButtonColor: '#10b981',
+      willClose: () => {
+        // This will execute when the alert closes
+        window.location.href = '/admin/categories';
+      }
     });
-    
-    // Move navigation after SweetAlert
-    router.push('/admin/categories');
-    
+
   } catch (err) {
     console.error(err);
     Swal.fire({
@@ -151,9 +152,10 @@ const handleSubmit = async (e: React.FormEvent) => {
       text: 'Update failed',
       confirmButtonColor: '#10b981',
     });
+  } finally {
+    setLoading(false);
   }
 };
-
   if (loading) {
     return (
       <>
@@ -173,7 +175,7 @@ const handleSubmit = async (e: React.FormEvent) => {
             <p className="mt-1 opacity-90">Update the details of your category</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          <form onSubmit={handleSubmit} className="p-6 space-y-6"  style={{background: "var(--background)"}}>
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">Name *</label>
               <input

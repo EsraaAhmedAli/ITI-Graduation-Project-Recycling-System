@@ -23,62 +23,62 @@ export default function AddCategoryPage() {
                        descriptionAr.trim() !== '' && 
                        imageFile !== null;
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-        if (!imageFile) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Oops...',
-                text: 'Please select an image for the category!',
-                confirmButtonColor: '#10b981',
-            });
-            return;
-        }
+  if (!imageFile) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Oops...',
+      text: 'Please select an image for the category!',
+      confirmButtonColor: '#10b981',
+    });
+    return;
+  }
 
-        setLoading(true);
+  setLoading(true);
 
-        try {
-            const formData = new FormData();
-            formData.append('name', name);
-            formData.append('nameAr', nameAr);
-            formData.append('description', description);
-            formData.append('descriptionAr', descriptionAr);
-            formData.append('image', imageFile);
+  try {
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('nameAr', nameAr);
+    formData.append('description', description);
+    formData.append('descriptionAr', descriptionAr);
+    formData.append('image', imageFile);
 
-            await api.post('/categories', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
+    await api.post('/categories', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
 
-            await Swal.fire({
-                icon: 'success',
-                title: 'Success!',
-                text: 'Category created successfully',
-                showConfirmButton: false,
-                timer: 1500,
-                timerProgressBar: true,
-            });
+    // Show success message first
+    await Swal.fire({
+      icon: 'success',
+      title: 'Success!',
+      text: 'Category created successfully',
+      confirmButtonColor: '#10b981',
+    });
 
-            router.push('/admin/categories');
-        } catch (err: any) {
-            console.log(err);
-            
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: err?.response?.data?.message || err.message || 'Something went wrong!',
-                confirmButtonColor: '#10b981',
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
+    // Force hard navigation to ensure fresh data
+    window.location.href = '/admin/categories';
+    
+  } catch (err: any) {
+    console.error(err);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: err?.response?.data?.message || err.message || 'Something went wrong!',
+      confirmButtonColor: '#10b981',
+    });
+  } finally {
+    setLoading(false);
+  }
+};
 
     return (
         <>
-            <div className="max-w-2xl mx-auto p-6">
+            <div className="max-w-2xl mx-auto p-6 " style={{ background: "var(--color-base-100)" }}>
                 <div className="bg-white rounded-lg shadow-md overflow-hidden">
                     <div className="p-6 bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
                         <h1 className="text-2xl font-bold">Add New Category</h1>

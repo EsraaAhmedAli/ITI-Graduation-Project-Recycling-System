@@ -20,6 +20,7 @@ import { get } from "http";
 import { useUserPoints } from "@/context/UserPointsContext";
 import { useNotification } from "@/context/notificationContext";
 import { queryClient } from "@/lib/queryClient";
+import { backgroundClip } from "html2canvas/dist/types/css/property-descriptors/background-clip";
 import { useLanguage } from "@/context/LanguageContext";
 
 type UserRole = "customer" | "buyer";
@@ -858,7 +859,7 @@ const { locale } = useLanguage();
       {/* Tab Navigation */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+          <nav className="-mb-px flex space-x-8 px-6" aria-label="Tabs" style={{ background: "var(--background)" }}>
             <button
               onClick={() => handleTabChange("customer")}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${

@@ -94,7 +94,7 @@ export default async function MarketplacePage() {
     <div className="max-w-7xl mx-auto px-4 py-6">
       {/* Server-rendered header for SEO */}
       <header className="mb-6 text-center">
-        <h1 className="text-2xl font-bold text-gray-800 mb-1">
+        <h1 className="text-2xl font-bold text-white-800 mb-1">
           ♻️ Sustainable Marketplace
         </h1>
         <p className="text-gray-600 text-sm">
