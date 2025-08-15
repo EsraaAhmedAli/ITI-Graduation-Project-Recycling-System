@@ -80,7 +80,7 @@ const UserGrowthChart = memo<UserGrowthChartProps>(({ userGrowth, loading }) => 
   };
 
   return (
-    <div className="bg-white p-4 md:p-6 rounded-xl md:rounded-2xl shadow border border-green-100">
+    <div className="bg-white p-4 md:p-6 rounded-xl md:rounded-2xl shadow border border-green-100" style={{ background: "var(--background)" }}>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg md:text-xl font-semibold text-green-800">User Growth</h2>
         <span className="text-xs text-green-500 bg-green-50 px-2 py-1 rounded">

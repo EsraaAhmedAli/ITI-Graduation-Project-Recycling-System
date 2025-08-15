@@ -135,7 +135,7 @@ await api.put(`/categories/${encodeURIComponent(name)}`, category);
             <p className="mt-1 opacity-90">Update the details of your category</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          <form onSubmit={handleSubmit} className="p-6 space-y-6"  style={{background: "var(--background)"}}>
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">Name *</label>
               <input

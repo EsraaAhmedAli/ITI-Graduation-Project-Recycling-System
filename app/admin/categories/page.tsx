@@ -13,7 +13,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 export default function Page() {
   const { data, isLoading, error } = useCategories();
-  const queryClient = useQueryClient(); // 👈 init queryClient
+  const queryClient = useQueryClient(); 
 
   const router = useRouter();
 
@@ -121,6 +121,7 @@ export default function Page() {
           }
         />
       )}
+      
     </>
   );
 }

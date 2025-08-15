@@ -144,7 +144,7 @@ const TopRecyclersCard = memo<TopRecyclersCardProps>(({ topUsers, loading }) => 
   };
 
   return (
-    <div className="bg-white rounded-xl p-4 md:p-6 shadow border border-green-100 flex-1 flex flex-col">
+    <div className="bg-white rounded-xl p-4 md:p-6 shadow border border-green-100 flex-1 flex flex-col" style={{ background: "var(--background)" }}>
       <div className="flex justify-between items-center mb-2">
         <span className="text-sm md:text-base font-medium text-green-800">
           Top Recyclers
