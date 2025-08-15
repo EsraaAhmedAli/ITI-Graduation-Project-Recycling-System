@@ -11,6 +11,7 @@ import { useUserAuth } from "@/context/AuthFormContext";
 import { CartItem } from "@/models/cart";
 import { toast } from "react-hot-toast";
 import { useGetItems } from "@/hooks/useGetItems"; // Import your hook
+import { useLanguage } from "@/context/LanguageContext";
 
 const itemVariants = {
   hidden: { opacity: 0, y: 10 },
@@ -31,7 +32,7 @@ export default function CartPage() {
   const [totalPoints, setTotalPoints] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
   const { user } = useUserAuth();
-
+const{t} = useLanguage()
   // States for input handling
   const [inputValues, setInputValues] = useState<{ [key: string]: string }>({});
   const [inputErrors, setInputErrors] = useState<{ [key: string]: string }>({});
@@ -517,12 +518,15 @@ export default function CartPage() {
                           <h3 className={`text-lg font-medium ${
                             outOfStockItems[item._id] ? 'text-gray-500 line-through' : 'text-gray-800'
                           }`}>
-                            {item.name}
-                          </h3>
+              {t(
+                    `items.${item.categoryName}.${item.name
+                      .toLowerCase()
+                      }`
+                  )}                          </h3>
                           <p className="text-sm text-gray-500 mt-1">
                             Category:{" "}
                             <span className="text-green-600">
-                              {item.categoryName}
+                              {t(`categories.${item?.categoryName}.name`)}
                             </span>
                           </p>
                         </div>

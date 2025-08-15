@@ -10,12 +10,34 @@ import Image from "next/image";
 import Button from "@/components/common/Button";
 import { useCategories } from "@/hooks/useGetCategories";
 import { useQueryClient } from "@tanstack/react-query";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function Page() {
   const { data, isLoading, error } = useCategories();
-  const queryClient = useQueryClient(); // 👈 init queryClient
-
+  const queryClient = useQueryClient();
+  const { t } = useLanguage(); // Get translation function
   const router = useRouter();
+
+  // Helper function to get translated category name
+  const getTranslatedCategoryName = (categoryName: string) => {
+    // Convert category name to translation key format
+    const translationKey = `categories.${categoryName.toLowerCase()}.name`;
+    
+    // Try to get translation, fallback to original name if not found
+    const translatedName = t(translationKey);
+    
+    // If translation returns the key itself (not found), return original name
+    return translatedName === translationKey ? categoryName : translatedName;
+  };
+
+  // Helper function to get translated description
+  const getTranslatedDescription = (categoryName: string) => {
+    const descriptionKey = `categories.${categoryName.toLowerCase().replace(/\s+/g, '-')}.description`;
+    const translatedDesc = t(descriptionKey);
+    
+    // Return translated description or fallback to empty string
+    return translatedDesc === descriptionKey ? '' : translatedDesc;
+  };
 
   const columns = [
     {
@@ -25,7 +47,7 @@ export default function Page() {
       render: (item: any) => (
         <Image
           src={item.image}
-          alt={item.name}
+          alt={getTranslatedCategoryName(item.name)}
           width={70}
           height={70}
           className="rounded-full object-cover cursor-pointer"
@@ -35,8 +57,18 @@ export default function Page() {
         />
       ),
     },
-    { key: "name", label: "Category Name", sortable: true },
-    { key: "description", label: "Description", sortable: true },
+    { 
+      key: "name", 
+      label: "Category Name", 
+      sortable: true,
+      render: (item: any) => getTranslatedCategoryName(item.name)
+    },
+    { 
+      key: "description", 
+      label: "Description", 
+      sortable: true,
+      render: (item: any) => getTranslatedDescription(item.name) || item.description
+    },
   ];
 
   const handleAddNewCategory = () => {
@@ -44,9 +76,11 @@ export default function Page() {
   };
 
   const handleDelete = async (item: any) => {
+    const translatedName = getTranslatedCategoryName(item.name);
+    
     const result = await Swal.fire({
       title: "Are you sure?",
-      text: `You are about to delete "${item.name}". This action cannot be undone!`,
+      text: `You are about to delete "${translatedName}". This action cannot be undone!`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
@@ -61,7 +95,7 @@ export default function Page() {
         Swal.fire({
           icon: "success",
           title: "Deleted!",
-          text: `"${item.name}" has been deleted.`,
+          text: `"${translatedName}" has been deleted.`,
           timer: 1500,
           showConfirmButton: false,
         });
@@ -82,16 +116,16 @@ export default function Page() {
         <Loader title="categories" />
       ) : error ? (
         <p className="text-center text-red-500 py-10">{error}</p>
-      ) : data.data?.length === 0 ? (
+      ) : data?.data?.length === 0 ? (
         <>
           <p className="text-center text-gray-500 py-10">
-            No categories found.
+            {t('staticCategories.errorLoadingCategories') || 'No categories found.'}
           </p>
           <div className="flex justify-center">
             <Button
               onClick={handleAddNewCategory}
               className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition-all duration-300">
-              Start adding new category
+              {t('common.startAdding') || 'Start adding new category'}
             </Button>
           </div>
         </>
@@ -99,9 +133,9 @@ export default function Page() {
         <DynamicTable
           data={data?.data}
           columns={columns}
-          title="Categories"
+          title={t('staticCategories.categories') || 'Categories'}
           itemsPerPage={5}
-          addButtonText="Add New Category"
+          addButtonText={t('staticCategories.addNewCategory') || 'Add New Category'}
           onAdd={handleAddNewCategory}
           onEdit={(item) =>
             router.push(

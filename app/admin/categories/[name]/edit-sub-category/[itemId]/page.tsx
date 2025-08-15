@@ -14,6 +14,7 @@ export default function EditItemPage() {
 
   const [formData, setFormData] = useState({
     name: "",
+    itemNameAr: "", // Arabic name field
     points: "",
     price: "",
     quantity: "",
@@ -36,6 +37,7 @@ export default function EditItemPage() {
         if (item) {
           setFormData({
             name: item.name,
+            itemNameAr: item.itemNameAr || "", // Handle Arabic name from API
             points: item.points,
             price: item.price,
             quantity: item.quantity,
@@ -86,11 +88,12 @@ export default function EditItemPage() {
     try {
       const data = new FormData();
       data.append("name", formData.name);
+      data.append("itemNameAr", formData.itemNameAr); // Include Arabic name in form data
       data.append("points", formData.points);
-      data.append("price",Math.floor( formData.points/19));
+      data.append("price", Math.floor(+formData.points / 19).toString());
       data.append("quantity", formData.quantity);
-
       data.append("measurement_unit", formData.measurement_unit);
+      
       if (formData.image) data.append("image", formData.image);
 
       const res = await api.put(`/categories/item/${name}/${itemId}`, data, {
@@ -108,12 +111,12 @@ export default function EditItemPage() {
       });
 
       router.push(`/admin/categories/${name}/get-sub-category`);
-    } catch (err) {
-      console.error(err.response.data.message);
+    } catch (err: any) {
+      console.error(err.response?.data?.message);
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: err.response.data.message,
+        text: err.response?.data?.message || "Failed to update item",
         confirmButtonColor: "#10b981",
       });
     } finally {
@@ -141,9 +144,10 @@ export default function EditItemPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            {/* English Item Name */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">
-                Item Name *
+                Item Name (English) *
               </label>
               <input
                 type="text"
@@ -151,9 +155,28 @@ export default function EditItemPage() {
                 value={formData.name}
                 onChange={handleChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
-                placeholder="Enter item name"
+                placeholder="Enter item name in English"
                 required
               />
+            </div>
+
+            {/* Arabic Item Name */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Item Name (Arabic)
+              </label>
+              <input
+                type="text"
+                name="itemNameAr"
+                value={formData.itemNameAr}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition text-right"
+                placeholder="أدخل اسم العنصر بالعربية"
+                dir="rtl" // Right-to-left text direction for Arabic
+              />
+              <p className="text-xs text-gray-500">
+                Arabic name is optional but recommended for better user experience
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -177,10 +200,10 @@ export default function EditItemPage() {
                   Price *
                 </label>
                 <input
-                disabled
+                  disabled
                   type="number"
                   name="price"
-                  value={Math.floor(formData.points/19)}
+                  value={Math.floor(+formData.points / 19)}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border bg-gray-200 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
                   placeholder="Enter price"
@@ -198,7 +221,7 @@ export default function EditItemPage() {
                   value={formData.quantity}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
-                  placeholder="Enter price"
+                  placeholder="Enter quantity"
                   required
                 />
               </div>
@@ -234,7 +257,7 @@ export default function EditItemPage() {
                     width={100}
                     height={100}
                     alt="Current item"
-                    className=" object-cover rounded-lg border border-gray-200"
+                    className="object-cover rounded-lg border border-gray-200"
                   />
                 </div>
               )}

@@ -21,6 +21,7 @@ export default function AddSubCategoryPage() {
 
   const [formData, setFormData] = useState({
     itemName: "",
+    itemNameAr: "",
     points: "",
     price: "",
     quantity: "",
@@ -29,8 +30,8 @@ export default function AddSubCategoryPage() {
   });
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, files } = e.target;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, files } = e.target as HTMLInputElement;
 
     if (name === "image" && files?.length) {
       const file = files[0];
@@ -52,8 +53,9 @@ export default function AddSubCategoryPage() {
     try {
       const form = new FormData();
       form.append("itemName", formData.itemName);
+      form.append("itemNameAr", formData.itemNameAr);
       form.append("points", formData.points);
-      form.append("price", Math.floor(formData.points/19));
+      form.append("price", Math.floor(Number(formData.points)/19).toString());
       form.append("quantity", formData.quantity);
 
       // convert measurement_unit string to number enum here:
@@ -72,17 +74,16 @@ export default function AddSubCategoryPage() {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      // success toast...
+      toast.success("Sub-category added successfully!");
       router.push("/admin/categories");
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
-      toast.error(error?.response?.data?.message)
-
-      // error toast...
+      toast.error(error?.response?.data?.message || "Something went wrong!");
     } finally {
       setLoading(false);
     }
   };
+
   return (
     <>
       <div className="max-w-2xl mx-auto p-6">
@@ -95,19 +96,37 @@ export default function AddSubCategoryPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Sub-Category Name *
-              </label>
-              <input
-                type="text"
-                name="itemName"
-                value={formData.itemName}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
-                placeholder="Enter sub-category name"
-                required
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Sub-Category Name (English) *
+                </label>
+                <input
+                  type="text"
+                  name="itemName"
+                  value={formData.itemName}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
+                  placeholder="Enter sub-category name in English"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Sub-Category Name (Arabic) *
+                </label>
+                <input
+                  type="text"
+                  name="itemNameAr"
+                  value={formData.itemNameAr}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition text-right"
+                  placeholder="أدخل اسم الفئة الفرعية بالعربية"
+                  dir="rtl"
+                  required
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -131,13 +150,12 @@ export default function AddSubCategoryPage() {
                   Price *
                 </label>
                 <input
-                disabled
+                  disabled
                   type="number"
                   name="price"
-                  value={Math.floor(formData.points/19)}
-                  // onChange={handleChange}
+                  value={formData.points ? Math.floor(Number(formData.points)/19) : ''}
                   className="w-full px-4 py-2 border bg-gray-300 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
-                  placeholder="Enter price"
+                  placeholder="Auto-calculated price"
                   required
                 />
               </div>

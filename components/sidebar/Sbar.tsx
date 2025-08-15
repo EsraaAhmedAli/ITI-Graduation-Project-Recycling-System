@@ -15,6 +15,7 @@ import clsx from "clsx";
 import { useContext, useEffect, useState, useCallback, useMemo } from "react";
 import { UserAuthContext } from "@/context/AuthFormContext";
 import { FaMoneyBill } from "react-icons/fa";
+import { useLanguage } from "@/context/LanguageContext";
 
 const menuItems = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/admin/dashboard" },
@@ -27,6 +28,7 @@ const menuItems = [
 ];
 
 export default function AdminSidebar() {
+  const {locale,setLocale} = useLanguage()
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(true);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -132,6 +134,43 @@ export default function AdminSidebar() {
         collapsed ? "w-20" : "w-64"
       )}
     >
+             <div className="hidden lg:flex items-center gap-1.5 px-2 py-1 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
+              <span
+                className={`text-xs font-medium ${
+                  locale === "en"
+                    ? "text-blue-600 dark:text-blue-400"
+                    : "text-gray-400 dark:text-gray-500"
+                }`}
+              >
+                EN
+              </span>
+              <button
+                onClick={() => setLocale(locale === "en" ? "ar" : "en")}
+                className="relative w-8 h-4 bg-gray-200 dark:bg-gray-600 rounded-full transition-colors duration-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                style={{
+                  backgroundColor:
+                    locale === "ar" ? "#3B82F6": "#D1D5DB",
+                }}
+                title="Toggle Language"
+              >
+                <div
+                  className="absolute top-0.5 left-0.5 w-3 h-3 bg-white dark:bg-gray-200 rounded-full shadow-sm transform transition-transform duration-200"
+                  style={{
+                    transform:
+                      locale === "ar" ? "translateX(16px)" : "translateX(0)",
+                  }}
+                />
+              </button>
+              <span
+                className={`text-xs font-medium ${
+                  locale === "ar"
+                    ? "text-blue-600 dark:text-blue-400"
+                    : "text-gray-400 dark:text-gray-500"
+                }`}
+              >
+                AR
+              </span>
+            </div>
       <div
         className="flex items-center gap-2 p-4 border-b border-gray-200 cursor-pointer flex-shrink-0"
         onClick={toggleSidebar}

@@ -63,8 +63,12 @@ export default function ItemsModal({ show, onclose, selectedOrderItems, userRole
                       <div className="flex items-center gap-3 mb-3">
                         <div className="flex items-center gap-2">
                           <h4 className="text-lg font-semibold text-gray-800">
-                            {item.itemName || 'Unnamed Item'}
-                          </h4>
+         {t(
+                    `items.${item?.categoryName}.${item?.itemName
+                      .toLowerCase()
+                      }`
+                  )}
+                                                 </h4>
                           <Image width={50} height={50} src={item.image} alt={item.itemName} />
                     
                         </div>
@@ -195,8 +199,9 @@ export default function ItemsModal({ show, onclose, selectedOrderItems, userRole
                     {t('itemsModal.totalPoints', { points: totalPoints.toLocaleString() })}
                   </p>
                 }
+           
                   {
-                    selectedOrder?.paymentMethod !== null &&                   <p  className="text-sm font-semibold text-green-700">payment Method: {selectedOrder.paymentMethod}</p>
+                    selectedOrder?.paymentMethod !== null && userRole.role !== 'customer' &&                  <p  className="text-sm font-semibold text-green-700">payment Method: {selectedOrder.paymentMethod}</p>
 
                   }
                 </div>

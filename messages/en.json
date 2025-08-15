@@ -70,7 +70,6 @@
     "searchplaceholder": "Search items...",
     "myCart": "Cart"
   },
-
   "footer": {
     "title": "XChange",
     "FAQ": "FAQ",
@@ -109,7 +108,6 @@
     "rewarding": "Points Program",
     "pickup": "Pickup"
   },
-
   "ecoAssist": {
     "welcome": {
       "title": "How can I help you recycle today?",
@@ -212,8 +210,7 @@
       "track": "Track Order",
       "rate": "Rate your order",
       "editRate": "Edit Review",
-      "recipt" : "View Recipt",
-
+      "recipt": "View Recipt",
       "cancelConfirm": "Are you sure you want to cancel this order?",
       "confirmYes": "Yes",
       "confirmNo": "No",
@@ -245,13 +242,10 @@
     "addToCollection": "Add to Collection"
   },
   "categories": {
-    "paper": "Paper",
     "e-wasted": "E-Waste",
     "metals": "Metals",
     "spare-parts": "Spare Parts",
-    "plastic": "Plastic",
     "home-appliances": "home appliances",
-
     "subcategories": {
       "shredded-paper": "Shredded Paper",
       "books": "Books",
@@ -270,9 +264,20 @@
       "receiver": "receiver",
       "powerbank": "powerbank",
       "tea-pot": "tea pot"
+    },
+    "paper": {
+      "name": "paper",
+      "description": "variety of paper items"
+    },
+    "plastic": {
+      "name": "plastic",
+      "description": "variety of plastic items"
+    },
+    "e wasted": {
+      "name": "e wasted",
+      "description": "e wasted items"
     }
   },
-
   "common": {
     "adding": "adding",
     "invalidQuantity": "Please enter a valid quantity",
@@ -413,11 +418,19 @@
     "buyerCost": {
       "question": "Is there a cost for buyers?",
       "answer": "Buyers pay for the items plus a small service fee that covers quality inspection, cleaning, and delivery. Our prices are typically 40-70% less than buying new, making quality second-hand materials affordable while supporting sustainability."
+    },
+    "recentPointsActivity": "Recent Points Activity",
+    "pointsAwarded": "Points awarded",
+    "pointsDeducted": "Points deducted",
+    "pts": "pts",
+    "viewFullHistory": "View full history"
+  },
+  "items": {
+    "paper": {
+      "shredded paper": "shredded paper"
+    },
+    "plastic": {
+      "chair": "chair"
     }
-    ,  "recentPointsActivity": "Recent Points Activity",
-  "pointsAwarded": "Points awarded",
-  "pointsDeducted": "Points deducted",
-  "pts": "pts",
-  "viewFullHistory": "View full history"
   }
 }

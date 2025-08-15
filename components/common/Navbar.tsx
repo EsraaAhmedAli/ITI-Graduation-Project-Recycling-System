@@ -247,14 +247,15 @@ export default function Navbar() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-gray-900 dark:text-white text-xs truncate">
+                           
                               {t(
-                                `categories.subcategories.${item?.name
-                                  ?.toLowerCase()
-                                  .replace(/\s+/g, "-")}`
-                              )}
+                    `items.${item.categoryName}.${item.name
+                      .toLowerCase()
+                      }`
+                  )}
                             </p>
                             <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">
-                              {t(`categories.${item?.categoryName}`)}
+                              {t(`categories.${item?.categoryName}.name`)}
                             </p>
                             <div className="flex items-center gap-2 mt-0.5">
                               <p className="text-gray-400 dark:text-gray-500 text-xs">

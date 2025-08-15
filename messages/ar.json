@@ -17,7 +17,6 @@
       "pickupScheduling": "تحديد موعد",
       "earnorshare": "اكسب أو شارك"
     },
-
     "steps": {
       "howItWorks": "كيف تعمل منصتنا",
       "step1": {
@@ -197,7 +196,6 @@
       "rate": "قيم طلبك",
       "editRate": " عدل التقييم",
       "recipt": "عرض الإيصال ",
-
       "status": {
         "inTransit": "قيد التوصيل",
         "completed": "مكتملة",
@@ -227,7 +225,6 @@
     "perItem": "لكل قطعة",
     "OriginalQuantity": "الكمية الأصلية",
     "quantityByDelivery": "الكمية بواسطه عامل التوصيل",
-
     "orderTotal": "إجمالي الطلب",
     "totalPrice": "{{total}} جنيه",
     "currency": "جنيه",
@@ -238,13 +235,10 @@
     "addToCollection": "اضف لمجموعتك"
   },
   "categories": {
-    "paper": "الورق",
     "e-wasted": "النفايات الإلكترونية",
     "metals": "المعادن",
     "spare-parts": "قطع غيار",
-    "plastic": "بلاستيك",
     "home-appliances": "ادوات منزلية",
-
     "subcategories": {
       "shredded-paper": "ورق مقطع",
       "books": "كتب",
@@ -263,10 +257,21 @@
       "receiver": "جهاز استقبال",
       "powerbank": "باور بانك",
       "tea-pot": "براد"
+    },
+    "paper": {
+      "name": "ورق",
+      "description": "مجموعة من الورق"
+    },
+    "plastic": {
+      "name": "بلاستيك",
+      "description": "بعض انواع البلاسيتك"
+    },
+    "e wasted": {
+      "name": "نفايات الكترونية",
+      "description": "نفايات الكترونيه متعدده"
     }
   },
   "collectionsOfCategory": "{{collections}}  {{category}}",
-
   "common": {
     "invalidQuantity": "يرجى إدخال كمية صحيحة",
     "exceedsMaxQuantity": "الحد الأقصى المتاح هو {{max}}",
@@ -406,10 +411,17 @@
     "title": "الأسئلة الشائعة",
     "slogan": "                كل ما تحتاج إلى معرفته حول عملية تبادل المواد لدينا"
   },
-
   "recentPointsActivity": "نشاط النقاط الأخير",
   "pointsAwarded": "منح نقاط",
   "pointsDeducted": "خصم نقاط",
   "pts": "نقطة",
-  "viewFullHistory": "عرض التاريخ الكامل"
+  "viewFullHistory": "عرض التاريخ الكامل",
+  "items": {
+    "paper": {
+      "shredded paper": "ورق متقطع"
+    },
+    "plastic": {
+      "chair": "كرسي"
+    }
+  }
 }

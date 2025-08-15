@@ -198,9 +198,9 @@ export default function UserCategoryPage() {
               <div className="p-4">
                 <h3 className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide leading-tight">
                   {t(
-                    `categories.subcategories.${item.name
+                    `items.${categoryName}.${item.name
                       .toLowerCase()
-                      .replace(/\s+/g, "-")}`
+                      }`
                   )}
                 </h3>
 

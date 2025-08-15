@@ -20,6 +20,7 @@ import { get } from "http";
 import { useUserPoints } from "@/context/UserPointsContext";
 import { useNotification } from "@/context/notificationContext";
 import { queryClient } from "@/lib/queryClient";
+import { useLanguage } from "@/context/LanguageContext";
 
 type UserRole = "customer" | "buyer";
 const STATUS = {
@@ -57,11 +58,13 @@ const fetchOrders = async (
   page: number,
   limit: number,
   userRole?: UserRole,
+  locale?:string,
   filters?: Record<string, any>,
   search?: string // Add search parameter
 ) => {
   const params: any = { page, limit };
   if (userRole) params.userRole = userRole;
+  if(locale) params.lang = locale
   if (filters?.status?.length) params.status = filters.status.join(",");
   if (filters?.date?.[0]) params.date = filters.date[0];
   if (search && search.trim()) params.search = search.trim(); // Add search to params
@@ -220,6 +223,7 @@ export default function Page() {
 
     return { status, date };
   }, [filters, activeTab]);
+const { locale } = useLanguage();
 
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
     queryKey: [
@@ -227,6 +231,7 @@ export default function Page() {
       currentPage,
       activeTab,
       activeFilters,
+      locale,
       debouncedSearchTerm,
     ], // Use debounced search term
     queryFn: () =>
@@ -641,6 +646,7 @@ export default function Page() {
     onClickItemsId: () => {
       setOrderStatus(order.status);
       setSelectedOrderItems(order.items);
+      setSelectedUser(order.user)
       setSelectedOrder(order);
       setIsItemsModalOpen(true);
     },
@@ -964,6 +970,8 @@ export default function Page() {
         selectedOrder={selectedOrder}
         show={isItemsModalOpen}
         orderStatus={orderStatus}
+        userRole={selectedUser}
+
         onclose={() => setIsItemsModalOpen(false)}
       />
       <CourierSelectionModal

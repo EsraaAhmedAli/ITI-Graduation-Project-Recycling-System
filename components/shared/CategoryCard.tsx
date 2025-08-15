@@ -48,10 +48,10 @@ const { t } = useLanguage();
               )}
             </span>
           </div>
-
+{}
           <div className="flex flex-col items-center mb-4">
         <h4 className="font-extrabold text-2xl drop-shadow-lg text-center mb-1 text-[var(--color-primary)] group-hover:text-[var(--color-accent)] transition-colors duration-300">
-              {t(`categories.${name}`)}
+              {t(`categories.${name}.name`)}
             </h4>            <span className="block w-12 h-1 rounded-full bg-gradient-to-r from-[var(--color-success-content)] to-[var(--color-accent)] mb-2 group-hover:from-[var(--color-primary)] group-hover:to-[var(--color-accent)] transition-all duration-300" />
           </div>
         </div>
