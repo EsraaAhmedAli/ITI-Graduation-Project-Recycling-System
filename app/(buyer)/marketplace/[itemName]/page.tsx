@@ -322,7 +322,7 @@ export default function ItemDetailsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen dark:bg-grey">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
           {/* Product Image */}
@@ -342,10 +342,10 @@ export default function ItemDetailsPage() {
           <div className="space-y-6">
             {/* Category and Title */}
             <div>
-              <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 mb-3">
+              <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-gray-100text-3xl text-white-900 mb-3">
                 {t(`categories.${item?.categoryName}`)}
               </span>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-3xl font-bold text-white-900">
                 {t(
                   `categories.subcategories.${decodedName
                     .toLowerCase()
@@ -359,7 +359,7 @@ export default function ItemDetailsPage() {
 
             {/* Price and Points */}
             <div className="flex items-baseline space-x-4">
-              <span className="text-3xl font-bold text-gray-900">
+              <span className="text-3xl font-bold text-white-900">
                 {(item.price * selectedQuantity).toFixed(2)}{" "}
                 {t("itemsModal.currency")}
               </span>
@@ -400,7 +400,7 @@ export default function ItemDetailsPage() {
                     }`}
                     style={{ width: `${stockPercentage}%` }}></div>
                 </div>
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <div className="flex justify-between text-xs text-white-500 mt-1">
                   <span>
                     {t("common.afterPurchase", {
                       quantity: Math.max(0, remainingQuantity),
@@ -596,7 +596,7 @@ export default function ItemDetailsPage() {
                   <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center">
                     {step.icon}
                   </div>
-                  <h3 className="font-semibold text-lg">{step.title}</h3>
+                  <h3 className="font-semibold text-lg text-gray-600">{step.title}</h3>
                   <p className="text-gray-600">{step.description}</p>
                 </div>
               ))}

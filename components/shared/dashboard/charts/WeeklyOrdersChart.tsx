@@ -203,7 +203,7 @@ const WeeklyOrdersChart = memo<WeeklyOrdersChartProps>(({ ordersPerDay, loading 
   };
 
   return (
-    <div className="bg-white rounded-xl p-4 md:p-6 shadow border border-green-100">
+    <div className="bg-white rounded-xl p-4 md:p-6 shadow border border-green-100"   style={{ background:"var(--background)" }}>
       <div className="flex justify-between items-center mb-2 flex-wrap gap-2">
         <span className="text-sm md:text-base font-medium text-green-800">
           Weekly Orders Distribution

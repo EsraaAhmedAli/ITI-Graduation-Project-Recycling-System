@@ -44,7 +44,7 @@ export const StatCard = memo<StatCardProps>(({
   }
 
   return (
-    <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg border-2 border-green-200 flex flex-col transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:-translate-y-1 group relative overflow-hidden backdrop-blur-sm">
+    <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg border-2 border-green-200 flex flex-col transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:-translate-y-1 group relative overflow-hidden backdrop-blur-sm"   style={{ background:"var(--background)" }}>
       {/* Background Gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-green-50/50 to-emerald-100/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       

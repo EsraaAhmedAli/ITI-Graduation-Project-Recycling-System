@@ -709,19 +709,19 @@ export default function PickupConfirmation() {
             <h3 className="font-semibold text-gray-800 mb-4">Order Summary</h3>
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Subtotal</span>
-              <span className="font-medium">EGP{totalPrice.toFixed(2)}</span>
+              <span className="font-medium text-gray-600">EGP{totalPrice.toFixed(2)}</span>
             </div>
             {selectedAddress?.city && (
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Delivery Fee</span>
-                <span className="font-medium">
+                <span className="font-medium text-gray-600">
                   EGP{(deliveryFees[selectedAddress.city] || 0).toFixed(2)}
                 </span>
               </div>
             )}
-            <div className="border-t pt-3 flex justify-between font-semibold text-lg">
+            <div className="border-t pt-3 flex justify-between font-semibold text-lg text-gray-600">
               <span>Total</span>
-              <span>
+              <span text-gray-600>
                 EGP
                 {(
                   totalPrice +

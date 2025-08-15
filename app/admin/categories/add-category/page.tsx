@@ -69,14 +69,14 @@ const isFormValid = name.trim() !== '' && description.trim() !== '' && imageFile
 
     return (
         <>
-            <div className="max-w-2xl mx-auto p-6">
+            <div className="max-w-2xl mx-auto p-6 " style={{ background: "var(--color-base-100)" }}>
                 <div className="bg-white rounded-lg shadow-md overflow-hidden">
                     <div className="p-6 bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
                         <h1 className="text-2xl font-bold">Add New Category</h1>
                         <p className="mt-1 opacity-90">Fill in the details below to create a new category</p>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                    <form onSubmit={handleSubmit} className="p-6 space-y-6" style={{background:"var(--background)"}}>
                         <div className="space-y-2">
                             <label className="block text-sm font-medium text-gray-700">Category Name *</label>
                             <input
