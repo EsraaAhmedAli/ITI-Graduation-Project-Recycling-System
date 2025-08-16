@@ -33,29 +33,13 @@ useEffect(() => {
     try {
       const res = await api.get(`get-items/${encodeURIComponent(name)}`);
       console.log(res.data);
-      
-      // Handle both string and object name formats
-      const categoryName = typeof res.data.name === 'object' 
-        ? res.data.name.en 
-        : res.data.name;
-
-      // Generate translation keys
-      const translationKey = `categories.${categoryName.toLowerCase()}.name`;
-      const translationDesc = `categories.${categoryName.toLowerCase()}.description`;
-      
-      // Always get Arabic translations using tAr
-      const arKey = tAr(translationKey);
-      const arDesc = tAr(translationDesc);
-      
-      console.log('Translation key:', translationKey);
-      console.log('Arabic translation:', arKey);
-      console.log('Arabic description:', arDesc);
+   
 
       setCategory({
-        name: categoryName,
-        nameAr: arKey,        // Always Arabic regardless of current language
-        description: res.data.description,
-        descriptionAr: arDesc, // Always Arabic regardless of current language
+        name: res.data.name.en,
+        nameAr: res.data.name.ar,        // Always Arabic regardless of current language
+        description: res.data.description.en,
+        descriptionAr: res.data.description.ar, // Always Arabic regardless of current language
         image: res.data.image,
       });
     } catch (err) {

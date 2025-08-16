@@ -26,7 +26,7 @@ export default function EditItemPage() {
 
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const { t, tAr, isLoaded } = useLanguage();
+  const {  tAr, isLoaded } = useLanguage();
 
   console.log(name, 'nnn', formData.name, 'ttt');
 
@@ -41,14 +41,11 @@ export default function EditItemPage() {
         const item = data.data.find((i: any) => i._id === itemId);
         
         if (item) {
-          // Generate translation key after item is fetched
-          const translationKey = `items.${name.toLowerCase()}.${item.name}`;
-          const arKey = tAr(translationKey);
-          console.log('Translation key:', translationKey, 'Arabic translation:', arKey);
+
           
           setFormData({
-            name: item.name,
-            itemNameAr: arKey !== translationKey ? arKey : "", // Only use translation if it exists
+            name: item.name.en,
+            itemNameAr: item.name.ar ,
             points: item.points,
             price: item.price,
             quantity: item.quantity,

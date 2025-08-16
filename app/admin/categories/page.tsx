@@ -10,42 +10,45 @@ import Image from "next/image";
 import Button from "@/components/common/Button";
 import { useCategories } from "@/hooks/useGetCategories";
 import { useQueryClient } from "@tanstack/react-query";
-import { useLanguage } from "@/context/LanguageContext";
+import { useLocalization } from "@/utils/localiztionUtil";
+
+// Type definitions for better type safety
+interface BilingualText {
+  en: string;
+  ar: string;
+}
+
+interface CategoryItem {
+  _id: string;
+  name: BilingualText | string;
+  description: BilingualText | string;
+  image: string;
+  items: any[];
+  displayName?: string; // Localized name from backend
+  displayDescription?: string; // Localized description from backend
+}
 
 export default function Page() {
   const { data, isLoading, error } = useCategories();
   const queryClient = useQueryClient();
-  const { t } = useLanguage(); // Get translation function
+  const { getDisplayName, getDisplayDescription, getEnglishName, t, locale } = useLocalization();
   const router = useRouter();
-  console.log(data?.data);
   
-  // Helper function to get translated category name
-  const getTranslatedCategoryName = (categoryItem: any) => {
-    // Extract the English name from the category name object
-    const categoryName = typeof categoryItem.name === 'object' ? categoryItem.name.en : categoryItem.name;
-    
-    // Convert category name to translation key format
-    const translationKey = `categories.${categoryName?.toLowerCase()}.name`;
-    
-    // Try to get translation, fallback to original name if not found
-    const translatedName = t(translationKey);
-    
-    // If translation returns the key itself (not found), return original name
-    return translatedName === translationKey ? categoryName : translatedName;
+  console.log("Categories data:", data?.data);
+  
+  // Now the backend handles localization, so we can use displayName/displayDescription directly
+  const getCategoryDisplayName = (categoryItem: CategoryItem): string => {
+    return getDisplayName(categoryItem);
   };
 
-  // Helper function to get translated description
-  const getTranslatedDescription = (categoryItem: any) => {
-    // Extract the English name from the category name object
-    const categoryName = typeof categoryItem.name === 'object' ? categoryItem.name.en : categoryItem.name;
-    console.log(categoryName,'ccaatname');
-    
-    
-    const descriptionKey = `categories.${categoryName?.toLowerCase()}.description`;
-    const translatedDesc = t(descriptionKey);
-    
-    // Return translated description or fallback to empty string
-    return translatedDesc === descriptionKey ? '' : translatedDesc;
+  // Backend should now provide correct localized displayDescription  
+  const getCategoryDisplayDescription = (categoryItem: CategoryItem): string => {
+    return getDisplayDescription(categoryItem);
+  };
+
+  // Get English name for API calls (backend operations)
+  const getCategoryEnglishName = (categoryItem: CategoryItem): string => {
+    return getEnglishName(categoryItem);
   };
 
   const columns = [
@@ -53,16 +56,16 @@ export default function Page() {
       key: "image",
       label: "Image",
       type: "image",
-      render: (item: any) => (
+      render: (item: CategoryItem) => (
         <Image
           src={item.image}
-          alt={getTranslatedCategoryName(item)}
+          alt={getCategoryDisplayName(item)}
           width={70}
           height={70}
           className="rounded-full object-cover cursor-pointer"
           onClick={() => {
-            const categoryName = typeof item.name === 'object' ? item.name.en : item.name;
-            router.push(`/admin/categories/${categoryName}/get-sub-category`);
+            const categoryName = getCategoryEnglishName(item);
+            router.push(`/admin/categories/${encodeURIComponent(categoryName)}/get-sub-category`);
           }}
         />
       ),
@@ -71,13 +74,13 @@ export default function Page() {
       key: "name", 
       label: "Category Name", 
       sortable: true,
-      render: (item: any) => getTranslatedCategoryName(item)
+      render: (item: CategoryItem) => getCategoryDisplayName(item)
     },
     { 
       key: "description", 
       label: "Description", 
       sortable: true,
-      render: (item: any) => getTranslatedDescription(item) || item.description
+      render: (item: CategoryItem) => getCategoryDisplayDescription(item)
     },
   ];
 
@@ -85,12 +88,12 @@ export default function Page() {
     router.push("/admin/categories/add-category");
   };
 
-  const handleDelete = async (item: any) => {
-    const translatedName = getTranslatedCategoryName(item);
+  const handleDelete = async (item: CategoryItem) => {
+    const displayName = getCategoryDisplayName(item);
     
     const result = await Swal.fire({
       title: "Are you sure?",
-      text: `You are about to delete "${translatedName}". This action cannot be undone!`,
+      text: `You are about to delete "${displayName}". This action cannot be undone!`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
@@ -100,13 +103,13 @@ export default function Page() {
 
     if (result.isConfirmed) {
       try {
-        const categoryName = typeof item.name === 'object' ? item.name.en : item.name;
+        const categoryName = getCategoryEnglishName(item);
         await api.delete(`/categories/${encodeURIComponent(categoryName)}`);
         queryClient.invalidateQueries({ queryKey: ["categories list"] });
         Swal.fire({
           icon: "success",
           title: "Deleted!",
-          text: `"${translatedName}" has been deleted.`,
+          text: `"${displayName}" has been deleted.`,
           timer: 1500,
           showConfirmButton: false,
         });
@@ -148,22 +151,21 @@ export default function Page() {
           itemsPerPage={5}
           addButtonText={t('staticCategories.addNewCategory') || 'Add New Category'}
           onAdd={handleAddNewCategory}
-          onEdit={(item) => {
-            const categoryName = typeof item.name === 'object' ? item.name.en : item.name;
+          onEdit={(item: CategoryItem) => {
+            const categoryName = getCategoryEnglishName(item);
             router.push(`/admin/categories/${encodeURIComponent(categoryName)}/edit`);
           }}
           onDelete={handleDelete}
-          onAddSubCategory={(item) => {
-            const categoryName = typeof item.name === 'object' ? item.name.en : item.name;
+          onAddSubCategory={(item: CategoryItem) => {
+            const categoryName = getCategoryEnglishName(item);
             router.push(`/admin/categories/${encodeURIComponent(categoryName)}/add-sub-category`);
           }}
-          onImageClick={(item) => {
-            const categoryName = typeof item.name === 'object' ? item.name.en : item.name;
-            router.push(`/admin/categories/${categoryName}/get-sub-category`);
+          onImageClick={(item: CategoryItem) => {
+            const categoryName = getCategoryEnglishName(item);
+            router.push(`/admin/categories/${encodeURIComponent(categoryName)}/get-sub-category`);
           }}
         />
       )}
-      
     </>
   );
 }

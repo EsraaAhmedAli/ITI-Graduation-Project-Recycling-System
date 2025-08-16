@@ -21,6 +21,7 @@ import { useUserAuth } from "@/context/AuthFormContext";
 import { useReviews } from "@/hooks/useReviews";
 import DeliveryReviewModal from "../../DeliveryReview";
 import PickupAddressCard from "@/components/pickupAdress";
+import { useLanguage } from "@/context/LanguageContext";
 
 const trackingSteps = [
   {
@@ -80,7 +81,7 @@ export default function TrackingStep({
   
   const {user} = useUserAuth();
   const queryClient = useQueryClient();
-  
+  const{locale} = useLanguage()
   // Get orderId from route parameters (for standalone page) or props (for embedded use)
   const params = useParams();
   const routeOrderId = params?.id as string;
@@ -108,6 +109,16 @@ export default function TrackingStep({
       refetchReviews();
     }
   }, [embedded, orderId, refetchReviews]);
+const getDisplayName = (name: any, locale: string): string => {
+  if (!name) return ''; // Handle undefined/null cases
+  if (typeof name === 'string') return name; // Handle string names
+  if (typeof name === 'object') {
+    // Handle bilingual object
+    if (locale === 'ar' && name.ar) return name.ar;
+    return name.en || ''; // Default to English or empty string
+  }
+  return ''; // Fallback for any other case
+};
 
   const getRefetchInterval = (status: string) => {
     switch (status) {
@@ -519,41 +530,41 @@ export default function TrackingStep({
             </h2>
           </div>
           <div className="space-y-3">
-            {order.items.map((item: any, index: number) => (
-              <div
-                key={index}
-                className={`flex items-center justify-between p-3 rounded-lg ${
-                  order.status === "completed" ? "bg-green-50" : "bg-gray-50"
-                }`}>
-                <div className="flex items-center gap-3">
-                  {item.image && (
-                    <img
-                      src={item.image}
-                      alt={item.name || item.itemName}
-                      className="w-10 h-10 rounded-lg object-cover"
-                    />
-                  )}
-                  <div>
-                    <p className="font-medium text-gray-900">
-                      {item.name || item.itemName}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Quantity: {item.quantity}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium text-gray-900">
-                    {item.price * item.quantity} EGP
-                  </p>
-                  <p className={`text-sm ${
-                    order.status === "completed" ? "text-green-600" : "text-green-600"
-                  }`}>
-                    {item.points * item.quantity} points
-                  </p>
-                </div>
-              </div>
-            ))}
+         {order.items.map((item: any, index: number) => (
+  <div
+    key={index}
+    className={`flex items-center justify-between p-3 rounded-lg ${
+      order.status === "completed" ? "bg-green-50" : "bg-gray-50"
+    }`}>
+    <div className="flex items-center gap-3">
+      {item.image && (
+        <img
+          src={item.image}
+          alt={getDisplayName(item.name, locale)}
+          className="w-10 h-10 rounded-lg object-cover"
+        />
+      )}
+      <div>
+        <p className="font-medium text-gray-900">
+          {getDisplayName(item.name, locale)}
+        </p>
+        <p className="text-sm text-gray-500">
+          Quantity: {item.quantity}
+        </p>
+      </div>
+    </div>
+    <div className="text-right">
+      <p className="font-medium text-gray-900">
+        {item.price * item.quantity} EGP
+      </p>
+      <p className={`text-sm ${
+        order.status === "completed" ? "text-green-600" : "text-green-600"
+      }`}>
+        {item.points * item.quantity} points
+      </p>
+    </div>
+  </div>
+))}
           </div>
         </div>
       )}

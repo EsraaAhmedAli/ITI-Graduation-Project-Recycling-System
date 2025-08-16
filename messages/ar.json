@@ -234,20 +234,6 @@
     "noItemsDesc": "لا يحتوي هذا الطلب على أي عناصر.",
     "addToCollection": "اضف لمجموعتك"
   },
-  "categories": {
-    "e-wasted": "النفايات الإلكترونية",
-    "metals": "المعادن",
-    "spare-parts": "قطع غيار",
-    "home-appliances": "ادوات منزلية",
-    "paper": {
-      "name": "ورق",
-      "description": "عربي"
-    },
-    "plastic": {
-      "name": "بلاسيتك",
-      "description": "مجموعة من العناصر"
-    }
-  },
   "collectionsOfCategory": "{{collections}}  {{category}}",
   "common": {
     "invalidQuantity": "يرجى إدخال كمية صحيحة",
@@ -396,11 +382,6 @@
   "pointsDeducted": "خصم نقاط",
   "pts": "نقطة",
   "viewFullHistory": "عرض التاريخ الكامل",
-  "items": {
-    "paper": {
-      "shredded papers": "ورق متقطع"
-    }
-  },
   "sidebar": {
     "dashboard": "لوحة التحكم",
     "categories": "الفئات",
@@ -410,5 +391,16 @@
     "approve": "الموافقة",
     "dark_mode": "الوضع الليلي",
     "logout": "تسجيل الخروج"
+  },
+  "categories": {
+    "paaper": {
+      "name": "ورق",
+      "description": "ورق"
+    }
+  },
+  "items": {
+    "paaper": {
+      "news paper": "جرايد"
+    }
   }
 }

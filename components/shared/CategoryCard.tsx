@@ -5,18 +5,32 @@ import { motion } from "framer-motion";
 import { categoryIcons } from "@/utils/categoryIcons";
 import { Package } from "lucide-react"; 
 import Link from "next/link";
-import { useLanguage } from "@/context/LanguageContext";
+import { useLocalization } from "@/utils/localiztionUtil";
+
+// Type definitions for bilingual text
+interface BilingualText {
+  en: string;
+  ar: string;
+}
 
 interface Props {
-  name: string;
+  name: BilingualText | string; // Support both bilingual object and string
   image: string;
+  displayName?: string; // Optional display name from backend
   onClick?: () => void;
 }
 
-export default function CategoryCard({ name, image, onClick }: Props) {
-const { t } = useLanguage();
+export default function CategoryCard({ name, image, displayName, onClick }: Props) {
+  const { getDisplayName, getEnglishName } = useLocalization();
+
+  // Create a temporary object to use with utility functions
+  const categoryObject = { name, displayName };
+
+  const categoryDisplayName = getDisplayName(categoryObject);
+  const englishName = getEnglishName(categoryObject);
+
   return (
-    <Link href={`/category/${encodeURIComponent(name)}`}>
+    <Link href={`/category/${encodeURIComponent(englishName)}`}>
       <motion.div
         role="button"
         tabIndex={0}
@@ -33,7 +47,7 @@ const { t } = useLanguage();
               <span className=" w-full h-full rounded-full bg-white overflow-hidden flex items-center justify-center border-4 border-[var(--color-base-200)] group-hover:border-[var(--color-primary)] transition-all duration-300">
                 <Image
                   src={image}
-                  alt={`Image of ${name}`}
+                  alt={`Image of ${categoryDisplayName}`}
                   width={100}
                   height={100}
                   className="object-cover w-24 h-24 rounded-full shadow-md"
@@ -43,16 +57,17 @@ const { t } = useLanguage();
             </span>
 
             <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-white rounded-full p-2 shadow-md border-2 border-[var(--color-base-200)] group-hover:border-[var(--color-primary)] transition-all duration-300">
-              {categoryIcons[name] ?? (
+              {categoryIcons[englishName] ?? (
                 <Package className="w-5 h-5 text-gray-400" />
               )}
             </span>
           </div>
-{}
+
           <div className="flex flex-col items-center mb-4">
-        <h4 className="font-extrabold text-2xl drop-shadow-lg text-center mb-1 text-[var(--color-primary)] group-hover:text-[var(--color-accent)] transition-colors duration-300">
-              {t(`categories.${name}.name`)}
-            </h4>            <span className="block w-12 h-1 rounded-full bg-gradient-to-r from-[var(--color-success-content)] to-[var(--color-accent)] mb-2 group-hover:from-[var(--color-primary)] group-hover:to-[var(--color-accent)] transition-all duration-300" />
+            <h4 className="font-extrabold text-2xl drop-shadow-lg text-center mb-1 text-[var(--color-primary)] group-hover:text-[var(--color-accent)] transition-colors duration-300">
+              {categoryDisplayName}
+            </h4>
+            <span className="block w-12 h-1 rounded-full bg-gradient-to-r from-[var(--color-success-content)] to-[var(--color-accent)] mb-2 group-hover:from-[var(--color-primary)] group-hover:to-[var(--color-accent)] transition-all duration-300" />
           </div>
         </div>
       </motion.div>

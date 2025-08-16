@@ -241,24 +241,6 @@
     "noItemsDesc": "This order doesn't contain any items.",
     "addToCollection": "Add to Collection"
   },
-  "categories": {
-    "e-wasted": "E-Waste",
-    "metals": "Metals",
-    "spare-parts": "Spare Parts",
-    "home-appliances": "home appliances",
-    "papers kteir gedan": {
-      "name": "papers kteir gedan",
-      "description": "english desc"
-    },
-    "paper": {
-      "name": "paper",
-      "description": "eng"
-    },
-    "plastic": {
-      "name": "plastic",
-      "description": "variety of plastic items"
-    }
-  },
   "common": {
     "adding": "adding",
     "invalidQuantity": "Please enter a valid quantity",
@@ -409,11 +391,6 @@
     "pts": "pts",
     "viewFullHistory": "View full history"
   },
-  "items": {
-    "paper": {
-      "shredded papers": "shredded papers"
-    }
-  },
   "sidebar": {
     "dashboard": "Dashboard",
     "categories": "Categories",
@@ -423,5 +400,16 @@
     "approve": "Approve",
     "dark_mode": "Dark Mode",
     "logout": "Logout"
+  },
+  "categories": {
+    "paaper": {
+      "name": "paaper",
+      "description": "testing paper"
+    }
+  },
+  "items": {
+    "paaper": {
+      "news paper": "news paper"
+    }
   }
 }

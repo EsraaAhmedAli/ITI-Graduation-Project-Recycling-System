@@ -8,40 +8,46 @@ import { Recycle, Plus, Sparkles } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import Image from "next/image";
-import { useLanguage } from "@/context/LanguageContext";
 import { useCategories } from "@/hooks/useGetCategories";
+import { useLocalization } from "@/utils/localiztionUtil";
 
-// interface Item {
-//   _id: string;
-//   name: string;
-//   image: string;
-//   points: number;
-//   price: number;
-//   categoryName: string;
-//   measurement_unit: 1 | 2;
-// }
+interface LocalizedItem {
+  _id: string;
+  name: {
+    en: string;
+    ar: string;
+  };
+  displayName: string; // Localized name from backend
+  image: string;
+  points: number;
+  price: number;
+  categoryName: {
+    en: string;
+    ar: string;
+  };
+  categoryDisplayName: string; // Localized category name from backend
+  measurement_unit: 1 | 2;
+  quantity: number;
+  categoryId: string;
+}
 
 export default function UserCategoryPage() {
-  const { t } = useLanguage();
+  const { getDisplayName, getEnglishName, getMeasurementUnit, formatCurrency, t, locale } = useLocalization();
 
   const params = useParams();
   const categoryName = decodeURIComponent(params.name as string);
   const { addToCart, loadingItemId } = useCart();
   const { getCategoryIdByItemName } = useCategories();
 
-  const { data, isLoading, error } = useQuery<CartItem[]>({
-    queryKey: ["subcategory", categoryName],
+  const { data, isLoading, error } = useQuery<LocalizedItem[]>({
+    queryKey: ["subcategory", categoryName, locale], // Include locale for proper caching
     queryFn: async () => {
       const res = await api.get(
-        `/categories/get-items/${encodeURIComponent(categoryName)}`
+        `/categories/get-items/${encodeURIComponent(categoryName)}?language=${locale}`
       );
-      const normalizedItems = res.data.data.map((item: any) => ({
-        ...item,
-        itemName: item.name,
-        categoryName: item.categoryName || categoryName,
-        measurement_unit: Number(item.measurement_unit) as 1 | 2,
-      }));
-      return normalizedItems;
+      
+      // Backend should return localized items with displayName and categoryDisplayName
+      return res.data.data;
     },
     staleTime: 60 * 1000,
     refetchOnMount: false,
@@ -55,63 +61,62 @@ export default function UserCategoryPage() {
 
   const categoryStats = useMemo(() => {
     if (!data || data.length === 0) return null;
+    
     const points = data.map((item) => item.points);
-    const impactKey = `environmentalImpact.${categoryName.toLowerCase()}`;
+    const categoryDisplayName = data[0]?.categoryDisplayName || categoryName;
+    
     return {
       totalItems: data.length,
-      estimatedImpact: t(impactKey),
+      categoryDisplayName,
       pointsRange: getPointsRange(points),
     };
-  }, [data, categoryName, t]);
+  }, [data, categoryName]);
 
-  // const handleAddToCollection = async (item: CartItem) => {
-  //   try {
-  //     // const cartItem = {
-  //     //   categoryId: item._id,
-  //     //   categoryName: item.categoryName,
-  //     //   itemName: item.name,
-  //     //   image: item.image,
-  //     //   points: item.points,
-  //     //   price: item.price,
-  //     //   measurement_unit: item.measurement_unit,
-  //     //   quantity: item.measurement_unit === 1 ? 0.25 : 1,
-  //     // };
-  //     const tmp = item._id;
-  //     item.categoryId = tmp;
-  //     item._id = getCategoryIdByItemName(item.itemName);
-  //     console.log("ADDDDDDDDDDDDDDDDDDDDD");
-  //     console.log(item);
-  //     console.log("------------------------------------");
-  //     await addToCart(item);
-  //   } catch (error) {
-  //     console.error("Add to cart failed:", error);
-  //   }
-  // };
-  const handleAddToCollection = async (item: CartItem) => {
-    try {
-      const categoryId = getCategoryIdByItemName(item.name);
+ const handleAddToCollection = async (item: LocalizedItem) => {
+  try {
+    // Get both English and Arabic names
+    const englishItemName = typeof item.name === 'string' ? item.name : item.name?.en || '';
+    const arabicItemName = typeof item.name === 'string' ? '' : item.name?.ar || '';
+    
+    // Get category ID using English name (as you prefer)
+    const categoryId = getCategoryIdByItemName(englishItemName);
 
-      const cartItem: CartItem = {
-        _id: item._id,
-        categoryId: categoryId,
-        categoryName: item.categoryName,
-        name: item.name,
-        image: item.image,
-        points: item.points,
-        price: item.price,
-        measurement_unit: item.measurement_unit,
-        quantity: item.measurement_unit === 1 ? 0.25 : 1, // set correct initial quantity
-      };
+    // Get category names (handle both string and object cases)
+    const categoryNameEn = typeof item.categoryName === 'string' 
+      ? item.categoryName 
+      : item.categoryName?.en || '';
+    const categoryNameAr = typeof item.categoryName === 'string' 
+      ? '' 
+      : item.categoryName?.ar || '';
 
-      await addToCart(cartItem);
-    } catch (error) {
-      console.error("Add to cart failed:", error);
-    }
-  };
+    const cartItem: CartItem = {
+      _id: item._id,
+      categoryId: categoryId,
+      categoryName: {
+        en: categoryNameEn,
+        ar: categoryNameAr
+      },
+      name: {
+        en: englishItemName,
+        ar: arabicItemName
+      },
+      image: item.image,
+      points: item.points,
+      price: item.price,
+      measurement_unit: item.measurement_unit,
+      quantity: item.measurement_unit === 1 ? 0.25 : 1,
+    };
 
+    await addToCart(cartItem);
+  } catch (error) {
+    console.error("Add to cart failed:", error);
+    // Optional: Add user feedback here (toast, alert, etc.)
+  }
+};
   const getMeasurementText = (unit: number) => {
     return unit === 1 ? t("itemsModal.perKg") : t("itemsModal.perItem");
   };
+
   if (isLoading) return <Loader />;
   if (error) {
     console.error("❌ Query Error:", error);
@@ -129,13 +134,10 @@ export default function UserCategoryPage() {
             </div>
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-white-900 tracking-tight">
+                {/* Use backend's localized category name instead of translation files */}
                 {t("collectionsOfCategory", {
                   collections: t("common.collectionsPlural"),
-                  category: t(
-                    `categories.${categoryName
-                      .toLowerCase()
-                      .replace(/\s+/g, "-")}`
-                  ),
+                  category: categoryStats?.categoryDisplayName || categoryName,
                 })}
               </h1>
               <p className="text-slate-500 mt-1 text-sm md:text-base">
@@ -153,8 +155,8 @@ export default function UserCategoryPage() {
                 </span>
               </div>
               <p className="text-slate-600 mb-3 text-sm">
-                {t("categoryStats.estimatedImpact")}:{" "}
-                {categoryStats.estimatedImpact}
+                {t("categoryStats.estimatedImpact")}: {/* You can add impact data to backend too */}
+                {t(`environmentalImpact.${getEnglishName({ name: categoryStats.categoryDisplayName }).toLowerCase()}`)}
               </p>
 
               <div className="flex flex-wrap gap-3 text-xs">
@@ -182,7 +184,7 @@ export default function UserCategoryPage() {
                 <div className="relative w-full h-40">
                   <Image
                     src={item.image}
-                    alt={item.name}
+                    alt={getDisplayName(item)}
                     fill
                     className="object-contain group-hover:scale-105 transition-transform duration-300"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
@@ -197,11 +199,8 @@ export default function UserCategoryPage() {
               {/* Content */}
               <div className="p-4">
                 <h3 className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide leading-tight">
-                  {t(
-                    `items.${categoryName}.${item.name
-                      .toLowerCase()
-                      }`
-                  )}
+                  {/* Use backend's localized displayName instead of translation files */}
+                  {getDisplayName(item)}
                 </h3>
 
                 {/* Price and Unit Info */}
@@ -247,12 +246,10 @@ export default function UserCategoryPage() {
               <Recycle className="w-10 h-10 text-slate-400" />
             </div>
             <h3 className="text-xl font-semibold text-slate-600 mb-2">
-              No items available
+              {t("common.noItemsAvailable") || "No items available"}
             </h3>
             <p className="text-slate-500 max-w-md mx-auto">
-              We're working on adding more recyclable{" "}
-              {categoryName.toLowerCase()} items. Check back soon for new
-              additions!
+              {t("common.workingOnAddingItems") || `We're working on adding more recyclable ${categoryStats?.categoryDisplayName || categoryName} items. Check back soon for new additions!`}
             </p>
           </div>
         )}

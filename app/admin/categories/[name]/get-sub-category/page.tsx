@@ -6,54 +6,37 @@ import Swal from "sweetalert2";
 import React, { useEffect, useState } from "react";
 import api from "@/lib/axios";
 import Loader from "@/components/common/Loader";
-import { useLanguage } from "@/context/LanguageContext";
+import { useLocalization } from "@/utils/localiztionUtil";
+
+interface SubcategoryItem {
+  _id: string;
+  name: {
+    en: string;
+    ar: string;
+  };
+  displayName: string;
+  points: number;
+  price: number;
+  quantity: number;
+  measurement_unit: number;
+  image: string;
+  categoryId: string;
+  categoryName: {
+    en: string;
+    ar: string;
+  };
+  categoryDisplayName: string;
+}
 
 export default function Page() {
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState<SubcategoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const { name } = useParams(); // category name from dynamic route
   const router = useRouter();
-  const { t } = useLanguage(); // Get translation function
-
-  // Helper function to get translated category name
-  const getTranslatedCategoryName = (categoryName: string) => {
-    const translationKey = `categories.${categoryName.toLowerCase()}.name`;
-    const translatedName = t(translationKey);
-    return translatedName === translationKey ? categoryName : translatedName;
-  };
-
-  // Helper function to get translated item name
-  const getTranslatedItemName = (itemName: string, categoryName: string) => {
-    // First try specific category subcategory
-    const subcategoryKey = `items.${categoryName}.${itemName}`;
-    let translatedName = t(subcategoryKey);
-    
-    // If not found, try items structure
-    if (translatedName === subcategoryKey) {
-      const itemKey = `items.${categoryName}.${itemName.toLowerCase().replace(/\s+/g, '-')}`;
-      translatedName = t(itemKey);
-      
-      // If still not found, return original name
-      if (translatedName === itemKey) {
-        return itemName;
-      }
-    }
-    
-    return translatedName;
-  };
-
-  // Helper function to translate measurement units
-  const getTranslatedMeasurementUnit = (unit: string) => {
-    switch (unit.toLowerCase()) {
-      case 'kg':
-        return t('common.unitKg') || 'KG';
-      case 'pieces':
-        return t('common.unitPiece') || 'Pieces';
-      default:
-        return unit;
-    }
-  };
+  
+  // Use shared localization utilities at component level
+  const { getDisplayName, getEnglishName, getMeasurementUnit, formatCurrency, t, locale } = useLocalization();
 
   const columns = [
     { 
@@ -65,7 +48,7 @@ export default function Page() {
       key: "name", 
       label: t('itemsModal.name') || "Item Name", 
       sortable: true,
-      render: (item: any) => getTranslatedItemName(item.originalName || item.name, name as string)
+      render: (item: SubcategoryItem) => getDisplayName(item) // Uses backend's displayName
     },
     { 
       key: "points", 
@@ -75,12 +58,13 @@ export default function Page() {
     { 
       key: "price", 
       label: `${t('itemsModal.unitPrice') || 'Price'} (${t('itemsModal.currency') || 'EGP'})`, 
-      sortable: true 
+      sortable: true,
+      render: (item: SubcategoryItem) => formatCurrency(item.price)
     },
     { 
       key: "measurement_unit", 
       label: t('common.measurementUnit') || "Measurement Unit",
-      render: (item: any) => getTranslatedMeasurementUnit(item.measurement_unit)
+      render: (item: SubcategoryItem) => getMeasurementUnit(item.measurement_unit)
     },
     { 
       key: "quantity", 
@@ -90,26 +74,12 @@ export default function Page() {
 
   const fetchItems = async () => {
     try {
-      const res = await api.get(`categories/get-items/${name}`);
+      // Use locale from hook (already called at component level)
+      const res = await api.get(`categories/get-items/${name}?language=${locale}`);
       const data = res.data;
 
-      const formatted = data.data.map((item: any) => ({
-        id: item._id,
-        image: item.image,
-        name: getTranslatedItemName(item.name || "No name", name as string),
-        originalName: item.name || "No name", // Keep original name for translation lookup
-        points: item.points,
-        price: item.price,
-        quantity: item.quantity,
-        measurement_unit:
-          item.measurement_unit === 1
-            ? "KG"
-            : item.measurement_unit === 2
-              ? "Pieces"
-              : "Unknown",
-      }));
-
-      setItems(formatted);
+      // No need to transform data - backend provides localized displayName
+      setItems(data.data);
     } catch (err: any) {
       setError(err.message || t('staticCategories.errorLoadingCategories') || "Something went wrong");
     } finally {
@@ -119,12 +89,14 @@ export default function Page() {
 
   useEffect(() => {
     if (name) fetchItems();
-  }, [name]);
+  }, [name, locale]); // Add locale as dependency to refetch when language changes
 
-  const handleDelete = async (item: any) => {
+  const handleDelete = async (item: SubcategoryItem) => {
+    const displayName = getDisplayName(item);
+    
     const result = await Swal.fire({
       title: t('profile.orders.cancelConfirm') || "Are you sure?",
-      text: `You are about to delete "${item.name}". This action cannot be undone!`,
+      text: `You are about to delete "${displayName}". This action cannot be undone!`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
@@ -135,17 +107,13 @@ export default function Page() {
 
     if (result.isConfirmed) {
       try {
-        // ✅ correct DELETE endpoint
-        await api.delete(`/categories/item/${name}/${item.id}`, {
-          method: "DELETE",
-        });
-
-        await fetchItems(); // ✅ refresh items list
+        await api.delete(`/categories/item/${name}/${item._id}`);
+        await fetchItems(); // Refresh items list
 
         Swal.fire({
           icon: "success",
           title: t('profile.orders.cancelled') || "Deleted!",
-          text: `"${item.name}" has been deleted.`,
+          text: `"${displayName}" has been deleted.`,
           timer: 1500,
           showConfirmButton: false,
         });
@@ -160,12 +128,20 @@ export default function Page() {
     }
   };
 
-  const translatedCategoryName = getTranslatedCategoryName(name as string);
+  // Get category display name from first item (if available)
+  const getCategoryDisplayName = (): string => {
+    if (items.length > 0 && items[0].categoryDisplayName) {
+      return items[0].categoryDisplayName;
+    }
+    return name as string; // Fallback to URL parameter
+  };
+
+  const categoryDisplayName = getCategoryDisplayName();
 
   return (
     <>
       {loading ? (
-        <Loader title={`${t('common.items') || 'items'} ${t('common.in') || 'in'} ${translatedCategoryName}`} />
+        <Loader title={`${t('common.items') || 'items'} ${t('common.in') || 'in'} ${categoryDisplayName}`} />
       ) : error ? (
         <p className="text-center text-red-500 py-10">{error}</p>
       ) : items.length === 0 ? (
@@ -176,7 +152,7 @@ export default function Page() {
         <DynamicTable
           data={items}
           columns={columns}
-          title={`${t('common.items') || 'Items'} ${t('common.in') || 'in'} ${t('breadcrumbs.category') || 'Category'} ${translatedCategoryName}`}
+          title={`${t('common.items') || 'Items'} ${t('common.in') || 'in'} ${t('breadcrumbs.category') || 'Category'} ${categoryDisplayName}`}
           itemsPerPage={5}
           addButtonText={t('common.addNewItem') || "Add New Item"}
           onAdd={() =>
@@ -184,7 +160,7 @@ export default function Page() {
           }
           onEdit={(item) =>
             router.push(
-              `/admin/categories/${name}/edit-sub-category/${item.id}`
+              `/admin/categories/${name}/edit-sub-category/${item._id}`
             )
           }
           onDelete={handleDelete}

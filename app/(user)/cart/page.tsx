@@ -32,7 +32,6 @@ export default function CartPage() {
   const [totalPoints, setTotalPoints] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
   const { user } = useUserAuth();
-const{t} = useLanguage()
   // States for input handling
   const [inputValues, setInputValues] = useState<{ [key: string]: string }>({});
   const [inputErrors, setInputErrors] = useState<{ [key: string]: string }>({});
@@ -238,6 +237,8 @@ const{t} = useLanguage()
       }));
     }
   };
+  const{t,locale} = useLanguage()
+
 
   // Handle input blur (when user finishes typing)
   const handleInputBlur = (itemId: string, item: CartItem) => {
@@ -518,15 +519,12 @@ const{t} = useLanguage()
                           <h3 className={`text-lg font-medium ${
                             outOfStockItems[item._id] ? 'text-gray-500 line-through' : 'text-gray-800'
                           }`}>
-              {t(
-                    `items.${item.categoryName}.${item.name
-                      .toLowerCase()
-                      }`
-                  )}                          </h3>
+            {typeof item.name === 'string' ? item.name : item.name[locale] || item.name.en || ''}
+                </h3>
                           <p className="text-sm text-gray-500 mt-1">
                             Category:{" "}
                             <span className="text-green-600">
-                              {t(`categories.${item?.categoryName}.name`)}
+                              {typeof item.categoryName === 'string' ? item.categoryName : item.categoryName[locale] || item.categoryName.en || ''}
                             </span>
                           </p>
                         </div>

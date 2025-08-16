@@ -13,6 +13,47 @@ import { toast } from "react-hot-toast";
 import { CartItem } from "@/models/cart";
 import { useUserAuth } from "@/context/AuthFormContext";
 
+// Updated interfaces to match new backend structure
+interface ItemName {
+  en: string;
+  ar: string;
+}
+
+interface BackendItem {
+  _id: string;
+  name: ItemName;
+  points: number;
+  price: number;
+  quantity: number;
+  measurement_unit: number;
+  image: string;
+  displayName: string;
+}
+
+interface BackendCategory {
+  _id: string;
+  name: ItemName;
+  description: ItemName;
+  image: string;
+  items: BackendItem[];
+  createdAt: string;
+  updatedAt: string;
+  displayName: string;
+  displayDescription: string;
+}
+
+interface BackendResponse {
+  success: boolean;
+  data: BackendCategory[];
+  pagination: {
+    currentPage: number;
+    itemsPerPage: number;
+    totalItems: number;
+    totalPages: number;
+    hasNextPage: boolean;
+  };
+}
+
 type CartContextType = {
   cart: CartItem[];
   addToCart: (item: CartItem) => Promise<void>;
@@ -80,6 +121,33 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const userRole = user?.role === "buyer" ? "buyer" : "customer";
   const isLoggedIn = !!user?._id;
 
+  // Helper function to convert backend item to CartItem format
+  // const convertBackendItemToCartItem = useCallback((backendItem: BackendItem, quantity: number = 1): CartItem => {
+  //   return {
+  //     _id: backendItem._id,
+  //     name: backendItem.displayName || backendItem.name.en, // Use displayName or fallback to English
+  //     points: backendItem.points,
+  //     price: backendItem.price,
+  //     quantity: quantity,
+  //     measurement_unit: backendItem.measurement_unit,
+  //     image: backendItem.image,
+  //     // Store multilingual data if needed
+  //     nameData: backendItem.name,
+  //     displayName: backendItem.displayName,
+  //   };
+  // }, []);
+
+  // Helper function to get all items from categories
+  const getAllItemsFromCategories = useCallback((categories: BackendCategory[]): BackendItem[] => {
+    const allItems: BackendItem[] = [];
+    categories.forEach(category => {
+      if (category.items && Array.isArray(category.items)) {
+        allItems.push(...category.items);
+      }
+    });
+    return allItems;
+  }, []);
+
   // Session storage helpers with error handling
   const saveCartToSession = useCallback((cartItems: CartItem[]) => {
     try {
@@ -113,27 +181,31 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Database helpers with better error handling
-  const saveCartToDatabase = useCallback(
-    async (cartItems: CartItem[]) => {
-      if (!isLoggedIn) return;
+ const saveCartToDatabase = useCallback(
+  async (cartItems: CartItem[]) => {
+    if (!isLoggedIn) return;
 
-      try {
-        await api.post(
-          "/cart/save",
-          { items: cartItems },
-          { withCredentials: true }
-        );
-        console.log(`Saved ${cartItems.length} items to database`);
-      } catch (error) {
-        console.error("Failed to save cart to database:", error);
-        // Save to local storage as backup
-        localStorage.setItem(UNSYNCED_CART_KEY, JSON.stringify(cartItems));
-        throw error;
-      }
-    },
-    [isLoggedIn]
-  );
+    try {
+      // Ensure all items have proper bilingual structure
+      const validatedItems = cartItems.map(item => ({
+        ...item,
+        // No transformation needed if your createCartItem already creates proper structure
+      }));
+
+      await api.post(
+        "/cart/save",
+        { items: validatedItems },
+        { withCredentials: true }
+      );
+      console.log(`Saved ${cartItems.length} items to database`);
+    } catch (error) {
+      console.error("Failed to save cart to database:", error);
+      localStorage.setItem(UNSYNCED_CART_KEY, JSON.stringify(cartItems));
+      throw error;
+    }
+  },
+  [isLoggedIn]
+);
 
   const loadCartFromDatabase = useCallback(async (): Promise<CartItem[]> => {
     if (!isLoggedIn) return [];
@@ -238,24 +310,62 @@ export function CartProvider({ children }: { children: ReactNode }) {
     []
   );
 
-  // Inventory checking
-  const checkInventoryEnhanced = useCallback(
-    async (item: CartItem, quantity: number): Promise<boolean> => {
-      if (userRole !== "buyer") return true; // Customers don't need inventory checks
+  // Updated inventory checking to work with new backend structure
+// Updated checkInventoryEnhanced function to match new backend structure
+const checkInventoryEnhanced = useCallback(
+  async (item: CartItem, quantity: number): Promise<boolean> => {
+    if (userRole !== "buyer") return true; // Customers don't need inventory checks
 
-      try {
-        const res = await api.get(
-          "/categories/get-items?limit=10000&role=buyer"
-        );
-        const found = res.data?.data?.find((i: any) => i._id === item._id);
-        return found && found.quantity >= quantity;
-      } catch (err) {
-        console.error("Failed to check inventory:", err);
+    try {
+      // Updated API call to match new structure
+      const res = await api.get("/categories/get-items?limit=10000&role=buyer");
+      const response: BackendResponse = res.data;
+      
+      if (!response.success || !response.data) {
+        console.error("Invalid response structure:", response);
         return false;
       }
-    },
-    [userRole]
-  );
+
+      // Find the item in all categories' items
+      let foundItem: BackendItem | undefined;
+      
+      for (const category of response.data) {
+        const itemInCategory = category.items.find((i: BackendItem) => i._id === item._id);
+        if (itemInCategory) {
+          foundItem = itemInCategory;
+          break;
+        }
+      }
+      
+      const isAvailable = foundItem && foundItem.quantity >= quantity;
+      console.log(`Inventory check for ${item.name}: requested=${quantity}, available=${foundItem?.quantity || 0}, result=${isAvailable}`);
+      
+      return isAvailable;
+    } catch (err) {
+      console.error("Failed to check inventory:", err);
+      return false;
+    }
+  },
+  [userRole]
+);
+
+// Updated helper function to convert backend item to CartItem format
+const convertBackendItemToCartItem = useCallback((backendItem: BackendItem, quantity: number = 1): CartItem => {
+  return {
+    _id: backendItem._id,
+    name: backendItem.displayName || backendItem.name?.en || 'Unnamed Item', // Use displayName or fallback to English
+    points: backendItem.points,
+    price: backendItem.price,
+    quantity: quantity,
+    measurement_unit: backendItem.measurement_unit,
+    image: backendItem.image,
+    // Store multilingual data if needed
+    nameData: backendItem.name,
+    displayName: backendItem.displayName,
+  };
+}, []);
+
+// Remove getAllItemsFromCategories since we're now searching through categories directly
 
   // Cart merging helper function
   const mergeCartItems = useCallback(
@@ -308,62 +418,67 @@ export function CartProvider({ children }: { children: ReactNode }) {
         console.log(`Merged cart has ${mergedCart.length} items`);
 
         // For buyers, validate inventory for merged items
-        if (userRole === "buyer") return;
-        // console.log("Validating inventory for merged cart items...");
-        // const validatedCart: CartItem[] = [];
-        // let hasInventoryIssues = false;
-        // for (const item of mergedCart) {
-        //   const isAvailable = await checkInventoryEnhanced(
-        //     item,
-        //     item.quantity
-        //   );
-        //   if (isAvailable) {
-        //     validatedCart.push(item);
-        //   } else {
-        //     console.warn(
-        //       `Insufficient inventory for ${item.name}, quantity: ${item.quantity}`
-        //     );
-        //     hasInventoryIssues = true;
-        //     // Try to find the maximum available quantity
-        //     try {
-        //       const res = await api.get(
-        //         "/categories/get-items?limit=10000&role=buyer"
-        //       );
-        //       const foundItem = res.data?.data?.find(
-        //         (i: any) => i._id === item._id
-        //       );
-        //       if (foundItem && foundItem.quantity > 0) {
-        //         const maxQuantity = foundItem.quantity;
-        //         const increment = item.measurement_unit === 1 ? 0.25 : 1;
-        //         const adjustedQuantity =
-        //           Math.floor(maxQuantity / increment) * increment;
-        //         if (adjustedQuantity > 0) {
-        //           validatedCart.push({ ...item, quantity: adjustedQuantity });
-        //           console.log(
-        //             `Adjusted ${item.name} quantity to available stock: ${adjustedQuantity}`
-        //           );
-        //         }
-        //       }
-        //     } catch (error) {
-        //       console.error(
-        //         "Failed to check individual item availability:",
-        //         error
-        //       );
-        //     }
-        //   }
-        // }
-        // if (hasInventoryIssues) {
-        //   toast.error(
-        //     "Some items had limited stock and quantities were adjusted",
-        //     {
-        //       duration: 5000,
-        //     }
-        //   );
-        // }
-        // setCart(validatedCart);
-        // await saveCartToDatabase(validatedCart);
-        // }
-        else {
+        if (userRole === "buyer") {
+          console.log("Validating inventory for merged cart items...");
+          const validatedCart: CartItem[] = [];
+          let hasInventoryIssues = false;
+          
+          for (const item of mergedCart) {
+            const isAvailable = await checkInventoryEnhanced(
+              item,
+              item.quantity
+            );
+            if (isAvailable) {
+              validatedCart.push(item);
+            } else {
+              console.warn(
+                `Insufficient inventory for ${item.name}, quantity: ${item.quantity}`
+              );
+              hasInventoryIssues = true;
+              
+              // Try to find the maximum available quantity
+              try {
+                const res = await api.get("/categories/get-items?limit=10000&role=buyer");
+                const response: BackendResponse = res.data;
+                
+                if (response.success && response.data) {
+                  const allItems = getAllItemsFromCategories(response.data);
+                  const foundItem = allItems.find((i: BackendItem) => i._id === item._id);
+                  
+                  if (foundItem && foundItem.quantity > 0) {
+                    const maxQuantity = foundItem.quantity;
+                    const increment = item.measurement_unit === 1 ? 0.25 : 1;
+                    const adjustedQuantity =
+                      Math.floor(maxQuantity / increment) * increment;
+                    if (adjustedQuantity > 0) {
+                      validatedCart.push({ ...item, quantity: adjustedQuantity });
+                      console.log(
+                        `Adjusted ${item.name} quantity to available stock: ${adjustedQuantity}`
+                      );
+                    }
+                  }
+                }
+              } catch (error) {
+                console.error(
+                  "Failed to check individual item availability:",
+                  error
+                );
+              }
+            }
+          }
+          
+          if (hasInventoryIssues) {
+            toast.error(
+              "Some items had limited stock and quantities were adjusted",
+              {
+                duration: 5000,
+              }
+            );
+          }
+          
+          setCart(validatedCart);
+          await saveCartToDatabase(validatedCart);
+        } else {
           // For customers, no inventory validation needed
           setCart(mergedCart);
           await saveCartToDatabase(mergedCart);
@@ -375,6 +490,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
         // Show success message
         if (guestCart.length > 0) {
+          toast.success(`Cart merged successfully! ${mergedCart.length} items total.`);
         } else {
           toast.success("Welcome back! Your cart has been loaded.");
         }
@@ -383,7 +499,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         throw error;
       }
     },
-    [mergeCartItems, userRole, saveCartToDatabase, clearCartFromSession]
+    [mergeCartItems, userRole, saveCartToDatabase, clearCartFromSession, checkInventoryEnhanced, getAllItemsFromCategories]
   );
 
   // Handle cart merging when user logs in (with optional user confirmation)
@@ -592,6 +708,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Cart operations with improved error handling
   const addToCart = useCallback(
     async (item: CartItem) => {
+      console.log(item,'itemfromAddtocar');
+      
       setLoadingItemId(item._id);
       try {
         const validatedItem = { ...item };
