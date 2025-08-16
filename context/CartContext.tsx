@@ -10,7 +10,7 @@ import {
 } from "react";
 import api from "@/lib/axios";
 import { toast } from "react-hot-toast";
-import { CartItem } from "@/models/cart";
+import { CartItem, ICartItem } from "@/models/cart";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { useLanguage } from "./LanguageContext";
 
@@ -207,14 +207,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     },
     [isLoggedIn, saveCartToDatabase, saveCartToSession]
   );
-  useEffect(() => {
-    console.log("LANGUAGE CHANGED", locale);
-    const f = async () => {
-      const cart = await loadCartFromDatabase();
-      setCart(cart);
-    };
-    f();
-  }, [locale, loadCartFromDatabase]);
 
   // Load cart based on authentication state
   const loadCart = useCallback(async () => {
@@ -271,20 +263,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
     []
   );
   useEffect(() => {
-    console.log("LANGUAGE CHANGED", locale);
-    if (isLoggedIn) {
+    console.log("TRANSLATING CART", locale);
+
+    if (!isLoggedIn) {
       const f = async () => {
-        try {
-          const cart = await loadCartFromDatabase();
-          setCart(cart);
-          console.log("Cart reloaded with new language:", locale);
-        } catch (error) {
-          console.error("Failed to reload cart with new language:", error);
-        }
+        const res = await api.post<{ items: CartItem[] }>(
+          `/cart/translate?lang=${locale}`,
+          { items: cart } // use current cart snapshot
+        );
+        console.log("TRANSLATED", res.data?.items);
+        setCart(res.data.items);
       };
       f();
     }
-  }, [locale, loadCartFromDatabase, isLoggedIn]);
+  }, [locale, isLoggedIn]); // removed cart
+
   // Inventory checking
   const checkInventoryEnhanced = useCallback(
     async (item: CartItem, quantity: number): Promise<boolean> => {
@@ -629,11 +622,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [cart, cartDirty, isLoggedIn, saveCartToSession]);
 
+  useEffect(() => {
+    console.log("LANGUAGE CHANGED", locale);
+    if (isLoggedIn) {
+      const f = async () => {
+        try {
+          const cart = await loadCartFromDatabase();
+          setCart(cart);
+          console.log("Cart reloaded with new language:", locale);
+        } catch (error) {
+          console.error("Failed to reload cart with new language:", error);
+        }
+      };
+      f();
+    }
+  }, [locale, loadCartFromDatabase, isLoggedIn]);
+
   // Cart operations with improved error handling
   const addToCart = useCallback(
     async (item: CartItem) => {
+      const DEBUG_KEY = "[Cart]";
       setLoadingItemId(item._id);
-      console.log(item, "yaraaaaaab");
+      console.log(DEBUG_KEY, "addToCart called with item:", item);
 
       try {
         const validatedItem = { ...item };
@@ -644,11 +654,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
           validatedItem.quantity < 0.25
         ) {
           validatedItem.quantity = 0.25;
+          console.log(DEBUG_KEY, "Adjusted quantity to 0.25 for KG item");
         } else if (
           validatedItem.measurement_unit === 2 &&
           validatedItem.quantity < 1
         ) {
           validatedItem.quantity = 1;
+          console.log(DEBUG_KEY, "Adjusted quantity to 1 for Piece item");
         }
 
         if (
@@ -661,6 +673,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             validatedItem.measurement_unit === 1
               ? "For KG items, minimum quantity is 0.25 KG and must be in 0.25 increments"
               : "For Piece items, quantity must be whole numbers ≥ 1";
+          console.warn(DEBUG_KEY, "Quantity validation failed:", validatedItem);
           toast.error(message);
           return;
         }
@@ -669,17 +682,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
         const existingItemIndex = cart.findIndex(
           (ci) => ci._id === validatedItem._id
         );
+        console.log(DEBUG_KEY, "existingItemIndex:", existingItemIndex);
 
         if (existingItemIndex >= 0) {
           // Update existing item quantity
           const newQuantity =
             cart[existingItemIndex].quantity + validatedItem.quantity;
+          console.log(
+            DEBUG_KEY,
+            "Updating existing item with newQuantity:",
+            newQuantity
+          );
 
           if (userRole === "buyer") {
             const isAvailable = await checkInventoryEnhanced(
               validatedItem,
               newQuantity
             );
+            console.log(DEBUG_KEY, "Inventory check result:", isAvailable);
+
             if (!isAvailable) {
               toast.error(
                 "Sorry, the requested quantity is not available in stock."
@@ -693,14 +714,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
             ...updatedCart[existingItemIndex],
             quantity: newQuantity,
           };
+
+          console.log(DEBUG_KEY, "Updated cart:", updatedCart);
           await updateCartState(updatedCart);
         } else {
           // Add new item
+          console.log(DEBUG_KEY, "Adding new item to cart:", validatedItem);
+
           if (userRole === "buyer") {
             const isAvailable = await checkInventoryEnhanced(
               validatedItem,
               validatedItem.quantity
             );
+            console.log(DEBUG_KEY, "Inventory check result:", isAvailable);
+
             if (!isAvailable) {
               toast.error(
                 "Sorry, the requested quantity is not available in stock."
@@ -710,14 +737,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
           }
 
           const updatedCart = [...cart, validatedItem];
+          console.log(DEBUG_KEY, "New cart after add:", updatedCart);
           await updateCartState(updatedCart);
         }
 
         toast.success(`${validatedItem.name} added to cart successfully!`);
       } catch (err) {
-        console.error("Failed to add to cart", err);
+        console.error(DEBUG_KEY, "Failed to add to cart", err);
         toast.error("Failed to add item to cart");
       } finally {
+        console.log(DEBUG_KEY, "Finished addToCart for item:", item._id);
         setLoadingItemId(null);
       }
     },

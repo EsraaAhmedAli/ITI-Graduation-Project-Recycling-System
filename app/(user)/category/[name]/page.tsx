@@ -27,6 +27,7 @@ export default function UserCategoryPage() {
   const categoryKey = decodeURIComponent(rawName || "");
   const params = useParams();
   const categoryName = decodeURIComponent(params.name as string);
+  const [translatedCatName, setTranslatedCatName] = useState(categoryKey);
   const { addToCart, loadingItemId } = useCart();
   const { getCategoryIdByItemName } = useCategories();
 
@@ -34,7 +35,7 @@ export default function UserCategoryPage() {
     queryKey: ["subcategory", categoryName, locale],
     queryFn: async () => {
       const res = await api.get(
-        `categories/get-items/${categoryKey}?lang=${locale}`
+        `categories/get-items/${categoryName}?lang=${locale}`
       );
       console.log(`bkr categories/get-items/${categoryKey}?lang=${locale}`);
       console.log("bkr", res);
@@ -44,6 +45,7 @@ export default function UserCategoryPage() {
         categoryName: item.categoryName || categoryName,
         measurement_unit: Number(item.measurement_unit) as 1 | 2,
       }));
+      setTranslatedCatName(normalizedItems[0].categoryName);
       return normalizedItems;
     },
     staleTime: 2000,
@@ -141,11 +143,7 @@ export default function UserCategoryPage() {
               <h1 className="text-2xl md:text-3xl font-bold text-white-900 tracking-tight">
                 {t("collectionsOfCategory", {
                   collections: t("common.collectionsPlural"),
-                  category: t(
-                    `categories.${categoryName
-                      .toLowerCase()
-                      .replace(/\s+/g, "-")}`
-                  ),
+                  category: translatedCatName,
                 })}
               </h1>
               <p className="text-slate-500 mt-1 text-sm md:text-base">

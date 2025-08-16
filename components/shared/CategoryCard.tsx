@@ -3,19 +3,23 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { categoryIcons } from "@/utils/categoryIcons";
-import { Package } from "lucide-react"; 
+import { Package } from "lucide-react";
 import Link from "next/link";
 
 interface Props {
   name: string;
-  slug:string;
+  slug: string;
   image: string;
   onClick?: () => void;
 }
 
-export default function CategoryCard({ slug,name, image, onClick }: Props) {
+export default function CategoryCard({ slug, name, image, onClick }: Props) {
+  console.log("INSIDE CATEGORY CARD");
+  console.log(slug);
   console.log(name);
-  
+  console.log(image);
+  console.log(onclick);
+
   return (
     <Link href={`/category/${encodeURIComponent(slug)}`}>
       <motion.div
@@ -53,7 +57,7 @@ export default function CategoryCard({ slug,name, image, onClick }: Props) {
           <div className="flex flex-col items-center mb-4">
             <h4 className="font-extrabold text-2xl drop-shadow-lg text-center mb-1 text-[var(--color-primary)] group-hover:text-[var(--color-accent)] transition-colors duration-300">
               {name}
-            </h4>            
+            </h4>
             <span className="block w-12 h-1 rounded-full bg-gradient-to-r from-[var(--color-success-content)] to-[var(--color-accent)] mb-2 group-hover:from-[var(--color-primary)] group-hover:to-[var(--color-accent)] transition-all duration-300" />
           </div>
         </div>

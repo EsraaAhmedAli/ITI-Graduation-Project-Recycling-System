@@ -70,18 +70,17 @@
     "searchplaceholder": "Search items...",
     "myCart": "Cart"
   },
-  "cart" :{
-    "confirm" : "Confirm items you want to recycle",
-        "totalItems": "Total Items",
+  "cart": {
+    "confirm": "Confirm items you want to recycle",
+    "totalItems": "Total Items",
     "earnedPoints": "Earned Points",
     "earnedMoney": "Earned Money",
     "paidMoney": "Paid Money",
     "currency": "EGP",
-    "schedule" : " Schedule Pickup",
-        "clear" : "clear collection",
-            "minWeight": "Min: 0.25 kg, increments of 0.25 kg",
+    "schedule": " Schedule Pickup",
+    "clear": "clear collection",
+    "minWeight": "Min: 0.25 kg, increments of 0.25 kg",
     "wholeNumbers": "Whole numbers only"
-
   },
   "admin": {
     "categories": {
@@ -90,8 +89,8 @@
       "categoryName": "Category Name",
       "image": "Category Image",
       "description": "Category Description",
-      "loading" : "Categories",
-      "itemsIn" : "Items in Category"
+      "loading": "Categories",
+      "itemsIn": "Items in Category"
     }
   },
 
@@ -269,34 +268,6 @@
     "noItemsTitle": "No Items Found",
     "noItemsDesc": "This order doesn't contain any items.",
     "addToCollection": "Add to Collection"
-  },
-  "categories": {
-    "paper": "Paper",
-    "e-wasted": "E-Waste",
-    "metals": "Metals",
-    "spare-parts": "Spare Parts",
-    "plastic": "Plastic",
-    "home-appliances": "home appliances",
-
-    "subcategories": {
-      "shredded-paper": "Shredded Paper",
-      "books": "Books",
-      "news-paper": "Newspaper",
-      "router": "router",
-      "cooking-pan": "cooking pan",
-      "hammer": "hammer",
-      "car-battery": "cart battery",
-      "acrylic": "acryclic",
-      "solid-plastic": "solid plastic",
-      "water-colman": "Coleman Water",
-      "plastic-barrel": "plastic barrel",
-      "fan": "fan",
-      "mobile": "Mobile",
-      "laptop": "laptop",
-      "receiver": "receiver",
-      "powerbank": "powerbank",
-      "tea-pot": "tea pot"
-    }
   },
 
   "common": {

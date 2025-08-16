@@ -22,8 +22,8 @@ export default function CategoryList({
   horizontal = false,
 }: CategoryListProps) {
   const [showAll, setShowAll] = useState(false);
-    const { locale, t } = useLanguage(); // Get current language from context
-  
+  const { locale, t } = useLanguage(); // Get current language from context
+
   const { data, isLoading, error } = useCategories({ language: locale }); // Pass language to hook
 
   // Memoize the categories to show to avoid recalculation on every render
@@ -54,8 +54,13 @@ export default function CategoryList({
           horizontal
             ? "min-w-[200px]"
             : "transform transition-transform duration-300 hover:scale-105"
-        }>
-        <CategoryCard slug={category?.slug} name={category?.name} image={category?.image} />
+        }
+      >
+        <CategoryCard
+          slug={category?.slug}
+          name={category?.name}
+          image={category?.image}
+        />
       </div>
     ),
     [horizontal]
@@ -74,7 +79,8 @@ export default function CategoryList({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}
-        className="mb-16 px-2 sm:px-4">
+        className="mb-16 px-2 sm:px-4"
+      >
         <div className="pl-18 mb-8 mt-16">
           <h2 className="text-3xl md:text-3xl font-bold text-start text-accent-content mb-2">
             {t("staticCategories.recyclingCategories")}
@@ -89,7 +95,8 @@ export default function CategoryList({
             speed={100}
             gradient={false}
             pauseOnHover
-            className="overflow-hidden">
+            className="overflow-hidden"
+          >
             <div className="flex gap-6 pl-4">
               {categoriesToShow.map(renderCategory)}
             </div>
@@ -104,7 +111,8 @@ export default function CategoryList({
           <div className="flex justify-center mt-8">
             <button
               onClick={handleSeeMoreClick}
-              className="px-6 py-2 rounded-full bg-green-500 hover:bg-green-600 text-white font-semibold transition-all duration-300 shadow-md">
+              className="px-6 py-2 rounded-full bg-green-500 hover:bg-green-600 text-white font-semibold transition-all duration-300 shadow-md"
+            >
               {t("staticCategories.seeMore")}
             </button>
           </div>

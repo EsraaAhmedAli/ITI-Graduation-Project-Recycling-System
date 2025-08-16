@@ -17,4 +17,5 @@ export interface Category {
   itemt: Item[];
   measurement_unit?: 1 | 2;
   price: number;
+  slug?: string;
 }

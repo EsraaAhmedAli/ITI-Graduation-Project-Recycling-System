@@ -20,6 +20,7 @@ import { get } from "http";
 import { useUserPoints } from "@/context/UserPointsContext";
 import { useNotification } from "@/context/notificationContext";
 import { queryClient } from "@/lib/queryClient";
+import { useLanguage } from "@/context/LanguageContext";
 
 type UserRole = "customer" | "buyer";
 const STATUS = {
@@ -58,14 +59,15 @@ const fetchOrders = async (
   limit: number,
   userRole?: UserRole,
   filters?: Record<string, any>,
-  search?: string // Add search parameter
+  search?: string, // Add search parameter
+  lang?: string
 ) => {
   const params: any = { page, limit };
   if (userRole) params.userRole = userRole;
   if (filters?.status?.length) params.status = filters.status.join(",");
   if (filters?.date?.[0]) params.date = filters.date[0];
   if (search && search.trim()) params.search = search.trim(); // Add search to params
-
+  if (lang) params.lang = lang;
   const { data } = await api.get("/admin/orders", { params });
   return data;
 };
@@ -221,6 +223,7 @@ export default function Page() {
     return { status, date };
   }, [filters, activeTab]);
 
+  const { locale } = useLanguage();
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
     queryKey: [
       "adminOrders",
@@ -235,7 +238,8 @@ export default function Page() {
         itemsPerPage,
         activeTab,
         activeFilters,
-        debouncedSearchTerm
+        debouncedSearchTerm,
+        locale
       ),
     // Remove keepPreviousData to show fresh data immediately
     // keepPreviousData: true,
@@ -407,7 +411,9 @@ export default function Page() {
       processStatusChanges();
     }
   }, [couriers, refetch]);
-
+  useEffect(() => {
+    refetch();
+  }, [locale, refetch]);
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
@@ -600,7 +606,8 @@ export default function Page() {
             className="w-8 h-8 text-red-600"
             fill="none"
             stroke="currentColor"
-            viewBox="0 0 24 24">
+            viewBox="0 0 24 24"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -617,7 +624,8 @@ export default function Page() {
         </p>
         <button
           onClick={() => refetch()}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+        >
           Try Again
         </button>
       </div>
@@ -677,7 +685,8 @@ export default function Page() {
         <div className="flex flex-col">
           <button
             onClick={row.onClickUser}
-            className="text-green-600 hover:underline font-medium text-left">
+            className="text-green-600 hover:underline font-medium text-left"
+          >
             {row.userName}
           </button>
 
@@ -693,7 +702,8 @@ export default function Page() {
       render: (row: any) => (
         <button
           onClick={row.onClickItemsId}
-          className="text-green-600 hover:underline font-medium">
+          className="text-green-600 hover:underline font-medium"
+        >
           {row.orderId}
         </button>
       ),
@@ -721,7 +731,8 @@ export default function Page() {
           return (
             <Button
               onClick={() => handleOpenCompletedDetails(order)}
-              className="px-5 py-2 text-xs font-semibold rounded-md bg-green-100 text-green-800 hover:bg-green-200 transition-colors">
+              className="px-5 py-2 text-xs font-semibold rounded-md bg-green-100 text-green-800 hover:bg-green-200 transition-colors"
+            >
               Completed
             </Button>
           );
@@ -732,7 +743,8 @@ export default function Page() {
           return (
             <button
               onClick={() => handleShowCancelReason(order.statusHistory)}
-              className="px-5 py-2 text-xs font-semibold rounded-md bg-red-100 text-red-800 hover:bg-red-200 transition-colors">
+              className="px-5 py-2 text-xs font-semibold rounded-md bg-red-100 text-red-800 hover:bg-red-200 transition-colors"
+            >
               Cancelled
             </button>
           );
@@ -744,13 +756,15 @@ export default function Page() {
             <div className="flex items-center gap-2">
               <Button
                 onClick={() => handleOpenCompletedDetails(order)}
-                className="px-3 py-2 text-sm font-semibold rounded-md bg-purple-500 text-purple-800 hover:bg-purple-200 transition-colors">
+                className="px-3 py-2 text-sm font-semibold rounded-md bg-purple-500 text-purple-800 hover:bg-purple-200 transition-colors"
+              >
                 see collection info
               </Button>
               <button
                 onClick={() => handleMarkAsCompleted(order.orderId)}
                 className="px-3 py-2 text-sm font-semibold rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors"
-                title="Mark as completed">
+                title="Mark as completed"
+              >
                 click to complete
               </button>
             </div>
@@ -826,7 +840,8 @@ export default function Page() {
             className={`px-2 py-1 rounded border ${getStatusColor(
               currentStatus
             )}`}
-            onClick={(e) => e.stopPropagation()}>
+            onClick={(e) => e.stopPropagation()}
+          >
             <option value={currentStatus}>
               {currentStatus === "assigntocourier"
                 ? "Assigned to Courier"
@@ -859,7 +874,8 @@ export default function Page() {
                 activeTab === "customer"
                   ? "border-green-500 text-green-600"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}>
+              }`}
+            >
               Customer Orders
               {activeTab === "customer" && (
                 <span className="ml-2 bg-green-100 text-green-600 py-0.5 px-2.5 rounded-full text-xs font-medium">
@@ -873,7 +889,8 @@ export default function Page() {
                 activeTab === "buyer"
                   ? "border-green-500 text-green-600"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}>
+              }`}
+            >
               Buyer Orders
               {activeTab === "buyer" && (
                 <span className="ml-2 bg-green-100 text-green-600 py-0.5 px-2.5 rounded-full text-xs font-medium">
@@ -898,14 +915,13 @@ export default function Page() {
           </p>
           <button
             onClick={() => refetch()}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+          >
             Refresh
           </button>
         </div>
       ) : (
         <>
-      
-
           <DynamicTable
             data={transformedData}
             columns={columns}
@@ -991,7 +1007,8 @@ export default function Page() {
         show={showCancelReasonModal}
         size="md"
         popup={true}
-        onClose={() => setShowCancelReasonModal(false)}>
+        onClose={() => setShowCancelReasonModal(false)}
+      >
         <ModalHeader />
         <ModalBody>
           <div className="text-center">
@@ -1002,7 +1019,8 @@ export default function Page() {
             <div className="mt-6">
               <button
                 onClick={() => setShowCancelReasonModal(false)}
-                className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+              >
                 Close
               </button>
             </div>
