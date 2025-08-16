@@ -198,7 +198,7 @@ const CitiesChart = memo<CitiesChartProps>(({ chartData, loading }) => {
   };
 
   return (
-    <div className="bg-white p-4 md:p-6 rounded-xl shadow border border-green-100" style={{ background: "var(--background)" }}>
+    <div className="bg-white p-4 md:p-6 rounded-xl shadow border border-green-100">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-sm md:text-lg font-medium text-green-700">
           Top Cities by Orders

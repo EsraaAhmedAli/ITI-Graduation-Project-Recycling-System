@@ -102,7 +102,7 @@ React.useEffect(() => {
   };
 
   return (
-    <div className="bg-white rounded-xl p-4 md:p-6 shadow border border-green-100 flex-1 flex flex-col" style={{ background: "var(--background)" }}>
+    <div className="bg-white rounded-xl p-4 md:p-6 shadow border border-green-100 flex-1 flex flex-col">
       <div className="flex justify-between items-center mb-2 flex-wrap gap-2">
         <span className="text-sm md:text-base font-medium text-green-800">
           Top Recycled Materials
@@ -110,10 +110,8 @@ React.useEffect(() => {
         <select 
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value as 'quantity' | 'category')}
-          className="text-xs border border-green-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+          className="text-xs border border-green-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white transition-colors"
           disabled={loading}
-          style={{ background: "var(--background)" }}
-         
         >
           <option value="quantity">By Quantity</option>
           <option value="category">By Name</option>

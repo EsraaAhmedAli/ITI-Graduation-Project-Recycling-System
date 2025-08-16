@@ -11,6 +11,7 @@ import { toast } from "react-toastify";
 import { UserAuthContext } from "@/context/AuthFormContext";
 import Loader from "@/components/common/Loader";
 import { CartItem, useCart } from "@/context/CartContext";
+
 import Link from "next/link";
 import api from "@/lib/axios";
 import {
@@ -49,6 +50,7 @@ export default function PickupConfirmation() {
   const [loading, setLoading] = useState<boolean>(true);
   const [direction, setDirection] = useState<"forward" | "backward">("forward");
   const router = useRouter();
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [selectedCity, setSelectedCity] = useState<City | "">("");
   const [formData, setFormData] = useState<FormInputs | null>(null);
   const [addresses, setAddresses] = useState<FormInputs[]>([]);
@@ -309,7 +311,7 @@ export default function PickupConfirmation() {
   }
 
   return (
-    <div className="lg:w-3xl w-full mx-auto md:p-8 p-5 bg-white rounded-2xl shadow-lg border border-green-100">
+    <div className="lg:w-3xl w-full mx-auto md:p-8 p-5  rounded-2xl shadow-lg  border border-gray-custom " style={{ background: "var(--color-card )"}}>
       <div className="flex my-3 flex-col md:flex-row items-start md:items-center gap-4 md:gap-0">
         <Step
           label={t("pickup.steps.address")}
@@ -422,7 +424,7 @@ export default function PickupConfirmation() {
                 <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
                   Choose Your Address
                 </h2>
-                <p className="text-gray-600">
+                <p  style={{color: "var(--text-gray-700)"}}>
                   Select or add a delivery address
                 </p>
               </div>
@@ -628,7 +630,7 @@ export default function PickupConfirmation() {
             <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
               Payment Method
             </h2>
-            <p className="text-gray-600">
+            <p  style={{color: "var(--text-gray-700)"}}>
               Choose your preferred payment method
             </p>
           </div>
@@ -640,38 +642,30 @@ export default function PickupConfirmation() {
               const isSelected = selectedPaymentMethod === method.id;
 
               return (
-                <div
-                  key={method.id}
-                  className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 ${
-                    isSelected
-                      ? "border-green-500 bg-green-50 shadow-md"
-                      : "border-gray-200 hover:border-blue-300"
-                  }`}
-                  onClick={() => setSelectedPaymentMethod(method.id)}>
-                  <div className="flex items-center gap-4">
-                    <div
-                      className={`p-3 rounded-lg ${
-                        method.id === "cash"
-                          ? "bg-green-100 text-green-600"
-                          : method.id === "credit_card"
-                          ? "bg-blue-100 text-blue-600"
-                          : "bg-purple-100 text-purple-600"
-                      }`}>
-                      <IconComponent className="w-6 h-6" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-lg">{method.name}</h3>
-                      <p className="text-gray-600 text-sm">
-                        {method.description}
-                      </p>
-                    </div>
-                    {isSelected && (
-                      <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
-                        <Check className="w-3 h-3 text-white" />
-                      </div>
-                    )}
-                  </div>
-                </div>
+             <div
+  key={method.id}
+  className={`payment-method-card ${isDarkMode ? 'dark' : 'light'} ${
+    isSelected ? 'selected' : ''
+  }`}
+  onClick={() => setSelectedPaymentMethod(method.id)}
+>
+  <div className="flex items-center gap-4">
+    <div className={`payment-icon-container ${method.id}`}>
+      <IconComponent className="w-6 h-6" />
+    </div>
+    <div className="flex-1">
+      <h3 className="payment-method-title">{method.name}</h3>
+      <p className="payment-method-description">
+        {method.description}
+      </p>
+    </div>
+    {isSelected && (
+      <div className="payment-checkmark selected">
+        <Check className="payment-checkmark-icon" />
+      </div>
+    )}
+  </div>
+</div>
               );
             })}
 
@@ -705,23 +699,23 @@ export default function PickupConfirmation() {
           </div>
 
           {/* Order Summary */}
-          <div className="bg-gray-50 rounded-xl p-6 space-y-3">
-            <h3 className="font-semibold text-gray-800 mb-4">Order Summary</h3>
+          <div className=" rounded-xl p-6 space-y-3" style={{background:"var(--bg-gray-50)"}}>
+            <h3 className="font-semibold text-gray-800 mb-4" style={{color:"var(--text-gray-700)"}}>Order Summary</h3>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Subtotal</span>
-              <span className="font-medium text-gray-600">EGP{totalPrice.toFixed(2)}</span>
+              <span style={{color:"var(--text-gray-700)"}}>Subtotal</span>
+              <span className="font-medium" style={{color:"var( --text-gray-700)"}}>EGP{totalPrice.toFixed(2)}</span>
             </div>
             {selectedAddress?.city && (
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Delivery Fee</span>
-                <span className="font-medium text-gray-600">
+                <span style={{color:"var(--text-gray-700)"}}>Delivery Fee</span>
+                <span className="font-medium" style={{color:"var(--text-gray-700)"}} >
                   EGP{(deliveryFees[selectedAddress.city] || 0).toFixed(2)}
                 </span>
               </div>
             )}
-            <div className="border-t pt-3 flex justify-between font-semibold text-lg text-gray-600">
+            <div className="border-t pt-3 flex justify-between font-semibold text-lg">
               <span>Total</span>
-              <span text-gray-600>
+              <span>
                 EGP
                 {(
                   totalPrice +

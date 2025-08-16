@@ -140,7 +140,7 @@ export default function EditItemPage() {
             <p className="mt-1 opacity-90">Update the details of your item</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-6 space-y-6"  style={{background: "var(--background)"}}>
+          <form onSubmit={handleSubmit} className="p-6 space-y-6">
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">
                 Item Name *

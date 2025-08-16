@@ -68,7 +68,7 @@
     onExternalFiltersChange?: (filters: Record<string, string[]>) => void;
     onView?: (item: T) => void;
     getRenderedValue?: (row: any, key: string) => string;
-    filtersConfig?: FilterConfig[];
+    filtersConfig?: FilterConfig[]; // ✅ new
   };
 
   function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
@@ -270,7 +270,6 @@
             src={value}
             alt={column.key}
             className="rounded-full object-cover bg-green-50 flex items-center justify-center border border-green-200"
-            style={{background: "var(--background)"}}
           />
         );
       }
@@ -286,9 +285,8 @@
         <div
           key={index}
           className="bg-white border border-green-100 rounded-lg mb-4 shadow-sm"
-          style={{background: "var(--background)"}}
         >
-          <div className="p-4" style={{background: "var(--background)"}}>
+          <div className="p-4">
             {/* Main content - always visible */}
             <div className="flex items-center justify-between mb-2">
               <div className="flex-1">
@@ -454,37 +452,130 @@
     };
 
     return (
-      <div className=" rounded-lg shadow-sm border border-green-100 "  style={{ background: "var(--background)" }}>
+      <div className="bg-white rounded-lg shadow-sm border border-green-100 ">
         {/* Header */}
-      <div
-  className="p-4 md:p-6 border-b bg-gradient-to-r"
-  style={{
-    borderColor: "var(--header-border)",
-    backgroundImage: `linear-gradient(to right, var(--header-bg-start), var(--header-bg-end))`,
-  }}
->
-  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-    <div className="flex items-center gap-4">
-      <h1
-        className="text-xl md:text-2xl font-semibold"
-        style={{ color: "var(--header-title)" }}
-      >
-        {title}
-      </h1>
-      <span
-        className="text-xs md:text-sm px-2 py-1 rounded-full whitespace-nowrap"
-        style={{
-          color: "var(--header-badge-text)",
-          backgroundColor: "var(--header-badge-bg)",
-        }}
-      >
-        Showing {Math.min(itemsPerPage, sortedData.length)} of{" "}
-        {sortedData.length}
-      </span>
-    </div>
-  </div>
-</div>
+        <div className="p-4 md:p-6 border-b border-green-100 bg-gradient-to-r from-green-100 to-emerald-100">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <h1 className="text-xl md:text-2xl font-semibold text-green-800">
+                {title}
+              </h1>
+              <span className="text-xs md:text-sm text-green-600 bg-green-100 px-2 py-1 rounded-full whitespace-nowrap">
+                Showing {Math.min(itemsPerPage, sortedData.length)} of{" "}
+                {sortedData.length}
+              </span>
+            </div>
 
+            <div className="flex items-center gap-2 md:gap-3 overflow-x-auto">
+              {/* Page Size Selector - only show when custom filters are provided */}
+              {filters && setFilters && (
+                <select
+                  value={filters.limit}
+                  onChange={(e) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      limit: parseInt(e.target.value),
+                      page: 1,
+                    }))
+                  }
+                  className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                >
+                  <option value={10}>10 per page</option>
+                  <option value={25}>25 per page</option>
+                  <option value={50}>50 per page</option>
+                  <option value={100}>100 per page</option>
+                </select>
+              )}
+
+              {showSearch && (
+                <div className="relative min-w-0 flex-1 sm:flex-initial">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-green-400 w-4 h-4" />
+                  <input
+                    type="text"
+                    placeholder="Search"
+                    className="w-full pl-10 pr-4 py-2 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white text-sm"
+                    value={currentSearchTerm}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                  />
+                </div>
+              )}
+              {/* FilterDrawer handles its own open/close state and trigger button */}
+              {showFilter &&
+                filtersConfig &&
+                onExternalFiltersChange &&
+                filtersConfig?.length > 0 && (
+                  <FilterDrawer
+                    filtersConfig={filtersConfig}
+                    activeFilters={externalFilters}
+                    onChangeFilters={onExternalFiltersChange}
+                    triggerButton={
+                      <button
+                        type="button"
+                        className="flex items-center gap-2 px-3 md:px-4 py-2 border border-green-200 rounded-lg text-green-700 bg-white hover:bg-green-50 transition-colors shadow-sm whitespace-nowrap text-sm"
+                      >
+                        <Filter className="w-4 h-4" />
+                        <span className="hidden sm:inline">Filter</span>
+                      </button>
+                    }
+                  />
+                )}
+              {/* Custom Filter Button - only show when setShowFilters is provided */}
+              {!filtersConfig && showFilter && setShowFilters && (
+                <button
+                  onClick={() => setShowFilters(true)}
+                  className={`flex items-center gap-2 px-3 md:px-4 py-2 border rounded-lg transition-colors whitespace-nowrap text-sm ${
+                    activeFiltersCount > 0
+                      ? "border-green-500 bg-green-50 text-green-700"
+                      : "border-green-200 hover:bg-green-50 text-green-700"
+                  }`}
+                >
+                  <Filter className="w-4 h-4" />
+                  <span className="hidden sm:inline">Filter</span>
+                  {activeFiltersCount > 0 && (
+                    <span className="bg-green-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      {activeFiltersCount}
+                    </span>
+                  )}
+                </button>
+              )}
+
+              {/* Default Filter Button - only show when no custom filter is provided */}
+              {!filtersConfig && showFilter && !setShowFilters && (
+                <button className="flex items-center gap-2 px-3 md:px-4 py-2 border border-green-200 rounded-lg hover:bg-green-50 text-green-700 transition-colors whitespace-nowrap text-sm">
+                  <Filter className="w-4 h-4" />
+                  <span className="hidden sm:inline">Filter</span>
+                </button>
+              )}
+
+              {/* Refresh Button - only show when refetch is provided */}
+              {refetch && (
+                <button
+                  onClick={() => refetch()}
+                  disabled={isFetching}
+                  className="flex items-center gap-2 px-3 md:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors whitespace-nowrap text-sm"
+                >
+                  <RefreshCw
+                    className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`}
+                  />
+                  <span className="hidden sm:inline">
+                    {isFetching ? "Updating..." : "Refresh"}
+                  </span>
+                </button>
+              )}
+
+              {showAddButton && (
+                <button
+                  onClick={onAdd}
+                  className="flex items-center gap-2 px-3 md:px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow-sm whitespace-nowrap text-sm"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span className="hidden sm:inline">{addButtonText}</span>
+                  <span className="sm:hidden">Add</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
 
         {/* Mobile Card View */}
         <div className="block md:hidden" onClick={() => setOpenMenuId(null)}>
@@ -532,15 +623,13 @@
                 )}
               </tr>
             </thead>
-           <tbody className="bg-[var(--background)] text-white divide-y divide-green-100">
-
+            <tbody className="bg-white divide-y divide-green-100">
               {currentData.map((item, index) => (
-                <tr className="hover:bg-[color-mix(in srgb, var(--background) 90%, white)] transition-colors" >
+                <tr key={index} className="hover:bg-green-25 transition-colors">
                   {columns.map((column) => (
                     <td
                       key={column.key}
-                      className="px-6 py-4 whitespace-nowrap text-sm"
-                      style={{ color: "var(--color-gray-900)" }}
+                      className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
                     >
                       {column.render
                         ? column.render(item)

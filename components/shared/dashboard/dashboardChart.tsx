@@ -67,7 +67,7 @@ export default function DashboardCharts() {
 
   if (error && allFailed) {
     return (
-      <div className="p-4 sm:p-6 text-center" style={{background:"var(--background"}}>
+      <div className="p-4 sm:p-6 text-center">
         <div className="text-red-600 mb-4 text-sm sm:text-base">
           Failed to load dashboard data
         </div>
@@ -82,7 +82,7 @@ export default function DashboardCharts() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 sm:bg-transparent" style={{ background: "var(--color-base-100)" }}>
+    <div className="min-h-screen bg-gray-50 sm:bg-transparent">
       <div className="px-3 py-4 sm:px-4 sm:py-6 md:p-6 space-y-4 sm:space-y-6 md:space-y-7 max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between">

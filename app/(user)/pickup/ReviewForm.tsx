@@ -37,7 +37,7 @@ export default function Review({
     <div className="space-y-6">
       <h2 className="text-xl font-bold text-green-700">Review Your Order</h2>
 
-      <div className="bg-green-50 rounded-lg p-4 space-y-4">
+      <div className=" rounded-lg p-4 space-y-4" style={{background:"var( --color-green-50)"}}>
         {cartItems.length === 0 ? (
           <p className="text-green-900">Your cart is empty.</p>
         ) : (
@@ -56,7 +56,7 @@ export default function Review({
                 />
                 <div className="flex-1">
                   <h3 className="font-semibold text-green-800">{item.name}</h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600" >
                     Quantity:{" "}
                     <span className="text-green-700">{item.quantity}</span>
                   </p>
