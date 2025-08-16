@@ -108,7 +108,9 @@ const searchParams = useSearchParams()
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
+    <div className="min-h-screen bg-gradient-to-br" style={{ 
+    background: "linear-gradient(to bottom right, var(--section-gradient-start), var(--section-gradient-middle), var(--section-gradient-end))" 
+  }}>
       {/* Header with Order Summary */}
     
 

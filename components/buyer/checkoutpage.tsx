@@ -344,7 +344,7 @@ const CheckoutPage = ({ amount, checkoutData }: CheckoutPageProps) => {
   }
 
   return (
-    <div className="flex bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden min-h-[600px]">
+    <div className="flex  rounded-2xl shadow-lg border border-green-100 overflow-hidden min-h-[600px]" style={{background:"var(--color-card)"}}>
       {/* Left Side - Static Illustration */}
       <div className="w-1/2 bg-gradient-to-br from-teal-50 via-green-50 to-emerald-100 flex items-center justify-center p-8 relative overflow-hidden">
         <div className="absolute top-10 left-10 w-20 h-20 bg-green-200 rounded-full opacity-30"></div>
@@ -361,7 +361,7 @@ const CheckoutPage = ({ amount, checkoutData }: CheckoutPageProps) => {
 
                 <div className="flex items-center mb-6">
                   <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center mr-3">
-                    <div className="w-4 h-4 bg-teal-500 rounded-full animate-pulse"></div>
+                    <div className="w-4 h-4 rounded-full animate-pulse" style={{background:"var(--bg-teal-500)"}}></div>
                   </div>
                   <span className="text-gray-600 font-medium">
                     Payment Data

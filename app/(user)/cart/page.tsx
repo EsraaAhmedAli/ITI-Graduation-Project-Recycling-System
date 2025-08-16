@@ -441,7 +441,7 @@ export default function CartPage() {
               </div>
             </div>
         {
-          user?.role == 'customer' &&     <div className="bg-white p-4 rounded-lg shadow-sm text-center">
+          user?.role == 'customer' &&     <div className=" p-4 rounded-lg shadow-sm text-center" style={{background:"var(--background)"}}>
               <div className="text-sm" style={{color:"var(--text-gray-400) "}}>Earned Points</div>
               <div className="text-2xl font-bold text-blue-600">
                 {totalPoints}

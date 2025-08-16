@@ -180,7 +180,7 @@ const handleSubmit = async () => {
                 </div>
                 
                 {orderInfo.itemCount && (
-                  <div className="flex items-center gap-1.5 text-gray-600">
+                  <div className="flex items-center gap-1.5" style={{color:"var(--text-gray-700)"}}>
                     <Package className="w-3.5 h-3.5 text-emerald-600" />
                     <span>{orderInfo.itemCount} item(s)</span>
                   </div>

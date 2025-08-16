@@ -35,7 +35,7 @@ export default function Review({
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-green-700">Review Your Order</h2>
+      <h2 className="text-xl font-bold text-green-900">Review Your Order</h2>
 
       <div className=" rounded-lg p-4 space-y-4" style={{background:"var( --color-green-50)"}}>
         {cartItems.length === 0 ? (
@@ -56,19 +56,19 @@ export default function Review({
                 />
                 <div className="flex-1">
                   <h3 className="font-semibold text-green-800">{item.name}</h3>
-                  <p className="text-sm text-gray-600" >
+                  <p className="text-sm " style={{color:"var( --text-gray-700)"}}>
                     Quantity:{" "}
-                    <span className="text-green-700">{item.quantity}</span>
+                    <span className="text-green-900">{item.quantity}</span>
                   </p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm " style={{color:"var( --text-gray-700)"}}>
                     Price per unit:{" "}
-                    <span className="text-green-700">
+                    <span className="text-green-900">
                       {item.price.toFixed(2)} EGP
                     </span>
                   </p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm " style={{color:"var( --text-gray-700)"}}>
                     Points:{" "}
-                    <span className="text-green-700">{item.points}</span>
+                    <span className="text-green-900">{item.points}</span>
                   </p>
                 </div>
               </div>
@@ -80,15 +80,15 @@ export default function Review({
 {userRole === "buyer" && (
   <>
     <div className="flex justify-between items-center">
-      <span className="text-gray-500 text-sm md:text-base">Order Price:</span>
-      <span className="font-medium text-gray-700">
+      <span className=" text-sm md:text-base"style={{color:"var(--text-gray-400)"}}>Order Price:</span>
+      <span className="font-medium " style={{color:"var(--text-gray-400)"}}>
         {subtotal.toFixed(2)} EGP
       </span>
     </div>
 
     <div className="flex justify-between items-center">
-      <span className="text-gray-500 text-sm md:text-base">Delivery Fees:</span>
-      <span className="font-medium text-gray-700">
+      <span className="text-sm md:text-base" style={{color:"var(--text-gray-400)"}}>Delivery Fees:</span>
+      <span className="font-medium" style={{color:"var(--text-gray-400)"}}>
         {deliveryFee.toFixed(2)} EGP
       </span>
     </div>
