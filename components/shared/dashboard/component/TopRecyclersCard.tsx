@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { FaMedal } from "react-icons/fa";
 import { TopUser } from '../../../../components/Types/dashboard.types';
 import { MEDAL_COLORS } from '../../../../constants/theme';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface TopRecyclersCardProps {
   topUsers: TopUser[];
@@ -53,7 +54,7 @@ const LoadingUserItem = () => (
 
 const TopRecyclersCard = memo<TopRecyclersCardProps>(({ topUsers, loading }) => {
   const maxPoints = topUsers[0]?.totalPoints || 1;
-
+const {t,convertNumber}=useLanguage()
   const getBackgroundClass = (index: number) => {
     switch (index) {
       case 0: return "bg-gradient-to-r from-yellow-50 to-yellow-100";
@@ -114,7 +115,7 @@ const TopRecyclersCard = memo<TopRecyclersCardProps>(({ topUsers, loading }) => 
                 {user.name}
               </span>
               <span className="text-xs text-green-500 mb-1">
-                {user.totalPoints.toLocaleString()} points
+                {convertNumber(user.totalPoints.toLocaleString())} {t('itemsModal.points')}
               </span>
               
               {/* Progress Bar */}
@@ -147,11 +148,9 @@ const TopRecyclersCard = memo<TopRecyclersCardProps>(({ topUsers, loading }) => 
     <div className="bg-white rounded-xl p-4 md:p-6 shadow border border-green-100 flex-1 flex flex-col" style={{ background: "var(--background)" }}>
       <div className="flex justify-between items-center mb-2">
         <span className="text-sm md:text-base font-medium text-green-800">
-          Top Recyclers
+        {t('charts.topUsers')}
         </span>
-        <button className="text-xs text-green-500 hover:text-green-700 hover:underline transition-colors">
-          View All
-        </button>
+   
       </div>
       
       {renderContent()}

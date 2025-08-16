@@ -4,6 +4,7 @@ import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip, Legend } from 'chart.js';
 import { TopMaterial } from '../../../../components/Types/dashboard.types'
 import { BAR_CHART_OPTIONS, CHART_COLORS } from '../../../../constants/theme';
+import { useLanguage } from '@/context/LanguageContext';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
@@ -13,6 +14,7 @@ interface MaterialsChartProps {
 }
 
 const MaterialsChart = memo<MaterialsChartProps>(({ topMaterials, loading }) => {
+  const { t, convertNumbers, locale } = useLanguage();
   const [sortBy, setSortBy] = useState<'quantity' | 'category'>('quantity');
 
   // Memoize chart data
@@ -24,64 +26,118 @@ const MaterialsChart = memo<MaterialsChartProps>(({ topMaterials, loading }) => 
       if (sortBy === 'quantity') {
         return b.totalQuantity - a.totalQuantity;
       }
-      return a._id.itemName.localeCompare(b._id.itemName);
+      // Updated: Use itemName directly instead of _id.itemName
+      return (a.itemName || '').localeCompare(b.itemName || '');
     });
 
     return {
-      labels: sortedMaterials.map(m => m._id.itemName),
+      // Updated: Use itemName directly with multilingual support
+      labels: sortedMaterials.map(m => {
+        // Handle multilingual names - prefer current locale, fallback to other languages
+        if (typeof m.itemNameMultilingual === 'object' && m.itemNameMultilingual) {
+          const isArabic = locale.startsWith('ar');
+          return isArabic 
+            ? (m.itemNameMultilingual.ar || m.itemNameMultilingual.en || m.itemName || t('charts.unknown'))
+            : (m.itemNameMultilingual.en || m.itemNameMultilingual.ar || m.itemName || t('charts.unknown'));
+        }
+        return m.itemName || t('charts.unknown');
+      }),
       datasets: [
         {
-          label: "Quantity",
-          data: sortedMaterials.map(m => m.totalQuantity),
+          label: t('charts.quantity'),
+          data: sortedMaterials.map(m => m.totalQuantity || 0),
           backgroundColor: [
             CHART_COLORS.primary,
             CHART_COLORS.secondary,
             CHART_COLORS.accent,
             CHART_COLORS.purple,
             CHART_COLORS.red,
+            // Add more colors for more items
+            CHART_COLORS.emerald,
+            '#FF6B6B',
+            '#4ECDC4',
+            '#45B7D1',
+            '#96CEB4'
           ],
           borderRadius: 8,
           hoverBackgroundColor: CHART_COLORS.emerald,
         }
       ]
     };
-  }, [topMaterials, sortBy]);
+  }, [topMaterials, sortBy, t, locale]);
 
-  // Memoize chart options
+  // Memoize chart options with better tooltips
   const chartOptions = useMemo(() => ({
     ...BAR_CHART_OPTIONS,
+    plugins: {
+      ...BAR_CHART_OPTIONS.plugins,
+      tooltip: {
+        callbacks: {
+          label: function(context: any) {
+            const material = topMaterials[context.dataIndex];
+            const unit = material?.unit || t('materials.pieces');
+            const quantity = convertNumbers(context.parsed.y.toString());
+            return `${quantity} ${unit}`;
+          },
+          afterLabel: function(context: any) {
+            const material = topMaterials[context.dataIndex];
+            if (material?.categoryName) {
+              return `${t('materials.category')}: ${material.categoryName}`;
+            }
+            return '';
+          }
+        }
+      }
+    },
     scales: {
       ...BAR_CHART_OPTIONS.scales,
       y: {
-        ...BAR_CHART_OPTIONS.scales.y,
-        title: { display: true, text: 'Quantity' }
+        ...BAR_CHART_OPTIONS.scales?.y,
+        title: { display: true, text: t('charts.quantity') },
+        beginAtZero: true,
+        ticks: {
+          ...BAR_CHART_OPTIONS.scales?.y?.ticks,
+          callback: function(value: any) {
+            return convertNumbers(value.toString());
+          }
+        }
       },
       x: {
-        ...BAR_CHART_OPTIONS.scales.x,
-        title: { display: true, text: 'Material' }
+        ...BAR_CHART_OPTIONS.scales?.x,
+        title: { display: true, text: t('charts.material') },
+        ticks: {
+          maxRotation: 45,
+          minRotation: 0
+        }
       },
     },
-  }), []);
-// Add this useEffect to debug the data
-React.useEffect(() => {
-  if (topMaterials && topMaterials.length > 0) {
-    console.log('MaterialsChart received data:', topMaterials);
-    const cookingPan = topMaterials.find(m => 
-      m._id.itemName.toLowerCase().includes('cooking') || 
-      m._id.itemName.toLowerCase().includes('pan')
-    );
-    if (cookingPan) {
-      console.log('Cooking pan data:', cookingPan);
+  }), [topMaterials, t, convertNumbers]);
+
+  // Updated debug effect
+  React.useEffect(() => {
+    if (topMaterials && topMaterials.length > 0) {
+      console.log('MaterialsChart received data:', topMaterials);
+      console.log('First material structure:', topMaterials[0]);
+      
+      // Look for cooking pan with new structure
+      const cookingPan = topMaterials.find(m => {
+        const name = m.itemName || '';
+        return name.toLowerCase().includes('cooking') || name.toLowerCase().includes('pan');
+      });
+      
+      if (cookingPan) {
+        console.log('Cooking pan data (new structure):', cookingPan);
+      }
     }
-  }
-}, [topMaterials]);
+  }, [topMaterials]);
+
   const renderContent = () => {
     if (loading) {
       return (
         <div className="flex items-center justify-center h-full text-green-500">
           <div className="text-center">
             <div className="animate-spin rounded-full h-6 md:h-8 w-6 md:w-8 border-b-2 border-green-500 mx-auto mb-2"></div>
-            <p className="text-xs md:text-sm">Loading materials...</p>
+            <p className="text-xs md:text-sm">{t('charts.loadingMaterials')}</p>
           </div>
         </div>
       );
@@ -92,7 +148,10 @@ React.useEffect(() => {
         <div className="flex items-center justify-center h-full text-gray-500">
           <div className="text-center">
             <div className="text-2xl md:text-4xl mb-2">📦</div>
-            <p className="text-xs md:text-sm">No materials data</p>
+            <p className="text-xs md:text-sm">{t('charts.noMaterialsData')}</p>
+            <p className="text-xs text-gray-400 mt-1">
+              {t('charts.materialsHint')}
+            </p>
           </div>
         </div>
       );
@@ -105,7 +164,7 @@ React.useEffect(() => {
     <div className="bg-white rounded-xl p-4 md:p-6 shadow border border-green-100 flex-1 flex flex-col" style={{ background: "var(--background)" }}>
       <div className="flex justify-between items-center mb-2 flex-wrap gap-2">
         <span className="text-sm md:text-base font-medium text-green-800">
-          Top Recycled Materials
+          {t('charts.topRecycledMaterials')}
         </span>
         <select 
           value={sortBy}
@@ -113,10 +172,9 @@ React.useEffect(() => {
           className="text-xs border border-green-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
           disabled={loading}
           style={{ background: "var(--background)" }}
-         
         >
-          <option value="quantity">By Quantity</option>
-          <option value="category">By Name</option>
+          <option value="quantity">{t('materials.sortByQuantity')}</option>
+          <option value="category">{t('materials.sortByName')}</option>
         </select>
       </div>
       
@@ -124,15 +182,36 @@ React.useEffect(() => {
         {renderContent()}
       </div>
       
-      {/* Summary stats */}
+      {/* Enhanced summary stats */}
       {!loading && topMaterials.length > 0 && (
         <div className="mt-2 text-xs text-gray-600 border-t border-green-100 pt-2">
-          <div className="flex justify-between">
-            <span>Total Materials: {topMaterials.length}</span>
+          <div className="flex justify-between items-center flex-wrap gap-2">
             <span>
-              Total Quantity: {topMaterials.reduce((sum, m) => sum + m.totalQuantity, 0).toLocaleString()}
+              {t('materials.totalMaterials')}: {convertNumbers(topMaterials.length.toString())}
+            </span>
+            <span>
+              {t('materials.totalQuantity')}: {convertNumbers(topMaterials.reduce((sum, m) => sum + (m.totalQuantity || 0), 0).toLocaleString())}
             </span>
           </div>
+          {/* Show top material info */}
+          {topMaterials[0] && (
+            <div className="mt-1 text-center">
+              <span className="text-green-600 font-medium">
+                {t('materials.topMaterial')}: {(() => {
+                  const material = topMaterials[0];
+                  // Get material name based on locale
+                  let materialName = material.itemName;
+                  if (typeof material.itemNameMultilingual === 'object' && material.itemNameMultilingual) {
+                    const isArabic = locale.startsWith('ar');
+                    materialName = isArabic 
+                      ? (material.itemNameMultilingual.ar || material.itemNameMultilingual.en || material.itemName)
+                      : (material.itemNameMultilingual.en || material.itemNameMultilingual.ar || material.itemName);
+                  }
+                  return materialName;
+                })()} ({convertNumbers(topMaterials[0].totalQuantity.toString())} {topMaterials[0].unit || t('materials.pieces')})
+              </span>
+            </div>
+          )}
         </div>
       )}
     </div>

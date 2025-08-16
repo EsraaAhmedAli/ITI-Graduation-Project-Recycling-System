@@ -398,6 +398,70 @@
       "description": "ورق"
     }
   },
+  "charts": {
+    "totalOrders": "اجمالي الطلبات",
+    "activeUsers": "المستخدمون النشطون",
+    "materialTrack": "المواد المتعقبة",
+    "dashboardTitle": "إحصائيات لوحة المعلومات",
+    "topUsers": "المستخدمون المميزون",
+    "userGrowth": "نمو المستخدم",
+    "month": "الشهر",
+    "months": "الشهور",
+    "users": "المستخدمين",
+    "orderStatus": "حالة الطلبات",
+    "overview": "نظرة عامة",
+    "noOrderData": "لا توجد بيانات طلبات",
+    "mostCommon": "الأكثر شيوعاً",
+    "total": "المجموع",
+    "notAvailable": "غير متاح",
+       "topRecycledMaterials": "أهم المواد المعاد تدويرها",
+    "loadingMaterials": "جاري تحميل المواد...",
+    "noMaterialsData": "لا توجد بيانات مواد",
+    "materialsHint": "تأكد من وجود طلبات مكتملة مع عناصر",
+    "material": "المادة",
+    "quantity": "الكمية",
+    "unknown": "غير معروف",
+        "loadingCitiesData": "جاري تحميل بيانات المدن...",
+    "noCitiesData": "لا توجد بيانات مدن متاحة",
+    "checkBackLater": "تحقق مرة أخرى لاحقاً للتحديثات",
+  
+    "trends": {
+      "up": "ارتفاع",
+      "down": "انخفاض",
+      "steady": "ثابت"
+    },
+    "vsLastPeriod": "مقارنة بالحقبة السابقة",
+    "numbers": {
+      "percent": "٪"
+    }
+  },
+    "cities": {
+    "topCitiesByOrders": "أفضل المدن حسب الطلبات",
+    "numberOfOrders": "عدد الطلبات",
+    "cities": "المدن",
+    "orders": "الطلبات",
+    "totalOrders": "إجمالي الطلبات",
+    "avgPerCity": "المتوسط لكل مدينة",
+    "topCity": "أفضل مدينة"
+  },
+   "materials": {
+    "category": "الفئة",
+    "pieces": "قطع",
+    "sortByQuantity": "حسب الكمية",
+    "sortByName": "حسب الاسم",
+    "totalMaterials": "إجمالي المواد",
+    "totalQuantity": "الكمية الإجمالية",
+    "topMaterial": "الأعلى"
+  },
+  "orderStatus": {
+    "pending": "قيد الانتظار",
+    "processing": "قيد المعالجة",
+    "shipped": "تم الشحن",
+    "delivered": "تم التسليم",
+    "cancelled": "ملغى",
+    "returned": "مرتجع",
+    "completed": "مكتمل"
+  },
   "items": {
     "paaper": {
       "news paper": "جرايد"

@@ -165,6 +165,75 @@
       "typeOfAccount": "Select the type of account you'd like to create."
     }
   },
+
+  "charts": {
+        "vsLastPeriod": "vs last period",
+    "numbers": {
+      "percent": "%"
+    },
+    "totalOrders": "total orders",
+    "activeUsers": "Active users",
+    "materialTrack": "Materials tracked",
+    "dashboardTitle": "Dashboard Insights",
+    "topUsers": "Top Users",
+    "userGrowth": "User Growth",
+    "month": "Month",
+    "users" : "Users",    "orderStatus": "Order Status",
+    "overview": "Overview",
+    "noOrderData": "No order data",
+    "mostCommon": "Most Common",
+    "total": "Total",
+    "notAvailable": "N/A",
+    "months": "Months",
+        "topRecycledMaterials": "Top Recycled Materials",
+    "loadingMaterials": "Loading materials...",
+    "noMaterialsData": "No materials data",
+    "materialsHint": "Make sure you have completed orders with items",
+    "material": "Material",
+    "quantity": "Quantity",
+    "unknown": "Unknown",
+      "loadingCitiesData": "Loading cities data...",
+    "noCitiesData": "No cities data available",
+    "checkBackLater": "Check back later for updates",
+
+    "trends": {
+      "up": "up",
+      "down": "down",
+      "steady": "steady"
+    }
+  },
+    "cities": {
+    "topCitiesByOrders": "Top Cities by Orders",
+    "numberOfOrders": "Number of Orders",
+    "cities": "Cities",
+    "orders": "Orders",
+    "totalOrders": "Total Orders",
+    "avgPerCity": "Avg per City",
+    "topCity": "Top City"
+  },
+    "materials": {
+    "category": "Category",
+    "pieces": "pieces",
+    "sortByQuantity": "By Quantity",
+    "sortByName": "By Name",
+    "totalMaterials": "Total Materials",
+    "totalQuantity": "Total Quantity",
+    "topMaterial": "Top"
+  },
+    "orderStatus": {
+    "pending": "Pending",
+    "processing": "Processing", 
+    "shipped": "Shipped",
+    "delivered": "Delivered",
+    "cancelled": "Cancelled",
+    "returned": "Returned",
+    "completed": "Completed",
+    "confirmed": "Confirmed",
+    "preparing": "Preparing",
+    "ready": "Ready",
+    "failed": "Failed"
+  },
+
   "profile": {
     "returnEarn": "Return & Earn",
     "editProfile": "Edit Profile",

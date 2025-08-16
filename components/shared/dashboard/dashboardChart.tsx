@@ -5,6 +5,7 @@ import { useDashboardData } from "../../../hooks/useDashboardData";
 import { StatCard } from "./component/StatCard";
 import { ErrorBoundary } from "./component/errorboundary";
 import Loader from "@/components/common/loader";
+import { useLanguage } from "@/context/LanguageContext";
 
 // Lazy load chart components
 const UserGrowthChart = lazy(() => import("./charts/UserGrowthChart"));
@@ -53,7 +54,7 @@ const MaterialsIcon = () => (
 
 export default function DashboardCharts() {
   const { data, loading, error, refetch } = useDashboardData();
-
+  const {convertNumber,t,locale}=useLanguage()
   const globalLoading = Object.values(loading).some(Boolean);
   const allFailed =
     Object.values(loading).every((v) => v === false) &&
@@ -88,43 +89,43 @@ export default function DashboardCharts() {
         <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-center sm:text-left">
             <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-green-900">
-              Dashboard Insights
+              {t('charts.dashboardTitle')}
             </h1>
-            <p className="text-xs sm:text-sm md:text-base text-green-700 mt-1">
-              {new Date().toLocaleDateString("en-US", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </p>
+<p className="text-xs sm:text-sm md:text-base text-green-700 mt-1">
+  {new Date().toLocaleDateString(locale === 'ar' ? 'ar-eg' : 'en-US', {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  })}
+</p>
           </div>
         </div>
 
         {/* Stat Cards */}
         <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
           <StatCard
-            title="Total Orders"
-            value={data.totalOrders?.toLocaleString() || "0"}
+            title={t('charts.totalOrders')}
+            value={convertNumber(data.totalOrders?.toLocaleString()) || "0"}
             icon={<OrdersIcon />}
             trend="up"
-            trendValue="8%"
+              trendValue={`${convertNumber(8)}%`}
             loading={loading.analytics}
           />
           <StatCard
-            title="Active Users"
-            value={data.topUsers?.length?.toLocaleString() || "0"}
+            title={t('charts.activeUsers')}
+            value={convertNumber(data.topUsers?.length) || "0"}
             icon={<UsersIcon />}
             trend="steady"
             loading={loading.users}
           />
           <div className="xs:col-span-2 lg:col-span-1">
             <StatCard
-              title="Materials Tracked"
-              value={data.topMaterials?.length?.toLocaleString() || "0"}
+            title={t('charts.materialTrack')}
+              value={convertNumber(data.topMaterials?.length)|| "0"}
               icon={<MaterialsIcon />}
               trend="up"
-              trendValue="5%"
+              trendValue={`${convertNumber(5)}%`}
               loading={loading.materials}
             />
           </div>

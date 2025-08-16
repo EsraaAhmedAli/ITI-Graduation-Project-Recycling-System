@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 // Import your translation files
 import enTranslations from '@/messages/en.json';
 import arTranslations from '@/messages/ar.json';
+import { convertNumbers } from '@/utils/numbersUtility';
 
 type Locale = 'en' | 'ar';
 
@@ -13,7 +14,8 @@ interface LanguageContextType {
   t: (key: string, params?: Record<string, any>) => string;
   tAr: (key: string, params?: Record<string, any>) => string;
   dir: 'ltr' | 'rtl';
-  isLoaded: boolean; // Add this to track if context is ready
+  isLoaded: boolean;
+  convertNumber: (value: number | string) => string; // Add this
 }
 
 const translations = {
@@ -93,9 +95,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   };
 
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
+  const convertNumber = (value: number | string) => convertNumbers(value, locale);
 
   return (
-    <LanguageContext.Provider value={{ locale, setLocale, t, tAr, dir, isLoaded }}>
+    <LanguageContext.Provider value={{ locale, setLocale, t, tAr, dir, isLoaded,convertNumber }}>
       {children}
     </LanguageContext.Provider>
   );
