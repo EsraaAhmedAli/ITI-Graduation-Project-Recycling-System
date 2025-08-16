@@ -5,48 +5,73 @@
 @import "keen-slider/keen-slider.min.css";
 
 
-
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --section-gradient-start: #f0fdf4;
-  /* --section-gradient-end: #E3F2FD; */
-  --section-gradient-end:#f0fdfa;
-  --section-gradient-middle: #ecfdf5;
-  --background-gray:#F9FAFB;
-  --color-700: #616161;
-  --color-base-100: #ffffff;
-  --color-base-200: #222;
-  --color-gray-900: #111827;
-   --header-bg-start: #d1fae5; /* green-100 */
-  --header-bg-end: #a7f3d0;   /* emerald-100 */
-  --header-border: #d1fae5;   /* green-100 */
-  --header-title: #065f46;    /* green-800 */
-  --header-badge-bg: #d1fae5; /* green-100 */
-  --header-badge-text: #059669; /* green-600 */
+    --background: #ffffff;
+    --foreground: #171717;
+    --color-base-200: #ffffff;
+    --color-base-800: #1F2937;
+    --color-base-slat-900:#0F172A;
+    --border-gray-200: #E5E7EB;
+    --text-gray-700:#374151;
+    --text-gray-100:#f3f4f6;
+    --text-gray-800:#1f2937;
+    --text-gray-900:#111827;
+    --text-gray-400:#9CA3AF;
+    --color-green-50:#ECFDF5;
+    --color-card:#ffffff;
+    --text-gray-800:#1F2937;
+    --bg-gray-50:#F9FAFB;
+    --card-bg: #ffffff;
+    --card-border: #e5e7eb; /* gray-200 */
+    --card-text: #111827; /* black */
+    --card-subtext: #4b5563; /* gray-600 */
+    --icon-bg-green: #d1fae5; /* green-100 */
+    --icon-text-green: #059669; /* green-600 */
+    --icon-bg-blue: #dbeafe; /* blue-100 */
+    --icon-text-blue: #2563eb; /* blue-600 */
+    --icon-bg-purple: #ede9fe; /* purple-100 */
+    --icon-text-purple: #7c3aed; /* purple-600 */
+
+      --background: #ffffff;
+  --border-color: #e5e7eb;
+  --text-gray-600: #4b5563;
+  --text-gray-900: #111827;
+  --bg-gray-50: #f9fafb;
+  --bg-white: #ffffff;
+  --bg-white-95: rgba(255, 255, 255, 0.95);
+  --border-gray-200: #e5e7eb;
+  --bg-red-500: #ef4444;
+  --border-white: #ffffff;
+  --bg-gray-200: #e5e7eb;
+  --text-yellow-400: #facc15;
+    --bg-gray-50: #f9fafb;
+  --border-gray-200: #e5e7eb;
 }
 
-
 .dark {
-  --background: #1B2432;
+  --background: #000000;
   --foreground: #ededed;
-  --color-base-100: #202833;
+  --color-base-100: #1a1a1a;
   --color-base-200: #222;
-  --color-base-300: #333;
+  --color-base-300: #1a1a1a;
   --color-base-content: #e0e0e0;
-  --section-gradient-start: #15191f;
-   --section-gradient-middle: #111315;
-  --section-gradient-end: #131822;
-  --background-gray:#030303;
-   --color-700: #E0E0E0;
-   --color-gray-900: #F8FAFC;
-    --header-bg-start: #1a2b26; 
-  --header-bg-end: #12352f;   
-  --header-border: #26433b;   
-  --header-title: #a7f3d0;    
-  --header-badge-bg: #1a2b26; 
-  --header-badge-text: #6ee7b7;
-  
+  --color-base-800:#e0e0e0;
+  --color-base-slat-900:#e0e0e0;
+  --border-gray-200: #1a1a1a;
+   --bg-gray-50:#1F2937;
+  --text-gray-700:#d5d5d5;
+  --text-gray-100:#535353;
+  --text-gray-800:#f3f3f3;
+  --text-gray-900:#fbfbfb;
+  --text-gray-400:#f7f3f3;
+  --color-green-50:#535353;
+  --color-card:#535353;
+    --bg-gray-800: #1f2937;
+  --border-gray-600: #4b5563;
+
+
+
+
 }
 
 @theme {
@@ -100,30 +125,404 @@ input::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
-.sidebar-link {
-  color: var(--color-700);
-  transition: background-color 0.2s ease, color 0.2s ease;
+
+.border-gray-custom {
+  border-color: var(--border-gray-200);
 }
 
-.sidebar-link:hover {
-  background-color: var(--section-gradient-start);
-  color: var(--color-success);
+/* Light Mode */
+.pickup-btn {
+  @apply flex items-center gap-2 px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg bg-green-500 hover:bg-green-600 text-white;
 }
 
-.dark .sidebar-link:hover {
-  background-color: var(  --background);
-  color: var(--color-success);
+/* Disabled في Light Mode */
+.pickup-btn:disabled {
+  @apply bg-gray-300 text-white cursor-not-allowed shadow-none;
+}
+
+/* Dark Mode */
+.dark .pickup-btn {
+  @apply bg-green-600 hover:bg-green-700 text-white;
+}
+
+/* Disabled في Dark Mode */
+.dark .pickup-btn:disabled {
+  @apply bg-gray-700 text-gray-400 cursor-not-allowed shadow-none;
 }
 
 
-.active-link {
-  background-color: var(--section-gradient-start);
-  color: var(--color-success);
-  font-weight: 600;
+/* global.css */
+
+/* Payment Method Card - Base Style */
+.payment-method-card {
+  padding: 1.5rem;
+  border-width: 2px;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 300ms;
+  display: block;
 }
 
-.dark .active-link {
-  background-color: var(--background);
-  color: var(--color-success);
+/* Light Mode */
+.payment-method-card.light {
+  border-color: #e5e7eb;
+  background-color: white;
 }
+
+.payment-method-card.light:hover {
+  border-color: #93c5fd;
+}
+
+.payment-method-card.light.selected {
+  border-color: #10b981;
+  background-color: #ecfdf5;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Dark Mode */
+.payment-method-card.dark {
+  border-color: #374151;
+  background-color: #1f2937;
+}
+
+.payment-method-card.dark:hover {
+  border-color: #3b82f6;
+}
+
+.payment-method-card.dark.selected {
+  border-color: #10b981;
+  background-color: #064e3b;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.25), 0 2px 4px -1px rgba(0, 0, 0, 0.15);
+}
+
+/* Icon Container */
+.payment-icon-container {
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+}
+
+.payment-icon-container.cash {
+  background-color: #d1fae5;
+  color: #059669;
+}
+
+.payment-icon-container.credit_card {
+  background-color: #dbeafe;
+  color: #2563eb;
+}
+
+.payment-icon-container.other {
+  background-color: #f3e8ff;
+  color: #7c3aed;
+}
+
+/* Dark Mode Icon Container */
+.dark .payment-icon-container.cash {
+  background-color: #065f46;
+  color: #6ee7b7;
+}
+
+.dark .payment-icon-container.credit_card {
+  background-color: #1e40af;
+  color: #93c5fd;
+}
+
+.dark .payment-icon-container.other {
+  background-color: #5b21b6;
+  color: #c4b5fd;
+}
+
+/* Text Styles */
+.payment-method-title {
+  font-weight: bold;
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+
+.light .payment-method-title {
+  color: #111827;
+}
+
+.dark .payment-method-title {
+  color: #000000;
+}
+
+.payment-method-description {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.light .payment-method-description {
+  color: #4b5563;
+}
+
+.dark .payment-method-description {
+  color: #9ca3af;
+}
+
+/* Checkmark Circle */
+.payment-checkmark {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.payment-checkmark.selected {
+  background-color: #10b981;
+}
+
+.payment-checkmark-icon {
+  width: 0.75rem;
+  height: 0.75rem;
+  color: var(--background);
+}
+
+/* Navbar Base Styles */
+.navbar {
+  background: var(--background);
+  border-color: var(--border-color);
+}
+
+/* Navbar Links */
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.nav-link.light {
+  color: var(--text-gray-600);
+  background-color: transparent;
+}
+
+.nav-link.light:hover {
+  color: var(--text-gray-900);
+  background-color: var(--bg-gray-50);
+}
+
+.nav-link.dark {
+  color: var(--text-gray-300);
+  background-color: transparent;
+}
+
+.nav-link.dark:hover {
+  color: var(--text-white);
+  background-color: var(--bg-gray-800);
+}
+
+/* Navbar Icons */
+.nav-icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+/* Dropdown Menus */
+.nav-dropdown {
+  background: var(--bg-white);
+  border-color: var(--border-gray-200);
+}
+
+.dark .nav-dropdown {
+  background: var(--bg-gray-800);
+  border-color: var(--border-gray-700);
+}
+
+/* Mobile Menu */
+.mobile-menu {
+  background: var(--bg-white-95);
+  border-color: var(--border-gray-200);
+}
+
+.dark .mobile-menu {
+  background: var(--bg-gray-900-95);
+  border-color: var(--border-gray-700);
+}
+
+/* Cart & Profile Indicators */
+.cart-indicator {
+  background: var(--bg-red-500);
+  color: var(--text-white);
+  border-color: var(--border-white);
+}
+
+/* Language Toggle */
+.language-toggle {
+  background: var(--bg-gray-50);
+  border-color: var(--border-gray-200);
+}
+
+.dark .language-toggle {
+  background: var(--bg-gray-800);
+  border-color: var(--border-gray-700);
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+  color: var(--text-gray-600);
+}
+
+.dark .theme-toggle {
+  color: var(--text-yellow-400);
+}
+/* Navbar Base Styles */
+.navbar {
+  background: var(--background);
+  border-color: var(--border-color);
+}
+
+/* Navbar Links */
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.nav-link.light {
+  color: var(--text-gray-600);
+  background-color: transparent;
+}
+
+.nav-link.light:hover {
+  color: var(--text-gray-900);
+  background-color: var(--bg-gray-50);
+}
+
+.nav-link.dark {
+  color: var(--text-gray-300);
+  background-color: transparent;
+}
+
+.nav-link.dark:hover {
+  color: var(--text-white);
+  background-color: var(--bg-gray-800);
+}
+
+/* Navbar Icons */
+.nav-icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+/* Cart Styles */
+.cart-button {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.cart-button.light {
+  color: var(--text-gray-600);
+  background-color: transparent;
+}
+
+.cart-button.light:hover {
+  color: var(--text-gray-900);
+  background-color: var(--bg-gray-50);
+  border-color: var(--border-gray-200);
+}
+
+.cart-button.dark {
+  color: var(--text-gray-300);
+  background-color: transparent;
+}
+
+.cart-button.dark:hover {
+  color: var(--text-white);
+  background-color: var(--bg-gray-800);
+  border-color: var(--border-gray-700);
+}
+
+/* Cart Indicator (Red Number) */
+.cart-indicator {
+  position: absolute;
+  top: -0.5rem;
+  right: -0.5rem;
+  background-color: #ef4444; /* Red-500 */
+  color: white;
+  font-size: 0.75rem;
+  font-weight: bold;
+  min-width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.25rem;
+  border: 1px solid white;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.dark .cart-indicator {
+  border-color: var(--border-gray-800);
+}
+
+/* Dropdown Menus - Updated */
+.nav-dropdown {
+  background: var(--bg-gray-50); /* Changed from white to light gray */
+  border-color: var(--border-gray-200);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.dark .nav-dropdown {
+  background: var(--bg-gray-800);
+  border-color: var(--border-gray-600); /* Slightly lighter border for better contrast */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.25), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile Menu */
+.mobile-menu {
+  background: var(--bg-white-95);
+  border-color: var(--border-gray-200);
+}
+
+.dark .mobile-menu {
+  background: var(--bg-gray-900-95);
+  border-color: var(--border-gray-700);
+}
+
+/* Language Toggle */
+.language-toggle {
+  background: var(--bg-gray-50);
+  border-color: var(--border-gray-200);
+}
+
+.dark .language-toggle {
+  background: var(--bg-gray-800);
+  border-color: var(--border-gray-700);
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+  color: var(--text-gray-600);
+}
+
+.dark .theme-toggle {
+  color: var(--text-yellow-400);
+}
+
+
+
+
+
 

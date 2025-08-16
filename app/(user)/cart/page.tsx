@@ -433,23 +433,23 @@ export default function CartPage() {
         </div>
       ) : (
         <>
-          <div className={`bg-green-50 rounded-xl p-4 mb-6 grid grid-cols-1 ${user?.role == 'customer' ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
-            <div className="bg-white p-4 rounded-lg shadow-sm text-center">
-              <div className="text-gray-500 text-sm">Total Items</div>
+          <div className={`rounded-xl p-4 mb-6 grid grid-cols-1 ${user?.role == 'customer' ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`} style={{background:"var(--color-green-50)"}}>
+            <div className=" p-4 rounded-lg shadow-sm text-center" style={{background:"var(--background)"}}>
+              <div className=" text-sm"style={{color:"var(--text-gray-400) "}}>Total Items</div>
               <div className="text-2xl font-bold text-green-600">
                 {totalItems}
               </div>
             </div>
         {
           user?.role == 'customer' &&     <div className="bg-white p-4 rounded-lg shadow-sm text-center">
-              <div className="text-gray-500 text-sm">Earned Points</div>
+              <div className="text-sm" style={{color:"var(--text-gray-400) "}}>Earned Points</div>
               <div className="text-2xl font-bold text-blue-600">
                 {totalPoints}
               </div>
             </div>
         }
-            <div className="bg-white p-4 rounded-lg shadow-sm text-center">
-              <div className="text-gray-500 text-sm">{user?.role == 'customer' ? 'Earned Money' : 'Payed Money'} </div>
+            <div className=" p-4 rounded-lg shadow-sm text-center" style={{background:"var(--background)"}}>
+              <div className="text-gray-500 text-sm" style={{color:"var(--text-gray-400)"}}>{user?.role == 'customer' ? 'Earned Money' : 'Payed Money'} </div>
               <div className="text-2xl font-bold text-emerald-600">
                 {totalPrice.toFixed(2)} EGP
               </div>
@@ -466,6 +466,7 @@ export default function CartPage() {
                   animate="visible"
                   exit="exit"
                   layout
+                  style={{ background: "var(--color-card)" }}
                   className={`bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-shadow ${
                     outOfStockItems[item._id] 
                       ? 'border-red-200 bg-red-50' 
@@ -495,7 +496,7 @@ export default function CartPage() {
                       </div>
                     )}
 
-                    <div className={`bg-green-50 rounded-lg w-full sm:w-24 h-24 flex-shrink-0 flex items-center justify-center relative ${
+                    <div style={{background:"var(--color-green-50)"}} className={` rounded-lg w-full sm:w-24 h-24 flex-shrink-0 flex items-center justify-center relative ${
                       outOfStockItems[item._id] ? 'opacity-50' : ''
                     }`}>
                       {item.image ? (
@@ -515,11 +516,11 @@ export default function CartPage() {
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
                           <h3 className={`text-lg font-medium ${
-                            outOfStockItems[item._id] ? 'text-gray-500 line-through' : 'text-gray-800'
+                            outOfStockItems[item._id] ? ' --text-gray-400 line-through' : 'text-gray-800'
                           }`}>
                             {item.name}
                           </h3>
-                          <p className="text-sm text-gray-500 mt-1">
+                          <p  style={{color:"--text-gray-400"}} className="text-sm mt-1">
                             Category:{" "}
                             <span className="text-green-600">
                               {item.categoryName}
@@ -542,7 +543,7 @@ export default function CartPage() {
                       </div>
 
                       <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
-                        <div className="flex items-center text-gray-600">
+                        <div className="flex items-center " color="var(--text-gray-700)">
                           <Scale className="w-4 h-4 mr-1" />
                           {item.measurement_unit === 1 ? "By Kilo" : "By Piece"}
                         </div>
@@ -585,7 +586,7 @@ export default function CartPage() {
                           <span className="font-semibold">Price:</span>{" "}
                           {item.price.toFixed(2)} EGP
                         </div>
-                        <div className="text-gray-600 text-sm">
+                        <div className=" text-sm" style={{color:"var(--text-gray-700)"}}>
                           {item.quantity} × {item.price.toFixed(2)} ={" "}
                           <span className="font-medium">
                             {(item.quantity * item.price).toFixed(2)} EGP
@@ -689,7 +690,7 @@ export default function CartPage() {
             </AnimatePresence>
           </div>
 
-          <div className="mt-8 bg-white rounded-xl shadow p-6">
+          <div className="mt-8 rounded-xl shadow p-6" style={{background:"var(--color-card)"}}>
             {/* Out of Stock Warning */}
             {hasOutOfStockItems && (
               <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -737,23 +738,20 @@ export default function CartPage() {
                 <div className={
                   totalPrice < 100 || hasOutOfStockItems ? "pointer-events-none" : ""
                 }>
-                  <Button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (!hasOutOfStockItems && totalPrice >= 100) {
-                        router.push("/pickup");
-                      }
-                    }}
-                    disabled={totalPrice < 100 || hasOutOfStockItems}
-                    className={`flex items-center gap-2 px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg ${
-                      totalPrice < 100 || hasOutOfStockItems
-                        ? "bg-gray-300 text-white cursor-not-allowed"
-                        : "bg-green-500 hover:bg-green-600 text-white"
-                    }`}
-                  >
-                    <Truck className="w-5 h-5" />
-                    Schedule Pickup
-                  </Button>
+              <Button
+  onClick={(e) => {
+    e.preventDefault();
+    if (!hasOutOfStockItems && totalPrice >= 100) {
+      router.push("/pickup");
+    }
+  }}
+  disabled={totalPrice < 100 || hasOutOfStockItems}
+  className="pickup-btn"
+>
+  <Truck className="w-5 h-5" />
+  Schedule Pickup
+</Button>
+
                 </div>
                 {totalPrice < 100 && (
                   <p className="text-xs text-red-600 mt-1 text-right">

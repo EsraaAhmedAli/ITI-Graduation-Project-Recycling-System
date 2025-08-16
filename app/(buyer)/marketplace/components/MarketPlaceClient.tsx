@@ -269,7 +269,8 @@ export default function MarketplaceClient({
     <>
       {/* Search and Filter Controls */}
       <section
-        className="mb-4 bg-white rounded-lg shadow-sm p-3 sticky top-0 z-10"
+        className="mb-4rounded-lg shadow-sm p-3 sticky top-0 z-10"
+        style={{ background: "var(--background)" }}
         aria-label="Search and filter controls"
       >
         <div className="flex flex-col sm:flex-row gap-2">
@@ -305,7 +306,8 @@ export default function MarketplaceClient({
               id="category-select"
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg w-full appearance-none bg-white focus:ring-1 focus:ring-green-500 focus:outline-none"
+              className="pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg w-full appearance-none focus:ring-1 focus:ring-green-500 focus:outline-none"
+              style={{ background: "var(--background)" }}
               disabled={categoriesLoading}
               aria-describedby="category-help"
             >
@@ -386,12 +388,14 @@ export default function MarketplaceClient({
               {filteredItems.map((item, index) => (
                 <article
                   key={item._id}
-                  className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-sm transition-all duration-150 h-full flex flex-col"
+                  className="bg-white rounded-lg  border border-gray-custom overflow-hidden hover:shadow-sm transition-all duration-150 h-full flex flex-col"
                   role="gridcell"
+                  style={{background:"var(--color-base-200)"}}
                 >
                   <Link
                     href={`/marketplace/${encodeURIComponent(item.name)}`}
                     className="h-full flex flex-col focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 rounded-lg"
+
                     aria-label={`View details for ${item.name}, priced at ${
                       item.price
                     } ${t("itemsModal.currency")}`}
@@ -404,7 +408,7 @@ export default function MarketplaceClient({
                     />
 
                     <div className="p-2 flex-1 flex flex-col">
-                      <h3 className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide leading-tight">
+                      <h3 className="font-bold mb-2 text-sm uppercase tracking-wide leading-tight" style={{color:"var(--color-base-slat-900)"}}>
                         {t(
                           `categories.subcategories.${item.name
                             .toLowerCase()
