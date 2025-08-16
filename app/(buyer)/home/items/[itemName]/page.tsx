@@ -39,6 +39,8 @@ export default function ItemDetailsPage() {
     decodedName,
     params: useParams(),
   });
+  console.log(itemName,'ii',decodedName,'dd');
+  
 
   // Fetch specific item by name using existing API (original prices only)
   const fetchItemByName = async () => {
@@ -56,7 +58,7 @@ export default function ItemDetailsPage() {
 
       // Find the item by name (case insensitive)
       const foundItem = allItems.find(
-        (item: any) => item.name.toLowerCase() === decodedName.toLowerCase()
+        (item: any) => item.name.en.toLowerCase() === decodedName.toLowerCase()
       );
 
       if (!foundItem) {

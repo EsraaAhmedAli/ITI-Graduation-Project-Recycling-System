@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import MarketplaceClient from "./components/MarketPlaceClient";
 import api from "@/lib/axios";
 import Loader from "@/components/common/Loader";
+import { useLanguage } from "@/context/LanguageContext";
 
 // SEO: Static metadata
 export const metadata: Metadata = {
@@ -52,9 +53,8 @@ async function getServerData(): Promise<ServerData> {
 
     const items = itemsResponse.data?.data || [];
     const allItems = categoriesResponse.data?.data || [];
-
     const categories = Array.from(
-      new Set(allItems.map((item: Item) => item.categoryName))
+      new Set(allItems.map((item: Item) => item.categoryName.en))
     ).sort();
 
     return {

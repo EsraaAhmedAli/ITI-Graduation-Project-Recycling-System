@@ -7,6 +7,7 @@ import PromotionSlider from "@/components/buyer/PromotionSlider";
 import {   ChevronRight,  Frown, Leaf, Zap, Recycle, AlertTriangle  } from "lucide-react";
 import api from "@/lib/axios";
 import { useUserAuth } from "@/context/AuthFormContext";
+import { useLanguage } from "@/context/LanguageContext";
 
 
 interface Item {
@@ -89,7 +90,7 @@ const {user} = useUserAuth()
       
 
       const formattedMaterials = data.data.map((item: any) => ({
-        name: item._id.itemName,
+        name: item._id.itemName.en,
         image: item.image,
         totalRecycled: item.totalQuantity,
         totalPoints: item.totalPoints,
@@ -104,7 +105,7 @@ const {user} = useUserAuth()
     }
   };
 
-
+const {locale}=useLanguage()
 
   useEffect(() => {
     // Try to get user role from session storage
@@ -131,8 +132,8 @@ const {user} = useUserAuth()
   useEffect(() => {
     const term = searchTerm.toLowerCase();
     const filtered = items.filter((item) => {
-      const matchesSearch = item.name.toLowerCase().includes(term) || item.categoryName.toLowerCase().includes(term);
-      const matchesCategory = selectedCategory === "all" || item.categoryName === selectedCategory;
+      const matchesSearch = item.name[locale].toLowerCase().includes(term) || item.categoryName[locale].toLowerCase().includes(term);
+      const matchesCategory = selectedCategory === "all" || item.categoryName[locale] === selectedCategory;
       return matchesSearch && matchesCategory;
     });
 
@@ -153,7 +154,7 @@ const {user} = useUserAuth()
     setFilteredItems(sortedFiltered);
   }, [searchTerm, selectedCategory, items]);
 
-  const uniqueCategories = Array.from(new Set(items.map((item) => item.categoryName))).sort();
+  const uniqueCategories = Array.from(new Set(items.map((item) => item.categoryName[locale]))).sort();
 
   return (
     <div className=" dark:bg-black-200  min-h-screen ">
@@ -207,6 +208,7 @@ const {user} = useUserAuth()
             </motion.div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
+
               {filteredItems.map((item) => (
                 <motion.div
                   key={item._id}
@@ -216,7 +218,8 @@ const {user} = useUserAuth()
                   whileHover={{ y: -5 }}
                   className="relative"
                 >
-                  <Link href={`/marketplace/${encodeURIComponent(item.name)}`} passHref>
+
+                  <Link href={`/marketplace/${encodeURIComponent(item.name.en)}`} passHref>
                     <div className={`bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-emerald-200 transition-all hover:shadow-sm h-full relative ${
                       item.quantity === 0 ? 'opacity-75' : ''
                     }`}>
@@ -259,7 +262,7 @@ const {user} = useUserAuth()
                         )}
                       </div>
                       
-                      <h3 className="text-base font-medium text-gray-800 truncate mb-2">{item.name}</h3>
+                      <h3 className="text-base font-medium text-gray-800 truncate mb-2">{item.name[locale] }</h3>
                       
                       <div className="space-y-1">
                         <div className="flex items-center justify-between">

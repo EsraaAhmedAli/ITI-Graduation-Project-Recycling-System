@@ -27,8 +27,12 @@ interface Item {
 
 export default function ItemDetailsPage() {
   const { itemName } = useParams();
+  console.log(itemName,'iiii');
+  const { locale } = useLanguage();
   const decodedName =
     typeof itemName === "string" ? decodeURIComponent(itemName) : "";
+    console.log(decodedName);
+    
   const [selectedQuantity, setSelectedQuantity] = useState(1);
   const [inputValue, setInputValue] = useState("1"); // For the input field
   const [inputError, setInputError] = useState("");
@@ -44,10 +48,10 @@ export default function ItemDetailsPage() {
   const { getCategoryIdByItemName } = useCategories();
 
   useEffect(() => {
-    const decodedName = decodeURIComponent(itemName?.toString().toLowerCase());
+    const decodedName = decodeURIComponent(itemName[locale]?.toString().toLowerCase());
 
     const existing = cart.find(
-      (item) => item?.name?.toLowerCase() === decodedName
+      (item) => item?.name.en?.toLowerCase() === decodedName
     );
     if (existing) {
       setSelectedQuantity(existing.quantity);
@@ -72,7 +76,8 @@ export default function ItemDetailsPage() {
       const allItems = res.data?.data || [];
 
       const foundItem = allItems.find(
-        (item: any) => item.name.toLowerCase() === decodedName.toLowerCase()
+        (item: any) =>
+          item.name.en.toLowerCase() === decodedName.toLowerCase()
       );
 
       if (!foundItem) {
@@ -254,13 +259,36 @@ export default function ItemDetailsPage() {
       </div>
     );
   }
+  
 
   function convertToCartItem(item: Item, quantity?: number): CartItem {
+    console.log(item,'yyyyyy');
+    
+        const englishItemName = typeof item.name === 'string' ? item.name : item.name?.en || '';
+    const arabicItemName = typeof item.name === 'string' ? '' : item.name?.ar || '';
+    
+    // Get category ID using English name (as you prefer)
+    const categoryId = getCategoryIdByItemName(englishItemName);
+
+    // Get category names (handle both string and object cases)
+    const categoryNameEn = typeof item.categoryName === 'string' 
+      ? item.categoryName 
+      : item.categoryName?.en || '';
+    const categoryNameAr = typeof item.categoryName === 'string' 
+      ? '' 
+      : item.categoryName?.ar || '';
     return {
       _id: item._id,
       categoryId: getCategoryIdByItemName(item.name),
-      categoryName: item.categoryName,
-      name: item.name,
+      categoryName: {
+        en: categoryNameEn,
+        ar: categoryNameAr,
+      },
+
+      name: {
+        en: englishItemName,
+        ar: arabicItemName,
+      },
       image: item.image,
       points: item.points,
       price: item.price,
@@ -281,7 +309,7 @@ export default function ItemDetailsPage() {
   const handleAddToCart = () => {
     if (!isOutOfStock && remainingQuantity >= 0) {
       console.log("🛒 Adding to cart:", {
-        item: item.name,
+        item: item.name.en,
         quantity: selectedQuantity,
       });
       addToCart({ ...item, quantity: selectedQuantity });
@@ -343,14 +371,11 @@ export default function ItemDetailsPage() {
             {/* Category and Title */}
             <div>
               <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-gray-100text-3xl text-white-900 mb-3">
-                {t(`categories.${item?.categoryName}`)}
+                {item.categoryName[locale]}
               </span>
               <h1 className="text-3xl font-bold text-white-900">
-                {t(
-                  `categories.subcategories.${decodedName
-                    .toLowerCase()
-                    .replace(/\s+/g, "-")}`
-                )}
+                {item.name[locale]
+                }
               </h1>
               {item?.description && (
                 <p className="text-gray-600 mt-2">{item?.description}</p>
@@ -596,7 +621,9 @@ export default function ItemDetailsPage() {
                   <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center">
                     {step.icon}
                   </div>
-                  <h3 className="font-semibold text-lg text-gray-600">{step.title}</h3>
+                  <h3 className="font-semibold text-lg text-gray-600">
+                    {step.title}
+                  </h3>
                   <p className="text-gray-600">{step.description}</p>
                 </div>
               ))}

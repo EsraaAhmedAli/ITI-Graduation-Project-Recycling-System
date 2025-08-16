@@ -12,6 +12,7 @@ import api from "@/lib/axios";
 import { toast } from "react-hot-toast";
 import { CartItem } from "@/models/cart";
 import { useUserAuth } from "@/context/AuthFormContext";
+import { useLanguage } from "./LanguageContext";
 
 // Updated interfaces to match new backend structure
 interface ItemName {
@@ -117,7 +118,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const isInitialized = useRef(false);
   const pendingGuestCart = useRef<CartItem[]>([]);
   const pendingUserCart = useRef<CartItem[]>([]);
-
+const{locale}=useLanguage()
   const userRole = user?.role === "buyer" ? "buyer" : "customer";
   const isLoggedIn = !!user?._id;
 
@@ -315,38 +316,35 @@ export function CartProvider({ children }: { children: ReactNode }) {
 const checkInventoryEnhanced = useCallback(
   async (item: CartItem, quantity: number): Promise<boolean> => {
     if (userRole !== "buyer") return true; // Customers don't need inventory checks
-
+    console.log(item, 'iiiiiiiii');
+    
     try {
-      // Updated API call to match new structure
+      // API call to get items
       const res = await api.get("/categories/get-items?limit=10000&role=buyer");
-      const response: BackendResponse = res.data;
       
-      if (!response.success || !response.data) {
-        console.error("Invalid response structure:", response);
+      // The response.data.data is directly an array of items, not nested in categories
+      const allItems = res.data?.data || [];
+      console.log(allItems, 'all items from API');
+      
+      // Check if response is an array
+      if (!Array.isArray(allItems)) {
+        console.error("Expected array of items, got:", allItems);
         return false;
       }
 
-      // Find the item in all categories' items
-      let foundItem: BackendItem | undefined;
-      
-      for (const category of response.data) {
-        const itemInCategory = category.items.find((i: BackendItem) => i._id === item._id);
-        if (itemInCategory) {
-          foundItem = itemInCategory;
-          break;
-        }
-      }
+      // Find the item directly in the array
+      const foundItem = allItems.find((i: any) => i._id === item._id);
       
       const isAvailable = foundItem && foundItem.quantity >= quantity;
-      console.log(`Inventory check for ${item.name}: requested=${quantity}, available=${foundItem?.quantity || 0}, result=${isAvailable}`);
+      console.log(`Inventory check for ${item.name[locale]}: requested=${quantity}, available=${foundItem?.quantity || 0}, result=${isAvailable}`);
       
-      return isAvailable;
+      return !!isAvailable;
     } catch (err) {
       console.error("Failed to check inventory:", err);
       return false;
     }
   },
-  [userRole]
+  [userRole, locale]
 );
 
 // Updated helper function to convert backend item to CartItem format

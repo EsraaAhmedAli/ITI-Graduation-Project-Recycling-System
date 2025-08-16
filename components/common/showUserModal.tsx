@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "@/context/LanguageContext";
 import { Modal, ModalBody, ModalHeader } from "flowbite-react";
 import Image from "next/image";
 import React from "react";
@@ -15,6 +16,8 @@ export default function CourierOrderDetailsModal({
   onClose,
   order,
 }: Props) {
+  const{locale}=useLanguage()
+
   if (!order) return null;
 
   const { user, address, items, createdAt } = order;
@@ -27,7 +30,6 @@ export default function CourierOrderDetailsModal({
       minute: "2-digit",
     });
   };
-
   return (
     <Modal show={show} onClose={onClose} size="4xl" dismissible>
       <ModalHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
@@ -298,7 +300,7 @@ export default function CourierOrderDetailsModal({
                           {item.image ? (
                             <Image
                               src={item.image}
-                              alt={item.itemName}
+                              alt={item.itemName[locale]}
                               width={64}
                               height={64}
                               className="w-full h-full object-cover"
@@ -326,7 +328,7 @@ export default function CourierOrderDetailsModal({
                       {/* Item Details */}
                       <div className="flex-1 min-w-0">
                         <h4 className="text-base font-semibold text-gray-900 capitalize mb-3">
-                          {item.itemName}
+                          {item.itemName[locale]}
                         </h4>
 
                         <div className="flex flex-wrap gap-2 text-sm">

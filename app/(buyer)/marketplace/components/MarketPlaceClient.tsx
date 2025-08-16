@@ -105,7 +105,7 @@ const OptimizedItemImage = ({
 export default function MarketplaceClient({
   initialData,
 }: MarketplaceClientProps) {
-  const { t } = useLanguage();
+  const { t ,locale} = useLanguage();
   const { user } = useUserAuth();
   const queryClient = useQueryClient();
 
@@ -226,8 +226,8 @@ export default function MarketplaceClient({
     return items.filter((item) => {
       const matchesSearch =
         !searchTerm ||
-        item.name.toLowerCase().includes(term) ||
-        item.categoryName.toLowerCase().includes(term);
+        item.name[locale].toLowerCase().includes(term) ||
+        item.categoryName[locale].toLowerCase().includes(term);
       const matchesCategory =
         selectedCategory === "all" || item.categoryName === selectedCategory;
       return matchesSearch && matchesCategory;
@@ -390,7 +390,7 @@ export default function MarketplaceClient({
                   role="gridcell"
                 >
                   <Link
-                    href={`/marketplace/${encodeURIComponent(item.name)}`}
+                    href={`/marketplace/${encodeURIComponent(item.name.en)}`}
                     className="h-full flex flex-col focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 rounded-lg"
                     aria-label={`View details for ${item.name}, priced at ${
                       item.price
@@ -405,11 +405,7 @@ export default function MarketplaceClient({
 
                     <div className="p-2 flex-1 flex flex-col">
                       <h3 className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide leading-tight">
-                        {t(
-                          `categories.subcategories.${item.name
-                            .toLowerCase()
-                            .replace(/\s+/g, "-")}`
-                        )}
+                        {item.name[locale]}
                       </h3>
                       <div className="flex justify-between items-center mt-auto">
                         <span className="text-xs font-bold text-green-600">

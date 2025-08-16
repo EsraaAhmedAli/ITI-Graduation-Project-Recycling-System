@@ -11,6 +11,7 @@ import { useUserAuth } from '@/context/AuthFormContext'
 import toast from 'react-hot-toast'
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
+import { useLanguage } from '@/context/LanguageContext'
 
 export default function Page() {
   // const [orders, setOrders] = useState([])
@@ -41,7 +42,7 @@ export default function Page() {
     refetchOnWindowFocus:true,
     staleTime:2000
   });
-
+const{locale}=useLanguage()
 const router = useRouter()
 const handleNavigateToEditProfile = ()=>{
   router.push('/editprofile')
@@ -77,7 +78,7 @@ const handleNavigateToEditProfile = ()=>{
         initialQuantities[item._id] = {
           originalQuantity: item.quantity,
           actualQuantity: item.quantity,
-          name: item.itemName || item.name || item.productName || "Item",
+          name: item.itemName[locale] || item.name || item.productName || "Item",
           unit: correctUnit, // Use the correct unit based on measurement_unit
           measurement_unit: item.measurement_unit,
           hasUnitMismatch: isUnitMismatch, // Track if there was a mismatch
