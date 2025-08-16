@@ -16,7 +16,7 @@ interface Item {
   measurement_unit: number;
   image: string;
   categoryName: string;
-  quantity: number; // Added quantity property
+  quantity: number; 
 }
 
 interface Material {
@@ -166,7 +166,7 @@ const {user} = useUserAuth()
         {/* Items Section */}
         <section className="mb-12">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-800">
+            <h2 className="text-xl font-semibold " style={{ color: "var(--text-gray-800)" }}>
               {selectedCategory === "all" ? "Featured Items" : selectedCategory}
             </h2>
             <Link href="/marketplace" passHref>
@@ -217,7 +217,7 @@ const {user} = useUserAuth()
                   className="relative"
                 >
                   <Link href={`/marketplace/${encodeURIComponent(item.name)}`} passHref>
-                    <div className={`bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-emerald-200 transition-all hover:shadow-sm h-full relative ${
+                    <div  style={{background:"var(--color-card-home)"}}className={` rounded-xl p-4 border border-gray-100 hover:border-emerald-200 transition-all hover:shadow-sm h-full relative ${
                       item.quantity === 0 ? 'opacity-75' : ''
                     }`}>
                       
@@ -241,7 +241,7 @@ const {user} = useUserAuth()
                         </div>
                       )}
 
-                      <div className="relative aspect-square w-full mb-3 bg-white rounded-lg overflow-hidden flex items-center justify-center">
+                      <div className="relative aspect-square w-full mb-3 rounded-lg overflow-hidden flex items-center justify-center" style={{ backgroundColor: item.image ? 'var(--color-image)' : 'var(--color-card)' }}>
                         {item.image ? (
                           <Image
                             src={item.image}
@@ -351,7 +351,7 @@ const {user} = useUserAuth()
 
               <section className="mb-12">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-800">Top Recycled Materials</h2>
+            <h2 className="text-xl font-semibold " style={{color:"var(  --text-gray-800)"}}>Top Recycled Materials</h2>
                 
           </div>
 
@@ -371,8 +371,8 @@ const {user} = useUserAuth()
                     transition={{ duration: 0.3 }}
                     whileHover={{ y: -5 }}
                   >
-                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-emerald-200 transition-all hover:shadow-sm">
-                      <div className="relative aspect-square w-full mb-3 bg-white rounded-lg overflow-hidden flex items-center justify-center">
+                    <div style={{ backgroundColor: 'var( --color-card)' }}  className="bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-emerald-200 transition-all hover:shadow-sm">
+                      <div style={{ backgroundColor: 'var(--color-image)' }}  className="relative aspect-square w-full mb-3 bg-white rounded-lg overflow-hidden flex items-center justify-center">
                         {material.image ? (
                           <Image
                             src={material.image}
@@ -398,8 +398,8 @@ const {user} = useUserAuth()
                     
                       </h3>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">
-                        <span className="text-sm text-gray-600 font-bold">  {material.totalRecycled} </span>
+                        <span className="text-sm" style={{color:"var( --text-gray-700)"}}>
+                        <span className="text-sm  font-bold" style={{color:"var( --text-gray-700)"}}>  {material.totalRecycled} </span>
                         
                         {material.unit}  sold
                         </span>

@@ -172,13 +172,15 @@ export default function UserCategoryPage() {
         </div>
 
         {/* Items Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" >
           {data!.map((item) => (
             <div
               key={item._id}
-              className="group bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300 hover:-translate-y-1">
+              className="group rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300 hover:-translate-y-1" style={{background:"var(--color-card)"}}>
               {/* Image Container */}
-              <div className="relative bg-gradient-to-br from-slate-100 to-slate-50">
+              <div    style={{
+    backgroundImage: "linear-gradient(to bottom right, var(--card-gradient-start), var(--card-gradient-end))"
+  }} className="relative ">
                 <div className="relative w-full h-40">
                   <Image
                     src={item.image}
