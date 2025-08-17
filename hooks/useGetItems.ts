@@ -49,7 +49,6 @@ export function useGetItems({
           search: search || undefined,
         },
       });
-
       console.log("📦 Fetched items:", res.data.data);
       console.log("📦 Pagination info:", res.data.pagination);
       return {
@@ -57,6 +56,8 @@ export function useGetItems({
         pagination: res.data.pagination,
       };
     },
+    // Only enable the query when userRole is "buyer"
+    enabled: userRole === "buyer",
     staleTime: Infinity, // Never consider data stale
     gcTime: Infinity, // Keep in cache forever (previously cacheTime)
     refetchOnMount: true, // Don't refetch when component mounts

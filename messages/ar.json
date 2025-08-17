@@ -234,11 +234,16 @@
     "noItemsDesc": "لا يحتوي هذا الطلب على أي عناصر.",
     "addToCollection": "اضف لمجموعتك"
   },
-  "collectionsOfCategory": "{{collections}}  {{category}}",
   "common": {
-        "piece": "قطعة",
+        "sold" : "مباعة",
+            "viewAll" : "شاهد الكل",
+
+
+    "piece" : "قطعة",
     "item": "عنصر",
     "cancel": "إلغاء",
+        "FeaturedItems" :"العناصر المميزة",
+
     "kg": "كيلو",
     "invalidQuantity": "يرجى إدخال كمية صحيحة",
     "exceedsMaxQuantity": "الحد الأقصى المتاح هو {{max}}",
@@ -250,6 +255,8 @@
     "collectionsPlural": "مجموعات",
     "adding": "اضافة",
     "pointsAbbreviation": "نقاط",
+        "inStock" : "في المخزن",
+
     "allCategories": "جميع الفئات",
     "showing": "عرض",
     "showings": "عرض {{start}} إلى {{end}} من أصل {{total}} نتيجة",
@@ -269,6 +276,19 @@
     "startAdding": "ابدأ بالأضافة",
     "removeFromCart": "احذف من عربة التسوق"
   },
+    "recyclingBanner": {
+    "title": "أعد التدوير اليوم من أجل غد أفضل",
+    "titleHighlight": "أفضل",
+    "description": "انضم إلى مجتمعنا الذي يحدث فرقاً. كل عنصر معاد تدويره له قيمة.",
+    "stats": {
+      "dailyRecyclers": "معيدو التدوير اليومي",
+      "itemsRecycled": "العناصر المعاد تدويرها",
+      "co2Reduced": "CO₂ المخفض",
+      "ecoFriendly": "صديق للبيئة"
+    }
+  },
+  "collectionsOfCategory": "{{collections}}  {{category}}",
+  
   "marketPlace": {
     "sustainableMarketplace": "الأسواق المستدامة",
     "marketPlaceDesc": "اكتشف العناصر القابلة لإعادة التدوير واكسب المكافآت"

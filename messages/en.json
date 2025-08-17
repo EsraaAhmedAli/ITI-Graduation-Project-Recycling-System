@@ -167,7 +167,7 @@
   },
 
   "charts": {
-        "vsLastPeriod": "vs last period",
+    "vsLastPeriod": "vs last period",
     "numbers": {
       "percent": "%"
     },
@@ -178,21 +178,22 @@
     "topUsers": "Top Users",
     "userGrowth": "User Growth",
     "month": "Month",
-    "users" : "Users",    "orderStatus": "Order Status",
+    "users": "Users",
+    "orderStatus": "Order Status",
     "overview": "Overview",
     "noOrderData": "No order data",
     "mostCommon": "Most Common",
     "total": "Total",
     "notAvailable": "N/A",
     "months": "Months",
-        "topRecycledMaterials": "Top Recycled Materials",
+    "topRecycledMaterials": "Top Recycled Materials",
     "loadingMaterials": "Loading materials...",
     "noMaterialsData": "No materials data",
     "materialsHint": "Make sure you have completed orders with items",
     "material": "Material",
     "quantity": "Quantity",
     "unknown": "Unknown",
-      "loadingCitiesData": "Loading cities data...",
+    "loadingCitiesData": "Loading cities data...",
     "noCitiesData": "No cities data available",
     "checkBackLater": "Check back later for updates",
 
@@ -202,7 +203,7 @@
       "steady": "steady"
     }
   },
-"courier": {
+  "courier": {
     "assignedOrders": "Assigned Orders",
     "deliveryDashboard": "Delivery Dashboard",
     "manageAssignedOrders": "Manage your assigned delivery orders",
@@ -260,9 +261,8 @@
       "merchant": "Merchant",
       "admin": "Admin"
     }
-  }
-,
-    "cities": {
+  },
+  "cities": {
     "topCitiesByOrders": "Top Cities by Orders",
     "numberOfOrders": "Number of Orders",
     "cities": "Cities",
@@ -271,7 +271,7 @@
     "avgPerCity": "Avg per City",
     "topCity": "Top City"
   },
-    "materials": {
+  "materials": {
     "category": "Category",
     "pieces": "pieces",
     "sortByQuantity": "By Quantity",
@@ -280,9 +280,9 @@
     "totalQuantity": "Total Quantity",
     "topMaterial": "Top"
   },
-    "orderStatus": {
+  "orderStatus": {
     "pending": "Pending",
-    "processing": "Processing", 
+    "processing": "Processing",
     "shipped": "Shipped",
     "delivered": "Delivered",
     "cancelled": "Cancelled",
@@ -371,7 +371,10 @@
     "addToCollection": "Add to Collection"
   },
   "common": {
-       "piece": "piece",
+    "sold" : "sold",
+    "viewAll" : "view all",
+    "piece": "piece",
+    "FeaturedItems" :"Featured Items",
     "item": "Item",
     "cancel": "Cancel",
     "kg": "kg",
@@ -397,6 +400,7 @@
     "removeFromRecyclingCart": "Remove From Recycling Cart",
     "processing": "processing",
     "availableStock": "Available Stock",
+    "inStock" : "in stock",
     "afterPurchase": "After purchase: {{quantity}} {{unit}}",
     "percentageRemaining": "{{percentage}}% remaining",
     "quantity": "Quantity",
@@ -405,6 +409,17 @@
     "lowStockWarning": "low stock",
     "startAdding": "start adding",
     "removeFromCart": "Remove from cart"
+  },
+    "recyclingBanner": {
+    "title": "Recycle Today for a Better Tomorrow",
+    "titleHighlight": "Better",
+    "description": "Join our community making a difference. Every recycled item counts.",
+    "stats": {
+      "dailyRecyclers": "Daily Recyclers",
+      "itemsRecycled": "Items Recycled",
+      "co2Reduced": "CO₂ Reduced",
+      "ecoFriendly": "Eco-Friendly"
+    }
   },
   "marketPlace": {
     "sustainableMarketplace": "Sustainable Marketplace",

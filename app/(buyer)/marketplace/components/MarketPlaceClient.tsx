@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, memo, startTransition, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Search, ChevronLeft, ChevronRight, Filter, Frown } from "lucide-react";
@@ -11,15 +11,22 @@ import { useUserAuth } from "@/context/AuthFormContext";
 import { Badge } from "flowbite-react";
 import { useGetItems } from "@/hooks/useGetItems";
 import { useItemSocket } from "@/hooks/useItemSocket";
+import dynamic from "next/dynamic";
 
 interface Item {
   _id: string;
-  name: string;
+  name: {
+    en: string;
+    ar: string;
+  };
   points: number;
   price: number;
   measurement_unit: 1 | 2;
   image: string;
-  categoryName: string;
+  categoryName: {
+    en: string;
+    ar: string;
+  };
   quantity: number;
 }
 
@@ -40,74 +47,220 @@ interface MarketplaceClientProps {
   initialData: ServerData;
 }
 
-// Optimized Image Component for LCP
-const OptimizedItemImage = ({
+// Dynamically import heavy components to reduce initial bundle
+const LazyPagination = dynamic(() => import('../../../../components/common/lazyPagination'), {
+  ssr: false,
+  loading: () => <div className="h-10 w-64 mx-auto bg-gray-100 rounded animate-pulse" />
+});
+
+// Preload critical images using requestIdleCallback
+const preloadCriticalImages = (items: Item[]) => {
+  if (typeof window === 'undefined') return;
+  
+  const preloadImage = (src: string) => {
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'image';
+    link.href = src;
+    document.head.appendChild(link);
+  };
+
+  // Use requestIdleCallback to avoid blocking main thread
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(() => {
+      items.slice(0, 4).forEach((item) => {
+        preloadImage(getOptimizedImageUrl(item.image, 280));
+      });
+    }, { timeout: 1000 });
+  } else {
+    // Fallback for browsers without requestIdleCallback
+    setTimeout(() => {
+      items.slice(0, 4).forEach((item) => {
+        preloadImage(getOptimizedImageUrl(item.image, 280));
+      });
+    }, 100);
+  }
+};
+
+// Move outside component to prevent recreation
+const getOptimizedImageUrl = (url: string, width: number = 300) => {
+  if (url.includes("cloudinary.com")) {
+    return url.replace("/upload/", `/upload/c_fit,w_${width},q_auto,f_auto,dpr_auto/`);
+  }
+  return url;
+};
+
+// Simplified image component - remove unnecessary state and effects for better TBT
+const OptimizedItemImage = memo(({
   item,
   priority = false,
+  index = 0,
 }: {
   item: Item;
   priority?: boolean;
   index?: number;
 }) => {
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageError, setImageError] = useState(false);
-
-  // Generate optimized Cloudinary URL - REMOVED fixed height for less cropping
-  const getOptimizedImageUrl = (url: string, width: number = 300) => {
-    if (url.includes("cloudinary.com")) {
-      // Changed from c_fill to c_fit to prevent cropping
-      // Removed h_${width} to allow natural aspect ratio
-      return url.replace("/upload/", `/upload/c_fit,w_${width},q_auto,f_auto/`);
-    }
-    return url;
-  };
+  const optimizedSrc = useMemo(() => getOptimizedImageUrl(item.image, 280), [item.image]);
 
   return (
-    // OPTION 1: Keep square but ensure no cropping
-    <div className="relative aspect-square bg-gray-50 p-2">
-      {/* Placeholder/Loading state */}
-      {!imageLoaded && !imageError && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-          <div className="w-8 h-8 border-2 border-green-200 border-t-green-600 rounded-full animate-spin" />
-        </div>
-      )}
-
-      {/* Error state */}
-      {imageError && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 text-gray-400">
-          <div className="text-center">
-            <div className="w-12 h-12 mx-auto mb-2 opacity-50">📦</div>
-            <span className="text-xs">Image unavailable</span>
-          </div>
-        </div>
-      )}
-
-      {/* Actual image with padding to prevent cropping */}
+    <div className="relative aspect-square bg-gray-50 overflow-hidden">
       <Image
-        src={getOptimizedImageUrl(item.image, 280)} // Slightly smaller to account for padding
-        alt={`${item.name} - ${item.categoryName} product image`}
+        src={optimizedSrc}
+        alt={item.name.en}
         fill
-        className={`object-contain p-1 transition-opacity duration-300 ${
-          imageLoaded ? "opacity-100" : "opacity-0"
-        }`}
+        className="object-contain p-2"
         sizes="(max-width: 640px) 150px, (max-width: 768px) 120px, (max-width: 1024px) 180px, 200px"
         priority={priority}
-        quality={85}
+        quality={priority ? 85 : 70}
         placeholder="blur"
         blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-        onLoad={() => setImageLoaded(true)}
-        onError={() => setImageError(true)}
+        loading={priority ? "eager" : "lazy"}
       />
     </div>
   );
+});
+
+OptimizedItemImage.displayName = 'OptimizedItemImage';
+
+// Simplified Item Card - reduce complexity to improve TBT
+const ItemCard = memo(({ 
+  item, 
+  index, 
+  locale, 
+  convertNumber, 
+  t, 
+  getMeasurementText 
+}: {
+  item: Item;
+  index: number;
+  locale: string;
+  convertNumber: (num: number) => string;
+  t: (key: string) => string;
+  getMeasurementText: (unit: 1 | 2) => string;
+}) => {
+  return (
+    <article className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-sm transition-shadow duration-150 h-full flex flex-col">
+      <Link
+        href={`/marketplace/${encodeURIComponent(item.name.en)}`}
+        className="h-full flex flex-col focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 rounded-lg"
+        prefetch={index < 2 ? true : false} // Only prefetch first 2 items
+      >
+        <OptimizedItemImage
+          item={item}
+          priority={index < 3}
+          index={index}
+        />
+
+        <div className="p-2 flex-1 flex flex-col">
+          <h3 className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide leading-tight line-clamp-2">
+            {item.name[locale]}
+          </h3>
+          
+          <div className="flex justify-between items-center mt-auto">
+            <span className="text-xs font-bold text-green-600">
+              {convertNumber(item.price)} {t("itemsModal.currency")}
+            </span>
+            
+            <span className="text-xs font-bold">
+              {item?.quantity === 0 ? (
+                <Badge color="failure" size="sm">{t('common.outOfStock')}</Badge>
+              ) : (
+                `${convertNumber(item.quantity)} ${t('common.inStock')}`
+              )}
+            </span>
+          </div>
+          
+          <div className="text-[0.6rem] text-gray-500 mt-0.5 text-right">
+            {getMeasurementText(item.measurement_unit)}
+          </div>
+        </div>
+      </Link>
+    </article>
+  );
+});
+
+ItemCard.displayName = 'ItemCard';
+
+// Simple debounce hook
+const useDebounce = (value: string, delay: number) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+
+  return debouncedValue;
 };
 
-export default function MarketplaceClient({
-  initialData,
-}: MarketplaceClientProps) {
-  const { t ,locale} = useLanguage();
+// Virtualized grid component for better performance with many items
+const VirtualizedGrid = memo(({ 
+  items, 
+  renderItem 
+}: { 
+  items: Item[];
+  renderItem: (item: Item, index: number) => React.ReactNode;
+}) => {
+  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 20 });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      const itemHeight = 250; // Approximate item height
+      const containerHeight = window.innerHeight;
+      const itemsPerRow = window.innerWidth >= 1024 ? 5 : window.innerWidth >= 768 ? 4 : window.innerWidth >= 640 ? 3 : 2;
+      
+      const start = Math.floor(scrollTop / itemHeight) * itemsPerRow;
+      const end = Math.min(start + (Math.ceil(containerHeight / itemHeight) + 2) * itemsPerRow, items.length);
+      
+      setVisibleRange({ start: Math.max(0, start - itemsPerRow), end });
+    };
+
+    // Use passive listener for better performance
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll(); // Initial calculation
+    
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [items.length]);
+
+  const visibleItems = items.slice(visibleRange.start, visibleRange.end);
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+      {/* Render spacer for items before visible range */}
+      {visibleRange.start > 0 && (
+        <div 
+          className="col-span-full" 
+          style={{ height: Math.floor(visibleRange.start / 5) * 250 }}
+        />
+      )}
+      
+      {visibleItems.map((item, index) => (
+        <div key={item._id}>
+          {renderItem(item, visibleRange.start + index)}
+        </div>
+      ))}
+      
+      {/* Render spacer for items after visible range */}
+      {visibleRange.end < items.length && (
+        <div 
+          className="col-span-full" 
+          style={{ height: Math.floor((items.length - visibleRange.end) / 5) * 250 }}
+        />
+      )}
+    </div>
+  );
+});
+
+VirtualizedGrid.displayName = 'VirtualizedGrid';
+
+export default function MarketplaceClient({ initialData }: MarketplaceClientProps) {
+  const { t, locale, convertNumber } = useLanguage();
   const { user } = useUserAuth();
   const queryClient = useQueryClient();
+  const [isPending, startTransition] = useTransition();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -115,125 +268,11 @@ export default function MarketplaceClient({
   const [isClient, setIsClient] = useState(false);
   const [items, setItems] = useState(initialData.items);
   const [pagination, setPagination] = useState(initialData.pagination);
+  
+  const debouncedSearchTerm = useDebounce(searchTerm, 400); // Increased debounce
   const itemsPerPage = 10;
 
-  useEffect(() => {
-    setIsClient(true);
-
-    // Preload critical images for LCP optimization
-    if (initialData.items.length > 0) {
-      const firstFourImages = initialData.items.slice(0, 4);
-      firstFourImages.forEach((item) => {
-        const img = new window.Image();
-        img.src = item.image.includes("cloudinary.com")
-          ? item.image.replace(
-              "/upload/",
-              "/upload/c_fill,w_300,h_300,q_auto,f_auto/"
-            )
-          : item.image;
-      });
-    }
-
-    // Pre-populate React Query cache with server data
-    queryClient.setQueryData(["items", 1, null], {
-      data: initialData.items,
-      pagination: initialData.pagination,
-    });
-    queryClient.setQueryData(["categories", null], initialData.categories);
-  }, [initialData, queryClient]);
-
-  // Client-side fetch functions
-  // const fetchItems = useCallback(async () => {
-  //   setLoading(true);
-  //   try {
-  //     const res = await api.get(
-  //       `/categories/get-items?page=${currentPage}&limit=${itemsPerPage}&role=${user?.role || ""}`
-  //     );
-  //     setItems(res?.data.data || []);
-  //     setPagination(res?.data.pagination || initialData.pagination);
-  //   } catch (error) {
-  //     console.error('Error fetching items:', error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // }, [currentPage, itemsPerPage, user?.role]);
-
-  const { data, isLoading } = useGetItems({
-    currentPage,
-    itemsPerPage,
-    userRole: user?.role,
-    category: selectedCategory,
-    search: searchTerm,
-  });
-  useItemSocket({
-    currentPage,
-    itemsPerPage,
-    userRole: user?.role,
-    selectedCategory,
-    searchTerm,
-  });
-
-  useEffect(() => {
-    if (data) {
-      setItems(data?.data);
-      setPagination(data?.pagination);
-    }
-  }, [data]);
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedCategory, searchTerm]);
-
-  const fetchAllCategories = useCallback(async () => {
-    if (!isClient) return initialData.categories;
-
-    try {
-      const res = await api.get(
-        `/categories/get-items?page=1&limit=50&role=${user?.role || ""}`
-      );
-      const allItems = res?.data.data || [];
-      return Array.from(
-        new Set(allItems.map((item: Item) => item.categoryName))
-      ).sort();
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      return initialData.categories;
-    }
-  }, [user?.role, isClient, initialData.categories]);
-
-  // React Query for categories
-  const {
-    data: categoriesData,
-    isLoading: categoriesLoading,
-    isError: categoriesError,
-  } = useQuery({
-    queryKey: ["categories", user?.role],
-    queryFn: fetchAllCategories,
-    initialData: initialData.categories,
-    staleTime: 10 * 60 * 1000,
-    refetchOnWindowFocus: true,
-    enabled: isClient,
-  });
-
-  const uniqueCategories = categoriesData || initialData.categories;
-
-  // Memoized filtered items
-  const filteredItems = useMemo(() => {
-    if (!searchTerm && selectedCategory === "all") {
-      return items;
-    }
-
-    const term = searchTerm.toLowerCase();
-    return items.filter((item) => {
-      const matchesSearch =
-        !searchTerm ||
-        item.name[locale].toLowerCase().includes(term) ||
-        item.categoryName[locale].toLowerCase().includes(term);
-      const matchesCategory =
-        selectedCategory === "all" || item.categoryName === selectedCategory;
-      return matchesSearch && matchesCategory;
-    });
-  }, [searchTerm, selectedCategory, items]);
-
+  // Memoize measurement text function
   const getMeasurementText = useCallback(
     (unit: 1 | 2): string => {
       return unit === 1 ? t("itemsModal.perKg") : t("itemsModal.perItem");
@@ -241,253 +280,216 @@ export default function MarketplaceClient({
     [t]
   );
 
+  useEffect(() => {
+    // Use startTransition to prevent blocking
+    startTransition(() => {
+      setIsClient(true);
+    });
+    
+    // Delay preloading to after initial render
+    preloadCriticalImages(initialData.items);
+    
+    // Pre-populate React Query cache
+    queryClient.setQueryData(["items", 1, null], {
+      data: initialData.items,
+      pagination: initialData.pagination,
+    });
+  }, [initialData, queryClient]);
+
+  const { data, isLoading } = useGetItems({
+    currentPage,
+    itemsPerPage,
+    userRole: user?.role,
+    category: selectedCategory,
+    search: debouncedSearchTerm,
+  });
+
+  // Conditionally load socket hook only when needed
+  useItemSocket({
+    currentPage,
+    itemsPerPage,
+    userRole: user?.role,
+    selectedCategory,
+    searchTerm: debouncedSearchTerm,
+    enabled: isClient, // Only enable after client-side hydration
+  });
+
+  useEffect(() => {
+    if (data) {
+      startTransition(() => {
+        setItems(data?.data);
+        setPagination(data?.pagination);
+      });
+    }
+  }, [data]);
+
+  useEffect(() => {
+    startTransition(() => {
+      setCurrentPage(1);
+    });
+  }, [selectedCategory, debouncedSearchTerm]);
+
+  // Simplified categories fetch
+  const { data: categoriesData } = useQuery({
+    queryKey: ["categories", user?.role],
+    queryFn: async () => {
+      if (!isClient) return initialData.categories;
+      const res = await api.get(`/categories/get-items?page=1&limit=50&role=${user?.role || ""}`);
+      const allItems = res?.data.data || [];
+      return [...new Set(allItems.map((item: Item) => item.categoryName.en))].sort();
+    },
+    initialData: initialData.categories,
+    staleTime: 20 * 60 * 1000, // 20 minutes
+    refetchOnWindowFocus: false,
+    enabled: isClient,
+  });
+
+  const uniqueCategories = categoriesData || initialData.categories;
+
+  // Optimized filtering with early returns
+  const filteredItems = useMemo(() => {
+    if (!debouncedSearchTerm && selectedCategory === "all") {
+      return items;
+    }
+
+    return items.filter((item) => {
+      if (debouncedSearchTerm) {
+        const term = debouncedSearchTerm.toLowerCase();
+        const matchesSearch = 
+          item.name[locale].toLowerCase().includes(term) ||
+          item.categoryName[locale].toLowerCase().includes(term);
+        if (!matchesSearch) return false;
+      }
+      
+      if (selectedCategory !== "all") {
+        const matchesCategory = item.categoryName.en === selectedCategory;
+        if (!matchesCategory) return false;
+      }
+      
+      return true;
+    });
+  }, [debouncedSearchTerm, selectedCategory, items, locale]);
+
   const handlePageChange = useCallback(
     (page: number) => {
       if (page >= 1 && page <= pagination.totalPages) {
-        setCurrentPage(page);
-        setSearchTerm("");
-        setSelectedCategory("all");
+        startTransition(() => {
+          setCurrentPage(page);
+          setSearchTerm("");
+          setSelectedCategory("all");
+        });
       }
     },
     [pagination.totalPages]
   );
 
-  // Debounced search
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      // Search is handled by useMemo above
-    }, 300);
-    return () => clearTimeout(timeoutId);
-  }, [searchTerm]);
-  //   useEffect(() => {
-  //   if (isClient) {
-  //     fetchItems();
-  //   }
-  // }, [fetchItems, isClient]);
+  // Handle search with transition
+  const handleSearchChange = useCallback((value: string) => {
+    startTransition(() => {
+      setSearchTerm(value);
+    });
+  }, []);
+
+  // Handle category change with transition
+  const handleCategoryChange = useCallback((value: string) => {
+    startTransition(() => {
+      setSelectedCategory(value);
+    });
+  }, []);
+
+  // Render item function for virtualized grid
+  const renderItem = useCallback((item: Item, index: number) => (
+    <ItemCard
+      item={item}
+      index={index}
+      locale={locale}
+      convertNumber={convertNumber}
+      t={t}
+      getMeasurementText={getMeasurementText}
+    />
+  ), [locale, convertNumber, t, getMeasurementText]);
+
+  // Loading skeleton
+  const LoadingSkeleton = memo(() => (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+      {[...Array(8)].map((_, i) => (
+        <div key={i} className="bg-gray-100 rounded-lg h-40 animate-pulse" />
+      ))}
+    </div>
+  ));
 
   return (
     <>
-      {/* Search and Filter Controls */}
-      <section
-        className="mb-4 bg-white rounded-lg shadow-sm p-3 sticky top-0 z-10"
-        aria-label="Search and filter controls"
-      >
+      {/* Simplified Search Controls */}
+      <section className="mb-4 bg-white rounded-lg shadow-sm p-3 sticky top-0 z-10">
         <div className="flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
-            <label htmlFor="search-input" className="sr-only">
-              {t("navbar.searchplaceholder")}
-            </label>
-            <div className="absolute top-3 left-0 pl-3 flex justify-center flex-col">
-              <Search className="h-4 w-4 text-gray-400" aria-hidden="true" />
-            </div>
+            <Search className="absolute top-3 left-3 h-4 w-4 text-gray-400" />
             <input
-              id="search-input"
               type="text"
               placeholder={t("navbar.searchplaceholder")}
               className="pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg w-full focus:ring-1 focus:ring-green-500 focus:outline-none"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              aria-describedby="search-help"
+              onChange={(e) => handleSearchChange(e.target.value)}
             />
-            <div id="search-help" className="sr-only">
-              Search by item name or category
-            </div>
           </div>
-
+          
           <div className="relative w-full sm:w-40">
-            <label htmlFor="category-select" className="sr-only">
-              Filter by category
-            </label>
-            <div className="absolute top-2 left-0 pl-3 flex items-center">
-              <Filter className="h-4 w-4 text-gray-400" aria-hidden="true" />
-            </div>
+            <Filter className="absolute top-2 left-3 h-4 w-4 text-gray-400" />
             <select
-              id="category-select"
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+              onChange={(e) => handleCategoryChange(e.target.value)}
               className="pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg w-full appearance-none bg-white focus:ring-1 focus:ring-green-500 focus:outline-none"
-              disabled={categoriesLoading}
-              aria-describedby="category-help"
             >
               <option value="all">{t("common.allCategories")}</option>
               {uniqueCategories.map((category: string) => (
                 <option key={category} value={category}>
-                  {t(
-                    `categories.${category?.toLowerCase().replace(/\s+/g, "-")}`
-                  )}
+                  {category}
                 </option>
               ))}
             </select>
-            <div id="category-help" className="sr-only">
-              Filter items by category
-            </div>
           </div>
         </div>
       </section>
 
       {/* Results Info */}
-      <div
-        className="flex justify-between items-center mb-3 px-1"
-        role="status"
-        aria-live="polite"
-      >
+      <div className="flex justify-between items-center mb-3 px-1">
         <span className="text-xs text-gray-500">
-          {t("common.showing")} {filteredItems.length} {t("common.of")}{" "}
-          {pagination.totalItems} {t("common.items")}
+          {t("common.showing")} {convertNumber(filteredItems.length)} {t("common.of")} {convertNumber(pagination.totalItems)} {t("common.items")}
         </span>
         <span className="text-xs text-gray-500">
-          {t("common.page")} {pagination.currentPage} {t("common.of")}{" "}
-          {pagination.totalPages}
+          {t("common.page")} {convertNumber(pagination.currentPage)} {t("common.of")} {convertNumber(pagination.totalPages)}
         </span>
       </div>
 
       {/* Main Content */}
       <main>
         {isLoading && !items.length ? (
-          <div
-            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"
-            role="status"
-            aria-label="Loading items"
-          >
-            {[...Array(8)].map((_, i) => (
-              <div
-                key={i}
-                className="bg-gray-100 rounded-lg h-40 animate-pulse"
-                aria-hidden="true"
-              />
-            ))}
-          </div>
+          <LoadingSkeleton />
         ) : filteredItems.length === 0 ? (
-          <div className="text-center py-12" role="status">
-            <Frown
-              className="mx-auto h-10 w-10 text-gray-400"
-              aria-hidden="true"
-            />
-            <h2 className="mt-2 text-sm font-medium text-gray-900">
-              No items found
-            </h2>
+          <div className="text-center py-12">
+            <Frown className="mx-auto h-10 w-10 text-gray-400" />
+            <h2 className="mt-2 text-sm font-medium text-gray-900">No items found</h2>
             <p className="mt-1 text-xs text-gray-500">
-              {searchTerm || selectedCategory !== "all"
+              {debouncedSearchTerm || selectedCategory !== "all"
                 ? "Try different search terms"
                 : "No items available yet"}
             </p>
           </div>
         ) : (
           <>
-            {/* Section heading for proper hierarchy */}
-            <h2 className="sr-only">Available Products</h2>
+            {/* Use Virtual Grid for better performance */}
+            <VirtualizedGrid 
+              items={filteredItems}
+              renderItem={renderItem}
+            />
 
-            {/* Items Grid - Optimized for LCP */}
-            <div
-              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"
-              role="grid"
-              aria-label="Available items"
-            >
-              {filteredItems.map((item, index) => (
-                <article
-                  key={item._id}
-                  className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-sm transition-all duration-150 h-full flex flex-col"
-                  role="gridcell"
-                >
-                  <Link
-                    href={`/marketplace/${encodeURIComponent(item.name.en)}`}
-                    className="h-full flex flex-col focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 rounded-lg"
-                    aria-label={`View details for ${item.name}, priced at ${
-                      item.price
-                    } ${t("itemsModal.currency")}`}
-                  >
-                    {/* Optimized Image Component */}
-                    <OptimizedItemImage
-                      item={item}
-                      priority={index < 4} // First 4 images get priority
-                      index={index}
-                    />
-
-                    <div className="p-2 flex-1 flex flex-col">
-                      <h3 className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide leading-tight">
-                        {item.name[locale]}
-                      </h3>
-                      <div className="flex justify-between items-center mt-auto">
-                        <span className="text-xs font-bold text-green-600">
-                          {item.price}
-
-                          <span className="text-sm mx-2 ml-1">
-                            {t("itemsModal.currency")}
-                          </span>
-                        </span>
-                        <span className="text-xs font-bold">
-                          {item?.quantity == 0 ? (
-                            <Badge color="failure">Out of stock</Badge>
-                          ) : (
-                            item.quantity + " in stock"
-                          )}
-                        </span>
-                      </div>
-                      <div className="text-[0.6rem] text-gray-500 mt-0.5 text-right">
-                        {getMeasurementText(item.measurement_unit)}
-                      </div>
-                    </div>
-                  </Link>
-                </article>
-              ))}
-            </div>
-
-            {/* Pagination */}
+            {/* Lazy-loaded Pagination */}
             {pagination.totalPages > 1 && (
-              <nav
-                className="flex justify-center mt-6"
-                role="navigation"
-                aria-label="Pagination"
-              >
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => handlePageChange(pagination.currentPage - 1)}
-                    disabled={!pagination.hasPreviousPage}
-                    className={`p-1.5 rounded-md ${
-                      pagination.hasPreviousPage
-                        ? "text-green-600 hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500"
-                        : "text-gray-300 cursor-not-allowed"
-                    }`}
-                    aria-label="Go to previous page"
-                  >
-                    <ChevronLeft className="w-4 h-4" aria-hidden="true" />
-                  </button>
-
-                  {Array.from(
-                    { length: pagination.totalPages },
-                    (_, i) => i + 1
-                  ).map((page) => (
-                    <button
-                      key={page}
-                      onClick={() => handlePageChange(page)}
-                      className={`w-8 h-8 flex items-center justify-center rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                        pagination.currentPage === page
-                          ? "bg-green-600 text-white"
-                          : "text-green-600 hover:bg-green-50"
-                      }`}
-                      aria-label={`Go to page ${page}`}
-                      aria-current={
-                        pagination.currentPage === page ? "page" : undefined
-                      }
-                    >
-                      {page}
-                    </button>
-                  ))}
-
-                  <button
-                    onClick={() => handlePageChange(pagination.currentPage + 1)}
-                    disabled={!pagination.hasNextPage}
-                    className={`p-1.5 rounded-md ${
-                      pagination.hasNextPage
-                        ? "text-green-600 hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500"
-                        : "text-gray-300 cursor-not-allowed"
-                    }`}
-                    aria-label="Go to next page"
-                  >
-                    <ChevronRight className="w-4 h-4" aria-hidden="true" />
-                  </button>
-                </div>
-              </nav>
+              <LazyPagination 
+                pagination={pagination}
+                onPageChange={handlePageChange}
+              />
             )}
           </>
         )}

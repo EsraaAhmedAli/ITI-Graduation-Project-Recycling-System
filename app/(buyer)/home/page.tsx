@@ -1,14 +1,12 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import PromotionSlider from "@/components/buyer/PromotionSlider";
-import {   ChevronRight,  Frown, Leaf, Zap, Recycle, AlertTriangle  } from "lucide-react";
+import { ChevronRight, Frown, Leaf, Zap, Recycle, AlertTriangle } from "lucide-react";
 import api from "@/lib/axios";
-import { useUserAuth } from "@/context/AuthFormContext";
 import { useLanguage } from "@/context/LanguageContext";
-
 
 interface Item {
   _id: string;
@@ -17,7 +15,7 @@ interface Item {
   measurement_unit: number;
   image: string;
   categoryName: string;
-  quantity: number; // Added quantity property
+  quantity: number;
 }
 
 interface Material {
@@ -25,76 +23,67 @@ interface Material {
   image: string;
   totalRecycled: number;
   totalPoints: number;
-  unit:string
+  unit: string;
 }
 
 export default function BuyerHomePage() {
   const [items, setItems] = useState<Item[]>([]);
-  const [filteredItems, setFilteredItems] = useState<Item[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
   const [materials, setMaterials] = useState<Material[]>([]);
   const [materialsLoading, setMaterialsLoading] = useState(true);
-  const [userRole, setUserRole] = useState<string>("buyer"); // default fallback
+  const [userRole, setUserRole] = useState<string>("buyer");
 
+  const { locale,t,convertNumber } = useLanguage();
 
-  
+  // OPTIMIZATION 1: Memoize utility functions
+  const getMeasurementText = useCallback((unit: number) => {
+    return unit === 1 ? `${t('common.kg')}` : `${t('common.piece')}`;
+  }, []);
 
-  const getMeasurementText = (unit: number) => {
-    return unit === 1 ? "kg" : "pc";
-  };
-
-  // Format quantity display
-  const formatQuantity = (quantity: number, unit: number) => {
+  const formatQuantity = useCallback((quantity: number, unit: number) => {
     if (quantity === 0) return "Out of stock";
     
     const unitText = getMeasurementText(unit);
     if (quantity < 10) {
       return `Only ${quantity} ${unitText} left`;
     }
-    return `${quantity} ${unitText} in stock`;
-  };
+    return `${convertNumber(quantity)} ${unitText} ${t('common.inStock')}`;
+  }, [getMeasurementText]);
 
-  // Get stock status color
-  const getStockColor = (quantity: number) => {
+  const getStockColor = useCallback((quantity: number) => {
     if (quantity === 0) return "text-red-600";
     if (quantity < 10) return "text-orange-600";
     return "text-emerald-600";
-  };
-const {user} = useUserAuth()
-  const fetchItems = async () => {
+  }, []);
+
+  // OPTIMIZATION 2: Memoize API calls to prevent unnecessary re-fetches
+  const fetchItems = useCallback(async () => {
     setIsLoading(true);
     try {
-      // const response = await fetch(`http://localhost:5000/api/categories/get-items?page=1&limit=8&role=buyer`);
-      // const data = await response.json();
-      const response = await api.get(`/categories/get-items?page=1&limit=8&role=buyer`)
-      const data = response.data
+      const response = await api.get(`/categories/get-items?page=1&limit=8&role=buyer`);
+      const data = response.data;
       setItems(data.data);
-      setFilteredItems(data.data);
     } catch (error) {
       console.error("Error fetching items:", error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const fetchMaterials = async () => {
+  const fetchMaterials = useCallback(async () => {
     setMaterialsLoading(true);
     try {
-      // const response = await fetch("http://localhost:5000/api/top-materials-recycled");
-      // const data = await response.json();
-      const response = await api.get('/top-materials-recycled')
-      const data = response.data
-      console.log(data);
-      
+      const response = await api.get('/top-materials-recycled');
+      const data = response.data;
 
       const formattedMaterials = data.data.map((item: any) => ({
-        name: item._id.itemName.en,
+        name: item.name,
         image: item.image,
         totalRecycled: item.totalQuantity,
         totalPoints: item.totalPoints,
-        unit:item.unit
+        unit: item.unit
       }));
 
       setMaterials(formattedMaterials);
@@ -103,12 +92,62 @@ const {user} = useUserAuth()
     } finally {
       setMaterialsLoading(false);
     }
-  };
+  }, []);
 
-const {locale}=useLanguage()
+  // OPTIMIZATION 3: Memoize filtered items to prevent recalculation on every render
+  const filteredItems = useMemo(() => {
+    const term = searchTerm.toLowerCase();
+    const filtered = items.filter((item) => {
+      const matchesSearch = item.name[locale]?.toLowerCase().includes(term) || 
+                           item.categoryName[locale]?.toLowerCase().includes(term);
+      const matchesCategory = selectedCategory === "all" || item.categoryName[locale] === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
 
+    // Sort items: in-stock items first, then out-of-stock
+    return filtered.sort((a, b) => {
+      if ((a.quantity > 0 && b.quantity > 0) || (a.quantity === 0 && b.quantity === 0)) {
+        return 0;
+      }
+      if (a.quantity > 0 && b.quantity === 0) {
+        return -1;
+      }
+      return 1;
+    });
+  }, [searchTerm, selectedCategory, items, locale]);
+
+  // OPTIMIZATION 4: Memoize reset filters function
+  const resetFilters = useCallback(() => {
+    setSearchTerm("");
+    setSelectedCategory("all");
+  }, []);
+
+  // OPTIMIZATION 5: Memoize stats data to prevent recreation
+const statsData = useMemo(() => [
+  { 
+    icon: <Zap className="w-5 h-5 text-yellow-300" />, 
+    value: "1,250+", 
+    label: t('recyclingBanner.stats.dailyRecyclers')
+  },
+  { 
+    icon: <Recycle className="w-5 h-5 text-emerald-300" />, 
+    value: "5.2K", 
+    label: t('recyclingBanner.stats.itemsRecycled')
+  },
+  { 
+    icon: <Leaf className="w-5 h-5 text-green-300" />, 
+    value: "28K+", 
+    label: t('recyclingBanner.stats.co2Reduced')
+  },
+  { 
+    icon: <span className="text-base">♻️</span>, 
+    value: "100%", 
+    label: t('recyclingBanner.stats.ecoFriendly')
+  }
+], [t]);
+
+  // OPTIMIZATION 6: Move user role logic to separate effect with proper dependencies
   useEffect(() => {
-    // Try to get user role from session storage
     try {
       const storedData = sessionStorage.getItem("checkoutData");
       if (storedData) {
@@ -124,56 +163,151 @@ const {locale}=useLanguage()
     }
   }, []);
 
+  // OPTIMIZATION 7: Separate effects for data fetching
   useEffect(() => {
     fetchItems();
-    fetchMaterials();
-  }, []);
+  }, [fetchItems]);
 
   useEffect(() => {
-    const term = searchTerm.toLowerCase();
-    const filtered = items.filter((item) => {
-      const matchesSearch = item.name[locale].toLowerCase().includes(term) || item.categoryName[locale].toLowerCase().includes(term);
-      const matchesCategory = selectedCategory === "all" || item.categoryName[locale] === selectedCategory;
-      return matchesSearch && matchesCategory;
-    });
+    fetchMaterials();
+  }, [fetchMaterials]);
 
-    // Sort items: in-stock items first, then out-of-stock
-    const sortedFiltered = filtered.sort((a, b) => {
-      // If both have stock or both are out of stock, maintain original order
-      if ((a.quantity > 0 && b.quantity > 0) || (a.quantity === 0 && b.quantity === 0)) {
-        return 0;
-      }
-      // If a has stock but b doesn't, a comes first
-      if (a.quantity > 0 && b.quantity === 0) {
-        return -1;
-      }
-      // If b has stock but a doesn't, b comes first
-      return 1;
-    });
+  // OPTIMIZATION 8: Memoize item component to prevent unnecessary re-renders
+  const ItemCard = useCallback(({ item }: { item: Item }) => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      whileHover={{ y: -5 }}
+      className="relative"
+    >
+      <Link href={`/marketplace/${encodeURIComponent(item.name.en)}`} passHref>
+        <div className={`bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-emerald-200 transition-all hover:shadow-sm h-full relative ${
+          item.quantity === 0 ? 'opacity-75' : ''
+        }`}>
+          
+          {/* Stock badges */}
+          {item.quantity === 0 && (
+            <div className="absolute top-2 right-2 z-10">
+              <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                <AlertTriangle className="w-3 h-3" />
+                Out of Stock
+              </div>
+            </div>
+          )}
 
-    setFilteredItems(sortedFiltered);
-  }, [searchTerm, selectedCategory, items]);
+          {item.quantity > 0 && item.quantity < 10 && (
+            <div className="absolute top-2 right-2 z-10">
+              <div className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                <AlertTriangle className="w-3 h-3" />
+                Low Stock
+              </div>
+            </div>
+          )}
 
-  const uniqueCategories = Array.from(new Set(items.map((item) => item.categoryName[locale]))).sort();
+          <div className="relative aspect-square w-full mb-3 bg-white rounded-lg overflow-hidden flex items-center justify-center">
+            {item.image ? (
+              <Image
+                src={item.image}
+                alt={item.name[locale] || item.name.en || 'Product image'}
+                width={200}
+                height={200}
+                className={`w-full h-full object-contain p-3 ${
+                  item.quantity === 0 ? 'grayscale' : ''
+                }`}
+                loading="lazy" // OPTIMIZATION: Lazy load images
+                placeholder="blur"
+                blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+              />
+            ) : (
+              <div className={`text-gray-300 ${item.quantity === 0 ? 'opacity-50' : ''}`}>
+                <Recycle className="h-10 w-10" />
+              </div>
+            )}
+          </div>
+          
+          <h3 className="text-base font-medium text-gray-800 truncate mb-2">
+            {item.name[locale] || item.name.en}
+          </h3>
+          
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-base font-bold text-emerald-600">
+                {convertNumber(item.price)} {t('itemsModal.currency')}
+              </span>
+              <span className="text-xs text-emerald-600">
+                /{getMeasurementText(item.measurement_unit)}
+              </span>
+            </div>
+            
+            <div className={`text-xs font-medium ${getStockColor(item.quantity)}`}>
+              {formatQuantity(item.quantity, item.measurement_unit)}
+            </div>  
+          </div>
+        </div>
+      </Link>
+    </motion.div>
+  ), [locale, getMeasurementText, getStockColor, formatQuantity]);
+
+  // OPTIMIZATION 9: Memoize material card component
+  const MaterialCard = useCallback(({ material, index }: { material: Material, index: number }) => (
+    <Link key={index} href={`/marketplace/${encodeURIComponent(material.name.en)}`} passHref>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        whileHover={{ y: -5 }}
+      >
+        <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-emerald-200 transition-all hover:shadow-sm">
+          <div className="relative aspect-square w-full mb-3 bg-white rounded-lg overflow-hidden flex items-center justify-center">
+            {material.image ? (
+              <Image
+                src={material.image}
+                alt={material.name[locale] || material.name.en || 'Recycled material'}
+                width={200}
+                height={200}
+                className="w-full h-full object-contain p-3"
+                loading="lazy" // OPTIMIZATION: Lazy load images
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null;
+                  target.src = '/fallback-recycle-icon.png';
+                }}
+              />
+            ) : (
+              <div className="text-gray-300">
+                <Recycle className="h-10 w-10" />
+              </div>
+            )}
+          </div>
+          <h3 className="text-base font-medium text-gray-800 truncate mb-1">
+            {material.name[locale] || material.name.en}
+          </h3>
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-gray-600">
+          
+              <span className="text-sm text-gray-600 font-bold">{convertNumber(material.totalRecycled)}</span>
+              {material.unit == "pieces" ? t('common.piece') : t('common.kg')} {t('common.sold')}
+            </span>
+          </div>
+        </div>
+      </motion.div>
+    </Link>
+  ), [locale]);
 
   return (
-    <div className=" dark:bg-black-200  min-h-screen ">
-      {/* Hero Slider */}
-      <PromotionSlider />
+    <div className="dark:bg-black-200 min-h-screen">
 
-      <div className="container mx-auto px-4 py-8  dark:bg-black-200">
-        {/* ... header, search bar, banner, top materials ... */}
-
+      <div className="container mx-auto px-4 py-8 dark:bg-black-200">
         {/* Items Section */}
         <section className="mb-12">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold text-gray-800">
-              {selectedCategory === "all" ? "Featured Items" : selectedCategory}
+              {selectedCategory === "all" ? `${t('common.FeaturedItems')}` : selectedCategory}
             </h2>
             <Link href="/marketplace" passHref>
-              <button   aria-label="view all items"
- className="text-emerald-600 hover:text-emerald-700 font-medium flex items-center text-sm transition-colors">
-                View All
+              <button aria-label="view all items" className="text-emerald-600 hover:text-emerald-700 font-medium flex items-center text-sm transition-colors">
+               {t('common.viewAll')}
                 <ChevronRight className="w-4 h-4 ml-1" />
               </button>
             </Link>
@@ -181,7 +315,7 @@ const {locale}=useLanguage()
 
           {isLoading ? (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
-              {[...Array(8)].map((_, i) => (
+              {Array.from({ length: 8 }, (_, i) => (
                 <div key={i} className="bg-gray-100 rounded-xl h-44 animate-pulse"></div>
               ))}
             </div>
@@ -196,11 +330,7 @@ const {locale}=useLanguage()
               <p className="text-gray-500 mb-4 text-sm">Try adjusting your search or filter</p>
               <button
                 aria-label="reset filters"
-
-                onClick={() => {
-                  setSearchTerm("");
-                  setSelectedCategory("all");
-                }}
+                onClick={resetFilters}
                 className="px-5 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm transition-colors"
               >
                 Reset filters
@@ -208,89 +338,17 @@ const {locale}=useLanguage()
             </motion.div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
-
               {filteredItems.map((item) => (
-                <motion.div
-                  key={item._id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  whileHover={{ y: -5 }}
-                  className="relative"
-                >
-
-                  <Link href={`/marketplace/${encodeURIComponent(item.name.en)}`} passHref>
-                    <div className={`bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-emerald-200 transition-all hover:shadow-sm h-full relative ${
-                      item.quantity === 0 ? 'opacity-75' : ''
-                    }`}>
-                      
-                      {/* Out of Stock Badge */}
-                      {item.quantity === 0 && (
-                        <div className="absolute top-2 right-2 z-10">
-                          <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                            <AlertTriangle className="w-3 h-3" />
-                            Out of Stock
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Low Stock Badge */}
-                      {item.quantity > 0 && item.quantity < 10 && (
-                        <div className="absolute top-2 right-2 z-10">
-                          <div className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                            <AlertTriangle className="w-3 h-3" />
-                            Low Stock
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="relative aspect-square w-full mb-3 bg-white rounded-lg overflow-hidden flex items-center justify-center">
-                        {item.image ? (
-                          <Image
-                            src={item.image}
-                            alt={item.name}
-                            width={200}
-                            height={200}
-                            className={`w-full h-full object-contain p-3 ${
-                              item.quantity === 0 ? 'grayscale' : ''
-                            }`}
-                          />
-                        ) : (
-                          <div className={`text-gray-300 ${item.quantity === 0 ? 'opacity-50' : ''}`}>
-                            <Recycle className="h-10 w-10" />
-                          </div>
-                        )}
-                      </div>
-                      
-                      <h3 className="text-base font-medium text-gray-800 truncate mb-2">{item.name[locale] }</h3>
-                      
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-base font-bold text-emerald-600">
-                            {item.price} EGP
-                          </span>
-                          <span className="text-xs text-emerald-600">
-                            /{getMeasurementText(item.measurement_unit)}
-                          </span>
-                        </div>
-                        
-                        <div className={`text-xs font-medium ${getStockColor(item.quantity)}`}>
-                          {formatQuantity(item.quantity, item.measurement_unit)}
-                        </div>  
-                      </div>
-                    </div>
-                  </Link>
-                </motion.div>
+                <ItemCard key={item._id} item={item} />
               ))}
             </div>
           )}
         </section>
 
-   
-              {/* Recycling Banner */}
+        {/* Recycling Banner */}
         <section className="relative bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl overflow-hidden mb-12">
-         <div className="absolute inset-0 overflow-hidden opacity-10">
-           {[...Array(6)].map((_, i) => (
+          <div className="absolute inset-0 overflow-hidden opacity-10">
+            {Array.from({ length: 6 }, (_, i) => (
               <motion.div
                 key={i}
                 className="absolute text-white"
@@ -314,110 +372,69 @@ const {locale}=useLanguage()
             ))}
           </div>
 
-          <div className="container mx-auto px-4 py-8 relative">
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
-              <div className="text-center lg:text-left lg:w-1/2">
-                <h2 className="text-xl md:text-2xl font-bold text-white mb-3">
-                  <span className="inline-block bg-white/20 px-2 py-1 rounded-full text-emerald-100 text-xs mb-2">
-                    X Change
-                  </span>
-                  <br />
-                  Recycle Today for a <span className="text-yellow-300">Better</span> Tomorrow
-                </h2>
-                <p className="text-sm text-emerald-100 mb-4 max-w-md mx-auto lg:mx-0">
-                  Join our community making a difference. Every recycled item counts.
-                </p>
-           
-              </div>
+    <div className="container mx-auto px-4 py-8 relative">
+  <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+    <div className="text-center lg:text-start lg:w-1/2">
+      <h2 className="text-xl md:text-2xl font-bold text-white mb-3">
+        <span className="inline-block bg-white/20 px-2 py-1 rounded-full text-emerald-100 text-xs mb-2">
+          X Change
+        </span>
+        <br />
+        {t('recyclingBanner.title').split(t('recyclingBanner.titleHighlight')).map((part, index, array) => {
+          if (index === array.length - 1) {
+            return <span key={index}>{part}</span>;
+          }
+          return (
+            <span key={index}>
+              {part}
+              <span className="text-yellow-300">{t('recyclingBanner.titleHighlight')}</span>
+            </span>
+          );
+        })}
+      </h2>
+      <p className="text-sm text-emerald-100 mb-4 max-w-md mx-auto lg:mx-0">
+        {t('recyclingBanner.description')}
+      </p>
+    </div>
 
-              <div className="grid grid-cols-2 gap-2 lg:w-1/2 max-w-xs">
-                {[
-                  { icon: <Zap className="w-5 h-5 text-yellow-300" />, value: "1,250+", label: "Daily Recyclers" },
-                  { icon: <Recycle className="w-5 h-5 text-emerald-300" />, value: "5.2K", label: "Items Recycled" },
-                  { icon: <Leaf className="w-5 h-5 text-green-300" />, value: "28K+", label: "CO₂ Reduced" },
-                  { icon: <span className="text-base">♻️</span>, value: "100%", label: "Eco-Friendly" }
-                ].map((stat, i) => (
-                  <motion.div 
-                    key={i}
-                    whileHover={{ y: -2 }}
-                    className="bg-white/10 backdrop-blur-sm p-2 rounded-lg border border-white/20"
-                  >
-                    <div className="flex justify-center mb-1">{stat.icon}</div>
-                    <h3 className="text-lg font-bold text-white text-center">{stat.value}</h3>
-                    <p className="text-emerald-100 text-xs text-center">{stat.label}</p>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </div>
+    <div className="grid grid-cols-2 gap-2 lg:w-1/2 max-w-xs">
+      {statsData.map((stat, i) => (
+        <motion.div 
+          key={i}
+          whileHover={{ y: -2 }}
+          className="bg-white/10 backdrop-blur-sm p-2 rounded-lg border border-white/20"
+        >
+          <div className="flex justify-center mb-1">{stat.icon}</div>
+          <h3 className="text-lg font-bold text-white text-center">{stat.value}</h3>
+          <p className="text-emerald-100 text-xs text-center">{stat.label}</p>
+        </motion.div>
+      ))}
+    </div>
+  </div>
+</div>
         </section>
 
-              <section className="mb-12">
+        {/* Top Materials Section */}
+        <section className="mb-12">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-800">Top Recycled Materials</h2>
-                
+            <h2 className="text-xl font-semibold text-gray-800">{t('charts.topRecycledMaterials')}</h2>
           </div>
 
           {materialsLoading ? (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
-              {[...Array(4)].map((_, i) => (
+              {Array.from({ length: 4 }, (_, i) => (
                 <div key={i} className="bg-gray-100 rounded-xl h-44 animate-pulse"></div>
               ))}
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
               {materials.map((material, index) => (
-                <Link key={index} href={`/home/items/${encodeURIComponent(material.name)}`} passHref>
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                    whileHover={{ y: -5 }}
-                  >
-                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-emerald-200 transition-all hover:shadow-sm">
-                      <div className="relative aspect-square w-full mb-3 bg-white rounded-lg overflow-hidden flex items-center justify-center">
-                        {material.image ? (
-                          <Image
-                            src={material.image}
-                            alt={material.name}
-                            width={200}
-                            height={200}
-                            className="w-full h-full object-contain p-3"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.onerror = null;
-                              target.src = '/fallback-recycle-icon.png';
-                            }}
-                          />
-                        ) : (
-                          <div className="text-gray-300">
-                            <Recycle className="h-10 w-10" />
-                            
-                          </div>
-                        )}
-                      </div>
-                      <h3 className="text-base font-medium text-gray-800 truncate mb-1">
-                        {material.name}
-                    
-                      </h3>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">
-                        <span className="text-sm text-gray-600 font-bold">  {material.totalRecycled} </span>
-                        
-                        {material.unit}  sold
-                        </span>
-                  
-                      </div>
-                    </div>
-                  </motion.div>
-                </Link>
+                <MaterialCard key={`${material.name.en}-${index}`} material={material} index={index} />
               ))}
             </div>
           )}
         </section>
-
       </div>
-      
     </div>
   );
 }
