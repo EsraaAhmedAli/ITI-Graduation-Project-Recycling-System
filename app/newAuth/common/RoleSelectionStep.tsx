@@ -1,14 +1,15 @@
 "use client";
 import React from "react";
 import { useAuthenticationContext } from "@/context/AuhenticationContext";
-import { roleConfig, Role } from "../Forms/MainForm";
+import { Role } from "../Forms/MainForm";
 import { useLanguage } from "@/context/LanguageContext";
+import { RoleConfig } from "./RoleConfig";
 
 export default function RoleSelect({ prevStep }: { prevStep?: () => void }) {
-  const {t} = useLanguage()
+  const { t } = useLanguage();
   const { selectedRole, setSelectedRole, setMode, setStep } =
     useAuthenticationContext();
-
+  const roleConfig = RoleConfig();
   const handleSelectRole = (role: Role) => {
     setSelectedRole(role);
     setStep(1);
@@ -18,7 +19,7 @@ export default function RoleSelect({ prevStep }: { prevStep?: () => void }) {
   return (
     <div className="space-y-6">
       <p className="text-gray-600 text-sm text-center px-4">
-       {t('auth.login.typeOfAccount')}
+        {t("auth.login.typeOfAccount")}
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-4 sm:px-0">
@@ -96,7 +97,7 @@ export default function RoleSelect({ prevStep }: { prevStep?: () => void }) {
             onClick={prevStep}
             className="text-sm text-primary hover:underline transition-colors duration-200"
           >
-            ← Back to previous
+            {t("auth.login.back")}
           </button>
         </div>
       )}

@@ -8,6 +8,7 @@ import { initiateSignup, verifyOtp } from "@/lib/auth";
 import { toast } from "react-toastify";
 import { Controller, useFormContext } from "react-hook-form";
 import { useAuthenticationContext } from "@/context/AuhenticationContext";
+import { useLanguage } from "@/context/LanguageContext";
 
 type OTPInputProps = {
   comeFrom: "signup" | "forgot";
@@ -21,6 +22,7 @@ export default function OTPInput({ comeFrom }: OTPInputProps) {
   const [canSubmit, setCanSubmit] = useState(false);
   const { setStep, step } = useAuthenticationContext();
   const otpValues = watch("otp") || [];
+  const { t } = useLanguage();
   // 1. Helper function for validating the full OTP array
   const validateOtp = () => {
     const values = getValues("otp") || [];
@@ -83,26 +85,21 @@ export default function OTPInput({ comeFrom }: OTPInputProps) {
 
     if (otpValue.length !== length) return;
 
-    if (comeFrom === "forgot") {
-      router.push(`/auth/resetpassword?otp=${otpValue}`);
-      return;
-    }
-
     try {
       await verifyOtp({ email, otpCode: otpValue });
       setStep(step + 1);
-      toast("GO AHEAD => ");
+      toast.success(t("auth.otp.submission_success"));
     } catch {
-      toast.error("OTP submission failed");
+      toast.error(t("auth.otp.submission_failed"));
     }
   };
 
   const handleResendOtp = async () => {
     try {
       await initiateSignup(getValues("email"));
-      toast("Resend OTP Successfully");
+      toast(t("resend_success"));
     } catch {
-      toast.error("OTP Resend failed");
+      toast(t("resend_failed"));
     }
   };
 
@@ -112,6 +109,7 @@ export default function OTPInput({ comeFrom }: OTPInputProps) {
         <div className="space-y-4 text-center">
           <p className="text-sm text-gray-500">
             Enter the 6-digit code. You can paste the full code directly.
+            {t("auth.otp.instruction")}
           </p>
           <div className="flex gap-2 justify-center">
             {Array.from({ length }).map((_, i) => (
@@ -146,13 +144,13 @@ export default function OTPInput({ comeFrom }: OTPInputProps) {
           </div>
 
           <p className="text-sm text-gray-500">
-            Didn’t receive the code?{" "}
+            {t("auth.otp.resend_question")}
             <button
               type="button"
               onClick={handleResendOtp}
               className="text-green-600 hover:underline font-medium"
             >
-              Resend OTP
+              {t("auth.otp.resend_button")}
             </button>
           </p>
           <Button
@@ -160,7 +158,7 @@ export default function OTPInput({ comeFrom }: OTPInputProps) {
             disabled={!canSubmit}
             className="bg-green-700 text-white m-auto w-50 h-10 rounded-lg hover:bg-green-800 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Confirm
+            {t("auth.otp.confirm")}
           </Button>
         </div>
       </Wrapper>

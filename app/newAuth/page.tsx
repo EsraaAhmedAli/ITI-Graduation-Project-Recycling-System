@@ -6,6 +6,7 @@ import Wrapper from "@/components/auth/Wrapper";
 import { AuthenticationProvider } from "@/context/AuhenticationContext";
 import MainForm from "./Forms/MainForm";
 import { useRouter } from "next/navigation";
+import Email from "next-auth/providers/email";
 
 export const roleConfig = {
   customer: {
@@ -45,8 +46,9 @@ type AuthModalProps = {
 
 export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const methods = useForm({
-    defaultValues: { otp: Array(6).fill("") },
-    mode: "all",
+    defaultValues: { otp: Array(6).fill(""), email: "" },
+    mode: "onChange", // don’t nag immediately
+    reValidateMode: "onChange", // but fix as soon as user types
   });
 
   if (!isOpen) return null;

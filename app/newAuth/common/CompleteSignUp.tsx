@@ -6,8 +6,6 @@ import toast from "react-hot-toast";
 import { FloatingInput } from "@/components/common/FlotingInput";
 import SmartNavigation from "./SmartNavigation";
 import { useAuthenticationContext } from "@/context/AuhenticationContext";
-import api from "@/lib/axios";
-import { registerUser } from "@/lib/auth";
 
 export default function CompleteSignup() {
   const {
@@ -53,7 +51,7 @@ export default function CompleteSignup() {
               message: "Enter a valid Egyptian mobile or landline number",
             },
           })}
-          error={errors.phoneNumber?.message}
+          error={errors.phoneNumber?.message as string}
           maxLength={11}
         />
       </div>

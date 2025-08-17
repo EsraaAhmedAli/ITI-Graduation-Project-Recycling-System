@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { useFormContext } from "react-hook-form";
+import { useLanguage } from "@/context/LanguageContext";
 
 const SocialButtons = () => {
   const { setMode, setGoogleUser } = useAuthenticationContext();
@@ -14,6 +15,8 @@ const SocialButtons = () => {
   const router = useRouter();
   const { setUser, setToken } = useUserAuth();
   const { setValue } = useFormContext();
+  const { locale } = useLanguage();
+  console.log(locale);
 
   const handleGoogleSuccess = async (credentialResponse: any) => {
     setLoading(true);
@@ -55,8 +58,11 @@ const SocialButtons = () => {
       <GoogleLogin
         onSuccess={handleGoogleSuccess}
         onError={() => console.error("Google login failed")}
-        useOneTap // optional: enables one-tap popup
-
+        locale="ar"
+        theme="outline"
+        size="large"
+        shape="rectangular"
+        text="signin_with"
       />
     </div>
   );

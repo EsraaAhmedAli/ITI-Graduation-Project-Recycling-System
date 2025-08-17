@@ -8,7 +8,7 @@ import { useFormContext } from "react-hook-form";
 import SmartNavigation from "./SmartNavigation";
 import toast from "react-hot-toast";
 import { initiateSignup } from "@/lib/auth";
-import { useUserAuth } from "@/context/AuthFormContext";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function BasicInfo() {
   const {
@@ -17,6 +17,7 @@ export default function BasicInfo() {
     formState: { errors },
     getValues,
     trigger,
+    clearErrors,
   } = useFormContext();
 
   const password = watch("password");
@@ -30,6 +31,7 @@ export default function BasicInfo() {
     setMode,
     GoogleUser,
   } = useAuthenticationContext();
+  const { t } = useLanguage();
   const nextStep = async () => {
     const fields = GoogleUser
       ? ["phoneNumber"]
@@ -62,6 +64,7 @@ export default function BasicInfo() {
 
   const prevStep = () => {
     setMode("role-select");
+    clearErrors();
   };
 
   return (
@@ -71,61 +74,62 @@ export default function BasicInfo() {
           {/* Full Name */}
           <FloatingInput
             id="name"
-            label="Full Name"
+            label={t("auth.register.fullName")}
             type="text"
-            {...register("name", { required: "Full name is required" })}
-            error={errors.name?.message}
+            {...register("name", {
+              required: t("auth.errors.required.fullName"),
+            })}
+            error={errors.name?.message as string} // 👈 cast
             maxLength={20}
           />
 
           {/* Email */}
           <FloatingInput
             id="email"
-            label="Email"
+            label={t("auth.login.email")}
             type="email"
             {...register("email", {
-              required: "Email is required",
+              required: t("auth.errors.required.email"),
               pattern: {
                 value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                message: "Invalid email format",
+                message: t("auth.errors.invalid.email"),
               },
             })}
-            error={errors.email?.message}
+            error={errors.email?.message as string}
             maxLength={30}
           />
 
           {/* Phone Number */}
           <FloatingInput
             id="phoneNumber"
-            label="Phone Number"
+            label={t("auth.register.phoneNumber")}
             type="tel"
             {...register("phoneNumber", {
-              required: "Phone number is required",
+              required: t("auth.errors.required.phoneNumber"),
               pattern: {
                 value:
                   /^((01[0125][0-9]{8})|(0(2|3|4[04578]|5[057]|6[245689]|8[24569]|9[2356])[0-9]{7}))$/,
-                message: "Enter a valid Egyptian mobile or landline number",
+                message: t("auth.errors.invalid.phoneNumber"),
               },
             })}
-            error={errors.phoneNumber?.message}
+            error={errors.phoneNumber?.message as string}
             maxLength={11}
           />
 
           {/* Password */}
           <FloatingInput
             id="password"
-            label="Password"
+            label={t("auth.login.password")}
             type={showPassword ? "text" : "password"}
             {...register("password", {
-              required: "Password is required",
+              required: t("auth.errors.required.password"),
               pattern: {
                 value:
                   /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,20}$/,
-                message:
-                  "8–20 chars, 1 uppercase, 1 number, 1 special character",
+                message: t("auth.errors.password.pattern"),
               },
             })}
-            error={errors.password?.message}
+            error={errors.password?.message as string}
             icon={
               showPassword ? (
                 <EyeOff
@@ -145,14 +149,15 @@ export default function BasicInfo() {
           {/* Confirm Password */}
           <FloatingInput
             id="confirmPassword"
-            label="Confirm Password"
+            label={t("auth.register.confirmPassword")}
             type={showConfirmPassword ? "text" : "password"}
             {...register("confirmPassword", {
-              required: "Confirm password is required",
+              required: t("auth.errors.required.confirmPassword"),
               validate: (value) =>
-                value === password || "Passwords do not match",
+                value === password ||
+                (t("auth.errors.password.mismatch") as string),
             })}
-            error={errors.confirmPassword?.message}
+            error={errors.confirmPassword?.message as string}
             icon={
               showConfirmPassword ? (
                 <EyeOff
@@ -174,17 +179,17 @@ export default function BasicInfo() {
           {/* Phone Number */}
           <FloatingInput
             id="phoneNumber"
-            label="Phone Number"
+            label={t("auth.register.PhoneNumber")}
             type="tel"
             {...register("phoneNumber", {
-              required: "Phone number is required",
+              required: t("auth.errors.required.phoneNumber"),
               pattern: {
                 value:
                   /^((01[0125][0-9]{8})|(0(2|3|4[04578]|5[057]|6[245689]|8[24569]|9[2356])[0-9]{7}))$/,
-                message: "Enter a valid Egyptian mobile or landline number",
+                message: t("auth.errors.invalid.phoneNumber"),
               },
             })}
-            error={errors.phoneNumber?.message}
+            error={errors.phoneNumber?.message as string}
             maxLength={11}
           />
         </div>

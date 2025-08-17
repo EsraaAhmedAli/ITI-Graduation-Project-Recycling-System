@@ -16,7 +16,12 @@ export interface VerifyData {
 // Response after successful auth
 export interface AuthResponse {
   user: User;
-  accessToken: string;
+  accessToken?: string; // optional, because pending/declined delivery users don't get a token
+  deliveryStatus: "approved" | "pending" | "declined";
+  declineReason?: string;
+  declinedAt?: string;
+  canReapply?: boolean;
+  message?: string;
 }
 
 // Request to start signup (OTP sent to email)

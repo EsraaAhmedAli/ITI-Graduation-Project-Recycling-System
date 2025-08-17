@@ -137,7 +137,7 @@ const LoginForm = () => {
             declineReason: errorData.declineReason,
             declinedAt: errorData.declinedAt,
             _id: errorData.user?.userId || errorData.user?._id || "",
-            email: errorData.user?.email || email,
+            email: errorData.user?.email || "",
             role: "delivery",
           },
           deliveryStatus: errorData.deliveryStatus,
@@ -181,18 +181,18 @@ const LoginForm = () => {
         {/* Email */}
         <FloatingInput
           id="email"
-          label={t('auth.login.email')}
+          label={t("auth.login.email")}
           type="email"
-          error={errors.email?.message}
+          error={errors.email?.message as string}
           {...register("email", {
-            required: t('auth.login.emailrequired'),
+            required: t("auth.login.emailrequired"),
             maxLength: {
               value: 30,
               message: "Email must be at most 30 characters",
             },
             pattern: {
               value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-              message: t('auth.login.emailError'),
+              message: t("auth.login.emailError"),
             },
           })}
           maxLength={30}
@@ -201,18 +201,18 @@ const LoginForm = () => {
         {/* Password */}
         <FloatingInput
           id="password"
-          label={t('auth.login.password')}
+          label={t("auth.login.password")}
           type={showPassword ? "text" : "password"}
           {...register("password", {
-            required: t('auth.login.passwordrequired'),
+            required: t("auth.login.passwordrequired"),
             pattern: {
               value:
                 /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,20}$/,
-              message: t('auth.login.passwordError'),
+              message: t("auth.login.passwordError"),
             },
           })}
           maxLength={20}
-          error={errors.password?.message}
+          error={errors.password?.message as string}
           icon={
             showPassword ? (
               <EyeOff
@@ -262,7 +262,7 @@ const LoginForm = () => {
         onClick={navigateToForgot}
         className="flex ms-auto text-sm text-gray-500 hover:underline"
       >
-        Forget Your Password?
+        {t("auth.login.forgotPassword")}
       </button>
 
       {/* Social */}
@@ -276,7 +276,7 @@ const LoginForm = () => {
           onClick={navigateToSignUp}
           className="text-sm text-[var(--color-primary)] hover:underline"
         >
-        {t('auth.login.dontHaveAccount')}
+          {t("auth.login.dontHaveAccount")}
         </button>
       </div>
     </div>

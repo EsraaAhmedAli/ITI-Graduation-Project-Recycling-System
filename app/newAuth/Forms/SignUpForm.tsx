@@ -5,17 +5,14 @@ import BasicInfo from "../common/BasicInfo";
 import CustomerSteps from "../customer/CustomerSteps";
 import DeliverySteps from "../delivery/DeliverySteps";
 import BuyerSteps from "../steps/BuyerSteps";
-import AdminSteps from "../steps/AdminSteps";
 import SocialButtons from "../common/socialSection";
 import OTPInput from "@/app/newAuth/common/OtpStep";
-
-type SignUpProps = {
-  resetForm: () => void;
-};
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function SignUpForm() {
   const { step, selectedRole, setMode, GoogleUser } =
     useAuthenticationContext();
+  const { t } = useLanguage();
 
   const renderRoleSpecificFields = () => {
     switch (selectedRole) {
@@ -46,7 +43,7 @@ export default function SignUpForm() {
             </div>
             <div className="relative flex justify-center text-sm">
               <span className="px-2 bg-white text-gray-500">
-                Or continue with
+                {t("auth.login.continueWith")}
               </span>
             </div>
           </div>
@@ -63,7 +60,7 @@ export default function SignUpForm() {
           }}
           className="text-sm text-primary hover:underline"
         >
-          Already have an account? Sign in
+          {t("auth.login.already")}
         </button>
       </div>
     </div>

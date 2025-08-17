@@ -156,6 +156,17 @@
       "passwordError": "8–20 characters, 1 uppercase, 1 number, 1 symbol",
       "signIn": "Sign in",
       "signingIn": "Signing in...",
+      "signUp": "Sign Up",
+      "already": "Already have an account? Sign in",
+      "sendReset": "Send Reset Code",
+      "reset": "Reset Password",
+
+      "back": "Back to previous",
+      "continueWith": "Or Continue With",
+      "sendingReset": "Sending...",
+      "forgotResetMsg": "Enter your email to receive a reset code.",
+      "signingUp": "Createing Account...",
+      "createAccount": "Create Account",
       "forgotPassword": "Forgot your password?",
       "securityNote": "Don’t worry, your information is 100% secure.",
       "loginFailed": "Login failed. Please check your credentials.",
@@ -163,11 +174,59 @@
       "dontHaveAccount": "Don't have an account? Sign up",
       "ChooseYourRole": "Choose Your Role",
       "typeOfAccount": "Select the type of account you'd like to create."
+    },
+    "otp": {
+      "instruction": "Enter the 6-digit code. You can paste the full code directly.",
+      "resend_question": "Didn’t receive the code?",
+      "resend_button": "Resend OTP",
+      "confirm": "Confirm",
+      "resend_success": "Resend OTP Successfully",
+      "resend_failed": "OTP Resend failed",
+      "submission_failed": "OTP submission failed",
+      "submission_success": "OTP Submited Successfully"
+    },
+    "register": {
+      "fullName": "Full Name",
+      "phoneNumber": "Phone Number",
+      "confirmPassword": "Confirm Password",
+      "next": "Next",
+      "previous": "Previous"
+    },
+    "roles": {
+      "customer": {
+        "title": "Customer Registration",
+        "description": "Join our recycling community"
+      },
+      "delivery": {
+        "title": "Delivery Partner Registration",
+        "description": "Become a verified delivery partner"
+      },
+      "buyer": {
+        "title": "Business Buyer Registration",
+        "description": "Register your business to purchase recycled materials"
+      }
+    },
+    "errors": {
+      "required": {
+        "fullName": "Full name is required",
+        "email": "Email is required",
+        "phoneNumber": "Phone number is required",
+        "password": "Password is required",
+        "confirmPassword": "Confirm password is required"
+      },
+      "invalid": {
+        "email": "Invalid email format",
+        "phoneNumber": "Enter a valid Egyptian mobile or landline number"
+      },
+      "password": {
+        "pattern": "8–20 chars, 1 uppercase, 1 number, 1 special character",
+        "mismatch": "Passwords do not match"
+      }
     }
   },
 
   "charts": {
-        "vsLastPeriod": "vs last period",
+    "vsLastPeriod": "vs last period",
     "numbers": {
       "percent": "%"
     },
@@ -178,21 +237,22 @@
     "topUsers": "Top Users",
     "userGrowth": "User Growth",
     "month": "Month",
-    "users" : "Users",    "orderStatus": "Order Status",
+    "users": "Users",
+    "orderStatus": "Order Status",
     "overview": "Overview",
     "noOrderData": "No order data",
     "mostCommon": "Most Common",
     "total": "Total",
     "notAvailable": "N/A",
     "months": "Months",
-        "topRecycledMaterials": "Top Recycled Materials",
+    "topRecycledMaterials": "Top Recycled Materials",
     "loadingMaterials": "Loading materials...",
     "noMaterialsData": "No materials data",
     "materialsHint": "Make sure you have completed orders with items",
     "material": "Material",
     "quantity": "Quantity",
     "unknown": "Unknown",
-      "loadingCitiesData": "Loading cities data...",
+    "loadingCitiesData": "Loading cities data...",
     "noCitiesData": "No cities data available",
     "checkBackLater": "Check back later for updates",
 
@@ -202,7 +262,7 @@
       "steady": "steady"
     }
   },
-    "cities": {
+  "cities": {
     "topCitiesByOrders": "Top Cities by Orders",
     "numberOfOrders": "Number of Orders",
     "cities": "Cities",
@@ -211,7 +271,7 @@
     "avgPerCity": "Avg per City",
     "topCity": "Top City"
   },
-    "materials": {
+  "materials": {
     "category": "Category",
     "pieces": "pieces",
     "sortByQuantity": "By Quantity",
@@ -220,9 +280,9 @@
     "totalQuantity": "Total Quantity",
     "topMaterial": "Top"
   },
-    "orderStatus": {
+  "orderStatus": {
     "pending": "Pending",
-    "processing": "Processing", 
+    "processing": "Processing",
     "shipped": "Shipped",
     "delivered": "Delivered",
     "cancelled": "Cancelled",

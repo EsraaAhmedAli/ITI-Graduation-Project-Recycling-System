@@ -154,6 +154,15 @@
       "passwordError": "8–20 حرفًا، حرف كبير، رقم، ورمز",
       "signIn": "تسجيل الدخول",
       "signingIn": "جارٍ تسجيل الدخول...",
+      "signUp": "انشاء حساب جديد",
+      "signingUp": "جار انشاء الحساب...",
+      "forgotResetMsg": "  ادخل بريدك الالكتروني لاستلام كود استرجاع الحساب. ",
+      "sendReset": "ارسال كود الاسترجاع",
+      "sendingReset": "جار الارسال ...",
+      "back": "الرجوع للسابق",
+      "already": "هل لديك حساب بالفعل؟ سجّل الدخول",
+      "reset": "تغيير الرقم السري",
+      "continueWith": "او الاستمرار بواسطة",
       "forgotPassword": "هل نسيت كلمة المرور؟",
       "securityNote": "لا تقلق، معلوماتك آمنة 100٪.",
       "loginFailed": "فشل تسجيل الدخول. يرجى التحقق من بياناتك.",
@@ -163,6 +172,55 @@
       "dontHaveAccount": "ليس لديك حساب؟ قم بالتسجيل",
       "ChooseYourRole": "اختر دورك",
       "typeOfAccount": "حدد نوع الحساب الذي ترغب في إنشائه."
+    },
+
+    "otp": {
+      "instruction": "أدخل الرمز المكوَّن من 6 أرقام. يمكنك لصق الرمز بالكامل مباشرة.",
+      "resend_question": "لم تستلم الرمز؟",
+      "resend_button": "إعادة إرسال الرمز",
+      "confirm": "تأكيد",
+      "resend_success": "تمت إعادة إرسال الرمز بنجاح",
+      "resend_failed": "فشل في إعادة إرسال الرمز",
+      "submission_failed": "فشل في ارسال الكود",
+      "submission_success": "تم ارسال الكود بنجاح"
+    },
+    "register": {
+      "fullName": "الاسم كامل",
+      "phoneNumber": "رقم المحمول",
+      "confirmPassword": "تاكيد كلمىة المرور",
+      "next": "التالي",
+      "previous": "السابق"
+    },
+    "roles": {
+      "customer": {
+        "title": "تسجيل العميل",
+        "description": "انضم إلى مجتمع إعادة التدوير الخاص بنا"
+      },
+      "delivery": {
+        "title": "تسجيل شريك التوصيل",
+        "description": "كن شريك توصيل معتمد"
+      },
+      "buyer": {
+        "title": "تسجيل المشتري التجاري",
+        "description": "سجل نشاطك التجاري لشراء المواد المعاد تدويرها"
+      }
+    },
+    "errors": {
+      "required": {
+        "fullName": "الاسم مطلوب",
+        "email": "البريد الإلكتروني مطلوب",
+        "phoneNumber": "رقم الهاتف مطلوب",
+        "password": "كلمة المرور مطلوبة",
+        "confirmPassword": "تأكيد كلمة المرور مطلوب"
+      },
+      "invalid": {
+        "email": "صيغة البريد الإلكتروني غير صحيحة",
+        "phoneNumber": "أدخل رقم هاتف محمول أو أرضي مصري صحيح"
+      },
+      "password": {
+        "pattern": "من ٨ - ٢٠ حرفًا، مع حرف كبير ورقم ورمز خاص على الأقل",
+        "mismatch": "كلمات المرور غير متطابقة"
+      }
     }
   },
   "profile": {
@@ -414,17 +472,17 @@
     "mostCommon": "الأكثر شيوعاً",
     "total": "المجموع",
     "notAvailable": "غير متاح",
-       "topRecycledMaterials": "أهم المواد المعاد تدويرها",
+    "topRecycledMaterials": "أهم المواد المعاد تدويرها",
     "loadingMaterials": "جاري تحميل المواد...",
     "noMaterialsData": "لا توجد بيانات مواد",
     "materialsHint": "تأكد من وجود طلبات مكتملة مع عناصر",
     "material": "المادة",
     "quantity": "الكمية",
     "unknown": "غير معروف",
-        "loadingCitiesData": "جاري تحميل بيانات المدن...",
+    "loadingCitiesData": "جاري تحميل بيانات المدن...",
     "noCitiesData": "لا توجد بيانات مدن متاحة",
     "checkBackLater": "تحقق مرة أخرى لاحقاً للتحديثات",
-  
+
     "trends": {
       "up": "ارتفاع",
       "down": "انخفاض",
@@ -435,7 +493,7 @@
       "percent": "٪"
     }
   },
-    "cities": {
+  "cities": {
     "topCitiesByOrders": "أفضل المدن حسب الطلبات",
     "numberOfOrders": "عدد الطلبات",
     "cities": "المدن",
@@ -444,7 +502,7 @@
     "avgPerCity": "المتوسط لكل مدينة",
     "topCity": "أفضل مدينة"
   },
-   "materials": {
+  "materials": {
     "category": "الفئة",
     "pieces": "قطع",
     "sortByQuantity": "حسب الكمية",

@@ -31,7 +31,6 @@ export const IdentityVerificationForm = () => {
 
   const { setUser, setToken } = useUserAuth();
   const { setMode, GoogleUser } = useAuthenticationContext();
-  const router = useRouter();
 
   const onSubmit = async () => {
     const {

@@ -1,4 +1,4 @@
-"use cluent";
+"use client";
 import React from "react";
 import {
   Check,
@@ -15,17 +15,18 @@ import { Role } from "@/app/newAuth/Forms/MainForm";
 import { useAuthenticationContext } from "@/context/AuhenticationContext";
 
 // Mapping icons per role
-const stepIcons: Record<Role, React.ReactElement[]> = {
-  customer: [<User />, <Shield />, <MapPin />],
-  delivery: [<User />, <Shield />, <Car />, <IdCard />],
-  buyer: [<User />, <Shield />, <Briefcase />, <FileText />],
+const stepIcons: Record<Role, React.ElementType[]> = {
+  customer: [User, Shield, MapPin],
+  delivery: [User, Shield, Car, IdCard],
+  buyer: [User, Shield, Briefcase, FileText],
 };
-const GoogleStepIcons: Record<Role, React.ReactElement[]> = {
-  customer: [<User />, <MapPin />],
-  delivery: [<User />, <Car />, <IdCard />],
-  buyer: [<User />, <Briefcase />, <FileText />],
+const GoogleStepIcons: Record<Role, React.ElementType[]> = {
+  customer: [User, MapPin],
+  delivery: [User, Car, IdCard],
+  buyer: [User, Briefcase, FileText],
 };
-const forgotIcons = [<User />, <Shield />, <DatabaseBackup />];
+const forgotIcons: React.ElementType[] = [User, Shield, DatabaseBackup];
+
 interface RoleStepperWithIconsProps {
   step: number;
   role: Role;
@@ -45,7 +46,7 @@ const RoleStepperWithIcons: React.FC<RoleStepperWithIconsProps> = ({
 
   return (
     <ol className="flex items-center justify-center w-full mb-5">
-      {icons.map((icon, idx) => {
+      {icons.map((Icon, idx) => {
         const isCompleted = idx + 1 < step;
         const isActive = idx + 1 === step;
         const isLast = idx === icons.length - 1;
@@ -76,7 +77,7 @@ const RoleStepperWithIcons: React.FC<RoleStepperWithIconsProps> = ({
               {isCompleted ? (
                 <Check className="w-4 h-4 lg:w-5 lg:h-5" />
               ) : (
-                React.cloneElement(icon, { className: "w-4 h-4 lg:w-5 lg:h-5" })
+                <Icon className="w-4 h-4 lg:w-5 lg:h-5" />
               )}
             </span>
           </li>

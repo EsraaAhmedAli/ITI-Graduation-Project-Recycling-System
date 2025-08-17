@@ -1,48 +1,23 @@
 "use client";
 import { useAuthenticationContext } from "@/context/AuhenticationContext";
 
-import { X, User, Truck, ShoppingCart, Shield } from "lucide-react";
+import { X } from "lucide-react";
 import RoleStepper from "@/app/newAuth/common/RoleStepper";
 import React from "react";
 import { FieldValues, useFormContext } from "react-hook-form";
 import LoginForm from "./LoginForm";
 import RoleSelect from "@/app/newAuth/common/RoleSelectionStep";
 import SignUpForm from "./SignUpForm";
-import CompleteSignup from "../common/CompleteSignUp";
 import { useLanguage } from "@/context/LanguageContext";
 import ForgetPasswordForm from "./ForgotPasswordForm";
-export const roleConfig = {
-  customer: {
-    title: "Customer Registration",
-    description: "Join our recycling community",
-    icon: <User className="w-6 h-6" />,
-    color: "bg-green-500",
-    steps: 3,
-  },
-  delivery: {
-    title: "Delivery Partner Registration",
-    description: "Become a verified delivery partner",
-    icon: <Truck className="w-6 h-6" />,
-    color: "bg-blue-500",
-    steps: 4,
-  },
-  buyer: {
-    title: "Business Buyer Registration",
-    description: "Register your business to purchase recycled materials",
-    icon: <ShoppingCart className="w-6 h-6" />,
-    color: "bg-purple-500",
-    steps: 4,
-  },
-  // admin: {
-  //   title: "Admin Registration",
-  //   description: "Administrative access registration",
-  //   icon: <Shield className="w-6 h-6" />,
-  //   color: "bg-red-500",
-  //   steps: 3,
-  // },
+import { RoleConfig } from "../common/RoleCOnfig";
+export const roleKeys = {
+  customer: true,
+  delivery: true,
+  buyer: true,
 };
 
-export type Role = keyof typeof roleConfig;
+export type Role = keyof typeof roleKeys;
 
 export default function MainForm() {
   const {
@@ -52,12 +27,13 @@ export default function MainForm() {
     setSelectedRole,
     step,
     setStep,
-    loading,
     handleClose,
     resetState,
   } = useAuthenticationContext();
-  const {t} = useLanguage()
-  const { handleSubmit, getValues, trigger } = useFormContext();
+  const { t } = useLanguage();
+  const roleConfig = RoleConfig();
+
+  const { handleSubmit, clearErrors } = useFormContext();
 
   const resetForm = () => {
     resetState();
@@ -91,11 +67,11 @@ export default function MainForm() {
 
   // Removed unused onSubmit function
 
-  const nextStep = () => {
-    if (step < roleConfig[selectedRole]?.steps) {
-      setStep(step + 1);
-    }
-  };
+  // const nextStep = () => {
+  //   if (step < roleConfig[selectedRole]?.steps) {
+  //     setStep(step + 1);
+  //   }
+  // };
 
   const prevStep = () => {
     if (step > 1) {
@@ -104,6 +80,7 @@ export default function MainForm() {
     if (step == 1) {
       const toMode = mode === "signup" ? "role-select" : "login";
       setMode(toMode);
+      clearErrors();
     }
   };
 
@@ -126,17 +103,17 @@ export default function MainForm() {
       <div className="flex items-start justify-between p-5 border-b border-solid border-gray-200 rounded-t">
         <h3 className="text-xl font-semibold">
           {mode === "role-select"
-            ? t('auth.login.ChooseYourRole')
+            ? t("auth.login.ChooseYourRole")
             : mode === "login"
-            ? "Sign In"
+            ? t("auth.login.signIn")
             : mode === "forgot-password"
-            ? "Forgot Password"
+            ? t("auth.login.forgotPassword")
             : selectedRole
             ? roleConfig[selectedRole]?.title
-            : "Sign Up"}
+            : t("auth.login.signUp")}
         </h3>
         <button
-          className="p-1 ml-auto bg-transparent border-0 text-gray-400 hover:text-gray-600 float-right text-3xl leading-none font-semibold outline-none focus:outline-none"
+          className="p-1 ms-auto bg-transparent border-0 text-gray-400 hover:text-gray-600 float-end text-3xl leading-none font-semibold outline-none focus:outline-none"
           onClick={onClose}
         >
           <X className="w-6 h-6" />
@@ -149,9 +126,7 @@ export default function MainForm() {
           <RoleStepper role={selectedRole} step={step} />
         )}
         <form onSubmit={handleSubmit(onSubmit)}>
-          {mode === "role-select" && (
-            <RoleSelect roleConfig={roleConfig} prevStep={prevStep} />
-          )}
+          {mode === "role-select" && <RoleSelect prevStep={prevStep} />}
           {/* {mode === "complete-signup" && <CompleteSignup />} */}
 
           {mode === "login" && <LoginForm />}
