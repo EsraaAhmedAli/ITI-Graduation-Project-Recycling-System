@@ -1,42 +1,8 @@
-// hooks/useCreateOrder.ts - Version that saves debug info to localStorage
+// hooks/useCreateOrder.ts - Modified version for profile navigation
 import { useState } from "react";
 import { toast } from "react-toastify";
 import api from "@/lib/axios";
 import { CartItem } from "@/context/CartContext";
-
-// Save debug info that persists through redirects
-const saveDebugInfo = (info: any) => {
-  try {
-    const existingDebug = JSON.parse(
-      localStorage.getItem("orderDebug") || "[]"
-    );
-    existingDebug.push({
-      timestamp: new Date().toISOString(),
-      ...info,
-    });
-    localStorage.setItem("orderDebug", JSON.stringify(existingDebug));
-  } catch (error) {
-    console.error("Failed to save debug info:", error);
-  }
-};
-
-export const getDebugInfo = () => {
-  try {
-    const debug = localStorage.getItem("orderDebug");
-    if (debug) {
-      console.log("🔍 ORDER DEBUG HISTORY:", JSON.parse(debug));
-      return JSON.parse(debug);
-    }
-  } catch (error) {
-    console.error("Failed to get debug info:", error);
-  }
-  return [];
-};
-
-// Clear debug info
-export const clearDebugInfo = () => {
-  localStorage.removeItem("orderDebug");
-};
 
 interface User {
   _id?: string;
@@ -74,8 +40,8 @@ interface CreateOrderResult {
 
 interface UseCreateOrderParams {
   clearCart: () => void;
-  setCurrentStep: (step: number) => void;
-  setCreatedOrderId: (id: string) => void;
+  // Removed setCurrentStep and setCreatedOrderId since we're navigating to profile
+  onOrderSuccess?: (orderId: string) => void; // Optional callback for additional actions
 }
 
 interface UseCreateOrderReturn {
@@ -91,8 +57,7 @@ interface UseCreateOrderReturn {
 
 export const useCreateOrder = ({
   clearCart,
-  setCurrentStep,
-  setCreatedOrderId,
+  onOrderSuccess,
 }: UseCreateOrderParams): UseCreateOrderReturn => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -103,10 +68,9 @@ export const useCreateOrder = ({
     deliveryFee: number = 0,
     paymentMethod: string = "cash"
   ): Promise<CreateOrderResult> => {
-    saveDebugInfo({
-      action: "ORDER_START",
+    
+    console.log("🚀 Creating order with:", {
       cartLength: cart?.length || 0,
-      cartItems: cart,
       hasAddress: !!selectedAddress,
       hasUser: !!user,
       deliveryFee,
@@ -115,19 +79,19 @@ export const useCreateOrder = ({
 
     // Validation
     if (!selectedAddress) {
-      saveDebugInfo({ action: "VALIDATION_FAILED", reason: "No address" });
+      console.error("❌ Validation failed: No address");
       toast.error("Please select an address");
       return { success: false };
     }
 
     if (!cart || cart.length === 0) {
-      saveDebugInfo({ action: "VALIDATION_FAILED", reason: "Empty cart" });
+      console.error("❌ Validation failed: Empty cart");
       toast.error("Your cart is empty");
       return { success: false };
     }
 
     setIsLoading(true);
-    saveDebugInfo({ action: "API_CALL_START" });
+    console.log("📡 Starting API call...");
 
     try {
       // Calculate total amount
@@ -148,42 +112,28 @@ export const useCreateOrder = ({
         userId: user?._id
       };
 
-      saveDebugInfo({
-        action: "ORDER_DATA",
-        orderData
-      });
+      console.log("📝 Order data:", orderData);
 
       const response = await api.post<OrderResponse>("orders", orderData);
-
       const orderId = response.data.data._id;
 
-      saveDebugInfo({
-        action: "ORDER_SUCCESS",
-        orderId: orderId,
-        responseStatus: response.status,
+      console.log("✅ Order created successfully:", {
+        orderId,
+        status: response.status
       });
 
-      // Success side effects
-      setCreatedOrderId(orderId);
-
-      // Debug cart clearing
-      saveDebugInfo({
-        action: "CART_CLEAR_START",
-        cartBeforeClear: cart.length,
-      });
-
+      // Clear cart
       try {
         clearCart();
-        saveDebugInfo({ action: "CART_CLEAR_SUCCESS" });
+        console.log("🛒 Cart cleared successfully");
       } catch (clearError) {
-        saveDebugInfo({
-          action: "CART_CLEAR_FAILED",
-          error: clearError.message,
-        });
+        console.error("❌ Failed to clear cart:", clearError);
       }
 
-      setCurrentStep(3);
-      saveDebugInfo({ action: "STEP_SET_TO_3" });
+      // Call optional success callback
+      if (onOrderSuccess) {
+        onOrderSuccess(orderId);
+      }
 
       toast.success("Order created successfully!");
 
@@ -193,8 +143,7 @@ export const useCreateOrder = ({
         data: response.data,
       };
     } catch (err: any) {
-      saveDebugInfo({
-        action: "ORDER_FAILED",
+      console.error("❌ Order creation failed:", {
         error: err?.message,
         status: err?.response?.status,
         responseData: err?.response?.data,
@@ -212,7 +161,7 @@ export const useCreateOrder = ({
       };
     } finally {
       setIsLoading(false);
-      saveDebugInfo({ action: "ORDER_COMPLETE" });
+      console.log("🏁 Order creation process complete");
     }
   };
 

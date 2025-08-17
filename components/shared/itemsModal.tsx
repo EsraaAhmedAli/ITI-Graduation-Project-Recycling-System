@@ -71,9 +71,9 @@ export default function ItemsModal({ show, onclose, selectedOrderItems, userRole
                       <div className="flex items-center gap-3 mb-3">
                         <div className="flex items-center gap-2">
                           <h4 className="text-lg font-semibold text-gray-800">
-                            {getLocalizedText(item?.itemName, 'Unknown Item')}
+                            {getLocalizedText(item?.name, 'Unknown Item')}
                           </h4>
-                          <Image width={50} height={50} src={item.image} alt={getLocalizedText(item?.itemName)} />
+                          <Image width={50} height={50} src={item.image} alt={getLocalizedText(item?.name)} />
                           
                           {/* Display category name */}
                           <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
@@ -96,7 +96,7 @@ export default function ItemsModal({ show, onclose, selectedOrderItems, userRole
                                 </svg>
                                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('itemsModal.OriginalQuantity')}</p>
                               </div>
-                              <p className="text-gray-800 font-semibold text-lg">{item.originalQuantity || 0} {item.unit || 'kg'}</p>
+                              <p className="text-gray-800 font-semibold text-lg">{item.originalQuantity || 0} {item.measurement_unit == 1 ? 'KG' : 'piece'}</p>
                             </div>
                             
                             {/* Delivered Quantity */}
@@ -114,7 +114,7 @@ export default function ItemsModal({ show, onclose, selectedOrderItems, userRole
                                     ? 'text-orange-600' 
                                     : 'text-gray-800'
                               }`}>
-                                {item.quantity || 0} {item.unit || 'kg'}
+                                {item.quantity || 0} {item.measurement_unit == 1 ? 'KG' : 'piece'}
                               </p>
                             </div>
                           </>
@@ -127,7 +127,7 @@ export default function ItemsModal({ show, onclose, selectedOrderItems, userRole
                               </svg>
                               <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('itemsModal.quantity')}</p>
                             </div>
-                            <p className="text-gray-800 font-semibold text-lg">{item.quantity || 0} {item.unit || 'kg'}</p>
+                            <p className="text-gray-800 font-semibold text-lg">{item.quantity || 0} {item.measurement_unit == 1 ? 'KG' : 'piece'}</p>
                           </div>
                         )}
 

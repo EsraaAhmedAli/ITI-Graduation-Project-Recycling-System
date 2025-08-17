@@ -5,10 +5,16 @@ import { initSocket, getSocket } from "@/lib/socket";
 import { useUserAuth } from "./AuthFormContext";
 import api from "@/lib/axios";
 
+interface LocalizedText {
+  en: string;
+  ar: string;
+  _id?: string;
+}
+
 interface Notification {
   _id: string;
-  title: string;
-  body: string;
+  title: string | LocalizedText;
+  body: string | LocalizedText;
   type: string;
   orderId?: any;
   data?: any;
@@ -42,8 +48,23 @@ const NotificationContext = createContext<NotificationContextType>({
 
 export const useNotification = () => useContext(NotificationContext);
 
-const PAGE_SIZE = 20; // Add consistent page size
-const MAX_NOTIFICATIONS = 1000; // Prevent memory issues
+const PAGE_SIZE = 20;
+const MAX_NOTIFICATIONS = 1000;
+
+// Helper function to extract text from localized object
+const getLocalizedText = (text: string | LocalizedText, language: string = 'en'): string => {
+  if (typeof text === 'string') return text;
+  return text[language as keyof LocalizedText] || text.en || '';
+};
+
+// Helper function to normalize notification data from API response
+const normalizeNotification = (notif: any): Notification => ({
+  ...notif,
+  isRead: notif.isRead ?? notif.read ?? false,
+  // Keep original structure but ensure we can extract text when needed
+  title: notif.title,
+  body: notif.body,
+});
 
 export const NotificationProvider = ({
   children,
@@ -121,16 +142,15 @@ export const NotificationProvider = ({
     try {
       const nextPage = currentPage + 1;
       const res = await api.get(`/notifications?page=${nextPage}&limit=${PAGE_SIZE}`);
-      const newNotifications = res.data.data.notifications.map(
-        (notif: any) => ({
-          ...notif,
-          isRead: notif.isRead ?? notif.read ?? false,
-        })
-      );
+      
+      // Handle new response structure
+      const responseData = res.data.data || res.data;
+      const newNotifications = (responseData.notifications || []).map(normalizeNotification);
+      const paginationData = responseData.pagination || {};
 
       setNotifications((prev) => [...prev, ...newNotifications]);
       setCurrentPage(nextPage);
-      setHasMore(res.data.data.hasMore || false);
+      setHasMore(paginationData.hasMore ?? false);
     } catch (error) {
       console.error("Failed to load more notifications:", error);
     } finally {
@@ -142,22 +162,21 @@ export const NotificationProvider = ({
     if (shouldDisableNotifications) return;
 
     try {
-      const [notifsRes, countRes] = await Promise.all([
-        api.get(`/notifications?page=1&limit=${PAGE_SIZE}`),
-        api.get("/notifications/unread-count"),
-      ]);
-
-      const normalizedNotifications = notifsRes.data.data.notifications.map(
-        (notif: any) => ({
-          ...notif,
-          isRead: notif.isRead ?? notif.read ?? false,
-        })
-      );
+      const notifsRes = await api.get(`/notifications?page=1&limit=${PAGE_SIZE}`);
+      
+      // Handle new response structure
+      const responseData = notifsRes.data.data || notifsRes.data;
+      const normalizedNotifications = (responseData.notifications || []).map(normalizeNotification);
+      const paginationData = responseData.pagination || {};
+      
+      // Extract unread count from root level or fallback to calculating it
+      const unreadCountFromAPI = notifsRes.data.unreadCount ?? 
+        normalizedNotifications.filter(notif => !notif.isRead).length;
 
       setNotifications(normalizedNotifications);
       setCurrentPage(1);
-      setHasMore(notifsRes.data.data.hasMore || false);
-      setUnreadCount(countRes.data.data.unreadCount || 0);
+      setHasMore(paginationData.hasMore ?? false);
+      setUnreadCount(unreadCountFromAPI);
     } catch (error) {
       console.error("❌ Failed to refresh notifications:", error);
     }
@@ -179,9 +198,17 @@ export const NotificationProvider = ({
           )
         );
 
-        // Get fresh unread count
-        const countRes = await api.get("/notifications/unread-count");
-        setUnreadCount(countRes.data.data.unreadCount || 0);
+        // Try to get fresh unread count, but handle both response structures
+        try {
+          const countRes = await api.get("/notifications/unread-count");
+          const unreadCountValue = countRes.data.unreadCount ?? 
+            countRes.data.data?.unreadCount ?? 
+            0;
+          setUnreadCount(unreadCountValue);
+        } catch (countError) {
+          // Fallback to decrementing if the count endpoint fails
+          setUnreadCount((prev) => Math.max(0, prev - 1));
+        }
       }
     } catch (error) {
       console.error("Failed to mark notification as read:", error);
@@ -206,24 +233,22 @@ export const NotificationProvider = ({
     
     const fetchInitialData = async () => {
       try {
-        const [notifsRes, countRes] = await Promise.all([
-          api.get(`/notifications?page=1&limit=${PAGE_SIZE}`),
-          api.get("/notifications/unread-count"),
-        ]);
-
+        const notifsRes = await api.get(`/notifications?page=1&limit=${PAGE_SIZE}`);
+        
         if (!isMounted) return;
 
-        const normalizedNotifications = notifsRes.data.data.notifications.map(
-          (notif: any) => ({
-            ...notif,
-            isRead: notif.isRead ?? notif.read ?? false,
-          })
-        );
+        // Handle new response structure
+        const responseData = notifsRes.data.data || notifsRes.data;
+        const normalizedNotifications = (responseData.notifications || []).map(normalizeNotification);
+        const paginationData = responseData.pagination || {};
+        
+        // Extract unread count from root level
+        const unreadCountValue = notifsRes.data.unreadCount ?? 0;
 
         setNotifications(normalizedNotifications);
         setCurrentPage(1);
-        setHasMore(notifsRes.data.data.hasMore);
-        setUnreadCount(countRes.data.data.unreadCount || 0);
+        setHasMore(paginationData.hasMore ?? false);
+        setUnreadCount(unreadCountValue);
         setIsInitialized(true);
       } catch (error) {
         console.error("❌ Failed to fetch notifications:", error);
@@ -248,10 +273,7 @@ export const NotificationProvider = ({
     const handleNewNotification = (newNotification: Notification) => {
       console.log("🔔 New notification received:", newNotification);
       
-      const normalizedNew = {
-        ...newNotification,
-        isRead: newNotification.isRead ?? newNotification.read ?? false,
-      };
+      const normalizedNew = normalizeNotification(newNotification);
 
       setNotifications((prev) => {
         // Check for duplicates
@@ -264,9 +286,11 @@ export const NotificationProvider = ({
       
       setUnreadCount((prev) => prev + 1);
 
-      // Show toast notification
+      // Show toast notification with localized text
       import("react-toastify").then(({ toast }) => {
-        toast.info(`${normalizedNew.title}: ${normalizedNew.body}`);
+        const titleText = getLocalizedText(normalizedNew.title);
+        const bodyText = getLocalizedText(normalizedNew.body);
+        toast.info(`${titleText}: ${bodyText}`);
       });
     };
 
@@ -280,7 +304,7 @@ export const NotificationProvider = ({
     socket.on("connect", handleConnect);
     socket.on("notification:new", handleNewNotification);
     socket.on("notification:count", handleNotificationCount);
-    socket.on("notification:unreadCount", handleNotificationCount); // Alternative event name
+    socket.on("notification:unreadCount", handleNotificationCount);
     
     // Handle reconnection
     socket.on("reconnect", () => {
@@ -338,3 +362,6 @@ export const NotificationProvider = ({
     </NotificationContext.Provider>
   );
 };
+
+// Export helper function for components to use
+export { getLocalizedText };

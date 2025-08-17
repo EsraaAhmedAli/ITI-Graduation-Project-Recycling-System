@@ -13,12 +13,12 @@ interface OrderStatusChartProps {
   loading: boolean;
 }
 
-const StatusLegendItem = memo<{ status: string; count: number; color: string; t: any; convertNumbers: any }>(({ 
+const StatusLegendItem = memo<{ status: string; count: number; color: string; t: any; convertNumber: any }>(({ 
   status, 
   count, 
   color,
   t,
-  convertNumbers
+  convertNumber
 }) => (
   <div className="flex items-center justify-between">
     <div className="flex items-center gap-2">
@@ -31,7 +31,7 @@ const StatusLegendItem = memo<{ status: string; count: number; color: string; t:
       </span>
     </div>
     <span className="text-xs font-semibold text-green-900">
-      {convertNumbers(count.toString())}
+      {convertNumber(count.toString())}
     </span>
   </div>
 ));
@@ -45,7 +45,7 @@ const LoadingDoughnut = () => (
 );
 
 const OrderStatusChart = memo<OrderStatusChartProps>(({ orderStatus, loading }) => {
-  const { t, convertNumbers } = useLanguage();
+  const { t, convertNumber } = useLanguage();
 
   // Memoize chart data
   const normalizedStatus = useMemo(() => {
@@ -92,7 +92,7 @@ const OrderStatusChart = memo<OrderStatusChartProps>(({ orderStatus, loading }) 
             const label = context.label || '';
             const value = context.parsed || 0;
             const percentage = totalOrders > 0 ? ((value / totalOrders) * 100).toFixed(1) : 0;
-            return `${label}: ${convertNumbers(value.toString())} (${convertNumbers(percentage.toString())}%)`;
+            return `${label}: ${convertNumber(value.toString())} (${convertNumber(percentage.toString())}%)`;
           }
         }
       }
@@ -102,7 +102,7 @@ const OrderStatusChart = memo<OrderStatusChartProps>(({ orderStatus, loading }) 
         event.native.target.style.cursor = elements.length > 0 ? 'pointer' : 'default';
       }
     }
-  }), [totalOrders, convertNumbers]);
+  }), [totalOrders, convertNumber]);
 
   const renderContent = () => {
     if (loading) {
@@ -153,7 +153,7 @@ const OrderStatusChart = memo<OrderStatusChartProps>(({ orderStatus, loading }) 
                 count={count}
                 color={STATUS_COLOR_MAP[status] || '#09c'}
                 t={t}
-                convertNumbers={convertNumbers}
+                convertNumber={convertNumber}
               />
             ))}
         </div>
@@ -192,7 +192,7 @@ const OrderStatusChart = memo<OrderStatusChartProps>(({ orderStatus, loading }) 
             </div>
             <div>
               <span className="font-medium">{t('charts.total')}: </span>
-              <span className="text-green-700">{convertNumbers(totalOrders.toString())}</span>
+              <span className="text-green-700">{convertNumber(totalOrders.toString())}</span>
             </div>
           </div>
         </div>

@@ -30,15 +30,11 @@ import { useCreateOrder } from "@/hooks/useCreateOrder";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import { deliveryFees } from "@/constants/deliveryFees";
-import TrackingStep from "./tracking/[id]/page";
-import TrackingStepWrapper from "@/components/pickup/trackingStepWrapper";
 
 enum Steps {
   ADDRESS = 1,
   PAYMENT,
   REVIEW,
-  TRACKING,
-  DELIVERY_REVIEW,
 }
 
 type PaymentMethod = "cash" | "credit_card" | "wallet";
@@ -60,7 +56,6 @@ export default function PickupConfirmation() {
     useState<PaymentMethod | null>(null);
 
   const [isEditing, setIsEditing] = useState(false);
-  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const [notLoggedIn] = useState(false);
   const [loadingBtn, setLoadingBtn] = useState<boolean>(false);
 
@@ -74,12 +69,13 @@ export default function PickupConfirmation() {
   const deliveryFee = selectedAddress?.city
     ? deliveryFees[selectedAddress.city] || 0
     : 0;
-      const totalAmount = totalPrice + deliveryFee;
+  const totalAmount = totalPrice + deliveryFee;
 
   const { createOrder } = useCreateOrder({
     clearCart,
-    setCurrentStep,
-    setCreatedOrderId,
+    onOrderSuccess: (orderId: string) => {
+      console.log("Order created with ID:", orderId);
+    }
   });
 
   const fetchAddresses = async () => {
@@ -151,6 +147,7 @@ export default function PickupConfirmation() {
       goToStep(Steps.REVIEW);
     }
   };
+
   const handleConfirm = async () => {
     setLoadingBtn(true);
     try {
@@ -179,9 +176,8 @@ export default function PickupConfirmation() {
         );
 
         if (selectedPaymentMethod === "credit_card") {
-
-          router.push(`/payment?total=${finalTotal}?deliveryFee=${deliveryFee}`);
-          return; // Exit early for credit card payment
+          router.push(`/payment?total=${finalTotal}&deliveryFee=${deliveryFee}`);
+          return;
         } else {
           const result = await createOrder(
             selectedAddress,
@@ -192,7 +188,9 @@ export default function PickupConfirmation() {
           );
           if (result.success) {
             console.log("Order created successfully:", result.orderId);
-            setCurrentStep(Steps.TRACKING);
+            toast.success("Order placed successfully!");
+            router.push("/profile");
+            return;
           }
         }
       } else {
@@ -204,7 +202,9 @@ export default function PickupConfirmation() {
         );
         if (result.success) {
           console.log("Order created successfully:", result.orderId);
-          setCurrentStep(Steps.TRACKING);
+          toast.success("Order placed successfully!");
+          router.push("/profile");
+          return;
         }
       }
     } catch (error) {
@@ -355,42 +355,6 @@ export default function PickupConfirmation() {
           direction={direction}
           isCurrent={currentStep === Steps.REVIEW}
           active={currentStep >= Steps.REVIEW}
-        />
-        <div
-          className={`hidden md:flex flex-grow h-0.5 mx-2 ${
-            currentStep >= Steps.TRACKING ? "bg-green-700" : "bg-gray-300"
-          }`}
-        />
-        <div
-          className={`flex md:hidden w-0.5 h-6 ${
-            currentStep >= Steps.TRACKING ? "bg-green-700" : "bg-gray-300"
-          }`}
-        />
-        <Step
-          label={t("pickup.steps.tracking")}
-          direction={direction}
-          isCurrent={currentStep === Steps.TRACKING}
-          active={currentStep >= Steps.TRACKING}
-        />
-        <div
-          className={`hidden md:flex flex-grow h-0.5 mx-2 ${
-            currentStep >= Steps.DELIVERY_REVIEW
-              ? "bg-green-700"
-              : "bg-gray-300"
-          }`}
-        />
-        <div
-          className={`flex md:hidden w-0.5 h-6 ${
-            currentStep >= Steps.DELIVERY_REVIEW
-              ? "bg-green-700"
-              : "bg-gray-300"
-          }`}
-        />
-        <Step
-          label={t("pickup.steps.deliveryReview")}
-          direction={direction}
-          isCurrent={currentStep === Steps.DELIVERY_REVIEW}
-          active={currentStep >= Steps.DELIVERY_REVIEW}
         />
       </div>
 
@@ -599,17 +563,19 @@ export default function PickupConfirmation() {
                 </Button>
               </div>
 
-              {/* Progress Indicator */}
+              {/* Updated Progress Indicator - Only 3 steps */}
               <div className="flex justify-center pt-4">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                   <div className="w-8 h-1 bg-green-500 rounded-full"></div>
-                  <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
-                  <div className="w-8 h-1 bg-gray-300 rounded-full"></div>
-                  <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
-                  <div className="w-8 h-1 bg-gray-300 rounded-full"></div>
-                  <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
-                  <div className="w-8 h-1 bg-gray-300 rounded-full"></div>
+                  <div className={`w-2 h-2 rounded-full ${user?.role === "buyer" ? "bg-gray-300" : "bg-green-500"}`}></div>
+                  {user?.role === "buyer" && (
+                    <>
+                      <div className="w-8 h-1 bg-gray-300 rounded-full"></div>
+                      <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                      <div className="w-8 h-1 bg-gray-300 rounded-full"></div>
+                    </>
+                  )}
                   <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
                 </div>
               </div>
@@ -721,7 +687,7 @@ export default function PickupConfirmation() {
             )}
             <div className="border-t pt-3 flex justify-between font-semibold text-lg text-gray-600">
               <span>Total</span>
-              <span text-gray-600>
+              <span className="text-gray-600">
                 EGP
                 {(
                   totalPrice +
@@ -770,15 +736,6 @@ export default function PickupConfirmation() {
           onConfirm={handleConfirm}
           loading={loadingBtn}
           userRole={user?.role}
-        />
-      )}
-
-      {currentStep === Steps.TRACKING && createdOrderId && (
-        <TrackingStepWrapper
-          key={`tracking-${createdOrderId}`}
-          orderId={createdOrderId}
-          onDelivered={() => router.push("/profile")}
-          embedded={true}
         />
       )}
     </div>
