@@ -71,9 +71,9 @@ export default function ItemsModal({ show, onclose, selectedOrderItems, userRole
                       <div className="flex items-center gap-3 mb-3">
                         <div className="flex items-center gap-2">
                           <h4 className="text-lg font-semibold text-gray-800">
-                            {getLocalizedText(item?.itemName, 'Unknown Item')}
+                            {getLocalizedText(item?.name, 'Unknown Item')}
                           </h4>
-                          <Image width={50} height={50} src={item.image} alt={getLocalizedText(item?.itemName)} />
+                          <Image width={50} height={50} src={item.image} alt={getLocalizedText(item?.name)} />
                           
                           {/* Display category name */}
                           <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">

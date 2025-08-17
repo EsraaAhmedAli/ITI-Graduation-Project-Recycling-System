@@ -300,7 +300,7 @@ export default function CourierOrderDetailsModal({
                           {item.image ? (
                             <Image
                               src={item.image}
-                              alt={item.itemName[locale]}
+                              alt={item.name[locale]}
                               width={64}
                               height={64}
                               className="w-full h-full object-cover"
@@ -328,7 +328,7 @@ export default function CourierOrderDetailsModal({
                       {/* Item Details */}
                       <div className="flex-1 min-w-0">
                         <h4 className="text-base font-semibold text-gray-900 capitalize mb-3">
-                          {item.itemName[locale]}
+                          {item.name[locale]}
                         </h4>
 
                         <div className="flex flex-wrap gap-2 text-sm">
