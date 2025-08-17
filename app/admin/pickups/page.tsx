@@ -226,29 +226,32 @@ export default function Page() {
   }, [filters, activeTab]);
 const { locale } = useLanguage();
 
-  const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
-    queryKey: [
-      "adminOrders",
+
+// Key changes in the fetchOrders function call and DynamicTable usage
+
+const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
+  queryKey: [
+    "adminOrders",
+    currentPage,
+    activeTab,
+    activeFilters,
+    locale,
+    debouncedSearchTerm,
+  ],
+  queryFn: () =>
+    fetchOrders(
       currentPage,
+      itemsPerPage,
       activeTab,
+      locale, // Fixed parameter order
       activeFilters,
-      locale,
-      debouncedSearchTerm,
-    ], // Use debounced search term
-    queryFn: () =>
-      fetchOrders(
-        currentPage,
-        itemsPerPage,
-        activeTab,
-        activeFilters,
-        debouncedSearchTerm
-      ),
-    // Remove keepPreviousData to show fresh data immediately
-    // keepPreviousData: true,
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
-    staleTime: 0, // Always fetch fresh data
-  });
+      debouncedSearchTerm
+    ),
+  refetchOnMount: true,
+  refetchOnWindowFocus: true,
+  staleTime: 0,
+});
+  
 
   const { user } = useUserAuth();
 

@@ -39,6 +39,8 @@ import { useLanguage } from "@/context/LanguageContext";
 
   type DynamicTableProps<T> = {
     data: T[];
+      disableClientSideSearch?: boolean; // New prop to disable client-side search
+
     columns: Column<T>[];
     title?: string;
     itemsPerPage?: number;
@@ -71,6 +73,7 @@ import { useLanguage } from "@/context/LanguageContext";
     onView?: (item: T) => void;
     getRenderedValue?: (row: any, key: string) => string;
     filtersConfig?: FilterConfig[]; // ✅ new
+    
   };
 
   function DynamicTable<T extends { [key: string]: any; id?: string | number }>({
@@ -103,6 +106,8 @@ import { useLanguage } from "@/context/LanguageContext";
     externalFilters = [],
     onExternalFiltersChange,
     getRenderedValue,
+      disableClientSideSearch = false, // New prop with default false
+
     filtersConfig,
   }: DynamicTableProps<T>) {
     const [currentPage, setCurrentPage] = useState(1);
@@ -123,11 +128,11 @@ import { useLanguage } from "@/context/LanguageContext";
     
     return () => window.removeEventListener('resize', updatePageGroupSize);
   }, []);
+    const currentSearchTerm = externalSearchTerm !== undefined ? externalSearchTerm : searchTerm;
+
     // Removed isDrawerOpen, setIsDrawerOpen. FilterDrawer now manages its own state.
 
-    // Use external search term if provided, otherwise use internal state
-    const currentSearchTerm =
-      externalSearchTerm !== undefined ? externalSearchTerm : searchTerm;
+
 
     const handleSearchChange = (value: string) => {
       if (onSearchChange) {
@@ -141,17 +146,20 @@ import { useLanguage } from "@/context/LanguageContext";
       // Add more if needed
     };
 
-    const filteredData = useMemo(() => {
-      if (!currentSearchTerm) return data;
-      return data.filter((item) =>
-        Object.values(item).some((value) =>
-          value
-            ?.toString()
-            .toLowerCase()
-            .includes(currentSearchTerm.toLowerCase())
-        )
-      );
-    }, [data, currentSearchTerm]);
+const filteredData = useMemo(() => {
+    // If client-side search is disabled (server handles search), return data as-is
+    if (disableClientSideSearch || onSearchChange) {
+      return data;
+    }
+    
+    // Otherwise, apply client-side search
+    if (!currentSearchTerm) return data;
+    return data.filter((item) =>
+      Object.values(item).some((value) =>
+        value?.toString().toLowerCase().includes(currentSearchTerm.toLowerCase())
+      )
+    );
+  }, [data, currentSearchTerm, disableClientSideSearch, onSearchChange]);
 
     const getSortKey = (colKey: string): string => {
       const col = columns.find((c) => c.key === colKey);
@@ -177,10 +185,12 @@ import { useLanguage } from "@/context/LanguageContext";
           : bStr.localeCompare(aStr);
       });
     }, [filteredData, sortColumn, sortDirection]);
-    const totalPages = Math.ceil(sortedData.length / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const currentData = sortedData?.slice(startIndex, endIndex);
+ const totalPages = Math.ceil(sortedData.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  
+  // Only slice data if client-side pagination is being used
+  const currentData = disableClientSideSearch ? sortedData : sortedData.slice(startIndex, endIndex);
 
     // Get columns that should be visible on mobile (priority-based)
     const mobileColumns = useMemo(() => {

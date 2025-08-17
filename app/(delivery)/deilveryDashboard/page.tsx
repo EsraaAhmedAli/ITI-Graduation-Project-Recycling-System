@@ -42,7 +42,7 @@ export default function Page() {
     refetchOnWindowFocus:true,
     staleTime:2000
   });
-const{locale}=useLanguage()
+const{locale,t}=useLanguage()
 const router = useRouter()
 const handleNavigateToEditProfile = ()=>{
   router.push('/editprofile')
@@ -72,13 +72,13 @@ const handleNavigateToEditProfile = ()=>{
         console.log("Item data:", item); // Debug log to see the actual data structure
 
         // Use measurement_unit field to determine the correct unit (ignore the unit field as it's incorrect)
-        const correctUnit = item.measurement_unit === 1 ? "kg" : "piece";
+        const correctUnit = item.measurement_unit === 1 ? "kg" : t('common.piece');
         const isUnitMismatch = item.unit !== correctUnit;
 
         initialQuantities[item._id] = {
           originalQuantity: item.quantity,
           actualQuantity: item.quantity,
-          name: item.itemName[locale] || item.name || item.productName || "Item",
+          name: item.name[locale] || item.name || item.productName || t('common.item'),
           unit: correctUnit, // Use the correct unit based on measurement_unit
           measurement_unit: item.measurement_unit,
           hasUnitMismatch: isUnitMismatch, // Track if there was a mismatch
@@ -174,7 +174,7 @@ const handleNavigateToEditProfile = ()=>{
         reader.onload = (e) => setPhotoPreview(e.target?.result as string);
         reader.readAsDataURL(file);
       } else {
-        alert("Please select an image file");
+        alert(t('courier.pleaseSelectImage'));
       }
     }
   };
@@ -182,7 +182,7 @@ const handleNavigateToEditProfile = ()=>{
   // Complete order with proof
   const completeOrderWithProof = async () => {
     if (!proofPhoto) {
-      alert("Please upload a delivery proof photo");
+      alert(t('courier.uploadProofPhoto'));
       return;
     }
 
@@ -195,7 +195,7 @@ const handleNavigateToEditProfile = ()=>{
       });
 
       if (hasChanges && !quantityNotes.trim()) {
-        alert("Please add notes about the quantity changes");
+        alert(t('courier.addQuantityNotes'));
         return;
       }
 
@@ -208,7 +208,7 @@ const handleNavigateToEditProfile = ()=>{
       );
 
       if (hasEmptyQuantities) {
-        alert("Please enter actual quantities for all items");
+        alert(t('courier.enterActualQuantities'));
         return;
       }
     }
@@ -236,7 +236,7 @@ const handleNavigateToEditProfile = ()=>{
       );
 
       if (response.status === 200) {
-        toast("Order completed successfully!");
+        toast(t('courier.orderCompletedSuccessfully'));
         setShowCompleteModal(false);
         resetModal();
         refetch()
@@ -244,12 +244,11 @@ const handleNavigateToEditProfile = ()=>{
       }
     } catch (error: any) {
       console.error("Error completing order:", error);
-      alert(error.response?.data?.message || "Error completing order");
+      alert(error.response?.data?.message || t('courier.errorCompletingOrder'));
     } finally {
       setCompleting(false);
     }
   };
-
   // Reset modal state
   const resetModal = () => {
     setSelectedOrder(null);
@@ -286,15 +285,17 @@ const handleNavigateToEditProfile = ()=>{
     const defaultStyle =
       "bg-gradient-to-r from-gray-100 to-gray-50 text-gray-800 border border-gray-200";
 
+    const statusText = status === "assigntocourier"
+      ? t('courier.readyForDelivery')
+      : t(`courier.status.${status}`, status.charAt(0).toUpperCase() + status.slice(1));
+
     return (
       <span
         className={`px-3 py-1.5 rounded-full text-xs font-semibold ${
           statusStyles[status] || defaultStyle
         }`}
       >
-        {status === "assigntocourier"
-          ? "Ready for Delivery"
-          : status.charAt(0).toUpperCase() + status.slice(1)}
+        {statusText}
       </span>
     );
   };
@@ -302,7 +303,7 @@ const handleNavigateToEditProfile = ()=>{
   const columns = [
     {
       key: "userName",
-      label: "customer",
+      label: t('courier.customer'),
       render: (row: any) => (
         <div className="flex items-center gap-3 py-2">
           <div className="relative">
@@ -331,7 +332,7 @@ const handleNavigateToEditProfile = ()=>{
             </span>
             <span className="text-xs text-gray-500 flex items-center gap-1">
               <User className="w-3 h-3" />
-              {row?.user?.role}
+              {t(`courier.role.${row?.user?.role}`, row?.user?.role)}
             </span>
           </div>
         </div>
@@ -340,11 +341,11 @@ const handleNavigateToEditProfile = ()=>{
     },
     {
       key: "createdAt",
-      label: "Order Date",
+      label: t('courier.orderDate'),
       render: (row: any) => (
         <div className="flex flex-col">
           <span className="font-medium text-gray-900">
-            {new Date(row.createdAt).toLocaleDateString("en-GB", {
+            {new Date(row.createdAt).toLocaleDateString(locale === 'ar' ? 'ar-EG' : 'en-GB', {
               day: "2-digit",
               month: "short",
               year: "numeric",
@@ -352,7 +353,7 @@ const handleNavigateToEditProfile = ()=>{
           </span>
           <span className="text-xs text-gray-500 flex items-center gap-1">
             <Clock className="w-3 h-3" />
-            {new Date(row.createdAt).toLocaleTimeString("en-GB", {
+            {new Date(row.createdAt).toLocaleTimeString(locale === 'ar' ? 'ar-EG' : 'en-GB', {
               hour: "2-digit",
               minute: "2-digit",
             })}
@@ -364,26 +365,26 @@ const handleNavigateToEditProfile = ()=>{
     },
     {
       key: "orderDetails",
-      label: "Order Details",
+      label: t('courier.orderDetails'),
       render: (row: any) => (
         <button
           onClick={() => handleViewOrderDetails(row)}
           className="group flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-all duration-200 border border-blue-200 hover:border-blue-300 hover:shadow-sm"
         >
           <Package className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
-          View Details
+          {t('courier.viewDetails')}
         </button>
       ),
     },
     {
       key: "status",
-      label: "Status",
+      label: t('courier.status.label'),
       render: (row: any) => getStatusBadge(row.status),
       priority: 4,
     },
     {
       key: "actions",
-      label: "Actions",
+      label: t('courier.actions'),
       render: (row: any) => (
         <div className="flex gap-2">
           {row.status === "assigntocourier" && (
@@ -392,13 +393,13 @@ const handleNavigateToEditProfile = ()=>{
               className="group flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg text-sm font-semibold transition-all duration-200 hover:shadow-lg hover:scale-105 active:scale-95"
             >
               <CheckCircle className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
-              {row.user.role == "customer" ? "Collect" : "Deliver"}
+              {row.user.role == "customer" ? t('courier.collect') : t('courier.deliver')}
             </button>
           )}
           {row.status === "completed" && row.deliveryProof && (
             <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-100 to-green-50 text-green-800 rounded-lg border border-green-200">
               <CheckCircle className="w-4 h-4" />
-              <span className="text-sm font-semibold">Delivered</span>
+              <span className="text-sm font-semibold">{t('courier.delivered')}</span>
             </div>
           )}
         </div>
@@ -418,10 +419,10 @@ const handleNavigateToEditProfile = ()=>{
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                  Delivery Dashboard
+                  {t('courier.deliveryDashboard')}
                 </h1>
                 <p className="text-gray-600">
-                  Manage your assigned delivery orders
+                  {t('courier.manageAssignedOrders')}
                 </p>
               </div>
             </div>
@@ -429,15 +430,15 @@ const handleNavigateToEditProfile = ()=>{
               <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-lg border border-blue-200">
                 <Package className="w-5 h-5 text-blue-600" />
                 <span className="text-sm font-semibold text-blue-800">
-                  {orders.length} Orders
+                  {orders.length} {t('courier.orders')}
                 </span>
               </div>
             </div>
             <div className="flex items-center gap-4">
-                  <button onClick={handleNavigateToEditProfile}>
+                  <button onClick={handleNavigateToEditProfile} title={t('courier.settings')}>
               <Settings/>
               </button>
-              <button onClick={logout}>
+              <button onClick={logout} title={t('courier.logout')}>
                 <LogOut />
               </button>
           
@@ -464,22 +465,22 @@ const handleNavigateToEditProfile = ()=>{
   <RotateCw
     className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`}
   />
-  {isFetching ? "Refreshing..." : "Refresh"}
+  {isFetching ? t('courier.refreshing') : t('courier.refresh')}
 </button>        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
           {orders.length === 0 ? (
             <div className="py-20 flex flex-col items-center justify-center text-gray-500">
               <Truck className="mb-4 w-12 h-12 text-gray-400" />
               <h2 className="text-xl font-semibold mb-2">
-                No orders assigned yet
+                {t('courier.noOrdersAssigned')}
               </h2>
               <p className="text-sm max-w-xs text-center">
-                Once orders are assigned to you, they will appear here.
+                {t('courier.ordersWillAppearHere')}
               </p>
             </div>
           ) : (
             <DynamicTable
               data={orders}
-              title="Assigned Orders"
+              title={t('courier.assignedOrders')}
               columns={columns}
               showActions={false}
               showAddButton={false}
@@ -502,25 +503,26 @@ const handleNavigateToEditProfile = ()=>{
       {/* Complete Order with Photo Proof Modal */}
       {showCompleteModal && (
         <Modal show={showCompleteModal} onClose={closeCompleteModal} size="lg">
-          <ModalHeader>Complete Delivery</ModalHeader>
+          <ModalHeader>{t('courier.completeDelivery')}</ModalHeader>
           <ModalBody>
             <div className="space-y-6">
               <div>
                 <h3 className="font-medium text-gray-900 mb-2">
-                  Order #{selectedOrder?._id?.slice(-8)}
+                  {t('courier.orderNumber', { id: selectedOrder?._id?.slice(-8) })}
                 </h3>
                 <p className="text-sm text-gray-600">
-                  Customer: {selectedOrder?.user?.userName}
+                  {t('courier.customer')}: {selectedOrder?.user?.userName}
                 </p>
               </div>
-
+{console.log(userRole)
+}
               {/* Quantity Review Form for Customer Orders */}
               {userRole === "customer" && showQuantityForm && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                   <div className="flex items-center gap-2 mb-3">
                     <Edit3 className="w-4 h-4 text-yellow-600" />
                     <h4 className="font-medium text-yellow-800">
-                      Verify Quantities
+                      {t('courier.verifyQuantities')}
                     </h4>
                   </div>
 
@@ -544,7 +546,7 @@ const handleNavigateToEditProfile = ()=>{
                           <div className="grid grid-cols-2 gap-2">
                             <div>
                               <label className="block text-xs text-gray-600 mb-1">
-                                Original
+                                {t('courier.original')}
                               </label>
                               <input
                                 type="number"
@@ -555,7 +557,7 @@ const handleNavigateToEditProfile = ()=>{
                             </div>
                             <div>
                               <label className="block text-xs text-gray-600 mb-1">
-                                Actual *
+                                {t('courier.actual')} *
                               </label>
                               <input
                                 type="number"
@@ -578,7 +580,7 @@ const handleNavigateToEditProfile = ()=>{
                             item.actualQuantity !== "" && (
                               <div className="mt-2 p-1 bg-red-50 border border-red-200 rounded">
                                 <span className="text-xs text-red-800 font-medium">
-                                  Diff:{" "}
+                                  {t('courier.difference')}:{" "}
                                   {item.measurement_unit === 2
                                     ? `${Math.round(
                                         Number(item.actualQuantity) -
@@ -606,12 +608,12 @@ const handleNavigateToEditProfile = ()=>{
                   }) && (
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">
-                        Reason for Changes *
+                        {t('courier.reasonForChanges')} *
                       </label>
                       <textarea
                         value={quantityNotes}
                         onChange={(e) => setQuantityNotes(e.target.value)}
-                        placeholder="Explain quantity differences..."
+                        placeholder={t('courier.explainQuantityDifferences')}
                         className="w-full px-2 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-xs"
                         rows={2}
                         required
@@ -625,13 +627,13 @@ const handleNavigateToEditProfile = ()=>{
               {userRole === "customer" && (
                 <div className="flex items-center gap-3">
                   <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
-                    Est. Weight (kg) *:
+                    {t('courier.estimatedWeight')} *:
                   </label>
                   <input
                     type="number"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder="e.g. 2.5"
+                    placeholder={t('courier.weightPlaceholder')}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                     step="0.1"
                     min="0"
@@ -644,12 +646,12 @@ const handleNavigateToEditProfile = ()=>{
               {userRole !== "customer" && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Estimated weight:
+                    {t('courier.estimatedWeight')}:
                   </label>
                   <textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Order weight"
+                    placeholder={t('courier.orderWeight')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     rows={3}
                   />
@@ -659,14 +661,14 @@ const handleNavigateToEditProfile = ()=>{
               {/* Photo Upload Section */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Delivery Proof Photo *
+                  {t('courier.deliveryProofPhoto')} *
                 </label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
                   {photoPreview ? (
                     <div className="relative">
                       <img
                         src={photoPreview}
-                        alt="Delivery proof"
+                        alt={t('courier.deliveryProof')}
                         className="w-full h-48 object-cover rounded-lg"
                       />
                       <button
@@ -677,7 +679,7 @@ const handleNavigateToEditProfile = ()=>{
                             fileInputRef.current.value = "";
                         }}
                         className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                        aria-label="Remove photo"
+                        aria-label={t('courier.removePhoto')}
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -686,16 +688,16 @@ const handleNavigateToEditProfile = ()=>{
                     <div className="text-center">
                       <Camera className="w-12 h-12 text-gray-400 mx-auto mb-2" />
                       <p className="text-sm text-gray-600 mb-2">
-                        Take a photo of the{" "}
-                        {userRole === "customer" ? "collected" : "delivered"}{" "}
-                        order
+                        {t('courier.takePhotoOfOrder', { 
+                          action: userRole === "customer" ? t('courier.collected') : t('courier.delivered') 
+                        })}
                       </p>
                       <button
                         onClick={() => fileInputRef.current?.click()}
                         className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 flex items-center gap-2 mx-auto"
                       >
                         <Upload className="w-4 h-4" />
-                        Upload Photo
+                        {t('courier.uploadPhoto')}
                       </button>
                     </div>
                   )}
@@ -717,7 +719,7 @@ const handleNavigateToEditProfile = ()=>{
                   disabled={completing}
                   className="flex-1 bg-gray-400"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   color="success"
@@ -732,14 +734,14 @@ const handleNavigateToEditProfile = ()=>{
                   {completing ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Completing...
+                      {t('courier.completing')}...
                     </>
                   ) : (
                     <>
                       <CheckCircle className="w-4 h-4" />
                       {userRole == "customer"
-                        ? "Mark as collected"
-                        : "Mark as delivered"}
+                        ? t('courier.markAsCollected')
+                        : t('courier.markAsDelivered')}
                     </>
                   )}
                 </Button>

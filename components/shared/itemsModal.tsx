@@ -96,7 +96,7 @@ export default function ItemsModal({ show, onclose, selectedOrderItems, userRole
                                 </svg>
                                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('itemsModal.OriginalQuantity')}</p>
                               </div>
-                              <p className="text-gray-800 font-semibold text-lg">{item.originalQuantity || 0} {item.unit || 'kg'}</p>
+                              <p className="text-gray-800 font-semibold text-lg">{item.originalQuantity || 0} {item.measurement_unit == 1 ? 'KG' : 'piece'}</p>
                             </div>
                             
                             {/* Delivered Quantity */}
@@ -114,7 +114,7 @@ export default function ItemsModal({ show, onclose, selectedOrderItems, userRole
                                     ? 'text-orange-600' 
                                     : 'text-gray-800'
                               }`}>
-                                {item.quantity || 0} {item.unit || 'kg'}
+                                {item.quantity || 0} {item.measurement_unit == 1 ? 'KG' : 'piece'}
                               </p>
                             </div>
                           </>
@@ -127,7 +127,7 @@ export default function ItemsModal({ show, onclose, selectedOrderItems, userRole
                               </svg>
                               <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('itemsModal.quantity')}</p>
                             </div>
-                            <p className="text-gray-800 font-semibold text-lg">{item.quantity || 0} {item.unit || 'kg'}</p>
+                            <p className="text-gray-800 font-semibold text-lg">{item.quantity || 0} {item.measurement_unit == 1 ? 'KG' : 'piece'}</p>
                           </div>
                         )}
 
