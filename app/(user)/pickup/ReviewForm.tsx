@@ -1,10 +1,9 @@
 import Button from "@/components/common/Button";
 import { FormInputs } from "@/components/Types/address.type";
 import Image from "next/image";
-import { CartItem } from "@/context/CartContext";
 import { deliveryFees } from "@/constants/deliveryFees";
 import { useLanguage } from "@/context/LanguageContext"; // Add this import
-
+import { CartItem } from "@/models/cart";
 interface ReviewProps {
   onBack: () => void;
   onConfirm: () => void;
@@ -12,6 +11,7 @@ interface ReviewProps {
   loading: boolean;
   cartItems: CartItem[];
   userRole?: string;
+  paymentMethod?: string;
 }
 
 export default function Review({
@@ -21,13 +21,16 @@ export default function Review({
   cartItems,
   formData,
   userRole,
+  paymentMethod,
 }: ReviewProps) {
   const { locale } = useLanguage(); // Get current locale
 
   // Helper function to get display name
-  const getDisplayName = (name: string | { en: string; ar: string }): string => {
-    if (typeof name === 'string') return name;
-    return name[locale] || name.en || ''; // Use current locale, fallback to English
+  const getDisplayName = (
+    name: string | { en: string; ar: string }
+  ): string => {
+    if (typeof name === "string") return name;
+    return name[locale] || name.en || ""; // Use current locale, fallback to English
   };
 
   const subtotal = cartItems.reduce(
@@ -91,14 +94,18 @@ export default function Review({
               {userRole === "buyer" && (
                 <>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-500 text-sm md:text-base">Order Price:</span>
+                    <span className="text-gray-500 text-sm md:text-base">
+                      Order Price:
+                    </span>
                     <span className="font-medium text-gray-700">
                       {subtotal.toFixed(2)} EGP
                     </span>
                   </div>
 
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-500 text-sm md:text-base">Delivery Fees:</span>
+                    <span className="text-gray-500 text-sm md:text-base">
+                      Delivery Fees:
+                    </span>
                     <span className="font-medium text-gray-700">
                       {deliveryFee.toFixed(2)} EGP
                     </span>
@@ -108,7 +115,9 @@ export default function Review({
 
               {/* Always show total */}
               <div className="flex justify-between items-center border-t border-gray-200 pt-4 mt-2">
-                <span className="text-lg font-semibold text-green-600">Total:</span>
+                <span className="text-lg font-semibold text-green-600">
+                  Total:
+                </span>
                 <span className="text-lg font-bold text-green-600">
                   {total.toFixed(2)} EGP
                 </span>
@@ -117,7 +126,10 @@ export default function Review({
 
             {/* Action Buttons */}
             <div className="flex justify-between mt-4">
-              <Button onClick={onBack} className="bg-red-600 px-6 py-2 rounded-lg">
+              <Button
+                onClick={onBack}
+                className="bg-red-600 px-6 py-2 rounded-lg"
+              >
                 Back
               </Button>
 

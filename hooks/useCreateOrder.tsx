@@ -13,7 +13,7 @@ interface User {
   role?: string;
 }
 
-interface Address {
+export interface Address {
   _id: string;
   city: string;
   area: string;
@@ -68,13 +68,12 @@ export const useCreateOrder = ({
     deliveryFee: number = 0,
     paymentMethod: string = "cash"
   ): Promise<CreateOrderResult> => {
-    
     console.log("🚀 Creating order with:", {
       cartLength: cart?.length || 0,
       hasAddress: !!selectedAddress,
       hasUser: !!user,
       deliveryFee,
-      paymentMethod
+      paymentMethod,
     });
 
     // Validation
@@ -95,7 +94,10 @@ export const useCreateOrder = ({
 
     try {
       // Calculate total amount
-      const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const subtotal = cart.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0
+      );
       const totalAmount = subtotal + deliveryFee;
 
       const orderData = {
@@ -109,7 +111,7 @@ export const useCreateOrder = ({
         paymentMethod,
         subtotal,
         totalAmount,
-        userId: user?._id
+        userId: user?._id,
       };
 
       console.log("📝 Order data:", orderData);
@@ -119,7 +121,7 @@ export const useCreateOrder = ({
 
       console.log("✅ Order created successfully:", {
         orderId,
-        status: response.status
+        status: response.status,
       });
 
       // Clear cart

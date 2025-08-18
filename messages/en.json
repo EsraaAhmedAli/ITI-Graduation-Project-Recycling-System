@@ -160,7 +160,7 @@
       "already": "Already have an account? Sign in",
       "sendReset": "Send Reset Code",
       "reset": "Reset Password",
-
+      "resetSuccess": "Password reset successfully",
       "back": "Back to previous",
       "continueWith": "Or Continue With",
       "sendingReset": "Sending...",
@@ -173,7 +173,8 @@
       "loginSuccess": "welcome back !",
       "dontHaveAccount": "Don't have an account? Sign up",
       "ChooseYourRole": "Choose Your Role",
-      "typeOfAccount": "Select the type of account you'd like to create."
+      "typeOfAccount": "Select the type of account you'd like to create.",
+      "wait": "please wait"
     },
     "otp": {
       "instruction": "Enter the 6-digit code. You can paste the full code directly.",
@@ -183,14 +184,18 @@
       "resend_success": "Resend OTP Successfully",
       "resend_failed": "OTP Resend failed",
       "submission_failed": "OTP submission failed",
-      "submission_success": "OTP Submited Successfully"
+      "submission_success": "OTP sent! Check your email.",
+      "verified": "Processing OTP Successfully",
+      "unVerified": "Invalid Otp"
     },
     "register": {
       "fullName": "Full Name",
       "phoneNumber": "Phone Number",
       "confirmPassword": "Confirm Password",
       "next": "Next",
-      "previous": "Previous"
+      "previous": "Previous",
+      "success": "Registered Successfully",
+      "fail": "Registered Failed"
     },
     "roles": {
       "customer": {
@@ -199,11 +204,132 @@
       },
       "delivery": {
         "title": "Delivery Partner Registration",
-        "description": "Become a verified delivery partner"
+        "description": "Become a verified delivery partner",
+        "steps": {
+          "info": "Vehicle & License Information",
+          "identity": "Identity Verification"
+        },
+        "fields": {
+          "licenseNumber": {
+            "label": "Driver's License Number",
+            "placeholder": "License number",
+            "required": "License number is required"
+          },
+          "vehicleType": {
+            "label": "Vehicle Type",
+            "placeholder": "Select vehicle type",
+            "required": "Vehicle type is required",
+            "options": {
+              "motorcycle": "Motorcycle",
+              "car": "Car",
+              "van": "Van",
+              "small-truck": "Small Truck",
+              "large-truck": "Large Truck"
+            }
+          },
+          "deliveryImage": {
+            "label": "Photo of Delivery Person",
+            "required": "Photo is required"
+          },
+          "vehicleImage": {
+            "label": "Photo of Vehicle",
+            "required": "Vehicle image is required"
+          },
+          "criminalRecord": {
+            "label": "Criminal Record Certificate (forwarded to our org)",
+            "required": "Certificate is required"
+          },
+          "identityFront": {
+            "label": "Identity Document (Front)",
+            "required": "Identity front is required"
+          },
+          "identityBack": {
+            "label": "Identity Document (Back)",
+            "required": "Identity back is required"
+          },
+          "nationalId": {
+            "label": "National ID / Passport Number",
+            "placeholder": "National ID or Passport number",
+            "required": "National ID or Passport number is required"
+          },
+          "emergencyContact": {
+            "label": "Emergency Contact",
+            "placeholder": "Emergency contact phone number",
+            "required": "Emergency contact is required"
+          },
+          "identityVerificationNote": {
+            "text": "Your identity will be verified within 24–48 hours. You'll receive an email once approved."
+          }
+        },
+        "messages": {
+          "registrationSuccess": "Delivery Registered. Awaiting Admin Approval",
+          "registrationError": "Something went wrong"
+        }
       },
       "buyer": {
         "title": "Business Buyer Registration",
-        "description": "Register your business to purchase recycled materials"
+        "description": "Register your business to purchase recycled materials",
+        "businessInfo": {
+          "heading": "Business Information",
+          "fields": {
+            "businessName": {
+              "label": "Business Name",
+              "placeholder": "Your business name",
+              "required": "Business name is required"
+            },
+            "businessType": {
+              "label": "Business Type",
+              "placeholder": "Select business type",
+              "required": "Business type is required",
+              "options": {
+                "recyclingPlant": "Recycling Plant",
+                "manufacturing": "Manufacturing",
+                "wasteManagement": "Waste Management",
+                "export": "Export Business",
+                "other": "Other"
+              }
+            },
+            "businessAddress": {
+              "label": "Business Address",
+              "placeholder": "Complete business address",
+              "required": "Business address is required"
+            }
+          },
+          "navigation": {
+            "next": "Next",
+            "back": "Back",
+            "submit": "Submit"
+          }
+        },
+        "lfInfo": {
+          "heading": "Legal & Financial Information",
+          "fields": {
+            "businessLicense": {
+              "label": "Business License Number",
+              "placeholder": "Business license number",
+              "required": "Business license number is required"
+            },
+            "taxId": {
+              "label": "Tax ID / EIN",
+              "placeholder": "Tax identification number",
+              "required": "Tax ID is required"
+            },
+            "estimatedMonthlyVolume": {
+              "label": "Estimated Monthly Volume (tons)",
+              "placeholder": "Select volume range",
+              "required": "Estimated volume is required",
+              "options": {
+                "1-10": "1–10 tons",
+                "10-50": "10–50 tons",
+                "50-100": "50–100 tons",
+                "100+": "100+ tons"
+              }
+            }
+          },
+          "notice": {
+            "businessVerification": "Our team will review your application and verify your business credentials within 2–3 business days."
+          }
+        }
       }
     },
     "errors": {
@@ -221,6 +347,10 @@
       "password": {
         "pattern": "8–20 chars, 1 uppercase, 1 number, 1 special character",
         "mismatch": "Passwords do not match"
+      },
+      "general": {
+        "fill": "Please fill all required fields.",
+        "google": "Google user data is missing."
       }
     }
   },

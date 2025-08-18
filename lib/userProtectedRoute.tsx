@@ -23,7 +23,7 @@ export const ProtectedRoute = ({
     if (!isLoading) {
       // 1. Not authenticated
       if (!user || !token) {
-        router.replace("/newAuth");
+        router.replace("/auth");
         return;
       }
 

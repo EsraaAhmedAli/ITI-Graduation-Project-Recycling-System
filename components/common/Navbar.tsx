@@ -483,7 +483,7 @@ export default function Navbar() {
               <div className="flex items-center gap-2">
                 <Link
                   prefetch={true}
-                  href="/newAuth"
+                  href="/auth"
                   className="flex items-center px-3 py-1.5 rounded-lg text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800 font-medium transition-all duration-200 text-sm"
                 >
                   <KeyRound className="w-4 h-4 rtl:ml-1 ltr:mr-1" />
@@ -621,7 +621,7 @@ export default function Navbar() {
               {!user ? (
                 <div className="pt-2 space-y-2">
                   <Link
-                    href="/newAuth"
+                    href="/auth"
                     onClick={() => setIsOpen(false)}
                     className="flex items-center justify-center w-full px-4 py-2.5 rounded-lg text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800 font-medium transition-all duration-200 border border-gray-200 dark:border-gray-700 text-sm"
                   >

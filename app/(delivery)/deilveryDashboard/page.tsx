@@ -1,17 +1,32 @@
-'use client'
-import CourierOrderDetailsModal from '@/components/common/showUserModal'
-import DynamicTable from '@/components/shared/dashboardTable'
-import api from '@/lib/axios'
-import Image from 'next/image'
-import React, { useEffect, useState, useRef } from 'react'
-import { Camera, CheckCircle, Upload, X, Package, Clock, User, MapPin, Truck, LogOut, Edit3, Save, RotateCw, Settings } from 'lucide-react'
-import { Modal, ModalBody, ModalHeader } from 'flowbite-react'
-import Button from '@/components/common/Button'
-import { useUserAuth } from '@/context/AuthFormContext'
-import toast from 'react-hot-toast'
-import { useQuery } from '@tanstack/react-query'
-import { useRouter } from 'next/navigation'
-import { useLanguage } from '@/context/LanguageContext'
+"use client";
+import CourierOrderDetailsModal from "@/components/common/showUserModal";
+import DynamicTable from "@/components/shared/dashboardTable";
+import api from "@/lib/axios";
+import Image from "next/image";
+import React, { useState, useRef } from "react";
+import {
+  Camera,
+  CheckCircle,
+  Upload,
+  X,
+  Package,
+  Clock,
+  User,
+  MapPin,
+  Truck,
+  LogOut,
+  Edit3,
+  Save,
+  RotateCw,
+  Settings,
+} from "lucide-react";
+import { Modal, ModalBody, ModalHeader } from "flowbite-react";
+import Button from "@/components/common/Button";
+import { useUserAuth } from "@/context/AuthFormContext";
+import toast from "react-hot-toast";
+import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function Page() {
   // const [orders, setOrders] = useState([])
@@ -30,23 +45,29 @@ export default function Page() {
   // New states for quantity management
   const [quantities, setQuantities] = useState<any>({});
   const [showQuantityForm, setShowQuantityForm] = useState(false);
-  const [quantityNotes, setQuantityNotes] = useState('');
- const{logout}= useUserAuth()
-  const { data: orders = [], isLoading, isError, refetch,isFetching } = useQuery({
+  const [quantityNotes, setQuantityNotes] = useState("");
+  const { logout } = useUserAuth();
+  const {
+    data: orders = [],
+    isLoading,
+    isError,
+    refetch,
+    isFetching,
+  } = useQuery({
     queryKey: ["my-orders"],
     queryFn: async () => {
       const res = await api.get("my-orders");
       return res.data.orders;
     },
-    refetchOnMount:true,
-    refetchOnWindowFocus:true,
-    staleTime:2000
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    staleTime: 2000,
   });
-const{locale,t}=useLanguage()
-const router = useRouter()
-const handleNavigateToEditProfile = ()=>{
-  router.push('/editprofile')
-}
+  const { locale, t } = useLanguage();
+  const router = useRouter();
+  const handleNavigateToEditProfile = () => {
+    router.push("/editprofile");
+  };
 
   // useEffect(() => {
   //   getAssignedOrdersToDelivery()
@@ -72,13 +93,18 @@ const handleNavigateToEditProfile = ()=>{
         console.log("Item data:", item); // Debug log to see the actual data structure
 
         // Use measurement_unit field to determine the correct unit (ignore the unit field as it's incorrect)
-        const correctUnit = item.measurement_unit === 1 ? "kg" : t('common.piece');
+        const correctUnit =
+          item.measurement_unit === 1 ? "kg" : t("common.piece");
         const isUnitMismatch = item.unit !== correctUnit;
 
         initialQuantities[item._id] = {
           originalQuantity: item.quantity,
           actualQuantity: item.quantity,
-          name: item.name[locale] || item.name || item.productName || t('common.item'),
+          name:
+            item.name[locale] ||
+            item.name ||
+            item.productName ||
+            t("common.item"),
           unit: correctUnit, // Use the correct unit based on measurement_unit
           measurement_unit: item.measurement_unit,
           hasUnitMismatch: isUnitMismatch, // Track if there was a mismatch
@@ -174,7 +200,7 @@ const handleNavigateToEditProfile = ()=>{
         reader.onload = (e) => setPhotoPreview(e.target?.result as string);
         reader.readAsDataURL(file);
       } else {
-        alert(t('courier.pleaseSelectImage'));
+        alert(t("courier.pleaseSelectImage"));
       }
     }
   };
@@ -182,7 +208,7 @@ const handleNavigateToEditProfile = ()=>{
   // Complete order with proof
   const completeOrderWithProof = async () => {
     if (!proofPhoto) {
-      alert(t('courier.uploadProofPhoto'));
+      alert(t("courier.uploadProofPhoto"));
       return;
     }
 
@@ -195,7 +221,7 @@ const handleNavigateToEditProfile = ()=>{
       });
 
       if (hasChanges && !quantityNotes.trim()) {
-        alert(t('courier.addQuantityNotes'));
+        alert(t("courier.addQuantityNotes"));
         return;
       }
 
@@ -208,7 +234,7 @@ const handleNavigateToEditProfile = ()=>{
       );
 
       if (hasEmptyQuantities) {
-        alert(t('courier.enterActualQuantities'));
+        alert(t("courier.enterActualQuantities"));
         return;
       }
     }
@@ -236,15 +262,15 @@ const handleNavigateToEditProfile = ()=>{
       );
 
       if (response.status === 200) {
-        toast(t('courier.orderCompletedSuccessfully'));
+        toast(t("courier.orderCompletedSuccessfully"));
         setShowCompleteModal(false);
         resetModal();
-        refetch()
+        refetch();
         // getAssignedOrdersToDelivery(); // Refresh orders
       }
     } catch (error: any) {
       console.error("Error completing order:", error);
-      alert(error.response?.data?.message || t('courier.errorCompletingOrder'));
+      alert(error.response?.data?.message || t("courier.errorCompletingOrder"));
     } finally {
       setCompleting(false);
     }
@@ -285,9 +311,12 @@ const handleNavigateToEditProfile = ()=>{
     const defaultStyle =
       "bg-gradient-to-r from-gray-100 to-gray-50 text-gray-800 border border-gray-200";
 
-    const statusText = status === "assigntocourier"
-      ? t('courier.readyForDelivery')
-      : t(`courier.status.${status}`, status.charAt(0).toUpperCase() + status.slice(1));
+    const statusText =
+      status === "assigntocourier"
+        ? t("courier.readyForDelivery")
+        : t(`courier.status.${status}`, {
+            defaultValue: status.charAt(0).toUpperCase() + status.slice(1),
+          });
 
     return (
       <span
@@ -303,7 +332,7 @@ const handleNavigateToEditProfile = ()=>{
   const columns = [
     {
       key: "userName",
-      label: t('courier.customer'),
+      label: t("courier.customer"),
       render: (row: any) => (
         <div className="flex items-center gap-3 py-2">
           <div className="relative">
@@ -341,22 +370,28 @@ const handleNavigateToEditProfile = ()=>{
     },
     {
       key: "createdAt",
-      label: t('courier.orderDate'),
+      label: t("courier.orderDate"),
       render: (row: any) => (
         <div className="flex flex-col">
           <span className="font-medium text-gray-900">
-            {new Date(row.createdAt).toLocaleDateString(locale === 'ar' ? 'ar-EG' : 'en-GB', {
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
-            })}
+            {new Date(row.createdAt).toLocaleDateString(
+              locale === "ar" ? "ar-EG" : "en-GB",
+              {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              }
+            )}
           </span>
           <span className="text-xs text-gray-500 flex items-center gap-1">
             <Clock className="w-3 h-3" />
-            {new Date(row.createdAt).toLocaleTimeString(locale === 'ar' ? 'ar-EG' : 'en-GB', {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
+            {new Date(row.createdAt).toLocaleTimeString(
+              locale === "ar" ? "ar-EG" : "en-GB",
+              {
+                hour: "2-digit",
+                minute: "2-digit",
+              }
+            )}
           </span>
         </div>
       ),
@@ -365,26 +400,26 @@ const handleNavigateToEditProfile = ()=>{
     },
     {
       key: "orderDetails",
-      label: t('courier.orderDetails'),
+      label: t("courier.orderDetails"),
       render: (row: any) => (
         <button
           onClick={() => handleViewOrderDetails(row)}
           className="group flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-all duration-200 border border-blue-200 hover:border-blue-300 hover:shadow-sm"
         >
           <Package className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
-          {t('courier.viewDetails')}
+          {t("courier.viewDetails")}
         </button>
       ),
     },
     {
       key: "status",
-      label: t('courier.status.label'),
+      label: t("courier.status.label"),
       render: (row: any) => getStatusBadge(row.status),
       priority: 4,
     },
     {
       key: "actions",
-      label: t('courier.actions'),
+      label: t("courier.actions"),
       render: (row: any) => (
         <div className="flex gap-2">
           {row.status === "assigntocourier" && (
@@ -393,13 +428,17 @@ const handleNavigateToEditProfile = ()=>{
               className="group flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg text-sm font-semibold transition-all duration-200 hover:shadow-lg hover:scale-105 active:scale-95"
             >
               <CheckCircle className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
-              {row.user.role == "customer" ? t('courier.collect') : t('courier.deliver')}
+              {row.user.role == "customer"
+                ? t("courier.collect")
+                : t("courier.deliver")}
             </button>
           )}
           {row.status === "completed" && row.deliveryProof && (
             <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-100 to-green-50 text-green-800 rounded-lg border border-green-200">
               <CheckCircle className="w-4 h-4" />
-              <span className="text-sm font-semibold">{t('courier.delivered')}</span>
+              <span className="text-sm font-semibold">
+                {t("courier.delivered")}
+              </span>
             </div>
           )}
         </div>
@@ -419,10 +458,10 @@ const handleNavigateToEditProfile = ()=>{
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                  {t('courier.deliveryDashboard')}
+                  {t("courier.deliveryDashboard")}
                 </h1>
                 <p className="text-gray-600">
-                  {t('courier.manageAssignedOrders')}
+                  {t("courier.manageAssignedOrders")}
                 </p>
               </div>
             </div>
@@ -430,18 +469,20 @@ const handleNavigateToEditProfile = ()=>{
               <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-lg border border-blue-200">
                 <Package className="w-5 h-5 text-blue-600" />
                 <span className="text-sm font-semibold text-blue-800">
-                  {orders.length} {t('courier.orders')}
+                  {orders.length} {t("courier.orders")}
                 </span>
               </div>
             </div>
             <div className="flex items-center gap-4">
-                  <button onClick={handleNavigateToEditProfile} title={t('courier.settings')}>
-              <Settings/>
+              <button
+                onClick={handleNavigateToEditProfile}
+                title={t("courier.settings")}
+              >
+                <Settings />
               </button>
-              <button onClick={logout} title={t('courier.logout')}>
+              <button onClick={logout} title={t("courier.logout")}>
                 <LogOut />
               </button>
-          
             </div>
           </div>
         </div>
@@ -449,10 +490,10 @@ const handleNavigateToEditProfile = ()=>{
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-<button
-  onClick={() => refetch()}
-  disabled={isFetching}
-  className={`
+        <button
+          onClick={() => refetch()}
+          disabled={isFetching}
+          className={`
     my-2
     flex items-center gap-2 px-4 py-2 rounded-lg
     bg-gradient-to-r from-blue-600 to-blue-700
@@ -461,26 +502,25 @@ const handleNavigateToEditProfile = ()=>{
     active:scale-95 transition-all duration-200
     disabled:opacity-70 disabled:cursor-not-allowed
   `}
->
-  <RotateCw
-    className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`}
-  />
-  {isFetching ? t('courier.refreshing') : t('courier.refresh')}
-</button>        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+        >
+          <RotateCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
+          {isFetching ? t("courier.refreshing") : t("courier.refresh")}
+        </button>{" "}
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
           {orders.length === 0 ? (
             <div className="py-20 flex flex-col items-center justify-center text-gray-500">
               <Truck className="mb-4 w-12 h-12 text-gray-400" />
               <h2 className="text-xl font-semibold mb-2">
-                {t('courier.noOrdersAssigned')}
+                {t("courier.noOrdersAssigned")}
               </h2>
               <p className="text-sm max-w-xs text-center">
-                {t('courier.ordersWillAppearHere')}
+                {t("courier.ordersWillAppearHere")}
               </p>
             </div>
           ) : (
             <DynamicTable
               data={orders}
-              title={t('courier.assignedOrders')}
+              title={t("courier.assignedOrders")}
               columns={columns}
               showActions={false}
               showAddButton={false}
@@ -503,26 +543,26 @@ const handleNavigateToEditProfile = ()=>{
       {/* Complete Order with Photo Proof Modal */}
       {showCompleteModal && (
         <Modal show={showCompleteModal} onClose={closeCompleteModal} size="lg">
-          <ModalHeader>{t('courier.completeDelivery')}</ModalHeader>
+          <ModalHeader>{t("courier.completeDelivery")}</ModalHeader>
           <ModalBody>
             <div className="space-y-6">
               <div>
                 <h3 className="font-medium text-gray-900 mb-2">
-                  {t('courier.orderNumber', { id: selectedOrder?._id?.slice(-8) })}
+                  {t("courier.orderNumber", {
+                    id: selectedOrder?._id?.slice(-8),
+                  })}
                 </h3>
                 <p className="text-sm text-gray-600">
-                  {t('courier.customer')}: {selectedOrder?.user?.userName}
+                  {t("courier.customer")}: {selectedOrder?.user?.userName}
                 </p>
               </div>
-{console.log(userRole)
-}
               {/* Quantity Review Form for Customer Orders */}
               {userRole === "customer" && showQuantityForm && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                   <div className="flex items-center gap-2 mb-3">
                     <Edit3 className="w-4 h-4 text-yellow-600" />
                     <h4 className="font-medium text-yellow-800">
-                      {t('courier.verifyQuantities')}
+                      {t("courier.verifyQuantities")}
                     </h4>
                   </div>
 
@@ -546,7 +586,7 @@ const handleNavigateToEditProfile = ()=>{
                           <div className="grid grid-cols-2 gap-2">
                             <div>
                               <label className="block text-xs text-gray-600 mb-1">
-                                {t('courier.original')}
+                                {t("courier.original")}
                               </label>
                               <input
                                 type="number"
@@ -557,7 +597,7 @@ const handleNavigateToEditProfile = ()=>{
                             </div>
                             <div>
                               <label className="block text-xs text-gray-600 mb-1">
-                                {t('courier.actual')} *
+                                {t("courier.actual")} *
                               </label>
                               <input
                                 type="number"
@@ -580,7 +620,7 @@ const handleNavigateToEditProfile = ()=>{
                             item.actualQuantity !== "" && (
                               <div className="mt-2 p-1 bg-red-50 border border-red-200 rounded">
                                 <span className="text-xs text-red-800 font-medium">
-                                  {t('courier.difference')}:{" "}
+                                  {t("courier.difference")}:{" "}
                                   {item.measurement_unit === 2
                                     ? `${Math.round(
                                         Number(item.actualQuantity) -
@@ -608,12 +648,12 @@ const handleNavigateToEditProfile = ()=>{
                   }) && (
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">
-                        {t('courier.reasonForChanges')} *
+                        {t("courier.reasonForChanges")} *
                       </label>
                       <textarea
                         value={quantityNotes}
                         onChange={(e) => setQuantityNotes(e.target.value)}
-                        placeholder={t('courier.explainQuantityDifferences')}
+                        placeholder={t("courier.explainQuantityDifferences")}
                         className="w-full px-2 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-xs"
                         rows={2}
                         required
@@ -627,13 +667,13 @@ const handleNavigateToEditProfile = ()=>{
               {userRole === "customer" && (
                 <div className="flex items-center gap-3">
                   <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
-                    {t('courier.estimatedWeight')} *:
+                    {t("courier.estimatedWeight")} *:
                   </label>
                   <input
                     type="number"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder={t('courier.weightPlaceholder')}
+                    placeholder={t("courier.weightPlaceholder")}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                     step="0.1"
                     min="0"
@@ -646,12 +686,12 @@ const handleNavigateToEditProfile = ()=>{
               {userRole !== "customer" && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('courier.estimatedWeight')}:
+                    {t("courier.estimatedWeight")}:
                   </label>
                   <textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder={t('courier.orderWeight')}
+                    placeholder={t("courier.orderWeight")}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     rows={3}
                   />
@@ -661,14 +701,14 @@ const handleNavigateToEditProfile = ()=>{
               {/* Photo Upload Section */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('courier.deliveryProofPhoto')} *
+                  {t("courier.deliveryProofPhoto")} *
                 </label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
                   {photoPreview ? (
                     <div className="relative">
                       <img
                         src={photoPreview}
-                        alt={t('courier.deliveryProof')}
+                        alt={t("courier.deliveryProof")}
                         className="w-full h-48 object-cover rounded-lg"
                       />
                       <button
@@ -679,7 +719,7 @@ const handleNavigateToEditProfile = ()=>{
                             fileInputRef.current.value = "";
                         }}
                         className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                        aria-label={t('courier.removePhoto')}
+                        aria-label={t("courier.removePhoto")}
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -688,8 +728,11 @@ const handleNavigateToEditProfile = ()=>{
                     <div className="text-center">
                       <Camera className="w-12 h-12 text-gray-400 mx-auto mb-2" />
                       <p className="text-sm text-gray-600 mb-2">
-                        {t('courier.takePhotoOfOrder', { 
-                          action: userRole === "customer" ? t('courier.collected') : t('courier.delivered') 
+                        {t("courier.takePhotoOfOrder", {
+                          action:
+                            userRole === "customer"
+                              ? t("courier.collected")
+                              : t("courier.delivered"),
                         })}
                       </p>
                       <button
@@ -697,7 +740,7 @@ const handleNavigateToEditProfile = ()=>{
                         className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 flex items-center gap-2 mx-auto"
                       >
                         <Upload className="w-4 h-4" />
-                        {t('courier.uploadPhoto')}
+                        {t("courier.uploadPhoto")}
                       </button>
                     </div>
                   )}
@@ -719,10 +762,9 @@ const handleNavigateToEditProfile = ()=>{
                   disabled={completing}
                   className="flex-1 bg-gray-400"
                 >
-                  {t('common.cancel')}
+                  {t("common.cancel")}
                 </Button>
                 <Button
-                  color="success"
                   onClick={completeOrderWithProof}
                   disabled={
                     !photoPreview ||
@@ -734,14 +776,14 @@ const handleNavigateToEditProfile = ()=>{
                   {completing ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      {t('courier.completing')}...
+                      {t("courier.completing")}...
                     </>
                   ) : (
                     <>
                       <CheckCircle className="w-4 h-4" />
                       {userRole == "customer"
-                        ? t('courier.markAsCollected')
-                        : t('courier.markAsDelivered')}
+                        ? t("courier.markAsCollected")
+                        : t("courier.markAsDelivered")}
                     </>
                   )}
                 </Button>

@@ -9,7 +9,16 @@ import { toast } from "react-hot-toast";
 import { Modal, ModalBody, ModalHeader, TextInput } from "flowbite-react";
 import Loader from "@/components/common/Loader";
 import { useQuery } from "@tanstack/react-query";
-import ReviewsModal, { RatingModal } from "@/components/ratingModal";
+import ReviewsModal from "@/components/ratingModal";
+export interface DeliveryItem {
+  userId: string; // unique user or courier ID
+  name: string; // courier / applicant name
+  currentStatus?: "pending" | "approved" | "declined" | "revoked"; // status
+  attachments?: string[]; // if you open attachments
+  createdAt?: string; // timestamp (optional)
+  updatedAt?: string; // timestamp (optional)
+  // ...add any other fields your API actually returns
+}
 
 const ActionModal = ({
   isOpen,
@@ -28,7 +37,7 @@ const ActionModal = ({
 }) => {
   const [reason, setReason] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     onConfirm(reason);
   };
@@ -54,7 +63,7 @@ const ActionModal = ({
               </h3>
               <p className="text-sm text-gray-600">
                 {isRevoke ? "Revoke" : "Decline"}{" "}
-                <span className="font-medium">{userName}</span>'s{" "}
+                <span className="font-medium">{userName}</span>&apos;s
                 {isRevoke ? "delivery access" : "application"}?
               </p>
               {isRevoke && (
@@ -78,21 +87,21 @@ const ActionModal = ({
 
             <div className="flex gap-2 pt-1">
               <Button
-                size="sm"
                 type="button"
                 onClick={handleClose}
                 disabled={isLoading}
-                className="flex-1">
+                className="flex-1"
+              >
                 Cancel
               </Button>
               <Button
-                size="sm"
                 onClick={handleSubmit}
-                isProcessing={isLoading}
+                loading={isLoading}
                 disabled={isLoading || (isRevoke && !reason.trim())}
                 className={`flex-1 ${
                   isRevoke ? "bg-orange-600" : "bg-red-600"
-                }`}>
+                }`}
+              >
                 {isRevoke ? "Revoke" : "Decline"}
               </Button>
             </div>
@@ -223,16 +232,9 @@ export default function Page() {
     data: deliveryData = [],
     isLoading: loading,
     refetch,
-  } = useQuery({
+  } = useQuery<DeliveryItem[]>({
     queryKey: ["delivery-attachments"],
     queryFn: fetchDeliveryAttachments,
-    onError: (err: any) => {
-      console.error("Error fetching delivery attachments:", err);
-      toast.error("Failed to fetch delivery data", {
-        duration: 5000,
-        position: "top-right",
-      });
-    },
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     staleTime: 2000,
@@ -278,7 +280,8 @@ export default function Page() {
                 onClick={() => {
                   setSelectedCourier({ id: item.userId, name: item.name });
                   setShowReviewsModal(true);
-                }}>
+                }}
+              >
                 view ratings
               </button>
             </div>
@@ -302,7 +305,8 @@ export default function Page() {
                 : status === "revoked"
                 ? "bg-orange-100 text-orange-800"
                 : "bg-yellow-100 text-yellow-800"
-            }`}>
+            }`}
+          >
             {status === "approved"
               ? "Approved"
               : status === "declined"
@@ -334,7 +338,8 @@ export default function Page() {
             }}
             className={`border border-gray-300 rounded-md px-3 py-1.5 text-sm text-gray-700 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
               isProcessing ? "opacity-50 cursor-not-allowed" : ""
-            }`}>
+            }`}
+          >
             <option value="" disabled>
               {isProcessing ? "Processing..." : "Select Action"}
             </option>
@@ -405,7 +410,8 @@ export default function Page() {
       render: (item: any) => (
         <button
           className="text-green-500 hover:text-green-700 underline text-sm"
-          onClick={() => setActiveAttachments(item.attachments)}>
+          onClick={() => setActiveAttachments(item.attachments)}
+        >
           View Documents
         </button>
       ),
@@ -469,7 +475,6 @@ export default function Page() {
                 }
               </div>
             </div>
-       
           </div>
 
           <DynamicTable

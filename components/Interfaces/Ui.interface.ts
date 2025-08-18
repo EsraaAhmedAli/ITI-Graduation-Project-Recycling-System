@@ -1,6 +1,6 @@
 export interface ButtonProps {
   children: React.ReactNode;
-  onClick?: () => void;
+  onClick?: (e?: React.MouseEvent<HTMLButtonElement>) => void;
   width?: string;
   height?: string;
   padding?: string;

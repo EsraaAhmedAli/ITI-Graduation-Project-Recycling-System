@@ -25,7 +25,7 @@ const WaitingForApprovalPage = () => {
     setDeliveryStatus,
     isLoading,
     logout,
-    token
+    token,
   } = useUserAuth();
 
   const [isReapplying, setIsReapplying] = useState(false);
@@ -61,24 +61,24 @@ const WaitingForApprovalPage = () => {
   // ✅ IMPROVED: Auto-refresh with better error handling
   useEffect(() => {
     if (!user || user.role !== "delivery" || isApprovedLocally) return;
-    
-    const shouldAutoRefresh = 
-      contextDeliveryStatus === "pending" || 
+
+    const shouldAutoRefresh =
+      contextDeliveryStatus === "pending" ||
       contextDeliveryStatus === "declined" ||
       contextDeliveryStatus === "revoked" ||
       sessionDeliveryData?.deliveryStatus === "pending" ||
       sessionDeliveryData?.deliveryStatus === "declined" ||
       sessionDeliveryData?.deliveryStatus === "revoked";
-    
+
     if (!shouldAutoRefresh) return;
 
     const interval = setInterval(async () => {
       const now = Date.now();
       if (now - lastCheckTime < 4000) return;
-      
+
       console.log("🔄 Auto-refreshing delivery status...");
       setLastCheckTime(now);
-      
+
       try {
         const result = await handleStatusCheck(false);
         if (result === null) {
@@ -91,19 +91,25 @@ const WaitingForApprovalPage = () => {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [user, contextDeliveryStatus, sessionDeliveryData, lastCheckTime, isApprovedLocally]);
+  }, [
+    user,
+    contextDeliveryStatus,
+    sessionDeliveryData,
+    lastCheckTime,
+    isApprovedLocally,
+  ]);
 
   // ✅ ENHANCED: Status check function with improved state updates
   const handleStatusCheck = async (showNotifications = true) => {
     if (!user?.email || isApprovedLocally) return;
-    
+
     setIsRefreshing(true);
-    
+
     try {
       console.log("🔄 Status check triggered");
-      
+
       let statusData = null;
-      
+
       if (token) {
         try {
           statusData = await refreshDeliveryStatus();
@@ -125,7 +131,7 @@ const WaitingForApprovalPage = () => {
           statusData = null;
         }
       }
-      
+
       // ✅ ADD: Check if statusData is null or doesn't have deliveryStatus
       if (!statusData || !statusData.deliveryStatus) {
         console.warn("⚠️ No valid status data received:", statusData);
@@ -134,23 +140,24 @@ const WaitingForApprovalPage = () => {
         }
         return null;
       }
-      
+
       const newStatus = statusData.deliveryStatus;
-      const currentDisplayStatus = sessionDeliveryData?.deliveryStatus || contextDeliveryStatus;
-      
-      console.log("📊 Status comparison:", { 
-        newStatus, 
-        currentDisplayStatus, 
-        userApproved: user.isApproved 
+      const currentDisplayStatus =
+        sessionDeliveryData?.deliveryStatus || contextDeliveryStatus;
+
+      console.log("📊 Status comparison:", {
+        newStatus,
+        currentDisplayStatus,
+        userApproved: user.isApproved,
       });
-      
+
       // Handle approval - NO ALERTS, NO REDIRECTS
       if (newStatus === "approved" && currentDisplayStatus !== "approved") {
         console.log("🎉 User approved - showing success UI!");
-        
+
         setIsApprovedLocally(true);
         setDeliveryStatus("approved");
-        
+
         const approvedData = {
           user: { ...user, isApproved: true },
           deliveryStatus: "approved",
@@ -159,30 +166,33 @@ const WaitingForApprovalPage = () => {
           revokeReason: "",
           revokedAt: "",
           canReapply: false,
-          message: "Application approved"
+          message: "Application approved",
         };
-        
-        sessionStorage.setItem("deliveryUserData", JSON.stringify(approvedData));
+
+        sessionStorage.setItem(
+          "deliveryUserData",
+          JSON.stringify(approvedData)
+        );
         setSessionDeliveryData(approvedData);
-        setForceRerender(prev => prev + 1); // ✅ ADD: Force rerender
-        
+        setForceRerender((prev) => prev + 1); // ✅ ADD: Force rerender
+
         return statusData;
       }
-      
+
       // ✅ IMPROVED: Handle revoked status with better state updates
       if (newStatus === "revoked" && currentDisplayStatus !== "revoked") {
         console.log("🚫 User access revoked");
-        
-        const updatedUser = { 
-          ...user, 
+
+        const updatedUser = {
+          ...user,
           isApproved: false,
           revokeReason: statusData.revokeReason,
-          revokedAt: statusData.revokedAt
+          revokedAt: statusData.revokedAt,
         };
-        
+
         setUser(updatedUser);
         setDeliveryStatus("revoked");
-        
+
         const revokeData = {
           user: updatedUser,
           deliveryStatus: "revoked",
@@ -190,48 +200,48 @@ const WaitingForApprovalPage = () => {
           revokedAt: statusData.revokedAt,
           activeOrdersCount: statusData.activeOrdersCount || 0,
           canReapply: statusData.canReapply !== false, // ✅ FIXED: Default to true if not explicitly false
-          message: "Access revoked"
+          message: "Access revoked",
         };
-        
+
         sessionStorage.setItem("deliveryUserData", JSON.stringify(revokeData));
         setSessionDeliveryData(revokeData);
-        setForceRerender(prev => prev + 1); // ✅ ADD: Force rerender
+        setForceRerender((prev) => prev + 1); // ✅ ADD: Force rerender
       }
-      
+
       // ✅ IMPROVED: Handle decline with better state updates
       if (newStatus === "declined" && currentDisplayStatus !== "declined") {
         console.log("❌ User declined");
-        
-        const updatedUser = { 
-          ...user, 
+
+        const updatedUser = {
+          ...user,
           isApproved: false,
           declineReason: statusData.declineReason,
-          declinedAt: statusData.declinedAt
+          declinedAt: statusData.declinedAt,
         };
-        
+
         setUser(updatedUser);
         setDeliveryStatus("declined");
-        
+
         const declineData = {
           user: updatedUser,
           deliveryStatus: "declined",
           declineReason: statusData.declineReason,
           declinedAt: statusData.declinedAt,
           canReapply: statusData.canReapply !== false, // ✅ FIXED: Default to true if not explicitly false
-          message: "Application declined"
+          message: "Application declined",
         };
-        
+
         sessionStorage.setItem("deliveryUserData", JSON.stringify(declineData));
         setSessionDeliveryData(declineData);
-        setForceRerender(prev => prev + 1); // ✅ ADD: Force rerender to show reapply button
+        setForceRerender((prev) => prev + 1); // ✅ ADD: Force rerender to show reapply button
       }
-      
+
       // Handle pending status
       if (newStatus === "pending" && currentDisplayStatus !== "pending") {
         console.log("⏳ Status is pending");
-        
+
         setDeliveryStatus("pending");
-        
+
         const pendingData = {
           user: { ...user, isApproved: false },
           deliveryStatus: "pending",
@@ -240,30 +250,29 @@ const WaitingForApprovalPage = () => {
           revokeReason: "",
           revokedAt: "",
           canReapply: false,
-          message: "Application pending"
+          message: "Application pending",
         };
-        
+
         sessionStorage.setItem("deliveryUserData", JSON.stringify(pendingData));
         setSessionDeliveryData(pendingData);
-        setForceRerender(prev => prev + 1); // ✅ ADD: Force rerender
+        setForceRerender((prev) => prev + 1); // ✅ ADD: Force rerender
       }
-      
+
       return statusData;
-      
     } catch (error) {
       console.error("Status check failed:", error);
       if (showNotifications) {
         // ✅ IMPROVED: More specific error messages
         let errorMessage = "Failed to check status. Please try again.";
-        
+
         if (error?.response?.status === 404) {
           errorMessage = "User not found. Please contact support.";
         } else if (error?.response?.status === 500) {
           errorMessage = "Server error. Please try again later.";
-        } else if (error?.message?.includes('Network')) {
+        } else if (error?.message?.includes("Network")) {
           errorMessage = "Network error. Please check your connection.";
         }
-        
+
         toast.error(errorMessage);
       }
       return null;
@@ -289,25 +298,27 @@ const WaitingForApprovalPage = () => {
   // ✅ IMPROVED: Better reapply handler with proper cleanup
   const handleReapply = async (email: string) => {
     setIsReapplying(true);
-    
+
     try {
-      const res = await api.post('delivery/reapply', { email });
+      const res = await api.post("delivery/reapply", { email });
 
       if (res.status === 200) {
         // ✅ IMPROVED: Clear all data before redirect
         localStorage.removeItem("user");
         localStorage.removeItem("token");
         sessionStorage.removeItem("deliveryUserData");
-        
+
         // Clear context state
         setUser(null);
         setDeliveryStatus(null);
-        
-        toast.success("Previous application deleted. Redirecting to reapply...");
-        
+
+        toast.success(
+          "Previous application deleted. Redirecting to reapply..."
+        );
+
         // ✅ IMPROVED: Use replace instead of push and add delay
         setTimeout(() => {
-          router.replace('/newAuth'); // Use replace to prevent back navigation
+          router.replace("/auth"); // Use replace to prevent back navigation
         }, 1500);
       }
     } catch (err: any) {
@@ -325,7 +336,7 @@ const WaitingForApprovalPage = () => {
   const handleLoginNavigation = () => {
     sessionStorage.removeItem("deliveryUserData");
     logout();
-    router.push("/newAuth");
+    router.push("/auth");
   };
 
   if (isLoading) {
@@ -333,7 +344,9 @@ const WaitingForApprovalPage = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading your application status...</p>
+          <p className="mt-4 text-gray-600">
+            Loading your application status...
+          </p>
         </div>
       </div>
     );
@@ -350,22 +363,30 @@ const WaitingForApprovalPage = () => {
   }
 
   const displayUser = sessionDeliveryData?.user || user;
-  const displayDeliveryStatus = sessionDeliveryData?.deliveryStatus || contextDeliveryStatus;
-  const declineReason = sessionDeliveryData?.declineReason || displayUser?.declineReason || "";
-  const declinedAt = sessionDeliveryData?.declinedAt || displayUser?.declinedAt || "";
-  const revokeReason = sessionDeliveryData?.revokeReason || displayUser?.revokeReason || "";
-  const revokedAt = sessionDeliveryData?.revokedAt || displayUser?.revokedAt || "";
+  const displayDeliveryStatus =
+    sessionDeliveryData?.deliveryStatus || contextDeliveryStatus;
+  const declineReason =
+    sessionDeliveryData?.declineReason || displayUser?.declineReason || "";
+  const declinedAt =
+    sessionDeliveryData?.declinedAt || displayUser?.declinedAt || "";
+  const revokeReason =
+    sessionDeliveryData?.revokeReason || displayUser?.revokeReason || "";
+  const revokedAt =
+    sessionDeliveryData?.revokedAt || displayUser?.revokedAt || "";
   const activeOrdersCount = sessionDeliveryData?.activeOrdersCount || 0;
   // ✅ FIXED: Always allow reapply for declined/revoked status, regardless of API flag
-  const canReapply = sessionDeliveryData?.canReapply || displayUser?.canReapply || 
-                     (displayDeliveryStatus === "declined" || displayDeliveryStatus === "revoked");
+  const canReapply =
+    sessionDeliveryData?.canReapply ||
+    displayUser?.canReapply ||
+    displayDeliveryStatus === "declined" ||
+    displayDeliveryStatus === "revoked";
 
   const isApproved = isApprovedLocally || displayDeliveryStatus === "approved";
 
   // Status icon with revoked support
   const getStatusIcon = () => {
     if (isApproved) return <CheckCircle className="w-16 h-16 text-green-500" />;
-    
+
     switch (displayDeliveryStatus) {
       case "declined":
         return <XCircle className="w-16 h-16 text-red-500" />;
@@ -380,7 +401,7 @@ const WaitingForApprovalPage = () => {
   // Status color with revoked support
   const getStatusColor = () => {
     if (isApproved) return "text-green-600 bg-green-50 border-green-200";
-    
+
     switch (displayDeliveryStatus) {
       case "declined":
         return "text-red-600 bg-red-50 border-red-200";
@@ -395,7 +416,7 @@ const WaitingForApprovalPage = () => {
   // Status title with revoked support
   const getStatusTitle = () => {
     if (isApproved) return "🎉 Application Approved!";
-    
+
     switch (displayDeliveryStatus) {
       case "declined":
         return "Application Declined";
@@ -412,7 +433,7 @@ const WaitingForApprovalPage = () => {
     if (isApproved) {
       return "Congratulations! Your delivery application has been approved. You can now proceed to login and start accepting delivery requests.";
     }
-    
+
     switch (displayDeliveryStatus) {
       case "declined":
         return "Unfortunately, your delivery application has been declined. Please review the reason below and consider reapplying if eligible.";
@@ -425,7 +446,10 @@ const WaitingForApprovalPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8" key={forceRerender}>
+    <div
+      className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8"
+      key={forceRerender}
+    >
       <div className="max-w-2xl mx-auto">
         <div className="bg-white shadow-lg rounded-lg overflow-hidden">
           <div className="px-6 py-8 text-center border-b border-gray-200">
@@ -433,8 +457,10 @@ const WaitingForApprovalPage = () => {
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
               {getStatusTitle()}
             </h1>
-            <p className="text-gray-600 max-w-md mx-auto">{getStatusMessage()}</p>
-            
+            <p className="text-gray-600 max-w-md mx-auto">
+              {getStatusMessage()}
+            </p>
+
             {!isApproved && (
               <div className="mt-3 flex items-center justify-center text-xs text-gray-500">
                 {isRefreshing ? (
@@ -467,7 +493,9 @@ const WaitingForApprovalPage = () => {
               </div>
               <div>
                 <span className="text-gray-500">Role:</span>
-                <span className="ml-2 font-medium capitalize">{displayUser?.role}</span>
+                <span className="ml-2 font-medium capitalize">
+                  {displayUser?.role}
+                </span>
               </div>
               <div>
                 <span className="text-gray-500">Status:</span>
@@ -479,19 +507,26 @@ const WaitingForApprovalPage = () => {
           </div>
 
           {/* Active orders info for revoked users */}
-          {displayDeliveryStatus === "revoked" && activeOrdersCount > 0 && !isApproved && (
-            <div className="px-6 py-4 bg-blue-50 border-b border-blue-200">
-              <div className="flex items-start">
-                <AlertCircle className="w-5 h-5 mt-0.5 mr-3 flex-shrink-0 text-blue-600" />
-                <div className="flex-1">
-                  <h4 className="font-medium text-blue-800 mb-1">Active Orders Preserved</h4>
-                  <p className="text-sm text-blue-700">
-                    You have {activeOrdersCount} active order(s) that will remain assigned to you even during the reapplication process. You can complete these orders while your new application is being reviewed.
-                  </p>
+          {displayDeliveryStatus === "revoked" &&
+            activeOrdersCount > 0 &&
+            !isApproved && (
+              <div className="px-6 py-4 bg-blue-50 border-b border-blue-200">
+                <div className="flex items-start">
+                  <AlertCircle className="w-5 h-5 mt-0.5 mr-3 flex-shrink-0 text-blue-600" />
+                  <div className="flex-1">
+                    <h4 className="font-medium text-blue-800 mb-1">
+                      Active Orders Preserved
+                    </h4>
+                    <p className="text-sm text-blue-700">
+                      You have {activeOrdersCount} active order(s) that will
+                      remain assigned to you even during the reapplication
+                      process. You can complete these orders while your new
+                      application is being reviewed.
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
           <div className="px-6 py-6">
             <div className={`p-4 rounded-lg border ${getStatusColor()}`}>
@@ -499,43 +534,58 @@ const WaitingForApprovalPage = () => {
                 <AlertCircle className="w-5 h-5 mt-0.5 mr-3 flex-shrink-0" />
                 <div className="flex-1">
                   <h4 className="font-medium mb-1">
-                    Current Status: <span className="capitalize">
+                    Current Status:{" "}
+                    <span className="capitalize">
                       {isApproved ? "approved" : displayDeliveryStatus}
                     </span>
                   </h4>
 
                   {/* Show decline reason */}
-                  {displayDeliveryStatus === "declined" && declineReason && !isApproved && (
-                    <div className="mt-3">
-                      <p className="font-medium text-sm mb-1">Reason for Decline:</p>
-                      <p className="text-sm bg-white bg-opacity-60 p-3 rounded border">
-                        {declineReason}
-                      </p>
-                    </div>
-                  )}
+                  {displayDeliveryStatus === "declined" &&
+                    declineReason &&
+                    !isApproved && (
+                      <div className="mt-3">
+                        <p className="font-medium text-sm mb-1">
+                          Reason for Decline:
+                        </p>
+                        <p className="text-sm bg-white bg-opacity-60 p-3 rounded border">
+                          {declineReason}
+                        </p>
+                      </div>
+                    )}
 
                   {/* Show revoke reason */}
-                  {displayDeliveryStatus === "revoked" && revokeReason && !isApproved && (
-                    <div className="mt-3">
-                      <p className="font-medium text-sm mb-1">Reason for Revocation:</p>
-                      <p className="text-sm bg-white bg-opacity-60 p-3 rounded border">
-                        {revokeReason}
-                      </p>
-                    </div>
-                  )}
+                  {displayDeliveryStatus === "revoked" &&
+                    revokeReason &&
+                    !isApproved && (
+                      <div className="mt-3">
+                        <p className="font-medium text-sm mb-1">
+                          Reason for Revocation:
+                        </p>
+                        <p className="text-sm bg-white bg-opacity-60 p-3 rounded border">
+                          {revokeReason}
+                        </p>
+                      </div>
+                    )}
 
                   {/* Show relevant dates */}
-                  {declinedAt && !isApproved && displayDeliveryStatus === "declined" && (
-                    <p className="text-sm mt-2">
-                      <span className="font-medium">Declined:</span> {formatDate(declinedAt)}
-                    </p>
-                  )}
+                  {declinedAt &&
+                    !isApproved &&
+                    displayDeliveryStatus === "declined" && (
+                      <p className="text-sm mt-2">
+                        <span className="font-medium">Declined:</span>{" "}
+                        {formatDate(declinedAt)}
+                      </p>
+                    )}
 
-                  {revokedAt && !isApproved && displayDeliveryStatus === "revoked" && (
-                    <p className="text-sm mt-2">
-                      <span className="font-medium">Revoked:</span> {formatDate(revokedAt)}
-                    </p>
-                  )}
+                  {revokedAt &&
+                    !isApproved &&
+                    displayDeliveryStatus === "revoked" && (
+                      <p className="text-sm mt-2">
+                        <span className="font-medium">Revoked:</span>{" "}
+                        {formatDate(revokedAt)}
+                      </p>
+                    )}
                 </div>
               </div>
             </div>
@@ -572,7 +622,8 @@ const WaitingForApprovalPage = () => {
                   </button>
 
                   {/* ✅ IMPROVED: Show reapply button based on status, not just canReapply flag */}
-                  {(displayDeliveryStatus === "declined" || displayDeliveryStatus === "revoked") && (
+                  {(displayDeliveryStatus === "declined" ||
+                    displayDeliveryStatus === "revoked") && (
                     <button
                       onClick={() => handleReapply(displayUser?.email)}
                       disabled={isReapplying}
@@ -604,14 +655,20 @@ const WaitingForApprovalPage = () => {
 
             {!isApproved && displayDeliveryStatus === "pending" && (
               <div className="text-sm text-gray-500 mt-4 text-center">
-                <p>We typically review applications within 2-3 business days.</p>
-                <p className="mt-1">Status automatically refreshes every 5 seconds.</p>
+                <p>
+                  We typically review applications within 2-3 business days.
+                </p>
+                <p className="mt-1">
+                  Status automatically refreshes every 5 seconds.
+                </p>
               </div>
             )}
 
             {!isApproved && displayDeliveryStatus === "declined" && (
               <div className="text-sm text-gray-500 mt-4 text-center">
-                <p>You can reapply after addressing the decline reasons above.</p>
+                <p>
+                  You can reapply after addressing the decline reasons above.
+                </p>
               </div>
             )}
 
@@ -620,7 +677,8 @@ const WaitingForApprovalPage = () => {
                 <p>Submit a new application to regain delivery access.</p>
                 {activeOrdersCount > 0 && (
                   <p className="mt-1 text-blue-600 font-medium">
-                    Your {activeOrdersCount} active order(s) will remain assigned during reapplication.
+                    Your {activeOrdersCount} active order(s) will remain
+                    assigned during reapplication.
                   </p>
                 )}
               </div>
@@ -628,7 +686,10 @@ const WaitingForApprovalPage = () => {
 
             {isApproved && (
               <div className="text-sm text-green-600 mt-4 text-center font-medium">
-                <p>🎉 You're all set! Click the login button above to access your delivery dashboard.</p>
+                <p>
+                  🎉 You're all set! Click the login button above to access your
+                  delivery dashboard.
+                </p>
               </div>
             )}
           </div>

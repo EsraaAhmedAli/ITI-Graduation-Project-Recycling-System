@@ -15,14 +15,13 @@ export interface ICartItem {
 export interface CartItem {
   _id: string;
   categoryId: string;
-  categoryName: string;
-  name: string;
+  categoryName: string | { en: string; ar: string };
+  name: string | { en: string; ar: string };
   image: string;
   points: number;
   price: number;
   measurement_unit: number;
   quantity: number;
-  paymentMethod : string,
-  deliveryFee: number
-
+  paymentMethod: string;
+  deliveryFee: number;
 }

@@ -49,9 +49,29 @@ export default function RootLayout({
                   <OfflineProvider>
                     {" "}
                     {/* Add OfflineProvider here */}
-                    <Toaster />
+                    <Toaster
+                      position="top-center"
+                      toastOptions={{
+                        duration: 5000,
+                        style: {
+                          direction: "ltr",
+                          textAlign: "left",
+                        },
+                      }}
+                    />
                     <NotificationProvider>
-                      <ToastContainer />
+                      <ToastContainer
+                        position="top-center" // top-center works well for RTL
+                        autoClose={5000}
+                        hideProgressBar={false}
+                        newestOnTop={false}
+                        closeOnClick
+                        rtl={false} // set false to avoid misbehavior
+                        pauseOnFocusLoss
+                        draggable
+                        pauseOnHover
+                        className="!text-left !flex !items-center" // force text left inside toast
+                      />
                       <GuestSessionProvider>
                         <GoogleOAuthProvider
                           clientId={
@@ -59,7 +79,7 @@ export default function RootLayout({
                           }
                         >
                           <ThemeProvider defaultTheme="system">
-                          <LayoutWrapper>{children}</LayoutWrapper>
+                            <LayoutWrapper>{children}</LayoutWrapper>
                           </ThemeProvider>
                         </GoogleOAuthProvider>
                       </GuestSessionProvider>

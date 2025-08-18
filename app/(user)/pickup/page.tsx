@@ -10,7 +10,8 @@ import AddressStep from "./AddressStep";
 import { toast } from "react-toastify";
 import { UserAuthContext } from "@/context/AuthFormContext";
 import Loader from "@/components/common/Loader";
-import { CartItem, useCart } from "@/context/CartContext";
+import { useCart } from "@/context/CartContext";
+import { CartItem } from "@/models/cart";
 import Link from "next/link";
 import api from "@/lib/axios";
 import {
@@ -26,7 +27,7 @@ import {
   Banknote,
   Check,
 } from "lucide-react";
-import { useCreateOrder } from "@/hooks/useCreateOrder";
+import { Address, useCreateOrder } from "@/hooks/useCreateOrder";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import { deliveryFees } from "@/constants/deliveryFees";
@@ -75,7 +76,7 @@ export default function PickupConfirmation() {
     clearCart,
     onOrderSuccess: (orderId: string) => {
       console.log("Order created with ID:", orderId);
-    }
+    },
   });
 
   const fetchAddresses = async () => {
@@ -147,7 +148,19 @@ export default function PickupConfirmation() {
       goToStep(Steps.REVIEW);
     }
   };
-
+  function mapFormToAddress(form: FormInputs): Address {
+    return {
+      _id: form._id as string, // cast since in FormInputs it may be SetStateAction<string>
+      city: form.city,
+      area: form.area,
+      street: form.street,
+      building: form.building.toString(),
+      floor: form.floor,
+      apartment: form.apartment.toString(),
+      landmark: form.landmark,
+      notes: form.notes,
+    };
+  }
   const handleConfirm = async () => {
     setLoadingBtn(true);
     try {
@@ -176,15 +189,17 @@ export default function PickupConfirmation() {
         );
 
         if (selectedPaymentMethod === "credit_card") {
-          router.push(`/payment?total=${finalTotal}&deliveryFee=${deliveryFee}`);
+          router.push(
+            `/payment?total=${finalTotal}&deliveryFee=${deliveryFee}`
+          );
           return;
         } else {
           const result = await createOrder(
-            selectedAddress,
+            mapFormToAddress(selectedAddress),
             cart,
             user,
             deliveryFee,
-            selectedPaymentMethod,
+            selectedPaymentMethod
           );
           if (result.success) {
             console.log("Order created successfully:", result.orderId);
@@ -196,9 +211,9 @@ export default function PickupConfirmation() {
       } else {
         // Handle customer orders
         const result = await createOrder(
-          selectedAddress,
+          mapFormToAddress(selectedAddress),
           cart,
-          user,
+          user
         );
         if (result.success) {
           console.log("Order created successfully:", result.orderId);
@@ -301,7 +316,8 @@ export default function PickupConfirmation() {
         </p>
         <Link
           href="/auth"
-          className="inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg">
+          className="inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg"
+        >
           Go to Login
         </Link>
       </div>
@@ -406,13 +422,14 @@ export default function PickupConfirmation() {
                 ) : (
                   addresses.map((addr) => (
                     <div
-                      key={addr._id}
+                      key={addr._id.toString()}
                       className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 cursor-pointer hover:shadow-lg hover:-translate-y-1 ${
                         selectedAddress?._id === addr._id
                           ? "border-emerald-300 bg-gradient-to-r from-emerald-50 via-white to-emerald-50 shadow-emerald-100 shadow-lg"
                           : "border-gray-200 bg-white hover:border-blue-200 hover:shadow-blue-100"
                       }`}
-                      onClick={() => handleSelectAddress(addr)}>
+                      onClick={() => handleSelectAddress(addr)}
+                    >
                       {/* Selection Indicator */}
                       <div
                         className={`absolute top-0 left-0 right-0 h-1 transition-all duration-300 ${
@@ -432,14 +449,16 @@ export default function PickupConfirmation() {
                                 selectedAddress?._id === addr._id
                                   ? "bg-emerald-100 text-emerald-600 scale-110"
                                   : "bg-gray-100 text-gray-600 group-hover:bg-blue-100 group-hover:text-blue-600"
-                              }`}>
+                              }`}
+                            >
                               <Home className="w-5 h-5" />
                               {selectedAddress?._id === addr._id && (
                                 <div className="absolute -top-1 -right-1 bg-emerald-500 rounded-full p-0.5">
                                   <svg
                                     className="w-3 h-3 text-white"
                                     fill="currentColor"
-                                    viewBox="0 0 20 20">
+                                    viewBox="0 0 20 20"
+                                  >
                                     <path
                                       fillRule="evenodd"
                                       d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -493,16 +512,18 @@ export default function PickupConfirmation() {
                                 handleEditAddress(addr);
                               }}
                               className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200 opacity-0 group-hover:opacity-100"
-                              title="Edit Address">
+                              title="Edit Address"
+                            >
                               <Edit3 className="w-4 h-4" />
                             </button>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleDeleteAddress(addr._id);
+                                handleDeleteAddress(addr._id.toString());
                               }}
                               className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200 opacity-0 group-hover:opacity-100"
-                              title="Delete Address">
+                              title="Delete Address"
+                            >
                               <Trash2 className="w-4 h-4" />
                             </button>
 
@@ -512,7 +533,8 @@ export default function PickupConfirmation() {
                                 selectedAddress?._id === addr._id
                                   ? "border-emerald-500 bg-emerald-500"
                                   : "border-gray-300 group-hover:border-blue-400"
-                              }`}>
+                              }`}
+                            >
                               {selectedAddress?._id === addr._id && (
                                 <div className="w-2 h-2 bg-white rounded-full" />
                               )}
@@ -543,7 +565,8 @@ export default function PickupConfirmation() {
                     });
                     setSelectedCity("");
                   }}
-                  className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 bg-white border-2 border-dashed border-gray-300 text-gray-700 rounded-2xl font-semibold hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300 group hover:shadow-md">
+                  className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 bg-white border-2 border-dashed border-gray-300 text-gray-700 rounded-2xl font-semibold hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300 group hover:shadow-md"
+                >
                   <div className="p-1 rounded-lg bg-gray-100 group-hover:bg-blue-100 transition-colors duration-300">
                     <Plus className="w-5 h-5" />
                   </div>
@@ -557,7 +580,8 @@ export default function PickupConfirmation() {
                     selectedAddress
                       ? " text-white  "
                       : "bg-gray-200 text-gray-500 cursor-not-allowed"
-                  }`}>
+                  }`}
+                >
                   Continue
                   <ChevronRight className="w-5 h-5" />
                 </Button>
@@ -568,7 +592,11 @@ export default function PickupConfirmation() {
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                   <div className="w-8 h-1 bg-green-500 rounded-full"></div>
-                  <div className={`w-2 h-2 rounded-full ${user?.role === "buyer" ? "bg-gray-300" : "bg-green-500"}`}></div>
+                  <div
+                    className={`w-2 h-2 rounded-full ${
+                      user?.role === "buyer" ? "bg-gray-300" : "bg-green-500"
+                    }`}
+                  ></div>
                   {user?.role === "buyer" && (
                     <>
                       <div className="w-8 h-1 bg-gray-300 rounded-full"></div>
@@ -613,7 +641,8 @@ export default function PickupConfirmation() {
                       ? "border-green-500 bg-green-50 shadow-md"
                       : "border-gray-200 hover:border-blue-300"
                   }`}
-                  onClick={() => setSelectedPaymentMethod(method.id)}>
+                  onClick={() => setSelectedPaymentMethod(method.id)}
+                >
                   <div className="flex items-center gap-4">
                     <div
                       className={`p-3 rounded-lg ${
@@ -622,7 +651,8 @@ export default function PickupConfirmation() {
                           : method.id === "credit_card"
                           ? "bg-blue-100 text-blue-600"
                           : "bg-purple-100 text-purple-600"
-                      }`}>
+                      }`}
+                    >
                       <IconComponent className="w-6 h-6" />
                     </div>
                     <div className="flex-1">
@@ -641,14 +671,15 @@ export default function PickupConfirmation() {
               );
             })}
 
-            {user?.walletBalance && user.walletBalance > 0 && (
+            {user?.attachments?.balance && user.attachments.balance > 0 && (
               <div
                 className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 ${
                   selectedPaymentMethod === "wallet"
                     ? "border-green-500 bg-green-50 shadow-md"
                     : "border-gray-200 hover:border-blue-300"
                 }`}
-                onClick={() => setSelectedPaymentMethod("wallet")}>
+                onClick={() => setSelectedPaymentMethod("wallet")}
+              >
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-purple-100 rounded-lg text-purple-600">
                     <Wallet className="w-6 h-6" />
@@ -656,8 +687,8 @@ export default function PickupConfirmation() {
                   <div className="flex-1">
                     <h3 className="font-bold text-lg">Wallet Balance</h3>
                     <p className="text-gray-600 text-sm">
-                      Use your wallet balance (${user.walletBalance.toFixed(2)}{" "}
-                      available)
+                      Use your wallet balance ($
+                      {user.attachments.balance.toFixed(2)} available)
                     </p>
                   </div>
                   {selectedPaymentMethod === "wallet" && (
@@ -675,7 +706,9 @@ export default function PickupConfirmation() {
             <h3 className="font-semibold text-gray-800 mb-4">Order Summary</h3>
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Subtotal</span>
-              <span className="font-medium text-gray-600">EGP{totalPrice.toFixed(2)}</span>
+              <span className="font-medium text-gray-600">
+                EGP{totalPrice.toFixed(2)}
+              </span>
             </div>
             {selectedAddress?.city && (
               <div className="flex justify-between text-sm">
@@ -703,7 +736,8 @@ export default function PickupConfirmation() {
           <div className="flex justify-between pt-8 border-t border-gray-200">
             <Button
               onClick={() => goToStep(Steps.ADDRESS)}
-              className="px-6 py-3 bg-gray-200 text-gray-700 hover:bg-gray-300">
+              className="px-6 py-3 bg-gray-200 text-gray-700 hover:bg-gray-300"
+            >
               Back
             </Button>
             <Button
@@ -713,7 +747,8 @@ export default function PickupConfirmation() {
                 selectedPaymentMethod
                   ? "bg-green-600 hover:bg-green-700 text-white"
                   : "bg-gray-200 text-gray-500 cursor-not-allowed"
-              }`}>
+              }`}
+            >
               Continue
               <ChevronRight className="w-5 h-5" />
             </Button>

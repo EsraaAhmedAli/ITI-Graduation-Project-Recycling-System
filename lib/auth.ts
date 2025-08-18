@@ -40,11 +40,12 @@ export interface RegisterUserRequest {
   name: string;
   email: string;
   phoneNumber: string;
-  role: "admin" | "customer" | "buyer" | "delivery";
+  role: "none" | "customer" | "buyer" | "delivery";
   password?: string;
   provider?: string;
   imgUrl?: string;
   attachments?: Record<string, any>;
+  idToken?: string;
 }
 
 export const verifyOtp = async (

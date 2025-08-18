@@ -9,9 +9,37 @@ export interface TopUser {
 }
 
 export interface TopMaterial {
-  _id: {
-    itemName: string;
+  _id?: {
+    itemName?: string;
   };
+  /** Plain item name (fallback) */
+  itemName?: string;
+
+  /** Multilingual names */
+  itemNameMultilingual?: {
+    en?: string;
+    ar?: string;
+    [key: string]: string | undefined;
+  };
+
+  /** Legacy name field (could be string or localized object) */
+  name: string | { [locale: string]: string };
+
+  /** Optional category names */
+  categoryName?: {
+    en?: string;
+    ar?: string;
+    [key: string]: string | undefined;
+  };
+
+  /** Unit of measurement (kg, pcs, etc.) */
+  unit?: {
+    en?: string;
+    ar?: string;
+    [key: string]: string | undefined;
+  };
+
+  /** Quantity for chart aggregation */
   totalQuantity: number;
 }
 
@@ -71,7 +99,7 @@ export interface StatCardProps {
   title: string;
   value: string;
   icon: React.ReactNode;
-  trend?: 'up' | 'down' | 'steady';
+  trend?: "up" | "down" | "steady";
   trendValue?: string;
   loading?: boolean;
 }
@@ -83,14 +111,13 @@ export interface ApiResponse<T = any> {
 }
 
 export enum OrderStatusEnum {
-   = '',
-  ACCEPTED = 'accepted',
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
+  ACCEPTED = "accepted",
+  COMPLETED = "completed",
+  CANCELLED = "cancelled",
 }
 
 export enum TrendType {
-  UP = 'up',
-  DOWN = 'down',
-  STEADY = 'steady',
+  UP = "up",
+  DOWN = "down",
+  STEADY = "steady",
 }
