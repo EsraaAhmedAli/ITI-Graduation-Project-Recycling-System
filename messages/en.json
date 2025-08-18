@@ -560,7 +560,10 @@
     "addToCollection": "Add to Collection"
   },
   "common": {
+    "sold": "sold",
+    "viewAll": "view all",
     "piece": "piece",
+    "FeaturedItems": "Featured Items",
     "item": "Item",
     "cancel": "Cancel",
     "kg": "kg",
@@ -586,6 +589,7 @@
     "removeFromRecyclingCart": "Remove From Recycling Cart",
     "processing": "processing",
     "availableStock": "Available Stock",
+    "inStock": "in stock",
     "afterPurchase": "After purchase: {{quantity}} {{unit}}",
     "percentageRemaining": "{{percentage}}% remaining",
     "quantity": "Quantity",
@@ -594,6 +598,17 @@
     "lowStockWarning": "low stock",
     "startAdding": "start adding",
     "removeFromCart": "Remove from cart"
+  },
+  "recyclingBanner": {
+    "title": "Recycle Today for a Better Tomorrow",
+    "titleHighlight": "Better",
+    "description": "Join our community making a difference. Every recycled item counts.",
+    "stats": {
+      "dailyRecyclers": "Daily Recyclers",
+      "itemsRecycled": "Items Recycled",
+      "co2Reduced": "CO₂ Reduced",
+      "ecoFriendly": "Eco-Friendly"
+    }
   },
   "marketPlace": {
     "sustainableMarketplace": "Sustainable Marketplace",
