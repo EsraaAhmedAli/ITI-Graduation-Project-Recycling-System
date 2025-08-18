@@ -72,11 +72,9 @@ const EWallet = () => {
       setBalance(newBalance);
 
       // Fetch transactions
-      const transactionsRes = await api.get(
-        `/users/${user._id}/transactions`
-      );
-      console.log(transactionsRes, 'resss');
-      
+      const transactionsRes = await api.get(`/users/${user._id}/transactions`);
+      console.log(transactionsRes, "resss");
+
       const raw =
         transactionsRes.data?.transactions || transactionsRes.data || [];
 

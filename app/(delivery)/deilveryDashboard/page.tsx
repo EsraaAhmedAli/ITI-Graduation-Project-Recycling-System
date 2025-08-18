@@ -3,7 +3,7 @@ import CourierOrderDetailsModal from "@/components/common/showUserModal";
 import DynamicTable from "@/components/shared/dashboardTable";
 import api from "@/lib/axios";
 import Image from "next/image";
-import React, { useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Camera,
   CheckCircle,
@@ -25,7 +25,8 @@ import Button from "@/components/common/Button";
 import { useUserAuth } from "@/context/AuthFormContext";
 import toast from "react-hot-toast";
 import { useQuery } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import CourierProfile from "./DeliveryProfile";
+import EditProfilePage from "@/app/(user)/editprofile/page";
 import { useLanguage } from "@/context/LanguageContext";
 
 export default function Page() {
@@ -46,7 +47,13 @@ export default function Page() {
   const [quantities, setQuantities] = useState<any>({});
   const [showQuantityForm, setShowQuantityForm] = useState(false);
   const [quantityNotes, setQuantityNotes] = useState("");
-  const { logout } = useUserAuth();
+  const [openProfile, setOpenProfile] = useState(false);
+  const [editProfile, setEditProfile] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+  const { logout, user } = useUserAuth();
+  const { t, locale } = useLanguage();
+  const dropdownRef = useRef(null);
+
   const {
     data: orders = [],
     isLoading,
@@ -63,15 +70,23 @@ export default function Page() {
     refetchOnWindowFocus: true,
     staleTime: 2000,
   });
-  const { locale, t } = useLanguage();
-  const router = useRouter();
-  const handleNavigateToEditProfile = () => {
-    router.push("/editprofile");
-  };
 
-  // useEffect(() => {
-  //   getAssignedOrdersToDelivery()
-  // }, [])
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target))
+        setShowPopup(false);
+    };
+
+    // Only add listener if dropdown is open
+    if (showPopup) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showPopup]); // Depend on openProfile state
 
   // Handler for opening the modal with order details
   const handleViewOrderDetails = (order: any) => {
@@ -121,28 +136,12 @@ export default function Page() {
     }
   };
 
-  // Calculate total points for display
-  const calculateTotalPoints = () => {
-    return Object.values(quantities).reduce((total: number, item: any) => {
-      const actualQty =
-        item.actualQuantity === "" ? 0 : Number(item.actualQuantity);
-      return total + item.pointsPerUnit * actualQty;
-    }, 0);
-  };
-
   const getInitials = (name: string) => {
     return name
       .split(" ")
       .map((n) => n[0])
       .join("")
       .toLowerCase();
-  };
-
-  // Calculate original total points
-  const calculateOriginalTotalPoints = () => {
-    return Object.values(quantities).reduce((total: number, item: any) => {
-      return total + item.originalPoints;
-    }, 0);
   };
 
   // Handle quantity change
@@ -445,6 +444,10 @@ export default function Page() {
       ),
     },
   ];
+  useEffect(() => {
+    console.log("EDIT PROFILE CHANGES");
+    console.log(editProfile);
+  }, [editProfile]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
@@ -457,14 +460,23 @@ export default function Page() {
                 <Truck className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {t("courier.deliveryDashboard")}
-                </h1>
+                <button
+                  onClick={() => {
+                    setOpenProfile(false);
+                    setEditProfile(false);
+                    setShowPopup(false);
+                  }}
+                >
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    Delivery Dashboard
+                  </h1>
+                </button>
                 <p className="text-gray-600">
                   {t("courier.manageAssignedOrders")}
                 </p>
               </div>
             </div>
+
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-lg border border-blue-200">
                 <Package className="w-5 h-5 text-blue-600" />
@@ -472,28 +484,122 @@ export default function Page() {
                   {orders.length} {t("courier.orders")}
                 </span>
               </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={handleNavigateToEditProfile}
-                title={t("courier.settings")}
-              >
-                <Settings />
-              </button>
-              <button onClick={logout} title={t("courier.logout")}>
-                <LogOut />
-              </button>
+
+              {/* User Avatar Dropdown Trigger */}
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent event bubbling
+
+                    setShowPopup(!showPopup);
+                  }}
+                  className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 transition-colors focus:outline-none f"
+                >
+                  <div className="relative">
+                    <Image
+                      src={user?.attachments?.deliveryImage || ""}
+                      alt="User Avatar"
+                      width={40}
+                      height={40}
+                      className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                    />
+
+                    {/* Online status indicator */}
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                  </div>
+                </button>
+
+                {/* Dropdown Menu */}
+                {showPopup && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                    <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <Image
+                            width={40}
+                            height={40}
+                            src={user?.attachments?.deliveryImage || ""}
+                            alt="User Profile"
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900 dark:text-white text-sm truncate">
+                            {user?.name || "User"}
+                          </p>
+                          <p className="text-gray-500 dark:text-gray-400 text-xs truncate">
+                            {user?.email || "user@example.com"}
+                          </p>
+                          {user?.role && (
+                            <span className="inline-block px-2 py-1 text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200 rounded-full mt-1 capitalize">
+                              {user?.role}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="py-1">
+                      <button
+                        onClick={() => {
+                          console.log("Profile clicked, closing dropdown");
+                          setOpenProfile(true);
+                          setShowPopup(false);
+                          setEditProfile(false);
+                        }}
+                        className="flex items-center gap-3 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors w-full text-left"
+                      >
+                        <User className="w-4 h-4" />
+                        <span className="text-sm font-medium">
+                          {t("navbar.profile")}
+                        </span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          console.log("Settings clicked, opening edit profile");
+                          setEditProfile(true);
+                          setShowPopup(false);
+                          setOpenProfile(false);
+                        }}
+                        className="flex items-center gap-3 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors w-full text-left"
+                      >
+                        <Settings className="w-4 h-4" />
+                        <span className="text-sm font-medium">
+                          {t("navbar.settings")}
+                        </span>
+                      </button>
+
+                      <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+
+                      <button
+                        onClick={() => {
+                          console.log("Logout clicked");
+                          logout();
+                        }}
+                        className="flex items-center gap-3 px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-300 transition-colors w-full text-left"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span className="text-sm font-medium">
+                          {t("navbar.signOut")}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <button
-          onClick={() => refetch()}
-          disabled={isFetching}
-          className={`
+      {!editProfile && !openProfile && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <button
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className={`
     my-2
     flex items-center gap-2 px-4 py-2 rounded-lg
     bg-gradient-to-r from-blue-600 to-blue-700
@@ -502,33 +608,36 @@ export default function Page() {
     active:scale-95 transition-all duration-200
     disabled:opacity-70 disabled:cursor-not-allowed
   `}
-        >
-          <RotateCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
-          {isFetching ? t("courier.refreshing") : t("courier.refresh")}
-        </button>{" "}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-          {orders.length === 0 ? (
-            <div className="py-20 flex flex-col items-center justify-center text-gray-500">
-              <Truck className="mb-4 w-12 h-12 text-gray-400" />
-              <h2 className="text-xl font-semibold mb-2">
-                {t("courier.noOrdersAssigned")}
-              </h2>
-              <p className="text-sm max-w-xs text-center">
-                {t("courier.ordersWillAppearHere")}
-              </p>
-            </div>
-          ) : (
-            <DynamicTable
-              data={orders}
-              title={t("courier.assignedOrders")}
-              columns={columns}
-              showActions={false}
-              showAddButton={false}
-              showFilter={false}
+          >
+            <RotateCw
+              className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`}
             />
-          )}
+            {isFetching ? "Refreshing..." : "Refresh"}
+          </button>{" "}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+            {orders.length === 0 ? (
+              <div className="py-20 flex flex-col items-center justify-center text-gray-500">
+                <Truck className="mb-4 w-12 h-12 text-gray-400" />
+                <h2 className="text-xl font-semibold mb-2">
+                  No orders assigned yet
+                </h2>
+                <p className="text-sm max-w-xs text-center">
+                  Once orders are assigned to you, they will appear here.
+                </p>
+              </div>
+            ) : (
+              <DynamicTable
+                data={orders}
+                title="Assigned Orders"
+                columns={columns}
+                showActions={false}
+                showAddButton={false}
+                showFilter={false}
+              />
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <CourierOrderDetailsModal
         show={isDetailsModalOpen}
@@ -539,7 +648,11 @@ export default function Page() {
         }}
       />
 
-      {/* Complete Order with Photo Proof Modal */}
+      {!editProfile && openProfile && (
+        <CourierProfile setEdit={setEditProfile} />
+      )}
+      {editProfile && <EditProfilePage />}
+
       {/* Complete Order with Photo Proof Modal */}
       {showCompleteModal && (
         <Modal show={showCompleteModal} onClose={closeCompleteModal} size="lg">
@@ -706,7 +819,7 @@ export default function Page() {
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
                   {photoPreview ? (
                     <div className="relative">
-                      <img
+                      <Image
                         src={photoPreview}
                         alt={t("courier.deliveryProof")}
                         className="w-full h-48 object-cover rounded-lg"

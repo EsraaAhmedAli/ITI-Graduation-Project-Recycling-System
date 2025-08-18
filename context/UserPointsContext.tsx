@@ -49,6 +49,7 @@ interface UserPointsContextType {
   refreshUserData: () => Promise<void>;
   // New: Silent refresh without loading states
   silentRefresh: () => Promise<void>;
+  totalPointsHistoryLength?: number;
 }
 
 const UserPointsContext = createContext<UserPointsContextType | undefined>(
@@ -75,6 +76,7 @@ export function UserPointsProvider({
   const [userPoints, setUserPoints] = useState<UserPointsType | null>(null);
   const [pointsLoading, setPointsLoading] = useState(false);
   const [totalCompletedOrders, setTotalCompletedOrders] = useState(0);
+  const [totalPointsHistoryLength, setTotalPointsHistoryLength] = useState(0);
 
   // Refs to track ongoing requests and prevent duplicate calls
   const pointsRequestRef = useRef<Promise<void> | null>(null);
@@ -85,66 +87,75 @@ export function UserPointsProvider({
   // Cache duration (5 minutes)
   const CACHE_DURATION = 5 * 60 * 1000;
 
-  const getUserPoints = useCallback(async (silent = false) => {
-    if (!userId) return;
+  const getUserPoints = useCallback(
+    async (silent = false) => {
+      if (!userId) return;
 
-    // Check if request is already in progress
-    if (pointsRequestRef.current) {
-      return pointsRequestRef.current;
-    }
-
-    // Check cache validity for silent requests
-    if (silent && Date.now() - lastFetchTime.current < CACHE_DURATION) {
-      return;
-    }
-
-    const fetchPoints = async () => {
-      try {
-        if (!silent) setPointsLoading(true);
-        
-        const res = await api.get<UserPointsResponse>(`/users/${userId}/points`);
-
-        if (res.data.success) {
-          setUserPoints(prev => {
-            // Only update if data actually changed to prevent unnecessary re-renders
-            const newData = res.data.data;
-            if (prev && 
-                prev.totalPoints === newData.totalPoints && 
-                prev.pointsHistory.length === newData.pointsHistory.length) {
-              return prev;
-            }
-            return newData;
-          });
-          lastFetchTime.current = Date.now();
-          console.log("User points updated:", res.data.data);
-        }
-      } catch (err) {
-        console.error("Error fetching user points:", err);
-        // Only set fallback data if we don't have any existing data
-        if (!userPoints) {
-          setUserPoints({
-            userId: userId || "",
-            name: name || "",
-            email: email || "",
-            totalPoints: 0,
-            pointsHistory: [],
-            pagination: {
-              currentPage: 1,
-              totalItems: 0,
-              totalPages: 0,
-              hasMore: false,
-            },
-          });
-        }
-      } finally {
-        if (!silent) setPointsLoading(false);
-        pointsRequestRef.current = null;
+      // Check if request is already in progress
+      if (pointsRequestRef.current) {
+        return pointsRequestRef.current;
       }
-    };
 
-    pointsRequestRef.current = fetchPoints();
-    return pointsRequestRef.current;
-  }, [userId, name, email, userPoints]);
+      // Check cache validity for silent requests
+      if (silent && Date.now() - lastFetchTime.current < CACHE_DURATION) {
+        return;
+      }
+
+      const fetchPoints = async () => {
+        try {
+          if (!silent) setPointsLoading(true);
+
+          const res = await api.get<UserPointsResponse>(
+            `/users/${userId}/points`
+          );
+          setTotalPointsHistoryLength(res.data.data.pagination.totalItems);
+
+          if (res.data.success) {
+            setUserPoints((prev) => {
+              // Only update if data actually changed to prevent unnecessary re-renders
+              const newData = res.data.data;
+
+              if (
+                prev &&
+                prev.totalPoints === newData.totalPoints &&
+                prev.pointsHistory.length === newData.pointsHistory.length
+              ) {
+                return prev;
+              }
+              return newData;
+            });
+            lastFetchTime.current = Date.now();
+            console.log("User points updated:", res.data.data);
+          }
+        } catch (err) {
+          console.error("Error fetching user points:", err);
+          // Only set fallback data if we don't have any existing data
+          if (!userPoints) {
+            setUserPoints({
+              userId: userId || "",
+              name: name || "",
+              email: email || "",
+              totalPoints: 0,
+              pointsHistory: [],
+              pagination: {
+                currentPage: 1,
+                totalItems: 0,
+                totalPages: 0,
+                hasMore: false,
+              },
+            });
+          }
+        } finally {
+          if (!silent) setPointsLoading(false);
+          pointsRequestRef.current = null;
+        }
+      };
+
+      pointsRequestRef.current = fetchPoints();
+      return pointsRequestRef.current;
+    },
+    [userId, name, email, userPoints]
+  );
 
   const fetchCompletedOrdersCount = useCallback(async (silent = false) => {
     // Check if request is already in progress
@@ -156,9 +167,11 @@ export function UserPointsProvider({
       try {
         const res = await api.get("/orders?status=completed&limit=1");
         const newCount = res.data.totalCount || 0;
-        
+
         // Only update if count changed
-        setTotalCompletedOrders(prev => prev === newCount ? prev : newCount);
+        setTotalCompletedOrders((prev) =>
+          prev === newCount ? prev : newCount
+        );
       } catch (error) {
         if (!silent) {
           console.error("Failed to fetch completed orders count:", error);
@@ -175,22 +188,22 @@ export function UserPointsProvider({
   // Silent refresh function that doesn't show loading states
   const silentRefresh = useCallback(async () => {
     const promises = [getUserPoints(true)];
-    
+
     if (role === "customer" && token) {
       promises.push(fetchCompletedOrdersCount(true));
     }
-    
+
     await Promise.allSettled(promises); // Use allSettled to prevent one failure from affecting others
   }, [getUserPoints, fetchCompletedOrdersCount, role, token]);
 
   // Combined refresh function with loading states
   const refreshUserData = useCallback(async () => {
     const promises = [getUserPoints(false)];
-    
+
     if (role === "customer" && token) {
       promises.push(fetchCompletedOrdersCount(false));
     }
-    
+
     await Promise.allSettled(promises);
   }, [getUserPoints, fetchCompletedOrdersCount, role, token]);
 
@@ -199,7 +212,7 @@ export function UserPointsProvider({
     if (refreshTimeout.current) {
       clearTimeout(refreshTimeout.current);
     }
-    
+
     refreshTimeout.current = setTimeout(() => {
       silentRefresh();
     }, 1000); // 1 second debounce
@@ -236,7 +249,7 @@ export function UserPointsProvider({
     // Optimized socket listeners with immediate updates
     const handlePointsUpdate = (data: any) => {
       console.log("Received points:updated event:", data);
-      
+
       // Immediate UI update for better UX
       setUserPoints((prev) => {
         if (prev && prev.totalPoints !== data.totalPoints) {
@@ -244,30 +257,34 @@ export function UserPointsProvider({
         }
         return prev;
       });
-      
+
       // If points increased, likely means an order was completed - update recycles count
       if (data.totalPoints > (userPoints?.totalPoints || 0)) {
-        setTotalCompletedOrders(prev => prev + 1);
+        setTotalCompletedOrders((prev) => prev + 1);
       }
-      
+
       // Debounced full refresh to get complete data
       debouncedSilentRefresh();
     };
 
     const handleOrderCompleted = (data: any) => {
       console.log("Received order:completed event:", data);
-      
+
       // Immediate update to completed orders count
-      setTotalCompletedOrders(prev => prev + 1);
-      
+      setTotalCompletedOrders((prev) => prev + 1);
+
       // Update points if provided in the event
       if (data.pointsEarned && userPoints) {
-        setUserPoints(prev => prev ? {
-          ...prev,
-          totalPoints: prev.totalPoints + data.pointsEarned
-        } : prev);
+        setUserPoints((prev) =>
+          prev
+            ? {
+                ...prev,
+                totalPoints: prev.totalPoints + data.pointsEarned,
+              }
+            : prev
+        );
       }
-      
+
       // Debounced full refresh
       debouncedSilentRefresh();
     };
@@ -276,16 +293,20 @@ export function UserPointsProvider({
       console.log("Received order:status:updated event:", data);
       if (data.status === "completed") {
         // Immediate update to completed orders count
-        setTotalCompletedOrders(prev => prev + 1);
-        
+        setTotalCompletedOrders((prev) => prev + 1);
+
         // Update points if provided
         if (data.pointsEarned && userPoints) {
-          setUserPoints(prev => prev ? {
-            ...prev,
-            totalPoints: prev.totalPoints + data.pointsEarned
-          } : prev);
+          setUserPoints((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  totalPoints: prev.totalPoints + data.pointsEarned,
+                }
+              : prev
+          );
         }
-        
+
         // Debounced full refresh
         debouncedSilentRefresh();
       }
@@ -294,20 +315,24 @@ export function UserPointsProvider({
     // NEW: Handle recycling completion events
     const handleRecyclingCompleted = (data: any) => {
       console.log("Received recycling:completed event:", data);
-      
+
       // Update points immediately
       if (data.pointsEarned && userPoints) {
-        setUserPoints(prev => prev ? {
-          ...prev,
-          totalPoints: prev.totalPoints + data.pointsEarned
-        } : prev);
+        setUserPoints((prev) =>
+          prev
+            ? {
+                ...prev,
+                totalPoints: prev.totalPoints + data.pointsEarned,
+              }
+            : prev
+        );
       }
-      
+
       // Update completed orders count
       if (data.orderCompleted) {
-        setTotalCompletedOrders(prev => prev + 1);
+        setTotalCompletedOrders((prev) => prev + 1);
       }
-      
+
       // Debounced full refresh
       debouncedSilentRefresh();
     };
@@ -322,7 +347,7 @@ export function UserPointsProvider({
       socket.off("order:completed", handleOrderCompleted);
       socket.off("order:status:updated", handleOrderStatusUpdate);
       socket.off("recycling:completed", handleRecyclingCompleted);
-      
+
       // Cleanup timeout
       if (refreshTimeout.current) {
         clearTimeout(refreshTimeout.current);
@@ -343,12 +368,14 @@ export function UserPointsProvider({
   const updateUserPoints = useCallback((updates: Partial<UserPointsType>) => {
     setUserPoints((prev) => {
       if (!prev) return null;
-      
+
       // Shallow comparison to prevent unnecessary updates
-      const hasChanges = Object.keys(updates).some(key => 
-        prev[key as keyof UserPointsType] !== updates[key as keyof UserPointsType]
+      const hasChanges = Object.keys(updates).some(
+        (key) =>
+          prev[key as keyof UserPointsType] !==
+          updates[key as keyof UserPointsType]
       );
-      
+
       return hasChanges ? { ...prev, ...updates } : prev;
     });
   }, []);
@@ -357,11 +384,11 @@ export function UserPointsProvider({
     setUserPoints(null);
     setTotalCompletedOrders(0);
     lastFetchTime.current = 0;
-    
+
     // Cancel ongoing requests
     pointsRequestRef.current = null;
     ordersRequestRef.current = null;
-    
+
     if (refreshTimeout.current) {
       clearTimeout(refreshTimeout.current);
     }
@@ -377,6 +404,7 @@ export function UserPointsProvider({
     fetchCompletedOrdersCount: () => fetchCompletedOrdersCount(false),
     refreshUserData,
     silentRefresh,
+    totalPointsHistoryLength,
   };
 
   return (

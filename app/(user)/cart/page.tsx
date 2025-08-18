@@ -20,13 +20,8 @@ const itemVariants = {
 };
 
 export default function CartPage() {
-  const {
-    cart,
-    removeFromCart,
-    clearCart,
-    userRole,
-    updateCartState,
-  } = useCart();
+  const { cart, removeFromCart, clearCart, userRole, updateCartState } =
+    useCart();
   const router = useRouter();
   const [totalItems, setTotalItems] = useState(0);
   const [totalPoints, setTotalPoints] = useState(0);
@@ -37,21 +32,29 @@ export default function CartPage() {
   const [inputErrors, setInputErrors] = useState<{ [key: string]: string }>({});
 
   // Out of stock tracking
-  const [outOfStockItems, setOutOfStockItems] = useState<{ [key: string]: boolean }>({});
+  const [outOfStockItems, setOutOfStockItems] = useState<{
+    [key: string]: boolean;
+  }>({});
   const [hasOutOfStockItems, setHasOutOfStockItems] = useState(false);
-  const [canIncrease, setCanIncrease] = useState<{ [key: string]: boolean }>({});
+  const [canIncrease, setCanIncrease] = useState<{ [key: string]: boolean }>(
+    {}
+  );
 
   // Use React Query to get real-time inventory data
-  const { data: itemsData, isLoading: isLoadingItems, error: itemsError } = useGetItems({
+  const {
+    data: itemsData,
+    isLoading: isLoadingItems,
+    error: itemsError,
+  } = useGetItems({
     currentPage: 1,
     itemsPerPage: 10000, // Get all items to ensure we have stock data for cart items
-    userRole: userRole || 'buyer',
+    userRole: userRole || "buyer",
   });
 
   // Create a stock levels map from the React Query data
   const stockLevels = useMemo(() => {
     if (!itemsData?.data || userRole !== "buyer") return {};
-    
+
     const stockMap: { [key: string]: number } = {};
     cart.forEach((cartItem) => {
       const foundItem = itemsData.data.find(
@@ -59,7 +62,7 @@ export default function CartPage() {
       );
       stockMap[cartItem._id] = foundItem?.quantity || 0;
     });
-    
+
     return stockMap;
   }, [itemsData, cart, userRole]);
 
@@ -85,15 +88,15 @@ export default function CartPage() {
     cart.forEach((item) => {
       const increment = item.measurement_unit === 1 ? 0.25 : 1;
       const availableStock = stockLevels[item._id] || 0;
-      
+
       // Check if item is out of stock (quantity in cart exceeds available stock)
       const isOutOfStock = availableStock < item.quantity;
       outOfStock[item._id] = isOutOfStock;
-      
+
       if (isOutOfStock) {
         hasAnyOutOfStock = true;
       }
-      
+
       // Check if we can increase quantity
       results[item._id] = availableStock >= item.quantity + increment;
     });
@@ -134,9 +137,11 @@ export default function CartPage() {
     if (hasOutOfStockItems) {
       const timer = setTimeout(() => {
         // Show a toast notification about out of stock items
-        toast.error("Some items in your cart are out of stock. Please review and remove them.");
+        toast.error(
+          "Some items in your cart are out of stock. Please review and remove them."
+        );
       }, 1000);
-      
+
       return () => clearTimeout(timer);
     }
   }, [hasOutOfStockItems]);
@@ -358,24 +363,24 @@ export default function CartPage() {
   // Function to handle removing all out of stock items
   const handleRemoveOutOfStockItems = async () => {
     const result = await Swal.fire({
-      title: 'Remove Out of Stock Items?',
-      text: 'This will remove all items that are currently out of stock from your cart.',
-      icon: 'warning',
+      title: "Remove Out of Stock Items?",
+      text: "This will remove all items that are currently out of stock from your cart.",
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonText: 'Yes, Remove Them',
-      cancelButtonText: 'Cancel',
-      confirmButtonColor: '#16a34a',
-      cancelButtonColor: '#d33',
+      confirmButtonText: "Yes, Remove Them",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#16a34a",
+      cancelButtonColor: "#d33",
     });
 
     if (result.isConfirmed) {
-      const availableItems = cart.filter(item => !outOfStockItems[item._id]);
+      const availableItems = cart.filter((item) => !outOfStockItems[item._id]);
       updateCartState(availableItems);
-      
+
       Swal.fire({
-        icon: 'success',
-        title: 'Items Removed!',
-        text: 'Out of stock items have been removed from your cart.',
+        icon: "success",
+        title: "Items Removed!",
+        text: "Out of stock items have been removed from your cart.",
         timer: 1500,
         showConfirmButton: false,
       });
@@ -429,29 +434,36 @@ export default function CartPage() {
             onClick={() =>
               router.push(user?.role === "buyer" ? "/marketplace" : "/category")
             }
-            className="rounded-full px-6 py-3 shadow-lg hover:shadow-xl transition">
+            className="rounded-full px-6 py-3 shadow-lg hover:shadow-xl transition"
+          >
             Browse Recyclable Items
           </Button>
         </div>
       ) : (
         <>
-          <div className={`bg-green-50 rounded-xl p-4 mb-6 grid grid-cols-1 ${user?.role == 'customer' ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
+          <div
+            className={`bg-green-50 rounded-xl p-4 mb-6 grid grid-cols-1 ${
+              user?.role == "customer" ? "md:grid-cols-3" : "md:grid-cols-2"
+            } gap-4`}
+          >
             <div className="bg-white p-4 rounded-lg shadow-sm text-center">
               <div className="text-gray-500 text-sm">Total Items</div>
               <div className="text-2xl font-bold text-green-600">
                 {totalItems}
               </div>
             </div>
-        {
-          user?.role == 'customer' &&     <div className="bg-white p-4 rounded-lg shadow-sm text-center">
-              <div className="text-gray-500 text-sm">Earned Points</div>
-              <div className="text-2xl font-bold text-blue-600">
-                {totalPoints}
+            {user?.role == "customer" && (
+              <div className="bg-white p-4 rounded-lg shadow-sm text-center">
+                <div className="text-gray-500 text-sm">Earned Points</div>
+                <div className="text-2xl font-bold text-blue-600">
+                  {totalPoints}
+                </div>
               </div>
-            </div>
-        }
+            )}
             <div className="bg-white p-4 rounded-lg shadow-sm text-center">
-              <div className="text-gray-500 text-sm">{user?.role == 'customer' ? 'Earned Money' : 'Payed Money'} </div>
+              <div className="text-gray-500 text-sm">
+                {user?.role == "customer" ? "Earned Money" : "Payed Money"}{" "}
+              </div>
               <div className="text-2xl font-bold text-emerald-600">
                 {totalPrice.toFixed(2)} EGP
               </div>
@@ -469,9 +481,9 @@ export default function CartPage() {
                   exit="exit"
                   layout
                   className={`bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-shadow ${
-                    outOfStockItems[item._id] 
-                      ? 'border-red-200 bg-red-50' 
-                      : 'border-gray-100'
+                    outOfStockItems[item._id]
+                      ? "border-red-200 bg-red-50"
+                      : "border-gray-100"
                   }`}
                 >
                   <div className="p-4 flex flex-col sm:flex-row gap-4 relative">
@@ -483,23 +495,27 @@ export default function CartPage() {
                         </span>
                       </div>
                     )}
-                    
-                    {/* Stock Warning Badge */}
-                    {userRole === "buyer" && 
-                     !outOfStockItems[item._id] && 
-                     stockLevels[item._id] !== undefined && 
-                     stockLevels[item._id] > 0 && 
-                     stockLevels[item._id] < item.quantity + (item.measurement_unit === 1 ? 0.25 : 1) && (
-                      <div className="absolute top-2 right-2 z-10">
-                        <span className="bg-yellow-500 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-sm">
-                          Low Stock
-                        </span>
-                      </div>
-                    )}
 
-                    <div className={`bg-green-50 rounded-lg w-full sm:w-24 h-24 flex-shrink-0 flex items-center justify-center relative ${
-                      outOfStockItems[item._id] ? 'opacity-50' : ''
-                    }`}>
+                    {/* Stock Warning Badge */}
+                    {userRole === "buyer" &&
+                      !outOfStockItems[item._id] &&
+                      stockLevels[item._id] !== undefined &&
+                      stockLevels[item._id] > 0 &&
+                      stockLevels[item._id] <
+                        item.quantity +
+                          (item.measurement_unit === 1 ? 0.25 : 1) && (
+                        <div className="absolute top-2 right-2 z-10">
+                          <span className="bg-yellow-500 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-sm">
+                            Low Stock
+                          </span>
+                        </div>
+                      )}
+
+                    <div
+                      className={`bg-green-50 rounded-lg w-full sm:w-24 h-24 flex-shrink-0 flex items-center justify-center relative ${
+                        outOfStockItems[item._id] ? "opacity-50" : ""
+                      }`}
+                    >
                       {item.image ? (
                         <Image
                           width={100}
@@ -516,11 +532,23 @@ export default function CartPage() {
                     <div className="flex-1">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
+<<<<<<< HEAD
                           <h3 className={`text-lg font-medium ${
                             outOfStockItems[item._id] ? 'text-gray-500 line-through' : 'text-gray-800'
                           }`}>
             {typeof item.name === 'string' ? item.name : item.name[locale] || item.name.en || ''}
                 </h3>
+=======
+                          <h3
+                            className={`text-lg font-medium ${
+                              outOfStockItems[item._id]
+                                ? "text-gray-500 line-through"
+                                : "text-gray-800"
+                            }`}
+                          >
+                            {item.name}
+                          </h3>
+>>>>>>> newNotesEdits-SearchandFilter
                           <p className="text-sm text-gray-500 mt-1">
                             Category:{" "}
                             <span className="text-green-600">
@@ -548,16 +576,19 @@ export default function CartPage() {
                           <Scale className="w-4 h-4 mr-1" />
                           {item.measurement_unit === 1 ? "By Kilo" : "By Piece"}
                         </div>
-                      
-                   
                       </div>
 
                       {userRole === "buyer" && (
                         <div className="text-xs mt-1 flex items-center gap-2">
-                          <span className={`${
-                            outOfStockItems[item._id] ? 'text-red-600 font-semibold' : 'text-gray-500'
-                          }`}>
-                            Stock: {stockLevels[item._id] ?? "Loading..."} available
+                          <span
+                            className={`${
+                              outOfStockItems[item._id]
+                                ? "text-red-600 font-semibold"
+                                : "text-gray-500"
+                            }`}
+                          >
+                            Stock: {stockLevels[item._id] ?? "Loading..."}{" "}
+                            available
                           </span>
                           {outOfStockItems[item._id] && (
                             <span className="text-red-600 font-semibold">
@@ -571,18 +602,23 @@ export default function CartPage() {
                       {outOfStockItems[item._id] && (
                         <div className="mt-2 p-2 bg-red-100 border border-red-200 rounded-md">
                           <p className="text-sm text-red-700 font-medium">
-                            ⚠️ This item is currently out of stock. 
-                            {stockLevels[item._id] > 0 
-                              ? ` Only ${stockLevels[item._id]} available, but you have ${item.quantity} in cart.`
-                              : ' No stock available.'
-                            }
+                            ⚠️ This item is currently out of stock.
+                            {stockLevels[item._id] > 0
+                              ? ` Only ${
+                                  stockLevels[item._id]
+                                } available, but you have ${
+                                  item.quantity
+                                } in cart.`
+                              : " No stock available."}
                           </p>
                         </div>
                       )}
 
-                      <div className={`text-emerald-600 text-sm space-y-1 mt-2 ${
-                        outOfStockItems[item._id] ? 'opacity-50' : ''
-                      }`}>
+                      <div
+                        className={`text-emerald-600 text-sm space-y-1 mt-2 ${
+                          outOfStockItems[item._id] ? "opacity-50" : ""
+                        }`}
+                      >
                         <div>
                           <span className="font-semibold">Price:</span>{" "}
                           {item.price.toFixed(2)} EGP
@@ -607,11 +643,13 @@ export default function CartPage() {
                               }}
                               disabled={
                                 outOfStockItems[item._id] ||
-                                item.quantity <= (item.measurement_unit === 1 ? 0.25 : 1)
+                                item.quantity <=
+                                  (item.measurement_unit === 1 ? 0.25 : 1)
                               }
                               className={`w-8 h-8 flex items-center justify-center rounded-full border transition-all ${
                                 outOfStockItems[item._id] ||
-                                item.quantity <= (item.measurement_unit === 1 ? 0.25 : 1)
+                                item.quantity <=
+                                  (item.measurement_unit === 1 ? 0.25 : 1)
                                   ? "text-gray-300 bg-gray-100 border-gray-200 cursor-not-allowed"
                                   : "text-gray-600 hover:bg-gray-50 border-gray-300"
                               }`}
@@ -629,7 +667,11 @@ export default function CartPage() {
                                     : item.quantity.toString()
                                 }
                                 onChange={(e) =>
-                                  handleInputChange(item._id, e.target.value, item)
+                                  handleInputChange(
+                                    item._id,
+                                    e.target.value,
+                                    item
+                                  )
                                 }
                                 onBlur={() => handleInputBlur(item._id, item)}
                                 disabled={outOfStockItems[item._id]}
@@ -640,7 +682,9 @@ export default function CartPage() {
                                     ? "border-red-300 focus:ring-red-500 focus:border-red-500"
                                     : "border-gray-300 focus:ring-green-500 focus:border-green-500"
                                 }`}
-                                placeholder={item.measurement_unit === 1 ? "0.25" : "1"}
+                                placeholder={
+                                  item.measurement_unit === 1 ? "0.25" : "1"
+                                }
                               />
                             </div>
 
@@ -697,8 +741,16 @@ export default function CartPage() {
               <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
                 <div className="flex items-start gap-3">
                   <div className="flex-shrink-0">
-                    <svg className="w-5 h-5 text-red-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    <svg
+                      className="w-5 h-5 text-red-500 mt-0.5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                   </div>
                   <div className="flex-1">
@@ -706,7 +758,8 @@ export default function CartPage() {
                       Some items are out of stock
                     </h3>
                     <p className="text-sm text-red-700 mt-1">
-                      Please remove out of stock items or adjust quantities before proceeding to checkout.
+                      Please remove out of stock items or adjust quantities
+                      before proceeding to checkout.
                     </p>
                     <button
                       onClick={handleRemoveOutOfStockItems}
@@ -736,9 +789,13 @@ export default function CartPage() {
               </Button>
 
               <div className="flex flex-col items-end">
-                <div className={
-                  totalPrice < 100 || hasOutOfStockItems ? "pointer-events-none" : ""
-                }>
+                <div
+                  className={
+                    totalPrice < 100 || hasOutOfStockItems
+                      ? "pointer-events-none"
+                      : ""
+                  }
+                >
                   <Button
                     onClick={(e) => {
                       e.preventDefault();

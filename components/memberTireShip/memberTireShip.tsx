@@ -11,19 +11,23 @@ export function getUserTier(reycles: number) {
   );
 }
 
-export default function TierStatBox({ totalRecycles }: { totalRecycles: number }) {
+export default function TierStatBox({
+  totalRecycles,
+}: {
+  totalRecycles: number;
+}) {
   const tier = getUserTier(totalRecycles);
   const { t } = useLanguage();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isNavigating, setIsNavigating] = useState(false);
-  
+
   if (!tier) return null;
 
   const handleNavigation = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsNavigating(true);
-    
+
     startTransition(() => {
       router.push("/profile/rewarding");
       // Reset after a delay since we can't easily detect when navigation completes
@@ -50,12 +54,7 @@ export default function TierStatBox({ totalRecycles }: { totalRecycles: number }
 
       {/* Right: Badge + Icon Link */}
       <div className="flex items-center gap-3 flex-shrink-0">
-        <div
-          className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-xl font-bold shadow-md border-2 border-current animate-spin-slow hover:[animation-play-state:paused]"
-          style={{ color: tier.color }}
-        >
-          {tier.badge}
-        </div>
+        <tier.badge />
 
         <button
           onClick={handleNavigation}
@@ -63,7 +62,7 @@ export default function TierStatBox({ totalRecycles }: { totalRecycles: number }
           className="p-2 rounded-full hover:bg-white/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           title="View Rewards Program"
         >
-          {(isNavigating || isPending) ? (
+          {isNavigating || isPending ? (
             <Loader2 className="w-5 h-5 animate-spin" />
           ) : (
             <Info className="w-5 h-5" />

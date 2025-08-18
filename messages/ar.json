@@ -196,9 +196,8 @@
       "confirmPassword": "تاكيد كلمىة المرور",
       "next": "التالي",
       "previous": "السابق",
-      "success":"تم انشاء الحساب بنجاح",
-      "fail":"فشل في انشاء الحساب"
-      
+      "success": "تم انشاء الحساب بنجاح",
+      "fail": "فشل في انشاء الحساب"
     },
     "roles": {
       "customer": {
@@ -428,18 +427,13 @@
     "addToCollection": "اضف لمجموعتك"
   },
   "common": {
-<<<<<<< HEAD
+    "sold": "مباعة",
+    "viewAll": "شاهد الكل",
+
     "piece": "قطعة",
-=======
-        "sold" : "مباعة",
-            "viewAll" : "شاهد الكل",
-
-
-    "piece" : "قطعة",
->>>>>>> dc1e70e018f82fc8a4d926d538a49a7dfa5ca74b
     "item": "عنصر",
     "cancel": "إلغاء",
-        "FeaturedItems" :"العناصر المميزة",
+    "FeaturedItems": "العناصر المميزة",
 
     "kg": "كيلو",
     "invalidQuantity": "يرجى إدخال كمية صحيحة",
@@ -452,7 +446,7 @@
     "collectionsPlural": "مجموعات",
     "adding": "اضافة",
     "pointsAbbreviation": "نقاط",
-        "inStock" : "في المخزن",
+    "inStock": "في المخزن",
 
     "allCategories": "جميع الفئات",
     "showing": "عرض",
@@ -473,7 +467,7 @@
     "startAdding": "ابدأ بالأضافة",
     "removeFromCart": "احذف من عربة التسوق"
   },
-    "recyclingBanner": {
+  "recyclingBanner": {
     "title": "أعد التدوير اليوم من أجل غد أفضل",
     "titleHighlight": "أفضل",
     "description": "انضم إلى مجتمعنا الذي يحدث فرقاً. كل عنصر معاد تدويره له قيمة.",
@@ -485,7 +479,7 @@
     }
   },
   "collectionsOfCategory": "{{collections}}  {{category}}",
-  
+
   "marketPlace": {
     "sustainableMarketplace": "الأسواق المستدامة",
     "marketPlaceDesc": "اكتشف العناصر القابلة لإعادة التدوير واكسب المكافآت"
