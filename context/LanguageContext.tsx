@@ -22,6 +22,7 @@ interface LanguageContextType {
   dir: "ltr" | "rtl";
   isLoaded: boolean;
   convertNumber: (value: number | string, locale?: Locale) => string; // Add this
+  formatNumber: (value: number | string, locale?: Locale) => string; // Add this
 }
 
 const translations = {
@@ -37,6 +38,7 @@ const LanguageContext = createContext<LanguageContextType>({
   dir: "ltr",
   isLoaded: false,
   convertNumber: (value: number | string, locale: Locale) => value.toString(), // dummy default
+  formatNumber: (value: number | string, locale: Locale) => value.toString(), // dummy default
 });
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
@@ -108,9 +110,23 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const convertNumber = (value: number | string, loc?: Locale) =>
     convertNumbers(value, loc ?? locale);
 
+  const formatNumber = (value: number | string, loc?: Locale): string => {
+    return new Intl.NumberFormat(
+      (loc ?? locale) === "ar" ? "ar-EG" : "en-US"
+    ).format(Number(value));
+  };
   return (
     <LanguageContext.Provider
-      value={{ locale, setLocale, t, tAr, dir, isLoaded, convertNumber }}
+      value={{
+        formatNumber,
+        locale,
+        setLocale,
+        t,
+        tAr,
+        dir,
+        isLoaded,
+        convertNumber,
+      }}
     >
       {children}
     </LanguageContext.Provider>

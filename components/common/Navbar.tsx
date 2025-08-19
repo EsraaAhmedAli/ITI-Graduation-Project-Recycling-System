@@ -127,9 +127,9 @@ export default function Navbar() {
                 {t("navbar.title")}
               </div>
             </Link>
-            {/* <div className="hidden md:block flex-1 max-w-md">
+            <div className="hidden md:block flex-1 max-w-md">
               <NavbarSearch />
-            </div> */}
+            </div>
           </div>
 
           {/* Center: Navigation Links - Desktop */}
