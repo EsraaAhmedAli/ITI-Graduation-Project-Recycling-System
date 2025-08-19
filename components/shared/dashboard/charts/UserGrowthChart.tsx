@@ -1,13 +1,13 @@
 // components/charts/UserGrowthChart.tsx
 import React, { memo, useMemo } from 'react';
 import { Bar } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip, Legend } from 'chart.js';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip, Legend, Title } from 'chart.js';
 import { UserGrowthItem } from '../../../../components/Types/dashboard.types';
 import { BAR_CHART_OPTIONS, CHART_COLORS } from '../../../../constants/theme';
 import { formatMonthLabel } from '../../../../utils/dataTransformers';
 import { useLanguage } from '@/context/LanguageContext';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend, Title);
 
 interface UserGrowthChartProps {
   userGrowth: UserGrowthItem[];
@@ -24,8 +24,6 @@ const UserGrowthChart = memo<UserGrowthChartProps>(({ userGrowth, loading }) => 
     return {
       labels: userGrowth.map((item) => {
         const monthName = item.label || item.month || item.name || 'Unknown';
-        
-        // Use formatMonthLabel with locale and convert numbers
         const formattedLabel = formatMonthLabel(monthName, locale);
         return convertNumber(formattedLabel);
       }),
@@ -43,38 +41,61 @@ const UserGrowthChart = memo<UserGrowthChartProps>(({ userGrowth, loading }) => 
     };
   }, [userGrowth, t, locale, convertNumber]);
 
-  // Memoize chart options with specific title
-  const chartOptions = useMemo(() => ({
-    ...BAR_CHART_OPTIONS,
-    scales: {
-      ...BAR_CHART_OPTIONS.scales,
-      y: {
-        ...BAR_CHART_OPTIONS.scales.y,
-        title: { display: true, text: t('charts.users') },
-        ticks: {
-          ...BAR_CHART_OPTIONS.scales.y.ticks,
-          callback: function(value: any) {
-            return convertNumber(value.toString());
+  // FIXED: Safe chart options with proper defaults
+  const chartOptions = useMemo(() => {
+    const baseOptions = BAR_CHART_OPTIONS || {};
+    
+    return {
+      ...baseOptions,
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: '#d1fae5' },
+          ticks: {
+            stepSize: 1,
+            callback: function(value: any) {
+              return convertNumber(value.toString());
+            }
+          },
+          title: { 
+            display: true, 
+            text: t('charts.users') 
           }
-        }
+        },
+        x: {
+          grid: { color: '#d1fae5' },
+          ticks: {
+            maxRotation: 45,
+            minRotation: 45,
+            autoSkip: false,
+            font: { size: 12, weight: 'bold' as const },
+          },
+          title: { 
+            display: true, 
+            text: t('charts.month') 
+          }
+        },
       },
-      x: {
-        ...BAR_CHART_OPTIONS.scales.x,
-        title: { display: true, text: t('charts.month') }
-      },
-    },
-    plugins: {
-      ...BAR_CHART_OPTIONS.plugins,
-      tooltip: {
-        ...BAR_CHART_OPTIONS.plugins?.tooltip,
-        callbacks: {
-          label: function(context: any) {
-            return `${t('charts.users')}: ${convertNumber(context.parsed.y.toString())}`;
+      plugins: {
+        ...baseOptions.plugins,
+        legend: {
+          display: false,
+          position: 'top' as const,
+        },
+        tooltip: {
+          mode: 'index' as const,
+          intersect: false,
+          callbacks: {
+            label: function(context: any) {
+              return `${t('charts.users')}: ${convertNumber(context.parsed.y.toString())}`;
+            }
           }
         }
       }
-    },
-  }), [t, convertNumber]);
+    };
+  }, [t, convertNumber]);
 
   const renderContent = () => {
     if (loading) {

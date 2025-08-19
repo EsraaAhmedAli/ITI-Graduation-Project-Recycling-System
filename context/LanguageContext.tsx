@@ -44,66 +44,108 @@ const LanguageContext = createContext<LanguageContextType>({
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>("en");
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
+  // First useEffect: Handle mounting
   useEffect(() => {
-    // Only run on client side
-    const savedLocale = localStorage.getItem("locale") as Locale;
-    const initialLocale =
-      savedLocale && (savedLocale === "en" || savedLocale === "ar")
-        ? savedLocale
-        : "en";
-
-    setLocaleState(initialLocale);
-    document.documentElement.dir = initialLocale === "ar" ? "rtl" : "ltr";
-    document.documentElement.lang = initialLocale;
-    setIsLoaded(true); // Mark as loaded after setting initial values
+    setIsMounted(true);
   }, []);
 
+  // Second useEffect: Handle localStorage only after mounting
+  useEffect(() => {
+    if (!isMounted) return;
+
+    try {
+      // Only access localStorage after component is mounted
+      const savedLocale = localStorage.getItem("locale") as Locale;
+      const initialLocale =
+        savedLocale && (savedLocale === "en" || savedLocale === "ar")
+          ? savedLocale
+          : "en";
+
+      setLocaleState(initialLocale);
+      
+      // Safely update document properties
+      if (typeof document !== 'undefined') {
+        document.documentElement.dir = initialLocale === "ar" ? "rtl" : "ltr";
+        document.documentElement.lang = initialLocale;
+      }
+      
+      setIsLoaded(true);
+    } catch (error) {
+      console.error('Error accessing localStorage:', error);
+      // Fallback to default locale
+      setLocaleState("en");
+      setIsLoaded(true);
+    }
+  }, [isMounted]);
+
   const setLocale = (newLocale: Locale) => {
-    localStorage.setItem("locale", newLocale);
-    setLocaleState(newLocale);
-    document.documentElement.dir = newLocale === "ar" ? "rtl" : "ltr";
-    document.documentElement.lang = newLocale;
+    if (!isMounted) return;
+    
+    try {
+      localStorage.setItem("locale", newLocale);
+      setLocaleState(newLocale);
+      
+      if (typeof document !== 'undefined') {
+        document.documentElement.dir = newLocale === "ar" ? "rtl" : "ltr";
+        document.documentElement.lang = newLocale;
+      }
+    } catch (error) {
+      console.error('Error setting locale:', error);
+      // Still update state even if localStorage fails
+      setLocaleState(newLocale);
+    }
   };
 
   const t = (key: string, params?: Record<string, any>): string => {
-    const keys = key.split(".");
-    let value: any = translations[locale];
+    try {
+      const keys = key.split(".");
+      let value: any = translations[locale];
 
-    for (const k of keys) {
-      value = value?.[k];
+      for (const k of keys) {
+        value = value?.[k];
+      }
+
+      if (typeof value !== "string") return key;
+
+      if (params) {
+        Object.entries(params).forEach(([paramKey, paramValue]) => {
+          const regex = new RegExp(`{{\\s*${paramKey}\\s*}}`, "g");
+          value = value.replace(regex, String(paramValue));
+        });
+      }
+
+      return (value as string) || key;
+    } catch (error) {
+      console.error('Translation error:', error);
+      return key;
     }
-
-    if (typeof value !== "string") return key;
-
-    if (params) {
-      Object.entries(params).forEach(([paramKey, paramValue]) => {
-        const regex = new RegExp(`{{\\s*${paramKey}\\s*}}`, "g");
-        value = value.replace(regex, String(paramValue));
-      });
-    }
-
-    return (value as string) || key;
   };
 
   const tAr = (key: string, params?: Record<string, any>): string => {
-    const keys = key.split(".");
-    let value: any = translations.ar;
+    try {
+      const keys = key.split(".");
+      let value: any = translations.ar;
 
-    for (const k of keys) {
-      value = value?.[k];
+      for (const k of keys) {
+        value = value?.[k];
+      }
+
+      if (typeof value !== "string") return key;
+
+      if (params) {
+        Object.entries(params).forEach(([paramKey, paramValue]) => {
+          const regex = new RegExp(`{{\\s*${paramKey}\\s*}}`, "g");
+          value = value.replace(regex, String(paramValue));
+        });
+      }
+
+      return (value as string) || key;
+    } catch (error) {
+      console.error('Arabic translation error:', error);
+      return key;
     }
-
-    if (typeof value !== "string") return key;
-
-    if (params) {
-      Object.entries(params).forEach(([paramKey, paramValue]) => {
-        const regex = new RegExp(`{{\\s*${paramKey}\\s*}}`, "g");
-        value = value.replace(regex, String(paramValue));
-      });
-    }
-
-    return (value as string) || key;
   };
 
   const dir = locale === "ar" ? "rtl" : "ltr";

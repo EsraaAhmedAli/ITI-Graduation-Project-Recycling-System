@@ -24,6 +24,7 @@ import Loader from "@/components/common/Loader";
 import { TablePagination } from "@/components/tablePagination/tablePagination";
 import { Modal, ModalBody, ModalFooter, ModalHeader, Toast } from "flowbite-react";
 import RefundModal from "@/components/shared/refundModal";
+import { useLanguage } from "@/context/LanguageContext";
 
 // Toast notification types
 interface ToastNotification {
@@ -129,7 +130,7 @@ const Transactions: React.FC = () => {
       minute: "2-digit",
     });
   };
-
+const{t}=useLanguage()
   // Helper function to get payment status
   const getPaymentStatus = (payment: PaymentData): string => {
     if (payment.refunded) return "refunded";
@@ -514,7 +515,7 @@ const Transactions: React.FC = () => {
 
   // Loading state
   if (isLoading && payments.length === 0) {
-    return <Loader title="transactions" />;
+    return <Loader title={t('loader.transactions')} />;
   }
 
   // Error state

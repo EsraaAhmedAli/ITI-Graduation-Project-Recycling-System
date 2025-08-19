@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { useCart } from "@/context/CartContext";
 import { CartItem } from "@/models/cart";
 import Loader from "@/components/common/loader";
@@ -10,7 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import Image from "next/image";
 import { useCategories } from "@/hooks/useGetCategories";
-import { useLocalization } from "@/utils/localiztionUtil";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface LocalizedItem {
   _id: string;
@@ -33,15 +33,7 @@ interface LocalizedItem {
 }
 
 export default function UserCategoryPage() {
-  const {
-    getDisplayName,
-    getEnglishName,
-    getMeasurementUnit,
-    formatCurrency,
-    t,
-    locale,
-  } = useLocalization();
-
+  const { locale, t, convertNumber } = useLanguage();
   const params = useParams();
   const categoryName = decodeURIComponent(params.name as string);
   const { addToCart, loadingItemId } = useCart();
@@ -60,7 +52,7 @@ export default function UserCategoryPage() {
       return res.data.data;
     },
     staleTime: 60 * 1000,
-    refetchOnMount: false,
+    refetchOnMount: true,
   });
 
   const getPointsRange = (points: number[]) => {
@@ -89,6 +81,9 @@ export default function UserCategoryPage() {
         typeof item.name === "string" ? item.name : item.name?.en || "";
       const arabicItemName =
         typeof item.name === "string" ? "" : item.name?.ar || "";
+
+      // Get category ID using English name (as you prefer)
+      const categoryId = getCategoryIdByItemName(englishItemName);
 
       // Get category ID using English name (as you prefer)
       const categoryId = getCategoryIdByItemName(englishItemName);
@@ -171,11 +166,7 @@ export default function UserCategoryPage() {
               <p className="text-slate-600 mb-3 text-sm">
                 {t("categoryStats.estimatedImpact")}:{" "}
                 {/* You can add impact data to backend too */}
-                {t(
-                  `environmentalImpact.${getEnglishName({
-                    name: categoryStats.categoryDisplayName,
-                  }).toLowerCase()}`
-                )}
+                {t(`environmentalImpact.${categoryName}`)}
               </p>
 
               <div className="flex flex-wrap gap-3 text-xs">
@@ -184,7 +175,7 @@ export default function UserCategoryPage() {
                     {t("categoryStats.totalItems")}:
                   </span>
                   <span className="font-semibold text-slate-700">
-                    {categoryStats.totalItems}
+                    {convertNumber(categoryStats.totalItems)}
                   </span>
                 </div>
               </div>
@@ -204,7 +195,7 @@ export default function UserCategoryPage() {
                 <div className="relative w-full h-40">
                   <Image
                     src={item.image}
-                    alt={getDisplayName(item)}
+                    alt={item.name.en}
                     fill
                     className="object-contain group-hover:scale-105 transition-transform duration-300"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
@@ -220,7 +211,7 @@ export default function UserCategoryPage() {
               <div className="p-4">
                 <h3 className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide leading-tight">
                   {/* Use backend's localized displayName instead of translation files */}
-                  {getDisplayName(item)}
+                  {item.name[locale]}
                 </h3>
 
                 {/* Price and Unit Info */}
@@ -230,7 +221,7 @@ export default function UserCategoryPage() {
                   </span>
                   <div className="text-end">
                     <span className="text-base font-bold text-slate-900">
-                      {item.price}
+                      {convertNumber(item.price)}
                     </span>
                     <span className="text-xs text-slate-500 ml-1">
                       {t("itemsModal.currency")}

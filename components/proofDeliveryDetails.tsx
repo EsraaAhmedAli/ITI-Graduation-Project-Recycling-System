@@ -136,11 +136,14 @@ export default function ProofOfDeliveryModal({
               <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md">
                 {formatDate(orderDetails.collectedAt || "")}
               </p>
-            </div>
+            </div>{
+              console.log(orderDetails)
+              
+            }
 
 <div>
   <h2>Collected By:</h2>
-  <p>courier name : {orderDetails.courier.name}</p>
+  <p>courier name : {orderDetails.courier?.name || 'unknow delivery'}</p>
 </div>
    
 

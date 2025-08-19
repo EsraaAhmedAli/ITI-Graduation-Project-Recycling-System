@@ -1,33 +1,23 @@
 "use client";
 
-import { ReactNode, useContext, useEffect, useMemo } from "react";
+import { ReactNode, useEffect, useMemo } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Navbar from "@/components/common/Navbar";
 import Footer from "../common/Footer";
 import { ToastContainer } from "react-toastify";
-import { UserAuthContext } from "@/context/AuthFormContext";
+import { useUserAuth } from "@/context/AuthFormContext"; // ✅ Use the hook instead
 
 export default function LayoutWrapper({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const { user, isLoading } = useContext(UserAuthContext) ?? {};
+  // ✅ Use the hook instead of useContext directly
+  const { user, isLoading } = useUserAuth();
 
   // === Computed Roles ===
   const isAdmin = user?.role === "admin";
   const isDelivery = user?.role === "delivery";
   const isBuyer = user?.role === "buyer";
-
-  // Define restricted routes for buyers (routes they should NOT access)
-  // const buyerRestrictedRoutes = [
-  //   "/admin",
-  //   "/deilveryDashboard",
-  //   "/waiting-for-approval",
-  //   // Add any specific routes that buyers should NOT access
-  // ];
-  // const approvedDeliveryAllowedRoutes = ["/deilveryDashboard", "/edit-profile"];
-
-  // Define routes that are considered "entry points" where we should redirect buyers to /home
 
   // Check if current path is restricted for buyers
   const isBuyerRestrictedRoute = useMemo(() => {
@@ -59,6 +49,7 @@ export default function LayoutWrapper({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (isLoading || !user) return;
+    
     const entryRoutes = ["/", "/login", "/register", "/auth"];
 
     // Handle buyer routing

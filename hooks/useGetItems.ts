@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios";
-import { Category } from "@/components/Types/categories.type";
 import { CartItem } from "@/models/cart";
 
 interface Pagination {

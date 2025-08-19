@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo, memo } from "react";
 import {
   ChevronDown,
   X,
@@ -15,65 +15,119 @@ import api from "@/lib/axios";
 import { useLanguage } from "@/context/LanguageContext";
 import Pagination from "../common/Pagintaion";
 
-// Function to categorize based on message content
-const categorizeEntry = (reason: string, points: number) => {
+// Types for better TypeScript support
+interface PointsEntry {
+  _id: string;
+  reason: string;
+  points: number;
+  timestamp: string;
+}
+
+interface UserPoints {
+  pointsHistory: PointsEntry[];
+}
+
+// Memoized categorization function - moved outside component to prevent recreation
+const categorizeEntry = (reason: string, points: number): string => {
   const message = reason.toLowerCase();
 
-  if (message.includes("cashback")) {
-    return "cashback";
-  } else if (message.includes("redeem") || message.includes("voucher")) {
-    return "redeem";
-  } else if (
-    message.includes("bonus") ||
-    message.includes("welcome") ||
-    message.includes("referral")
-  ) {
-    return "bonus";
-  } else if (
-    message.includes("deduct") ||
-    message.includes("return") ||
-    points < 0
-  ) {
-    return "deduct";
-  } else if (
-    message.includes("earn") ||
-    message.includes("purchase") ||
-    message.includes("survey") ||
-    points > 0
-  ) {
-    return "earn";
-  }
-
+  if (message.includes("cashback")) return "cashback";
+  if (message.includes("redeem") || message.includes("voucher")) return "redeem";
+  if (message.includes("bonus") || message.includes("welcome") || message.includes("referral")) return "bonus";
+  if (message.includes("deduct") || message.includes("return") || points < 0) return "deduct";
+  if (message.includes("earn") || message.includes("purchase") || message.includes("survey") || points > 0) return "earn";
+  
   return "earn"; // default fallback
 };
 
+// Memoized style constants - moved outside to prevent object recreation
+const TAG_COLORS = {
+  redeem: "bg-purple-100 text-purple-800 border-purple-200",
+  cashback: "bg-orange-100 text-orange-800 border-orange-200",
+  earn: "bg-green-100 text-green-800 border-green-200",
+  bonus: "bg-blue-100 text-blue-800 border-blue-200",
+  deduct: "bg-red-100 text-red-800 border-red-200",
+} as const;
+
+const TAG_ICONS = {
+  redeem: Gift,
+  cashback: Gift,
+  earn: Plus,
+  bonus: Award,
+  deduct: Minus,
+} as const;
+
 const getTagColor = (tag: string) => {
-  const colors = {
-    redeem: "bg-purple-100 text-purple-800 border-purple-200",
-    cashback: "bg-orange-100 text-orange-800 border-orange-200",
-    earn: "bg-green-100 text-green-800 border-green-200",
-    bonus: "bg-blue-100 text-blue-800 border-blue-200",
-    deduct: "bg-red-100 text-red-800 border-red-200",
-  };
-  return (
-    colors[tag as keyof typeof colors] ||
-    "bg-gray-100 text-gray-800 border-gray-200"
-  );
+  return TAG_COLORS[tag as keyof typeof TAG_COLORS] || "bg-gray-100 text-gray-800 border-gray-200";
 };
 
 const getTagIcon = (tag: string) => {
-  const icons = {
-    redeem: Gift,
-    cashback: Gift,
-    earn: Plus,
-    bonus: Award,
-    deduct: Minus,
-  };
-  const Icon = icons[tag as keyof typeof icons] || Plus;
+  const Icon = TAG_ICONS[tag as keyof typeof TAG_ICONS] || Plus;
   return <Icon className="w-3 h-3" />;
 };
 
-const PointsHistoryModal = ({
+// Memoized date formatter - create once and reuse
+const formatDate = (timestamp: string, includeYear: boolean = false) => {
+  return new Date(timestamp).toLocaleDateString("en-US", {
+    year: includeYear ? "numeric" : undefined,
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+// Memoized PointsEntry component to prevent unnecessary re-renders
+const PointsEntryItem = memo(({ 
+  entry, 
+  t, 
+  showYear = false 
+}: { 
+  entry: PointsEntry; 
+  t: (key: string) => string;
+  showYear?: boolean;
+}) => {
+  const tag = useMemo(() => categorizeEntry(entry.reason, entry.points), [entry.reason, entry.points]);
+  const formattedDate = useMemo(() => formatDate(entry.timestamp, showYear), [entry.timestamp, showYear]);
+  const tagColor = useMemo(() => getTagColor(tag), [tag]);
+  const tagIcon = useMemo(() => getTagIcon(tag), [tag]);
+
+  return (
+    <div className="bg-gradient-to-r from-gray-50 to-white p-4 rounded-xl border border-gray-200 hover:shadow-md transition-shadow">
+      <div className="flex items-center justify-between">
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-2">
+            <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border ${tagColor}`}>
+              {tagIcon}
+              {t(tag)}
+            </span>
+          </div>
+          <p className="text-sm font-semibold text-gray-900 mb-1">
+            {entry.reason}
+          </p>
+          <p className="text-xs text-gray-500 flex items-center gap-1">
+            <Calendar className="w-3 h-3" />
+            {formattedDate}
+          </p>
+        </div>
+        <div className="text-right">
+          <div className={`font-bold text-lg ${entry.points > 0 ? "text-green-600" : "text-red-600"}`}>
+            {entry.points > 0 ? "+" : "-"}
+            {Math.abs(entry.points)}
+          </div>
+          <span className="text-xs text-gray-500">
+            {t("pts")}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+PointsEntryItem.displayName = 'PointsEntryItem';
+
+// Memoized modal component
+const PointsHistoryModal = memo(({
   isOpen,
   onClose,
   t,
@@ -83,7 +137,7 @@ const PointsHistoryModal = ({
   t: (key: string) => string;
 }) => {
   const { user } = useUserAuth();
-  const [pointsHistory, setPointsHistory] = useState<any[]>([]);
+  const [pointsHistory, setPointsHistory] = useState<PointsEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -113,37 +167,40 @@ const PointsHistoryModal = ({
 
   useEffect(() => {
     if (isOpen) {
-      loadPointsHistory(1); // load first page when modal opens
+      loadPointsHistory(1);
     }
-  }, [isOpen, loadPointsHistory]); // run only when modal opens
+  }, [isOpen, loadPointsHistory]);
 
-  // for user changing pages
-  const handlePageChange = (page: number) => {
+  const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
     loadPointsHistory(page);
-  };
+  }, [loadPointsHistory]);
+  
   useEffect(() => {
     if (!isOpen) {
       setCurrentPage(1);
     }
   }, [isOpen]);
 
+  // Memoize backdrop click handler
+  const handleBackdropClick = useCallback((e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  }, [onClose]);
+
   if (!isOpen) {
-    // setCurrentPage(1);
     return null;
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
       <div
         className="fixed inset-0 bg-opacity-50 backdrop-blur-sm transition-opacity"
-        onClick={onClose}
+        onClick={handleBackdropClick}
       />
 
-      {/* Modal */}
       <div className="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col">
-        {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <Calendar className="w-6 h-6 text-primary" />
@@ -157,7 +214,6 @@ const PointsHistoryModal = ({
           </button>
         </div>
 
-        {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
           {loading ? (
             <div className="flex items-center justify-center py-8">
@@ -166,62 +222,16 @@ const PointsHistoryModal = ({
             </div>
           ) : (
             <div className="space-y-4">
-              {pointsHistory.map((entry: any, index: number) => {
-                const tag = categorizeEntry(entry.reason, entry.points);
+              {pointsHistory.map((entry) => (
+                <PointsEntryItem 
+                  key={entry._id} 
+                  entry={entry} 
+                  t={t} 
+                  showYear={true} 
+                />
+              ))}
 
-                return (
-                  <div
-                    key={entry._id || index}
-                    className="bg-gradient-to-r from-gray-50 to-white p-4 rounded-xl border border-gray-200 hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <span
-                            className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border ${getTagColor(
-                              tag
-                            )}`}
-                          >
-                            {getTagIcon(tag)}
-                            {t(tag)}
-                          </span>
-                        </div>
-                        <p className="text-sm font-semibold text-gray-900 mb-1">
-                          {entry.reason}
-                        </p>
-                        <p className="text-xs text-gray-500 flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {new Date(entry.timestamp).toLocaleDateString(
-                            "en-US",
-                            {
-                              year: "numeric",
-                              month: "short",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }
-                          )}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <div
-                          className={`font-bold text-lg ${
-                            entry.points > 0 ? "text-green-600" : "text-red-600"
-                          }`}
-                        >
-                          {entry.points > 0 ? "+" : "-"}
-                          {Math.abs(entry.points)}
-                        </div>
-                        <span className="text-xs text-gray-500">
-                          {t("pts")}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-
-              {pointsHistory.length === 0 && !loading && (
+              {pointsHistory.length === 0 && (
                 <p className="text-center text-gray-500 py-8">
                   {t("noPointsHistory")}
                 </p>
@@ -229,8 +239,6 @@ const PointsHistoryModal = ({
             </div>
           )}
         </div>
-
-        {/* Pagination */}
 
         <Pagination
           currentPage={currentPage}
@@ -240,40 +248,60 @@ const PointsHistoryModal = ({
       </div>
     </div>
   );
-};
+});
 
+PointsHistoryModal.displayName = 'PointsHistoryModal';
+
+// Main component with performance optimizations
 export default function PointsActivity({
   userPoints,
   userPointsLength,
 }: {
-  userPoints?: any;
-  userPointsLength?: any;
+  userPoints?: UserPoints;
+  userPointsLength?: number;
 }) {
   const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  if (!userPoints || !userPoints.pointsHistory?.length) {
+  // Memoize toggle handlers
+  const toggleAccordion = useCallback(() => setIsOpen(!isOpen), [isOpen]);
+  const openModal = useCallback(() => setIsModalOpen(true), []);
+  const closeModal = useCallback(() => setIsModalOpen(false), []);
+
+  // Memoize recent entries to prevent recalculation
+  const recentEntries = useMemo(() => {
+    return userPoints?.pointsHistory?.slice(0, 3) || [];
+  }, [userPoints?.pointsHistory]);
+
+  // Memoize empty state check
+  const hasNoActivity = useMemo(() => {
+    return !userPoints || !userPoints.pointsHistory?.length;
+  }, [userPoints]);
+
+  // Memoize show full history button condition
+  const showFullHistoryButton = useMemo(() => {
+    return userPoints?.pointsHistory?.length && userPoints.pointsHistory.length > 3;
+  }, [userPoints?.pointsHistory?.length]);
+
+  if (hasNoActivity) {
     return (
       <div className="bg-gradient-to-br from-gray-50 to-gray-100 w-full max-h-[150px] p-3 rounded-xl shadow-sm border border-gray-200 flex items-center justify-center">
         <div className="flex items-center gap-5">
           <Calendar className="w-5 h-5 text-primary mx-auto mb-2" />
           <p className="text-gray-500 text-sm font-medium">
-            {t("profile.noActivity")}
+            {t("noActivity")}
           </p>
         </div>
       </div>
     );
   }
 
-  const recentEntries = userPoints.pointsHistory.slice(0, 3);
-
   return (
     <>
       <div className="bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 p-6 rounded-2xl shadow-lg border border-white/50 backdrop-blur-sm">
-        {/* Accordion header */}
         <button
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={toggleAccordion}
           className="w-full flex items-center justify-between group"
         >
           <div className="flex items-center gap-3">
@@ -291,75 +319,30 @@ export default function PointsActivity({
           />
         </button>
 
-        {/* Accordion content */}
         {isOpen && (
           <div className="mt-6 space-y-4">
             <div className="space-y-3">
-              {recentEntries.map((entry: any, index: number) => {
-                const tag = categorizeEntry(entry.reason, entry.points);
-
-                return (
-                  <div
-                    key={index}
-                    className="bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-sm border border-white/50 hover:shadow-md transition-all duration-200"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <span
-                            className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold border ${getTagColor(
-                              tag
-                            )}`}
-                          >
-                            {getTagIcon(tag)}
-                            {t(tag)}
-                          </span>
-                        </div>
-                        <p className="text-sm font-semibold text-gray-800 mb-1">
-                          {entry.reason}
-                        </p>
-                        <p className="text-xs text-gray-500 flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {new Date(entry.timestamp).toLocaleDateString(
-                            "en-US",
-                            {
-                              month: "short",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }
-                          )}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <div
-                          className={`font-bold text-lg ${
-                            entry.points > 0 ? "text-green-600" : "text-red-600"
-                          }`}
-                        >
-                          {entry.points > 0 ? "+" : "-"}
-                          {Math.abs(entry.points)}
-                        </div>
-                        <span className="text-xs text-gray-500">
-                          {t("pts")}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              {recentEntries.map((entry,ind) => (
+                <div
+             
+                  key={ind}
+                  className="bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-sm border border-white/50 hover:shadow-md transition-all duration-200"
+                >
+           
+                  <PointsEntryItem entry={entry} t={t} />
+                </div>
+              ))}
             </div>
 
-            {/* View Full History Button */}
-            {userPoints.pointsHistory.length > 3 && (
+            {showFullHistoryButton && (
               <button
-                onClick={() => setIsModalOpen(true)}
+                onClick={openModal}
                 className="w-full mt-4 px-4 py-3 bg-gradient-to-r from-green-500 to-lime-500 text-white font-semibold rounded-xl hover:from-green-600 hover:to-lime-600 transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
               >
                 <Eye className="w-4 h-4" />
                 {t("viewFullHistory")}
                 <span className="bg-white/20 px-2 py-1 rounded-full text-xs">
-                  {userPointsLength} items
+                  {userPointsLength} {t("items")}
                 </span>
               </button>
             )}
@@ -367,10 +350,9 @@ export default function PointsActivity({
         )}
       </div>
 
-      {/* Modal */}
       <PointsHistoryModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={closeModal}
         t={t}
       />
     </>

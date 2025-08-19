@@ -93,7 +93,6 @@ export const useCart = () => {
   }
   return context;
 };
-
 const CART_SESSION_KEY = "guest_cart";
 const UNSYNCED_CART_KEY = "unsynced_cart";
 const SAVE_DEBOUNCE_MS = 800;
@@ -121,6 +120,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const { locale } = useLanguage();
   const userRole = user?.role === "buyer" ? "buyer" : "customer";
   const isLoggedIn = !!user?._id;
+const {t}=useLanguage()
 
   // Helper function to convert backend item to CartItem format
   // const convertBackendItemToCartItem = useCallback((backendItem: BackendItem, quantity: number = 1): CartItem => {
@@ -810,9 +810,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
           await updateCartState(updatedCart);
         }
 
-        toast.success(
-          `${validatedItem.name[locale]} added to cart successfully!`
-        );
+      toast.success(
+  t('toast.cart', { itemName: validatedItem.name[locale] })
+);
       } catch (err) {
         console.error("Failed to add to cart", err);
         toast.error("Failed to add item to cart");

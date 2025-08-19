@@ -61,7 +61,7 @@ export default function CategoryList({
   );
 
   // Early returns for loading and error states
-  if (isLoading) return <Loader title="categories" />;
+  if (isLoading) return <Loader title={t('loaders.Categories')}/>;
   if (error)
     return (
       <p className="text-red-500 text-center">Error loading categories.</p>

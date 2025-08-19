@@ -1,19 +1,67 @@
 "use client";
 
-import React, { Suspense, lazy } from "react";
+import React, { Suspense } from "react";
 import { useDashboardData } from "../../../hooks/useDashboardData";
 import { StatCard } from "./component/StatCard";
 import { ErrorBoundary } from "./component/errorboundary";
-import Loader from "@/components/common/loader";
 import { useLanguage } from "@/context/LanguageContext";
+import dynamic from "next/dynamic";
+import Loader from "@/components/common/Loader";
 
-// Lazy load chart components
-const UserGrowthChart = lazy(() => import("./charts/UserGrowthChart"));
-const OrderStatusChart = lazy(() => import("./charts/OrderStatusChart"));
-const TopRecyclersCard = lazy(() => import("./component/TopRecyclersCard"));
-const MaterialsChart = lazy(() => import("./charts/MaterialsChart"));
-const CitiesChart = lazy(() => import("./charts/CitiesChart"));
-const WeeklyOrdersChart = lazy(() => import("./charts/WeeklyOrdersChart"));
+// Replace React.lazy with Next.js dynamic imports
+const UserGrowthChart = dynamic(() => import("./charts/UserGrowthChart"), {
+  ssr: false,
+  loading: () => (
+    <div className="bg-white rounded-lg border h-64 sm:h-72 md:h-80 flex items-center justify-center">
+      <Loader />
+    </div>
+  )
+});
+
+const OrderStatusChart = dynamic(() => import("./charts/OrderStatusChart"), {
+  ssr: false,
+  loading: () => (
+    <div className="bg-white rounded-lg border h-64 sm:h-72 md:h-80 flex items-center justify-center">
+      <Loader />
+    </div>
+  )
+});
+
+const TopRecyclersCard = dynamic(() => import("./component/TopRecyclersCard"), {
+  ssr: false,
+  loading: () => (
+    <div className="bg-white rounded-lg border h-64 sm:h-72 md:h-80 flex items-center justify-center">
+      <Loader />
+    </div>
+  )
+});
+
+const MaterialsChart = dynamic(() => import("./charts/MaterialsChart"), {
+  ssr: false,
+  loading: () => (
+    <div className="bg-white rounded-lg border h-64 sm:h-72 md:h-80 flex items-center justify-center">
+      <Loader />
+    </div>
+  )
+});
+
+const CitiesChart = dynamic(() => import("./charts/CitiesChart"), {
+  ssr: false,
+  loading: () => (
+    <div className="bg-white rounded-lg border h-64 sm:h-72 md:h-80 flex items-center justify-center">
+      <Loader />
+    </div>
+  )
+});
+
+const WeeklyOrdersChart = dynamic(() => import("./charts/WeeklyOrdersChart"), {
+  ssr: false,
+  loading: () => (
+    <div className="bg-white rounded-lg border h-64 sm:h-72 md:h-80 flex items-center justify-center">
+      <Loader />
+    </div>
+  )
+});
 
 // Icons
 const OrdersIcon = () => (

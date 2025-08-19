@@ -515,7 +515,12 @@
     "orders": "Orders",
     "totalOrders": "Total Orders",
     "avgPerCity": "Avg per City",
-    "topCity": "Top City"
+    "topCity": "Top City",
+       "cairo": "Cairo",
+    "giza": "Giza",
+    "alexandria": "Alexandria",
+    "mansoura": "Mansoura",
+    "aswan": "Aswan"
   },
   "materials": {
     "category": "Category",
@@ -776,6 +781,11 @@
     "addToCollection": "Add to Collection"
   },
   "common": {
+
+    "back": "Back",
+    "currency": "EGP",
+    "next": "Next",
+    "loading" : "Loading",
     "sold": "sold",
     "viewAll": "view all",
     "piece": "piece",
@@ -826,6 +836,17 @@
       "ecoFriendly": "Eco-Friendly"
     }
   },
+    "loaders" : {
+"Categories" : "Categories",
+"recipet" : "Receipt",
+"transactions": "Transactions",
+"deliveryData" : "Delivery Data",
+"items" : "items",
+"info" :"your info",
+"reviews" :"reviews",
+"orders" :"orders",
+"payments" : "payments"
+  },
   "marketPlace": {
     "sustainableMarketplace": "Sustainable Marketplace",
     "marketPlaceDesc": "Discover recyclable items and earn rewards"
@@ -852,6 +873,9 @@
     "default": "Contributes to a cleaner environment",
     "environmentalImpact": "Environmental Impact"
   },
+"toast": {
+  "cart": "{{itemName}} added to cart successfully!"
+},
   "categoryStats": {
     "totalItems": "Total Items",
     "pointsRange": "Points Range",
@@ -964,5 +988,92 @@
     "paaper": {
       "news paper": "news paper"
     }
+  },
+  "redeemEcoPoints": "Redeem Eco Points",
+  "loading": "Loading...",
+  "points": "Points",
+  "vouchers": "Vouchers",
+  "cashOut": "Cash Out",
+  "pts": "pts",
+  "redeemed": "Redeemed",
+  "needMorePoints": "You need {{points}} more points",
+  "voucherSuccessfullyRedeemed": "Voucher successfully redeemed",
+  "amountToRedeem": "Amount to Redeem (EGP)",
+  "enterAmount": "Enter amount",
+  "currency": "EGP",
+  "requiredPoints": "Required points",
+  "remainingPoints": "Remaining points",
+  "notEnoughPointsForAmount": "You don't have enough points for this amount",
+  "exchangeRate": "Exchange Rate: 19 Points = 1 EGP",
+  "maxAvailable": "Max available: {{amount}} EGP",
+  "yourVoucherQR": "Your Voucher QR Code",
+  "downloadQR": "Download QR Code",
+  "alreadyRedeemed": "Already Redeemed",
+  "redeemVoucher": "Redeem Voucher",
+  "transferToAccount": "Transfer to Account",
+  "invalidAmount": "Invalid amount",
+  "notEnoughPoints": "You don't have enough points",
+  "success": "Success",
+  "cashbackRedeemed": "Cashback redeemed successfully!",
+  "error": "Error",
+  "couldNotDeductPoints": "Could not deduct points",
+  "selectVoucher": "Select a voucher",
+  "voucher": "Voucher",
+  "value": "Value",  "pointsHistory": "Points History",
+  "noPointsHistory": "No points history found",
+  "noActivity": "No recent activity",
+  "recentPointsActivity": "Recent Points Activity",
+  "viewFullHistory": "View Full History",
+  "redeem": "Redeem",
+  "cashback": "Cashback", 
+  "earn": "Earn",
+  "bonus": "Bonus",
+  "deduct": "Deduct",
+   "addresses": {
+    "noAddressesTitle": "No addresses yet",
+    "noAddressesDescription": "Add your first delivery address to get started",
+    "selected": "Selected",
+    "editAddress": "Edit Address",
+    "deleteAddress": "Delete Address",
+    "choose" : "Choose Your Address",
+    "select" : "Select or add a delivery address",
+    "addNew" : "Add New Address"
+  },
+  
+  "addressForm": {
+    "pickupAddress": "Pickup Address",
+    "selectCity": "Select your city",
+    "selectCityPlaceholder": "-- Select City --",
+    "selectArea": "Select your area",
+    "selectAreaPlaceholder": "-- Select Area --",
+    "streetAddress": "Street Address",
+    "streetPlaceholder": "e.g. El-Central street",
+    "nearestLandmark": "Nearest Landmark (optional)",
+    "landmarkPlaceholder": "e.g. El-Asdekaa Market",
+    "buildingNumber": "Building Number/Name",
+    "floorNumber": "Floor Number",
+    "apartmentNumber": "Apartment Number",
+    "additionalNote": "Additional Note",
+    "notesPlaceholder": "e.g. Don't ring the bell"
+  },
+   "validation": {
+    "areaRequired": "Area is required",
+    "streetRequired": "Street is required",
+    "buildingRequired": "Building is required",
+    "floorRequired": "Floor is required",
+    "apartmentRequired": "Apartment is required"
+  },
+  "review": {
+    "reviewYourOrder": "Review Your Order",
+    "cartEmpty": "Your cart is empty.",
+    "quantity": "Quantity",
+    "pricePerUnit": "Price per unit",
+    "points": "Points",
+    "orderPrice": "Order Price",
+    "deliveryFees": "Delivery Fees",
+    "total": "Total",
+    "processing": "Processing...",
+    "confirmOrder": "Confirm Order"
   }
+
 }

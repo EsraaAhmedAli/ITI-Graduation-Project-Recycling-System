@@ -16,12 +16,7 @@ export interface VerifyData {
 // Response after successful auth
 export interface AuthResponse {
   user: User;
-  accessToken?: string; // optional, because pending/declined delivery users don't get a token
-  deliveryStatus: "approved" | "pending" | "declined";
-  declineReason?: string;
-  declinedAt?: string;
-  canReapply?: boolean;
-  message?: string;
+  accessToken: string;
 }
 
 // Request to start signup (OTP sent to email)
@@ -40,12 +35,11 @@ export interface RegisterUserRequest {
   name: string;
   email: string;
   phoneNumber: string;
-  role: "none" | "customer" | "buyer" | "delivery";
+  role: "admin" | "customer" | "buyer" | "delivery";
   password?: string;
   provider?: string;
   imgUrl?: string;
   attachments?: Record<string, any>;
-  idToken?: string;
 }
 
 export const verifyOtp = async (
