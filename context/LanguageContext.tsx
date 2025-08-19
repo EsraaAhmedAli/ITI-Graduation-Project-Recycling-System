@@ -21,7 +21,8 @@ interface LanguageContextType {
   tAr: (key: string, params?: Record<string, any>) => string;
   dir: "ltr" | "rtl";
   isLoaded: boolean;
-  convertNumber: (value: number | string, locale?: Locale) => string;
+  convertNumber: (value: number | string, locale?: Locale) => string; // Add this
+  formatNumber: (value: number | string, locale?: Locale) => string; // Add this
 }
 
 const translations = {
@@ -36,7 +37,8 @@ const LanguageContext = createContext<LanguageContextType>({
   tAr: () => "",
   dir: "ltr",
   isLoaded: false,
-  convertNumber: (value: number | string, locale: Locale) => value.toString(),
+  convertNumber: (value: number | string, locale: Locale) => value.toString(), // dummy default
+  formatNumber: (value: number | string, locale: Locale) => value.toString(), // dummy default
 });
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
@@ -147,37 +149,26 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   };
 
   const dir = locale === "ar" ? "rtl" : "ltr";
-  const convertNumber = (value: number | string, loc?: Locale) => {
-    try {
-      return convertNumbers(value, loc ?? locale);
-    } catch (error) {
-      console.error('Number conversion error:', error);
-      return value.toString();
-    }
+  const convertNumber = (value: number | string, loc?: Locale) =>
+    convertNumbers(value, loc ?? locale);
+
+  const formatNumber = (value: number | string, loc?: Locale): string => {
+    return new Intl.NumberFormat(
+      (loc ?? locale) === "ar" ? "ar-EG" : "en-US"
+    ).format(Number(value));
   };
-
-  // Don't render children until context is properly initialized
-  if (!isMounted || !isLoaded) {
-    return (
-      <LanguageContext.Provider
-        value={{ 
-          locale: "en", 
-          setLocale: () => {}, 
-          t: (key) => key, 
-          tAr: (key) => key, 
-          dir: "ltr", 
-          isLoaded: false,
-          convertNumber: (value) => value.toString()
-        }}
-      >
-        {children}
-      </LanguageContext.Provider>
-    );
-  }
-
   return (
     <LanguageContext.Provider
-      value={{ locale, setLocale, t, tAr, dir, isLoaded, convertNumber }}
+      value={{
+        formatNumber,
+        locale,
+        setLocale,
+        t,
+        tAr,
+        dir,
+        isLoaded,
+        convertNumber,
+      }}
     >
       {children}
     </LanguageContext.Provider>

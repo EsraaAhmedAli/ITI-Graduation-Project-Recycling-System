@@ -11,17 +11,18 @@ let accessToken: string | null = null;
 export const setAccessToken = (token: string | null) => {
   accessToken = token;
 };
-// In lib/axios.ts
-export const refreshAccessToken = async (): Promise<{ accessToken: string }> => {
-  const response = await api.post("/auth/refresh");
+
+export const getAccessToken = () => accessToken;
+
+export async function refreshAccessToken(): Promise<{ accessToken: string }> {
+  const response = await api.post("/auth/refresh"); // backend returns new access token
   const { accessToken } = response.data;
+
   if (!accessToken) {
     throw new Error("No access token returned");
   }
   return { accessToken };
-};
-export const getAccessToken = () => accessToken;
-
+}
 // === Session ID (from localStorage or cookie) ===
 const getSessionId = () => {
   if (typeof window === "undefined") return null;
@@ -47,6 +48,8 @@ const processQueue = (error: any, token: string | null = null) => {
 api.interceptors.request.use((config) => {
   const token = getAccessToken();
   const sessionId = getSessionId();
+  console.log("BAKR IS HERE");
+  console.log("😢😢😢😢😢😢😢😢😢😢😢😢😢😢😢😢😢");
 
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
