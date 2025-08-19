@@ -6,6 +6,7 @@ import { City, FormInputs } from "@/components/Types/address.type";
 import { UseFormRegister, FieldErrors, UseFormSetValue } from "react-hook-form";
 import { cityAreas } from "./cityAreas";
 import Button from "@/components/common/Button";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface Props {
   register: UseFormRegister<FormInputs>;
@@ -16,6 +17,7 @@ interface Props {
   isValid: boolean;
   onCancel: () => void;
   onSubmit: () => void;
+  t: (key: string) => string; // Add t function to props
 }
 
 export default function AddressStep({
@@ -36,7 +38,7 @@ export default function AddressStep({
     setValue("city", newCity, { shouldValidate: true });
     setValue("area", "");
   };
-
+const{t}=useLanguage()
   return (
     <form
       role="form"
@@ -47,7 +49,7 @@ export default function AddressStep({
         <legend
           id="pickup-address-title"
           className="text-lg font-bold text-green-800 mb-4">
-          Pickup Address
+          {t('addressForm.pickupAddress')}
         </legend>
 
         <div className="grid grid-cols-1 gap-4">
@@ -55,7 +57,7 @@ export default function AddressStep({
             <label
               htmlFor="city"
               className="block text-sm font-semibold text-green-800 mb-1">
-              Select your city
+              {t('addressForm.selectCity')}
             </label>
             <Select
               id="city"
@@ -64,13 +66,13 @@ export default function AddressStep({
               aria-invalid={errors.city ? "true" : "false"}
               aria-describedby="city-error">
               <option disabled value="">
-                -- Select City --
+                {t('addressForm.selectCityPlaceholder')}
               </option>
-              <option value="Cairo">Cairo</option>
-              <option value="Giza">Giza</option>
-              <option value="Alexandria">Alexandria</option>
-              <option value="Mansoura">Mansoura</option>
-              <option value="Aswan">Aswan</option>
+              <option value="Cairo">{t('cities.cairo')}</option>
+              <option value="Giza">{t('cities.giza')}</option>
+              <option value="Alexandria">{t('cities.alexandria')}</option>
+              <option value="Mansoura">{t('cities.mansoura')}</option>
+              <option value="Aswan">{t('cities.aswan')}</option>
             </Select>
             <FormError id="city-error" message={errors.city?.message} />
           </div>
@@ -79,16 +81,16 @@ export default function AddressStep({
             <label
               htmlFor="area"
               className="block text-sm font-semibold text-green-800 mb-1">
-              Select your area
+              {t('addressForm.selectArea')}
             </label>
             <Select
               id="area"
-              {...register("area", { required: "Area is required" })}
+              {...register("area", { required: t('validation.areaRequired') })}
               disabled={!selectedCity}
               aria-invalid={errors.area ? "true" : "false"}
               aria-describedby="area-error">
               <option disabled value="">
-                -- Select Area --
+                {t('addressForm.selectAreaPlaceholder')}
               </option>
               {availableAreas.map((area) => (
                 <option key={area} value={area}>
@@ -103,12 +105,12 @@ export default function AddressStep({
             <label
               htmlFor="street"
               className="block text-sm font-semibold text-green-800 mb-1">
-              Street Address
+              {t('addressForm.streetAddress')}
             </label>
             <TextInput
               id="street"
-              {...register("street", { required: "Street is required" })}
-              placeholder="e.g. El-Central street"
+              {...register("street", { required: t('validation.streetRequired') })}
+              placeholder={t('addressForm.streetPlaceholder')}
               aria-invalid={errors.street ? "true" : "false"}
               aria-describedby="street-error"
             />
@@ -119,12 +121,12 @@ export default function AddressStep({
             <label
               htmlFor="landmark"
               className="block text-sm font-semibold text-green-800 mb-1">
-              Nearest Landmark (optional)
+              {t('addressForm.nearestLandmark')}
             </label>
             <TextInput
               id="landmark"
               {...register("landmark")}
-              placeholder="e.g. El-Asdekaa Market"
+              placeholder={t('addressForm.landmarkPlaceholder')}
             />
           </div>
 
@@ -133,11 +135,11 @@ export default function AddressStep({
               <label
                 htmlFor="building"
                 className="block text-sm font-semibold text-green-800 mb-1">
-                Building Number/Name
+                {t('addressForm.buildingNumber')}
               </label>
               <TextInput
                 id="building"
-                {...register("building", { required: "Building is required" })}
+                {...register("building", { required: t('validation.buildingRequired') })}
                 aria-invalid={errors.building ? "true" : "false"}
                 aria-describedby="building-error"
               />
@@ -150,11 +152,11 @@ export default function AddressStep({
               <label
                 htmlFor="floor"
                 className="block text-sm font-semibold text-green-800 mb-1">
-                Floor Number
+                {t('addressForm.floorNumber')}
               </label>
               <TextInput
                 id="floor"
-                {...register("floor", { required: "Floor is required" })}
+                {...register("floor", { required: t('validation.floorRequired') })}
                 aria-invalid={errors.floor ? "true" : "false"}
                 aria-describedby="floor-error"
               />
@@ -167,12 +169,12 @@ export default function AddressStep({
               <label
                 htmlFor="apartment"
                 className="block text-sm font-semibold text-green-800 mb-1">
-                Apartment Number
+                {t('addressForm.apartmentNumber')}
               </label>
               <TextInput
                 id="apartment"
                 {...register("apartment", {
-                  required: "Apartment is required",
+                  required: t('validation.apartmentRequired'),
                 })}
                 aria-invalid={errors.apartment ? "true" : "false"}
                 aria-describedby="apartment-error"
@@ -186,12 +188,12 @@ export default function AddressStep({
               <label
                 htmlFor="notes"
                 className="block text-sm font-semibold text-green-800 mb-1">
-                Additional Note
+                {t('addressForm.additionalNote')}
               </label>
               <TextInput
                 id="notes"
                 {...register("notes")}
-                placeholder="e.g. Don't ring the bell"
+                placeholder={t('addressForm.notesPlaceholder')}
               />
             </div>
           </div>
@@ -201,7 +203,7 @@ export default function AddressStep({
           <Button
             onClick={onCancel}
             className="border bg-red-700 text-white px-6 py-2 rounded-lg">
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={() => onSubmit()}
@@ -212,7 +214,7 @@ export default function AddressStep({
                 ? "bg-green-600 hover:bg-green-700 text-white"
                 : "bg-gray-300 text-gray-500 cursor-not-allowed"
             }`}>
-            Next
+            {t('common.next')}
           </Button>
         </div>
       </fieldset>

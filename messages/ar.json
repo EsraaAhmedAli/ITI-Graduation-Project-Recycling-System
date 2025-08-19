@@ -107,27 +107,20 @@
     "editProfile": "تعديل الملف الشخصي",
     "rewarding": "برنامج المكافآت",
     "pickup": "استلام"
-  },"toast": {
-  "cart": "! تمت إضافة {{itemName}} إلى سلة التسوق بنجاح"
-},
-  "loaders" : {
-"Categories" : "الفئات",
-"recipet" : "الايصال",
-"transactions": "المعاملات",
-"deliveryData" : "بيانات التسليم"
-,
-"items" : "الأشياء",
-"info" :"معلوماتك",
-"reviews" :"الاراء"
-,
-"orders" :"طلبات",
-"payments" : "المدفوعات"
-
-
-
-
-
-
+  },
+  "toast": {
+    "cart": "! تمت إضافة {{itemName}} إلى سلة التسوق بنجاح"
+  },
+  "loaders": {
+    "Categories": "الفئات",
+    "recipet": "الايصال",
+    "transactions": "المعاملات",
+    "deliveryData": "بيانات التسليم",
+    "items": "الأشياء",
+    "info": "معلوماتك",
+    "reviews": "الاراء",
+    "orders": "طلبات",
+    "payments": "المدفوعات"
   },
   "ecoAssist": {
     "welcome": {
@@ -607,7 +600,11 @@
     "addToCollection": "اضف لمجموعتك"
   },
   "common": {
-        "loading" : "جاري تحميل",
+
+    "back": "السابق",
+    "currency": "جنيه",
+    "next": "التالي",
+    "loading": "جاري تحميل",
 
     "sold": "مباعة",
     "viewAll": "شاهد الكل",
@@ -839,7 +836,12 @@
     "orders": "الطلبات",
     "totalOrders": "إجمالي الطلبات",
     "avgPerCity": "المتوسط لكل مدينة",
-    "topCity": "أفضل مدينة"
+    "topCity": "أفضل مدينة",
+       "cairo": "القاهرة",
+    "giza": "الجيزة",
+    "alexandria": "الإسكندرية",
+    "mansoura": "المنصورة",
+    "aswan": "أسوان"
   },
   "courier": {
     "assignedOrders": "الطلبات المخصصة",
@@ -923,7 +925,7 @@
       "news paper": "جرايد"
     }
   },
-   "redeemEcoPoints": "استبدال النقاط البيئية",
+  "redeemEcoPoints": "استبدال النقاط البيئية",
   "loading": "جارٍ التحميل...",
   "points": "نقاط",
   "vouchers": "قسائم",
@@ -954,7 +956,7 @@
   "voucher": "قسيمة",
   "value": "القيمة",
   "voucherReady": "قسيمتك جاهزة!",
-    "pointsHistory": "تاريخ النقاط",
+  "pointsHistory": "تاريخ النقاط",
   "noPointsHistory": "لا يوجد تاريخ نقاط",
   "noActivity": "لا يوجد نشاط حديث",
 
@@ -962,5 +964,52 @@
   "cashback": "استرداد نقدي",
   "earn": "كسب",
   "bonus": "مكافأة",
-  "deduct": "خصم"
+  "deduct": "خصم",
+  "addresses": {
+    "noAddressesTitle": "لا توجد عناوين بعد",
+    "noAddressesDescription": "أضف عنوان التوصيل الأول للبدء",
+    "selected": "محدد",
+    "editAddress": "تعديل العنوان",
+    "deleteAddress": "حذف العنوان",
+    "choose": "اختر عنوانا",
+    "select": "اختر او اضف عنوان للتوصيل",
+        "addNew" : "اضف عنوان جديد"
+
+  },
+  "addressForm": {
+    "pickupAddress": "عنوان الاستلام",
+    "selectCity": "اختر مدينتك",
+    "selectCityPlaceholder": "-- اختر المدينة --",
+    "selectArea": "اختر منطقتك",
+    "selectAreaPlaceholder": "-- اختر المنطقة --",
+    "streetAddress": "عنوان الشارع",
+    "streetPlaceholder": "مثال: شارع الوسطى",
+    "nearestLandmark": "أقرب معلم (اختياري)",
+    "landmarkPlaceholder": "مثال: سوق الأصدقاء",
+    "buildingNumber": "رقم/اسم المبنى",
+    "floorNumber": "رقم الطابق",
+    "apartmentNumber": "رقم الشقة",
+    "additionalNote": "ملاحظة إضافية",
+    "notesPlaceholder": "مثال: لا تدق الجرس"
+  },
+
+  "validation": {
+    "areaRequired": "المنطقة مطلوبة",
+    "streetRequired": "الشارع مطلوب",
+    "buildingRequired": "المبنى مطلوب",
+    "floorRequired": "الطابق مطلوب",
+    "apartmentRequired": "الشقة مطلوبة"
+  },
+   "review": {
+    "reviewYourOrder": "راجع طلبك",
+    "cartEmpty": "عربة التسوق فارغة.",
+    "quantity": "الكمية",
+    "pricePerUnit": "السعر للوحدة",
+    "points": "النقاط",
+    "orderPrice": "سعر الطلب",
+    "deliveryFees": "رسوم التوصيل",
+    "total": "المجموع",
+    "processing": "جاري المعالجة...",
+    "confirmOrder": "تأكيد الطلب"
+  }
 }

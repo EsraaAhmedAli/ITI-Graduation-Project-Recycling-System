@@ -11,7 +11,7 @@ import { useUserAuth } from "@/context/AuthFormContext";
 import { Badge } from "flowbite-react";
 import { useGetItems } from "@/hooks/useGetItems";
 import { useItemSocket } from "@/hooks/useItemSocket";
-import dynamic from "next/dynamic";
+import LazyPagination from "@/components/common/lazyPagination";
 
 interface Item {
   _id: string;
@@ -47,11 +47,7 @@ interface MarketplaceClientProps {
   initialData: ServerData;
 }
 
-// Dynamically import heavy components to reduce initial bundle
-const LazyPagination = dynamic(() => import('../../../../components/common/lazyPagination'), {
-  ssr: false,
-  loading: () => <div className="h-10 w-64 mx-auto bg-gray-100 rounded animate-pulse" />
-});
+
 
 // Preload critical images using requestIdleCallback
 const preloadCriticalImages = (items: Item[]) => {

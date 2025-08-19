@@ -2,20 +2,12 @@
 import React, { memo, Suspense } from "react";
 import Loader from "@/components/common/Loader";
 
-import dynamic from "next/dynamic";
 import OrderCardSkeleton from "./orderSkeleton";
 import OrderCard from "./orderCard";
+import ReviewsTab from "./ReviewTabs";
+import PaymentsHistory from "./paymentHistory";
 
-// Dynamic imports
-const PaymentsHistory = dynamic(() => import("./paymentHistory"), {
-  loading: () => <Loader title="Loading payments..." />,
-  ssr: false
-});
 
-const ReviewsTab = dynamic(() => import("@/components/profile/ReviewTabs"), {
-  loading: () => <Loader title="Loading reviews..." />,
-  ssr: false
-});
 
 interface TabContentProps {
   activeTab: string;

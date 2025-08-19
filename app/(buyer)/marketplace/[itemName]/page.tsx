@@ -11,7 +11,6 @@ import {
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
-import dynamic from "next/dynamic";
 import api from "@/lib/axios";
 import { useCart } from "@/context/CartContext";
 import { CartItem } from "@/models/cart";
@@ -21,14 +20,6 @@ import { useCategories } from "@/hooks/useGetCategories";
 import toast from "react-hot-toast";
 
 // Lazy load heavy components
-const LazyLoader = dynamic(() => import("@/components/common/Loader"), {
-  ssr: false,
-  loading: () => (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-    </div>
-  ),
-});
 
 interface Item {
   _id: string;
@@ -704,9 +695,7 @@ export default function ItemDetailsPage() {
   ]);
 
   // Loading state
-  if (isLoading) {
-    return <LazyLoader title="items" />;
-  }
+
 
   // Error state
   if (isError || !item) {

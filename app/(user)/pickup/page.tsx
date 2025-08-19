@@ -400,23 +400,23 @@ export default function PickupConfirmation() {
                   <MapPin className="w-8 h-8 text-white" />
                 </div>
                 <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-                  Choose Your Address
+                  {t('addresses.choose')}
                 </h2>
                 <p className="text-gray-600">
-                  Select or add a delivery address
+                  {t('addresses.select')}
                 </p>
               </div>
 
               {/* Address Grid */}
-              <div className="grid gap-6">
+      <div className="grid gap-6">
                 {addresses.length === 0 ? (
                   <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded-3xl border border-gray-200">
                     <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                      No addresses yet
+                      {t('addresses.noAddressesTitle')}
                     </h3>
                     <p className="text-gray-600 mb-6">
-                      Add your first delivery address to get started
+                      {t('addresses.noAddressesDescription')}
                     </p>
                   </div>
                 ) : (
@@ -477,7 +477,7 @@ export default function PickupConfirmation() {
                                 </h3>
                                 {selectedAddress?._id === addr._id && (
                                   <span className="bg-emerald-100 text-emerald-700 text-xs font-medium px-2 py-1 rounded-full">
-                                    Selected
+                                    {t('addresses.selected')}
                                   </span>
                                 )}
                               </div>
@@ -512,7 +512,7 @@ export default function PickupConfirmation() {
                                 handleEditAddress(addr);
                               }}
                               className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200 opacity-0 group-hover:opacity-100"
-                              title="Edit Address"
+                              title={t('addresses.editAddress')}
                             >
                               <Edit3 className="w-4 h-4" />
                             </button>
@@ -522,7 +522,7 @@ export default function PickupConfirmation() {
                                 handleDeleteAddress(addr._id.toString());
                               }}
                               className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200 opacity-0 group-hover:opacity-100"
-                              title="Delete Address"
+                              title={t('addresses.deleteAddress')}
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -570,7 +570,7 @@ export default function PickupConfirmation() {
                   <div className="p-1 rounded-lg bg-gray-100 group-hover:bg-blue-100 transition-colors duration-300">
                     <Plus className="w-5 h-5" />
                   </div>
-                  Add New Address
+                {t('addresses.addNew')}
                 </button>
 
                 <Button
@@ -582,7 +582,7 @@ export default function PickupConfirmation() {
                       : "bg-gray-200 text-gray-500 cursor-not-allowed"
                   }`}
                 >
-                  Continue
+                  {t('ewallet.withdraw.buttons.continue')}
                   <ChevronRight className="w-5 h-5" />
                 </Button>
               </div>

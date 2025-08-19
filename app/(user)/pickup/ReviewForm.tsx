@@ -2,8 +2,9 @@ import Button from "@/components/common/Button";
 import { FormInputs } from "@/components/Types/address.type";
 import Image from "next/image";
 import { deliveryFees } from "@/constants/deliveryFees";
-import { useLanguage } from "@/context/LanguageContext"; // Add this import
+import { useLanguage } from "@/context/LanguageContext";
 import { CartItem } from "@/models/cart";
+
 interface ReviewProps {
   onBack: () => void;
   onConfirm: () => void;
@@ -21,9 +22,8 @@ export default function Review({
   cartItems,
   formData,
   userRole,
-  paymentMethod,
 }: ReviewProps) {
-  const { locale } = useLanguage(); // Get current locale
+  const { locale, t } = useLanguage(); // Get both locale and t function
 
   // Helper function to get display name
   const getDisplayName = (
@@ -47,11 +47,13 @@ export default function Review({
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-green-700">Review Your Order</h2>
+      <h2 className="text-xl font-bold text-green-700">
+        {t('review.reviewYourOrder')}
+      </h2>
 
       <div className="bg-green-50 rounded-lg p-4 space-y-4">
         {cartItems.length === 0 ? (
-          <p className="text-green-900">Your cart is empty.</p>
+          <p className="text-green-900">{t('review.cartEmpty')}</p>
         ) : (
           <>
             {cartItems.map((item, idx) => (
@@ -71,17 +73,17 @@ export default function Review({
                     {getDisplayName(item.name)} {/* Fixed: Use display name */}
                   </h3>
                   <p className="text-sm text-gray-600">
-                    Quantity:{" "}
+                    {t('review.quantity')}:{" "}
                     <span className="text-green-700">{item.quantity}</span>
                   </p>
                   <p className="text-sm text-gray-600">
-                    Price per unit:{" "}
+                    {t('review.pricePerUnit')}:{" "}
                     <span className="text-green-700">
-                      {item.price.toFixed(2)} EGP
+                      {item.price.toFixed(2)} {t('common.currency')}
                     </span>
                   </p>
                   <p className="text-sm text-gray-600">
-                    Points:{" "}
+                    {t('review.points')}:{" "}
                     <span className="text-green-700">{item.points}</span>
                   </p>
                 </div>
@@ -95,19 +97,19 @@ export default function Review({
                 <>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-500 text-sm md:text-base">
-                      Order Price:
+                      {t('review.orderPrice')}:
                     </span>
                     <span className="font-medium text-gray-700">
-                      {subtotal.toFixed(2)} EGP
+                      {subtotal.toFixed(2)} {t('common.currency')}
                     </span>
                   </div>
 
                   <div className="flex justify-between items-center">
                     <span className="text-gray-500 text-sm md:text-base">
-                      Delivery Fees:
+                      {t('review.deliveryFees')}:
                     </span>
                     <span className="font-medium text-gray-700">
-                      {deliveryFee.toFixed(2)} EGP
+                      {deliveryFee.toFixed(2)} {t('common.currency')}
                     </span>
                   </div>
                 </>
@@ -116,10 +118,10 @@ export default function Review({
               {/* Always show total */}
               <div className="flex justify-between items-center border-t border-gray-200 pt-4 mt-2">
                 <span className="text-lg font-semibold text-green-600">
-                  Total:
+                  {t('review.total')}:
                 </span>
                 <span className="text-lg font-bold text-green-600">
-                  {total.toFixed(2)} EGP
+                  {total.toFixed(2)} {t('common.currency')}
                 </span>
               </div>
             </div>
@@ -130,7 +132,7 @@ export default function Review({
                 onClick={onBack}
                 className="bg-red-600 px-6 py-2 rounded-lg"
               >
-                Back
+                {t('common.back')}
               </Button>
 
               <Button
@@ -138,7 +140,7 @@ export default function Review({
                 onClick={onConfirm}
                 className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg"
               >
-                {loading ? "Processing..." : "Confirm Order"}
+                {loading ? t('review.processing') : t('review.confirmOrder')}
               </Button>
             </div>
           </>

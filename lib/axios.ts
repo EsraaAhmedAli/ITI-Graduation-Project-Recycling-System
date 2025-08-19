@@ -1,5 +1,4 @@
 import axios from "axios";
-import { refreshAccessToken } from "./auth";
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
@@ -12,7 +11,15 @@ let accessToken: string | null = null;
 export const setAccessToken = (token: string | null) => {
   accessToken = token;
 };
-
+// In lib/axios.ts
+export const refreshAccessToken = async (): Promise<{ accessToken: string }> => {
+  const response = await api.post("/auth/refresh");
+  const { accessToken } = response.data;
+  if (!accessToken) {
+    throw new Error("No access token returned");
+  }
+  return { accessToken };
+};
 export const getAccessToken = () => accessToken;
 
 // === Session ID (from localStorage or cookie) ===
@@ -121,5 +128,6 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
 
 export default api;

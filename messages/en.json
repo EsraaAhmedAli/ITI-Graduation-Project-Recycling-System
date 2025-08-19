@@ -458,7 +458,12 @@
     "orders": "Orders",
     "totalOrders": "Total Orders",
     "avgPerCity": "Avg per City",
-    "topCity": "Top City"
+    "topCity": "Top City",
+       "cairo": "Cairo",
+    "giza": "Giza",
+    "alexandria": "Alexandria",
+    "mansoura": "Mansoura",
+    "aswan": "Aswan"
   },
   "materials": {
     "category": "Category",
@@ -719,6 +724,10 @@
     "addToCollection": "Add to Collection"
   },
   "common": {
+
+    "back": "Back",
+    "currency": "EGP",
+    "next": "Next",
     "loading" : "Loading",
     "sold": "sold",
     "viewAll": "view all",
@@ -962,6 +971,52 @@
   "cashback": "Cashback", 
   "earn": "Earn",
   "bonus": "Bonus",
-  "deduct": "Deduct"
+  "deduct": "Deduct",
+   "addresses": {
+    "noAddressesTitle": "No addresses yet",
+    "noAddressesDescription": "Add your first delivery address to get started",
+    "selected": "Selected",
+    "editAddress": "Edit Address",
+    "deleteAddress": "Delete Address",
+    "choose" : "Choose Your Address",
+    "select" : "Select or add a delivery address",
+    "addNew" : "Add New Address"
+  },
+  
+  "addressForm": {
+    "pickupAddress": "Pickup Address",
+    "selectCity": "Select your city",
+    "selectCityPlaceholder": "-- Select City --",
+    "selectArea": "Select your area",
+    "selectAreaPlaceholder": "-- Select Area --",
+    "streetAddress": "Street Address",
+    "streetPlaceholder": "e.g. El-Central street",
+    "nearestLandmark": "Nearest Landmark (optional)",
+    "landmarkPlaceholder": "e.g. El-Asdekaa Market",
+    "buildingNumber": "Building Number/Name",
+    "floorNumber": "Floor Number",
+    "apartmentNumber": "Apartment Number",
+    "additionalNote": "Additional Note",
+    "notesPlaceholder": "e.g. Don't ring the bell"
+  },
+   "validation": {
+    "areaRequired": "Area is required",
+    "streetRequired": "Street is required",
+    "buildingRequired": "Building is required",
+    "floorRequired": "Floor is required",
+    "apartmentRequired": "Apartment is required"
+  },
+  "review": {
+    "reviewYourOrder": "Review Your Order",
+    "cartEmpty": "Your cart is empty.",
+    "quantity": "Quantity",
+    "pricePerUnit": "Price per unit",
+    "points": "Points",
+    "orderPrice": "Order Price",
+    "deliveryFees": "Delivery Fees",
+    "total": "Total",
+    "processing": "Processing...",
+    "confirmOrder": "Confirm Order"
+  }
 
 }
