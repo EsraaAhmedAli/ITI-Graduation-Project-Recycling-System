@@ -2,8 +2,9 @@
 
 import { useParams } from "next/navigation";
 import { useState, useMemo } from "react";
-import { CartItem, useCart } from "@/context/CartContext";
-import Loader from "@/components/common/Loader";
+import { useCart } from "@/context/CartContext";
+import { CartItem } from "@/models/cart";
+import Loader from "@/components/common/loader";
 import { Recycle, Plus, Sparkles } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios";
@@ -32,7 +33,14 @@ interface LocalizedItem {
 }
 
 export default function UserCategoryPage() {
-  const { getDisplayName, getEnglishName, getMeasurementUnit, formatCurrency, t, locale } = useLocalization();
+  const {
+    getDisplayName,
+    getEnglishName,
+    getMeasurementUnit,
+    formatCurrency,
+    t,
+    locale,
+  } = useLocalization();
 
   const params = useParams();
   const categoryName = decodeURIComponent(params.name as string);
@@ -43,9 +51,11 @@ export default function UserCategoryPage() {
     queryKey: ["subcategory", categoryName, locale], // Include locale for proper caching
     queryFn: async () => {
       const res = await api.get(
-        `/categories/get-items/${encodeURIComponent(categoryName)}?language=${locale}`
+        `/categories/get-items/${encodeURIComponent(
+          categoryName
+        )}?language=${locale}`
       );
-      
+
       // Backend should return localized items with displayName and categoryDisplayName
       return res.data.data;
     },
@@ -61,10 +71,10 @@ export default function UserCategoryPage() {
 
   const categoryStats = useMemo(() => {
     if (!data || data.length === 0) return null;
-    
+
     const points = data.map((item) => item.points);
     const categoryDisplayName = data[0]?.categoryDisplayName || categoryName;
-    
+
     return {
       totalItems: data.length,
       categoryDisplayName,
@@ -72,47 +82,51 @@ export default function UserCategoryPage() {
     };
   }, [data, categoryName]);
 
- const handleAddToCollection = async (item: LocalizedItem) => {
-  try {
-    // Get both English and Arabic names
-    const englishItemName = typeof item.name === 'string' ? item.name : item.name?.en || '';
-    const arabicItemName = typeof item.name === 'string' ? '' : item.name?.ar || '';
-    
-    // Get category ID using English name (as you prefer)
-    const categoryId = getCategoryIdByItemName(englishItemName);
+  const handleAddToCollection = async (item: LocalizedItem) => {
+    try {
+      // Get both English and Arabic names
+      const englishItemName =
+        typeof item.name === "string" ? item.name : item.name?.en || "";
+      const arabicItemName =
+        typeof item.name === "string" ? "" : item.name?.ar || "";
 
-    // Get category names (handle both string and object cases)
-    const categoryNameEn = typeof item.categoryName === 'string' 
-      ? item.categoryName 
-      : item.categoryName?.en || '';
-    const categoryNameAr = typeof item.categoryName === 'string' 
-      ? '' 
-      : item.categoryName?.ar || '';
+      // Get category ID using English name (as you prefer)
+      const categoryId = getCategoryIdByItemName(englishItemName);
 
-    const cartItem: CartItem = {
-      _id: item._id,
-      categoryId: categoryId,
-      categoryName: {
-        en: categoryNameEn,
-        ar: categoryNameAr
-      },
-      name: {
-        en: englishItemName,
-        ar: arabicItemName
-      },
-      image: item.image,
-      points: item.points,
-      price: item.price,
-      measurement_unit: item.measurement_unit,
-      quantity: item.measurement_unit === 1 ? 0.25 : 1,
-    };
+      // Get category names (handle both string and object cases)
+      const categoryNameEn =
+        typeof item.categoryName === "string"
+          ? item.categoryName
+          : item.categoryName?.en || "";
+      const categoryNameAr =
+        typeof item.categoryName === "string"
+          ? ""
+          : item.categoryName?.ar || "";
 
-    await addToCart(cartItem);
-  } catch (error) {
-    console.error("Add to cart failed:", error);
-    // Optional: Add user feedback here (toast, alert, etc.)
-  }
-};
+      const cartItem: CartItem = {
+        _id: item._id,
+        categoryId: categoryId,
+        categoryName: {
+          en: categoryNameEn,
+          ar: categoryNameAr,
+        },
+        name: {
+          en: englishItemName,
+          ar: arabicItemName,
+        },
+        image: item.image,
+        points: item.points,
+        price: item.price,
+        measurement_unit: item.measurement_unit,
+        quantity: item.measurement_unit === 1 ? 0.25 : 1,
+      };
+
+      await addToCart(cartItem);
+    } catch (error) {
+      console.error("Add to cart failed:", error);
+      // Optional: Add user feedback here (toast, alert, etc.)
+    }
+  };
   const getMeasurementText = (unit: number) => {
     return unit === 1 ? t("itemsModal.perKg") : t("itemsModal.perItem");
   };
@@ -155,8 +169,13 @@ export default function UserCategoryPage() {
                 </span>
               </div>
               <p className="text-slate-600 mb-3 text-sm">
-                {t("categoryStats.estimatedImpact")}: {/* You can add impact data to backend too */}
-                {t(`environmentalImpact.${getEnglishName({ name: categoryStats.categoryDisplayName }).toLowerCase()}`)}
+                {t("categoryStats.estimatedImpact")}:{" "}
+                {/* You can add impact data to backend too */}
+                {t(
+                  `environmentalImpact.${getEnglishName({
+                    name: categoryStats.categoryDisplayName,
+                  }).toLowerCase()}`
+                )}
               </p>
 
               <div className="flex flex-wrap gap-3 text-xs">
@@ -178,7 +197,8 @@ export default function UserCategoryPage() {
           {data!.map((item) => (
             <div
               key={item._id}
-              className="group bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300 hover:-translate-y-1">
+              className="group bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300 hover:-translate-y-1"
+            >
               {/* Image Container */}
               <div className="relative bg-gradient-to-br from-slate-100 to-slate-50">
                 <div className="relative w-full h-40">
@@ -222,7 +242,8 @@ export default function UserCategoryPage() {
                 <button
                   onClick={() => handleAddToCollection(item)}
                   disabled={loadingItemId === item._id}
-                  className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white py-2 px-3 rounded-xl font-semibold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm hover:shadow-md group/button">
+                  className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white py-2 px-3 rounded-xl font-semibold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm hover:shadow-md group/button"
+                >
                   {loadingItemId === item._id ? (
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
@@ -249,7 +270,10 @@ export default function UserCategoryPage() {
               {t("common.noItemsAvailable") || "No items available"}
             </h3>
             <p className="text-slate-500 max-w-md mx-auto">
-              {t("common.workingOnAddingItems") || `We're working on adding more recyclable ${categoryStats?.categoryDisplayName || categoryName} items. Check back soon for new additions!`}
+              {t("common.workingOnAddingItems") ||
+                `We're working on adding more recyclable ${
+                  categoryStats?.categoryDisplayName || categoryName
+                } items. Check back soon for new additions!`}
             </p>
           </div>
         )}
