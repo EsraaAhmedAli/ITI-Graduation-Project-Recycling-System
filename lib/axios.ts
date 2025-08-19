@@ -48,6 +48,8 @@ const processQueue = (error: any, token: string | null = null) => {
 api.interceptors.request.use((config) => {
   const token = getAccessToken();
   const sessionId = getSessionId();
+  console.log("BAKR IS HERE");
+  console.log("😢😢😢😢😢😢😢😢😢😢😢😢😢😢😢😢😢");
 
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
