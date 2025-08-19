@@ -518,7 +518,7 @@ export default function Page() {
                           <Image
                             width={40}
                             height={40}
-                            src={user?.attachments?.deliveryImage || ""}
+                            src={user?.attachments?.deliveryImage}
                             alt="User Profile"
                             className="w-10 h-10 rounded-full object-cover"
                           />
