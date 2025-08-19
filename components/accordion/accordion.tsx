@@ -255,10 +255,12 @@ export default function PointsActivity({
 
   if (!userPoints || !userPoints.pointsHistory?.length) {
     return (
-      <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-2xl shadow-sm border border-gray-200">
-        <div className="text-center py-8">
-          <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-          <p className="text-gray-500 font-medium">{t("noActivity")}</p>
+      <div className="bg-gradient-to-br from-gray-50 to-gray-100 w-full max-h-[150px] p-3 rounded-xl shadow-sm border border-gray-200 flex items-center justify-center">
+        <div className="flex items-center gap-5">
+          <Calendar className="w-5 h-5 text-primary mx-auto mb-2" />
+          <p className="text-gray-500 text-sm font-medium">
+            {t("profile.noActivity")}
+          </p>
         </div>
       </div>
     );

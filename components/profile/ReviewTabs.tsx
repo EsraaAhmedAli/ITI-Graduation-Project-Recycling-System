@@ -37,7 +37,11 @@ interface ReviewsTabProps {
   onDeleteReview: (orderId: string) => void;
 }
 
-export default function ReviewsTab({ userReviews, onEditReview, onDeleteReview }: ReviewsTabProps) {
+export default function ReviewsTab({
+  userReviews,
+  onEditReview,
+  onDeleteReview,
+}: ReviewsTabProps) {
   const { t } = useLanguage();
   const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null);
 
@@ -56,14 +60,20 @@ export default function ReviewsTab({ userReviews, onEditReview, onDeleteReview }
   };
 
   const handleDeleteReview = async (orderId: string) => {
-    if (window.confirm("Are you sure you want to delete this review? This action cannot be undone.")) {
+    if (
+      window.confirm(
+        "Are you sure you want to delete this review? This action cannot be undone."
+      )
+    ) {
       setDeletingReviewId(orderId);
       try {
         await onDeleteReview(orderId);
         toast.success("Review deleted successfully!");
       } catch (error: any) {
         // Handle the error messages from the ReviewManager
-        toast.error(error.message || "Failed to delete review. Please try again.");
+        toast.error(
+          error.message || "Failed to delete review. Please try again."
+        );
       } finally {
         setDeletingReviewId(null);
       }
@@ -74,10 +84,8 @@ export default function ReviewsTab({ userReviews, onEditReview, onDeleteReview }
     return (
       <div className="text-center py-8 text-gray-500">
         <Star size={48} className="mx-auto mb-3 text-gray-300" />
-        <p>No reviews yet</p>
-        <p className="text-sm">
-          Complete an order and rate it to see your reviews here
-        </p>
+        <p>{t("profile.noReveiws")}</p>
+        <p className="text-sm">{t("profile.noReveiwsSub")}</p>
       </div>
     );
   }
@@ -110,7 +118,9 @@ export default function ReviewsTab({ userReviews, onEditReview, onDeleteReview }
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => onEditReview(createMockOrderFromReview(review))}
+                    onClick={() =>
+                      onEditReview(createMockOrderFromReview(review))
+                    }
                     className="text-blue-600 hover:text-blue-800 p-1 hover:bg-blue-100 rounded-full transition-colors"
                     title="Edit Review"
                   >
@@ -149,9 +159,7 @@ export default function ReviewsTab({ userReviews, onEditReview, onDeleteReview }
               </div>
 
               {review.comment && (
-                <p className="text-sm text-gray-700 italic">
-                  {review.comment}
-                </p>
+                <p className="text-sm text-gray-700 italic">{review.comment}</p>
               )}
             </div>
           ))}

@@ -259,16 +259,16 @@ export default function FilterDrawer({
   };
 
   return (
-    <div className="inline-block text-left">
+    <div className="inline-block text-left rtl:text-right">
       <button
         onClick={() => setIsOpen((prev) => !prev)}
         className={`flex items-center justify-between gap-2 px-4 py-2 rounded-md shadow-sm text-sm min-w-[140px] border transition-colors
-    ${
-      selectedCount > 0
-        ? "bg-green-600 text-white border-green-600 hover:bg-green-700"
-        : "bg-white text-green-700 border-green-600 hover:bg-green-50"
-    }
-  `}
+      ${
+        selectedCount > 0
+          ? "bg-green-600 text-white border-green-600 hover:bg-green-700"
+          : "bg-white text-green-700 border-green-600 hover:bg-green-50"
+      }
+    `}
       >
         <Filter className="w-4 h-4" />
         <span className="whitespace-nowrap">Filters</span>
@@ -278,21 +278,20 @@ export default function FilterDrawer({
             {selectedCount}
           </span>
         )}
-        <ChevronDown className="w-4 h-4" />
+        <ChevronDown className="w-4 h-4 rtl:rotate-180" />
       </button>
-
-      {/* Trigger Button */}
 
       {isOpen && (
         <div
-          className="fixed mt-2 right-5 z-50 min-w-[180px]   bg-white border border-green-200 rounded-xl shadow-xl 
-                 p-4 animate-slide-down"
+          className="fixed mt-2 right-5 z-50 min-w-[180px] bg-white border border-green-200 rounded-xl shadow-xl 
+               p-4 animate-slide-down
+               rtl:right-auto rtl:left-5"
         >
           {/* Header */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 rtl:flex-row-reverse">
             <h3 className="text-base font-semibold text-gray-800">Filters</h3>
 
-            <div className="flex items-center gap-2 text-sm">
+            <div className="flex items-center gap-2 text-sm rtl:flex-row-reverse">
               {selectedCount > 0 && (
                 <button
                   onClick={clearAll}
@@ -316,7 +315,7 @@ export default function FilterDrawer({
               <div key={filter.name} className="border-b pb-4 last:border-0">
                 <button
                   onClick={() => toggleGroup(filter.name)}
-                  className="flex justify-between items-center w-full"
+                  className="flex justify-between items-center w-full rtl:flex-row-reverse"
                 >
                   <span className="font-medium">{filter.title}</span>
                   {expandedGroups[filter.name] ? (

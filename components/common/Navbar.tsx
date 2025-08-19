@@ -227,7 +227,7 @@ export default function Navbar() {
                             {item.image ? (
                               <Link
                                 href={`/category/${encodeURIComponent(
-                                  item.categoryName
+                                  item.categoryName[locale]
                                 )}`}
                                 onClick={() => setIsCartOpen(false)}
                               >
@@ -235,7 +235,7 @@ export default function Navbar() {
                                   height={24}
                                   width={24}
                                   src={item.image}
-                                  alt={item.name || "Item"}
+                                  alt={item.name[locale] || "Item"}
                                   className="w-full h-full object-contain"
                                 />
                               </Link>
@@ -247,10 +247,10 @@ export default function Navbar() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-gray-900 dark:text-white text-xs truncate">
-                              {"itemName"}
+                              {item.name[locale]}
                             </p>
                             <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">
-                              {"caregname"}
+                              {item.categoryName[locale]}
                             </p>
                             <div className="flex items-center gap-2 mt-0.5">
                               <p className="text-gray-400 dark:text-gray-500 text-xs">
@@ -377,7 +377,9 @@ export default function Navbar() {
               <div className="relative" ref={profileRef}>
                 <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="flex items-center gap-1 p-1 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200"
+                  className={`flex items-center gap-1 p-1 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200 ${
+                    locale === "ar" ? "flex-row-reverse gap-x-1" : ""
+                  }`}
                 >
                   <div className="relative">
                     {user.imgUrl ? (
@@ -394,12 +396,22 @@ export default function Navbar() {
                       </div>
                     )}
                   </div>
-                  <ChevronDown className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                  <ChevronDown
+                    className={`w-4 h-4 text-gray-400 dark:text-gray-500`}
+                  />
                 </button>
 
                 {/* Profile Dropdown */}
                 {isProfileOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                  <div
+                    className="
+  absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50
+  max-w-[calc(100vw-2rem)]  // Ensures it doesn't exceed screen width with padding
+  mx-2                      // Adds horizontal margin
+  transform -translate-x-2   // Adjusts for RTL positioning
+  rtl:right-auto rtl:left-0 rtl:transform rtl:translate-x-2 // RTL specific styles
+"
+                  >
                     <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
                       <div className="flex items-center gap-3">
                         <div className="relative">
@@ -454,16 +466,18 @@ export default function Navbar() {
                         </span>
                       </Link>
                       <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
-                      <Link
-                        href="/profile/ewallet"
-                        onClick={() => setIsProfileOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
-                      >
-                        <Wallet className="w-4 h-4" />
-                        <span className="text-xs font-medium">
-                          {t("navbar.ewallet")}
-                        </span>
-                      </Link>
+                      {user.role === "customer" && (
+                        <Link
+                          href="/profile/ewallet"
+                          onClick={() => setIsProfileOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                        >
+                          <Wallet className="w-4 h-4" />
+                          <span className="text-xs font-medium">
+                            {t("navbar.ewallet")}
+                          </span>
+                        </Link>
+                      )}
                       <div className="border-t border-gray-100 my-1"></div>{" "}
                       {/* Reduced margin */}
                       <button

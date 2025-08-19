@@ -118,7 +118,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const isInitialized = useRef(false);
   const pendingGuestCart = useRef<CartItem[]>([]);
   const pendingUserCart = useRef<CartItem[]>([]);
-const{locale}=useLanguage()
+  const { locale } = useLanguage();
   const userRole = user?.role === "buyer" ? "buyer" : "customer";
   const isLoggedIn = !!user?._id;
 
@@ -139,15 +139,18 @@ const{locale}=useLanguage()
   // }, []);
 
   // Helper function to get all items from categories
-  const getAllItemsFromCategories = useCallback((categories: BackendCategory[]): BackendItem[] => {
-    const allItems: BackendItem[] = [];
-    categories.forEach(category => {
-      if (category.items && Array.isArray(category.items)) {
-        allItems.push(...category.items);
-      }
-    });
-    return allItems;
-  }, []);
+  const getAllItemsFromCategories = useCallback(
+    (categories: BackendCategory[]): BackendItem[] => {
+      const allItems: BackendItem[] = [];
+      categories.forEach((category) => {
+        if (category.items && Array.isArray(category.items)) {
+          allItems.push(...category.items);
+        }
+      });
+      return allItems;
+    },
+    []
+  );
 
   // Session storage helpers with error handling
   const saveCartToSession = useCallback((cartItems: CartItem[]) => {
@@ -182,31 +185,31 @@ const{locale}=useLanguage()
     }
   }, []);
 
- const saveCartToDatabase = useCallback(
-  async (cartItems: CartItem[]) => {
-    if (!isLoggedIn) return;
+  const saveCartToDatabase = useCallback(
+    async (cartItems: CartItem[]) => {
+      if (!isLoggedIn) return;
 
-    try {
-      // Ensure all items have proper bilingual structure
-      const validatedItems = cartItems.map(item => ({
-        ...item,
-        // No transformation needed if your createCartItem already creates proper structure
-      }));
+      try {
+        // Ensure all items have proper bilingual structure
+        const validatedItems = cartItems.map((item) => ({
+          ...item,
+          // No transformation needed if your createCartItem already creates proper structure
+        }));
 
-      await api.post(
-        "/cart/save",
-        { items: validatedItems },
-        { withCredentials: true }
-      );
-      console.log(`Saved ${cartItems.length} items to database`);
-    } catch (error) {
-      console.error("Failed to save cart to database:", error);
-      localStorage.setItem(UNSYNCED_CART_KEY, JSON.stringify(cartItems));
-      throw error;
-    }
-  },
-  [isLoggedIn]
-);
+        await api.post(
+          "/cart/save",
+          { items: validatedItems },
+          { withCredentials: true }
+        );
+        console.log(`Saved ${cartItems.length} items to database`);
+      } catch (error) {
+        console.error("Failed to save cart to database:", error);
+        localStorage.setItem(UNSYNCED_CART_KEY, JSON.stringify(cartItems));
+        throw error;
+      }
+    },
+    [isLoggedIn]
+  );
 
   const loadCartFromDatabase = useCallback(async (): Promise<CartItem[]> => {
     if (!isLoggedIn) return [];
@@ -312,58 +315,69 @@ const{locale}=useLanguage()
   );
 
   // Updated inventory checking to work with new backend structure
-// Updated checkInventoryEnhanced function to match new backend structure
-const checkInventoryEnhanced = useCallback(
-  async (item: CartItem, quantity: number): Promise<boolean> => {
-    if (userRole !== "buyer") return true; // Customers don't need inventory checks
-    console.log(item, 'iiiiiiiii');
-    
-    try {
-      // API call to get items
-      const res = await api.get("/categories/get-items?limit=10000&role=buyer");
-      
-      // The response.data.data is directly an array of items, not nested in categories
-      const allItems = res.data?.data || [];
-      console.log(allItems, 'all items from API');
-      
-      // Check if response is an array
-      if (!Array.isArray(allItems)) {
-        console.error("Expected array of items, got:", allItems);
+  // Updated checkInventoryEnhanced function to match new backend structure
+  const checkInventoryEnhanced = useCallback(
+    async (item: CartItem, quantity: number): Promise<boolean> => {
+      if (userRole !== "buyer") return true; // Customers don't need inventory checks
+      console.log(item, "iiiiiiiii");
+
+      try {
+        // API call to get items
+        const res = await api.get(
+          "/categories/get-items?limit=10000&role=buyer"
+        );
+
+        // The response.data.data is directly an array of items, not nested in categories
+        const allItems = res.data?.data || [];
+        console.log(allItems, "all items from API");
+
+        // Check if response is an array
+        if (!Array.isArray(allItems)) {
+          console.error("Expected array of items, got:", allItems);
+          return false;
+        }
+
+        // Find the item directly in the array
+        const foundItem = allItems.find((i: any) => i._id === item._id);
+
+        const isAvailable = foundItem && foundItem.quantity >= quantity;
+        console.log(
+          `Inventory check for ${
+            item.name[locale]
+          }: requested=${quantity}, available=${
+            foundItem?.quantity || 0
+          }, result=${isAvailable}`
+        );
+
+        return !!isAvailable;
+      } catch (err) {
+        console.error("Failed to check inventory:", err);
         return false;
       }
+    },
+    [userRole, locale]
+  );
 
-      // Find the item directly in the array
-      const foundItem = allItems.find((i: any) => i._id === item._id);
-      
-      const isAvailable = foundItem && foundItem.quantity >= quantity;
-      console.log(`Inventory check for ${item.name[locale]}: requested=${quantity}, available=${foundItem?.quantity || 0}, result=${isAvailable}`);
-      
-      return !!isAvailable;
-    } catch (err) {
-      console.error("Failed to check inventory:", err);
-      return false;
-    }
-  },
-  [userRole, locale]
-);
+  // Updated helper function to convert backend item to CartItem format
+  const convertBackendItemToCartItem = useCallback(
+    (backendItem: BackendItem, quantity: number = 1): CartItem => {
+      return {
+        _id: backendItem._id,
+        name: backendItem.displayName || backendItem.name?.en || "Unnamed Item", // Use displayName or fallback to English
+        points: backendItem.points,
+        price: backendItem.price,
+        quantity: quantity,
+        measurement_unit: backendItem.measurement_unit,
+        image: backendItem.image,
+        // Store multilingual data if needed
+        nameData: backendItem.name,
+        displayName: backendItem.displayName,
+      };
+    },
+    []
+  );
 
-// Updated helper function to convert backend item to CartItem format
-const convertBackendItemToCartItem = useCallback((backendItem: BackendItem, quantity: number = 1): CartItem => {
-  return {
-    _id: backendItem._id,
-    name: backendItem.displayName || backendItem.name?.en || 'Unnamed Item', // Use displayName or fallback to English
-    points: backendItem.points,
-    price: backendItem.price,
-    quantity: quantity,
-    measurement_unit: backendItem.measurement_unit,
-    image: backendItem.image,
-    // Store multilingual data if needed
-    nameData: backendItem.name,
-    displayName: backendItem.displayName,
-  };
-}, []);
-
-// Remove getAllItemsFromCategories since we're now searching through categories directly
+  // Remove getAllItemsFromCategories since we're now searching through categories directly
 
   // Cart merging helper function
   const mergeCartItems = useCallback(
@@ -420,7 +434,7 @@ const convertBackendItemToCartItem = useCallback((backendItem: BackendItem, quan
           console.log("Validating inventory for merged cart items...");
           const validatedCart: CartItem[] = [];
           let hasInventoryIssues = false;
-          
+
           for (const item of mergedCart) {
             const isAvailable = await checkInventoryEnhanced(
               item,
@@ -433,23 +447,30 @@ const convertBackendItemToCartItem = useCallback((backendItem: BackendItem, quan
                 `Insufficient inventory for ${item.name}, quantity: ${item.quantity}`
               );
               hasInventoryIssues = true;
-              
+
               // Try to find the maximum available quantity
               try {
-                const res = await api.get("/categories/get-items?limit=10000&role=buyer");
+                const res = await api.get(
+                  "/categories/get-items?limit=10000&role=buyer"
+                );
                 const response: BackendResponse = res.data;
-                
+
                 if (response.success && response.data) {
                   const allItems = getAllItemsFromCategories(response.data);
-                  const foundItem = allItems.find((i: BackendItem) => i._id === item._id);
-                  
+                  const foundItem = allItems.find(
+                    (i: BackendItem) => i._id === item._id
+                  );
+
                   if (foundItem && foundItem.quantity > 0) {
                     const maxQuantity = foundItem.quantity;
                     const increment = item.measurement_unit === 1 ? 0.25 : 1;
                     const adjustedQuantity =
                       Math.floor(maxQuantity / increment) * increment;
                     if (adjustedQuantity > 0) {
-                      validatedCart.push({ ...item, quantity: adjustedQuantity });
+                      validatedCart.push({
+                        ...item,
+                        quantity: adjustedQuantity,
+                      });
                       console.log(
                         `Adjusted ${item.name} quantity to available stock: ${adjustedQuantity}`
                       );
@@ -464,7 +485,7 @@ const convertBackendItemToCartItem = useCallback((backendItem: BackendItem, quan
               }
             }
           }
-          
+
           if (hasInventoryIssues) {
             toast.error(
               "Some items had limited stock and quantities were adjusted",
@@ -473,7 +494,7 @@ const convertBackendItemToCartItem = useCallback((backendItem: BackendItem, quan
               }
             );
           }
-          
+
           setCart(validatedCart);
           await saveCartToDatabase(validatedCart);
         } else {
@@ -488,7 +509,9 @@ const convertBackendItemToCartItem = useCallback((backendItem: BackendItem, quan
 
         // Show success message
         if (guestCart.length > 0) {
-          toast.success(`Cart merged successfully! ${mergedCart.length} items total.`);
+          toast.success(
+            `Cart merged successfully! ${mergedCart.length} items total.`
+          );
         } else {
           toast.success("Welcome back! Your cart has been loaded.");
         }
@@ -497,7 +520,14 @@ const convertBackendItemToCartItem = useCallback((backendItem: BackendItem, quan
         throw error;
       }
     },
-    [mergeCartItems, userRole, saveCartToDatabase, clearCartFromSession, checkInventoryEnhanced, getAllItemsFromCategories]
+    [
+      mergeCartItems,
+      userRole,
+      saveCartToDatabase,
+      clearCartFromSession,
+      checkInventoryEnhanced,
+      getAllItemsFromCategories,
+    ]
   );
 
   // Handle cart merging when user logs in (with optional user confirmation)
@@ -699,8 +729,8 @@ const convertBackendItemToCartItem = useCallback((backendItem: BackendItem, quan
   // Cart operations with improved error handling
   const addToCart = useCallback(
     async (item: CartItem) => {
-      console.log(item,'itemfromAddtocar');
-      
+      console.log(item, "itemfromAddtocar");
+
       setLoadingItemId(item._id);
       try {
         const validatedItem = { ...item };
@@ -780,7 +810,9 @@ const convertBackendItemToCartItem = useCallback((backendItem: BackendItem, quan
           await updateCartState(updatedCart);
         }
 
-        toast.success(`${validatedItem.name} added to cart successfully!`);
+        toast.success(
+          `${validatedItem.name[locale]} added to cart successfully!`
+        );
       } catch (err) {
         console.error("Failed to add to cart", err);
         toast.error("Failed to add item to cart");
@@ -788,7 +820,14 @@ const convertBackendItemToCartItem = useCallback((backendItem: BackendItem, quan
         setLoadingItemId(null);
       }
     },
-    [cart, checkInventoryEnhanced, userRole, validateQuantity, updateCartState]
+    [
+      cart,
+      checkInventoryEnhanced,
+      userRole,
+      validateQuantity,
+      updateCartState,
+      locale,
+    ]
   );
 
   const updateQuantity = useCallback(

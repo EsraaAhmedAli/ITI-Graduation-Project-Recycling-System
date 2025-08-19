@@ -80,7 +80,7 @@ function ProfileContent({
     totalPointsHistoryLength,
   } = useUserPoints();
 
-  const { t } = useLanguage();
+  const { t, convertNumber, locale } = useLanguage();
   const [activeTab, setActiveTab] = useState("incoming");
   const [isRecyclingModalOpen, setIsRecyclingModalOpen] = useState(false);
   const [isItemsModalOpen, setIsItemsModalOpen] = useState(false);
@@ -92,6 +92,9 @@ function ProfileContent({
 
   const router = useRouter();
   const queryClient = useQueryClient();
+  const now = new Date();
+  const monthName = now.toLocaleString(locale || "en-US", { month: "long" });
+  const yearNumber = convertNumber(now.getFullYear()); // convert year based on language
 
   // Memoize status parameter calculation
   const statusParam = useMemo(() => {
@@ -383,9 +386,9 @@ function ProfileContent({
               </h2>
               <p className="text-sm text-gray-500">{user?.email}</p>
               <p className="text-sm text-gray-500">
-                {user?.phoneNumber?.padStart(11, "0")}
+                {convertNumber(user?.phoneNumber?.padStart(11, "0"))}
               </p>
-              <p className="text-xs text-gray-400">Cairo, July 2025</p>
+              <LocationDate />
             </div>
           </div>
 
@@ -476,7 +479,7 @@ function ProfileContent({
           <Loader title=" orders..." />
         ) : filteredOrders.length === 0 ? (
           <p className="text-center text-gray-500">
-            No orders in this tab yet.
+            {t("profile.noOrders")}
           </p>
         ) : (
           <div className="space-y-4">
@@ -660,6 +663,7 @@ const StatBox = React.memo(function StatBox({
   value: number;
   loading?: boolean;
 }) {
+  const { convertNumber } = useLanguage();
   return (
     <div className="bg-green-100 text-green-800 p-4 rounded-xl shadow-sm">
       {loading ? (
@@ -669,7 +673,7 @@ const StatBox = React.memo(function StatBox({
         </div>
       ) : (
         <>
-          <p className="text-2xl font-bold">{value}</p>
+          <p className="text-2xl font-bold">{convertNumber(value)}</p>
           <p className="text-sm">{label}</p>
         </>
       )}
@@ -756,3 +760,49 @@ const PaymentCard = React.memo(function PaymentCard({
     </div>
   );
 });
+
+function LocationDate() {
+  const [city, setCity] = useState("Cairo"); // fallback
+  const [dateStr, setDateStr] = useState("");
+  const { locale, convertNumber } = useLanguage();
+
+  useEffect(() => {
+    // 1️⃣ جلب الموقع الحالي
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const { latitude, longitude } = position.coords;
+
+        try {
+          // 2️⃣ استخدم Nominatim reverse geocoding
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=${locale}`
+          );
+          const data = await res.json();
+
+          // اختر أفضل مكون للمدينة
+          const cityName =
+            data.address.city ||
+            data.address.town ||
+            data.address.village ||
+            data.address.state;
+
+          if (cityName) setCity(cityName);
+        } catch (err) {
+          console.error("Failed to fetch city:", err);
+        }
+      });
+    }
+
+    // 3️⃣ إعداد التاريخ
+    const now = new Date();
+    const monthName = now.toLocaleString(locale || "en-US", { month: "long" });
+    const yearNumber = convertNumber(now.getFullYear());
+    setDateStr(`${monthName} ${yearNumber}`);
+  }, [locale, convertNumber]);
+
+  return (
+    <p className="text-xs text-gray-400">
+      {city} , {dateStr}
+    </p>
+  );
+}

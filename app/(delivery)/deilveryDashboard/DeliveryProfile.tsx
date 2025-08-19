@@ -6,6 +6,7 @@ import { useUserAuth } from "@/context/AuthFormContext";
 import api from "@/lib/axios";
 import Image from "next/image";
 import Pagination from "@/components/common/Pagintaion";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface Review {
   id: string;
@@ -45,6 +46,7 @@ const CourierProfile = ({ setEdit }) => {
   const itemsPerPage = 3;
 
   const { user } = useUserAuth();
+  const { t, locale, convertNumber } = useLanguage();
 
   const fetchReviews = useCallback(
     async (page: number) => {
@@ -91,13 +93,15 @@ const CourierProfile = ({ setEdit }) => {
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl font-bold text-gray-900">
-              Customer Reviews
+              {t("profile.delivery.customer_reviews")}{" "}
             </h2>
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-500 text-white font-semibold">
-                {data.pagination.totalReviews}
+                {convertNumber(data.pagination.totalReviews)}
               </span>
-              <span className="text-sm text-gray-500">Total reviews</span>
+              <span className="text-sm text-gray-500">
+                {t("profile.delivery.total_reviews")}
+              </span>
             </div>
           </div>
 
@@ -110,7 +114,7 @@ const CourierProfile = ({ setEdit }) => {
               >
                 {/* Comment on the left */}
                 <p className="text-gray-700 leading-relaxed flex-1 mr-4">
-                  {review.comment || "No comment provided"}
+                  {review.comment || t("profile.delivery.no_comment")}
                 </p>
 
                 {/* Stars on the right */}
@@ -145,11 +149,21 @@ const CourierProfile = ({ setEdit }) => {
 export default CourierProfile;
 
 const DeliveryHeader = ({ attachments, courier, setEdit }) => {
+  const { t, locale, convertNumber } = useLanguage();
+
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-gray-100">
-      <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-6">
+      <div
+        className={`flex flex-col xl:flex-row xl:items-center xl:justify-between gap-6 ${
+          locale === "ar" ? "rtl" : ""
+        }`}
+      >
         {/* LEFT: Avatar + Info */}
-        <div className="flex items-center space-x-6">
+        <div
+          className={`flex items-center ${
+            locale === "ar" ? "space-x-reverse space-x-6" : "space-x-6"
+          }`}
+        >
           {/* Avatar */}
           <div className="relative inline-block">
             <div className="w-20 h-20 rounded-full overflow-hidden shadow-lg border-4 border-white">
@@ -161,61 +175,88 @@ const DeliveryHeader = ({ attachments, courier, setEdit }) => {
                 height={80}
               />
             </div>
-            <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-r from-yellow-400 to-yellow-600 shadow-lg border-2 border-white animate-pulse hover:animate-none">
+            <div
+              className={`absolute -bottom-2 ${
+                locale === "ar" ? "-left-2" : "-right-2"
+              } w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-r from-yellow-400 to-yellow-600 shadow-lg border-2 border-white animate-pulse hover:animate-none`}
+            >
               <Award className="text-white w-5 h-5" />
             </div>
           </div>
 
           {/* Name + Verified + Rating */}
           <div>
-            <div className="flex items-center  mb-1">
+            <div
+              className={`flex items-center mb-1 ${
+                locale === "ar" ? "flex-row-reverse" : ""
+              }`}
+            >
               <h1 className="text-2xl font-bold text-gray-900">
                 {courier.name}
               </h1>
-              <div className="flex items-center bg-green-50 px-3 py-0.5 rounded-full">
-                <Shield className="h-4 w-4 text-green-600 mr-1" />
+              <div
+                className={`flex items-center bg-green-50 px-3 py-0.5 rounded-full ${
+                  locale === "ar" ? "mr-2" : "ml-2"
+                }`}
+              >
+                <Shield className="h-4 w-4 text-green-600" />
                 <span className="text-green-700 font-semibold text-sm">
-                  Verified Courier
+                  {t("profile.delivery.verified_courier")}
                 </span>
               </div>
             </div>
 
             {/* Rating */}
-            <div className="flex items-center bg-yellow-50 px-3 py-1 rounded-full w-fit">
-              <Star className="h-4 w-4 text-yellow-500 mr-1 fill-current" />
+            <div
+              className={`flex items-center bg-yellow-50 px-3 py-1 rounded-full w-fit ${
+                locale === "ar" ? "flex-row-reverse" : ""
+              }`}
+            >
+              <Star className="h-4 w-4 text-yellow-500 fill-current" />
               <span className="font-bold text-yellow-700">
-                {courier.averageRating.toFixed(1)}
+                {convertNumber(courier.averageRating.toFixed(1))}
               </span>
-              <span className="text-yellow-600 ml-1 text-sm">
-                ({courier.totalReviews})
+              <span className="text-yellow-600 text-sm">
+                ({convertNumber(courier.totalReviews)})
               </span>
             </div>
           </div>
         </div>
 
         {/* RIGHT: Deliveries + Button */}
-        <div className="flex items-center gap-6">
+        <div
+          className={`flex items-center gap-6 ${
+            locale === "ar" ? "flex-row-reverse" : ""
+          }`}
+        >
           {/* Deliveries Stat */}
-          <div className="flex gap-2 items-center text-center">
+          <div
+            className={`flex gap-2 items-center text-center ${
+              locale === "ar" ? "flex-row-reverse" : ""
+            }`}
+          >
             <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-xl mb-1">
               <Truck className="h-6 w-6 text-blue-600" />
             </div>
             <div className="text-xl font-bold text-gray-900">
-              {courier.totalReviews}
+              {convertNumber(courier.totalReviews)}
             </div>
-            <div className="text-xs text-gray-500">Deliveries</div>
+            <div className="text-xs text-gray-500">
+              {t("profile.delivery.deliveries")}
+            </div>
           </div>
 
           {/* Edit Button */}
           <button
-            onClick={() => {
-              console.log("EDIT CLICKS");
-              setEdit(true);
-            }}
-            className="flex items-center justify-center gap-2 bg-white border border-green-600 text-green-700 px-4 py-2 rounded-full hover:bg-green-50 hover:shadow-md transition-all duration-200"
+            onClick={() => setEdit(true)}
+            className={`flex items-center justify-center gap-2 bg-white border border-green-600 text-green-700 px-4 py-2 rounded-full hover:bg-green-50 hover:shadow-md transition-all duration-200 ${
+              locale === "ar" ? "flex-row-reverse" : ""
+            }`}
           >
             <Pencil size={16} />
-            <span className="font-medium">Edit Profile</span>
+            <span className="font-medium">
+              {t("profile.delivery.edit_profile")}
+            </span>
           </button>
         </div>
       </div>

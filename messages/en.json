@@ -490,7 +490,20 @@
       "recycles": "Total Recycles",
       "points": "Points Collected"
     },
+    "delivery": {
+      "customer_reviews": "Customer Reviews",
+      "total_reviews": "Total reviews",
+      "no_comment": "No comment provided",
+      "verified_courier": "Verified Courier",
+      "deliveries": "Deliveries",
+      "edit_profile": "Edit Profile"
+    },
+    "noActivity": "No Activity Yet.",
+    "noOrders": "No Orders In This Tab Yet.",
+    "noReveiws": "No Reveiws Yet.",
+    "noReveiwsSub": "Complete an order and rate it to see your reviews here",
     "tires": {
+      "ecobeginner": "Eco Beginner",
       "ecostarter": "Eco Starter",
       "greenhelper": "Green Helper",
       "silverrecycler": "Silver Recycler",
@@ -537,6 +550,152 @@
       "safe": "Your order is safe"
     },
     "location": "Cairo, July 2025"
+  },
+  "cart": {
+    "confirmItems": "Confirm items you want to recycle",
+    "liveInventory": "Live Inventory",
+    "check": "Checking inventory...",
+    "emptyCart": {
+      "title": "Your recycling bin is empty",
+      "description": "Start making a positive impact on the environment. Browse available recyclable items and add them to your bin!",
+      "button": "Browse Recyclable Items"
+    },
+    "cartSummary": {
+      "totalItems": "Total Items",
+      "earnedPoints": "Earned Points",
+      "earnedMoney": "Earned Money",
+      "payedMoney": "Payed Money"
+    },
+    "item": {
+      "category": "Category",
+      "byKilo": "By Kilo",
+      "byPiece": "By Piece",
+      "stock": "Stock",
+      "requested": "Requested",
+      "price": "Price",
+      "outOfStock": "Out of Stock",
+      "lowStock": "Low Stock",
+      "outOfStockWarning": "⚠️ This item is currently out of stock.",
+      "removeItem": "Remove Item?",
+      "removeConfirm": "Remove {itemName} from your recycling collection?",
+      "minIncrement": "Min: 0.25 kg, increments of 0.25 kg",
+      "wholeNumbers": "Whole numbers only",
+      "kg": "kg",
+      "items": "items"
+    },
+    "checkout": {
+      "outOfStockTitle": "Some items are out of stock",
+      "outOfStockMessage": "Please remove out of stock items or adjust quantities before proceeding to checkout.",
+      "removeOutOfStock": "Remove Out of Stock Items",
+      "clearAll": "Clear All?",
+      "clearConfirm": "Are you sure you want to remove all items from your recycling collection?",
+      "clearCollection": "Clear Collection",
+      "schedulePickup": "Schedule Pickup",
+      "minAmount": "You should reach at least 100 EGP",
+      "removeOutOfStockToContinue": "Remove out of stock items to continue"
+    }
+  },
+  "ewallet": {
+    "title": "EcoWallet",
+    "subtitle": "Earn rewards for your recycling efforts",
+    "balance": {
+      "title": "Eco Rewards Balance",
+      "subtitle": "Earned through sustainable recycling",
+      "cashOut": "Cash Out",
+      "recycleMore": "Recycle More"
+    },
+    "transactions": {
+      "title": "Recent Activity",
+      "history": "Transaction History",
+
+      "viewAll": "View All",
+      "types": {
+        "cashback": "Cashback",
+        "withdrawal": "Withdrawal",
+        "deposit": "Deposit",
+        "recycle": "Recycle",
+        "redeem": "Redeem",
+        "purchase": "Purchase"
+      },
+      "next": "Next",
+      "previous": "Previous",
+      "currency": "EGP"
+    },
+    "withdraw": {
+      "title": "Cash Out Rewards",
+      "availableBalance": "Available balance",
+      "withdrawalAmount": "Withdrawal Amount",
+      "currency": "EGP",
+      "validation": {
+        "min": "Minimum withdrawal is 10.00 EGP",
+        "max": "You cannot withdraw more than your balance"
+      },
+      "buttons": {
+        "cancel": "Cancel",
+        "continue": "Continue"
+      }
+    },
+    "payment": {
+      "step1": {
+        "title": "Choose Payment Method",
+        "withdrawing": "Withdrawing",
+        "fee": "Fee",
+        "buttons": {
+          "cancel": "Cancel",
+          "process": "Process Payment"
+        }
+      },
+      "step2": {
+        "title": "Processing Payment...",
+        "subtitle": "Transferring your eco-rewards via"
+      },
+      "step3": {
+        "title": "Payment Successful!",
+        "subtitle": "Your {amount} {currency} withdrawal has been processed successfully"
+      }
+    }
+  },
+  "program": {
+    "headerTitle": "Recycling Rewards Program",
+    "headerSubtitle": "Earn points, unlock badges, and help save the planet!",
+    "welcomeBack": "Welcome back, {{name}}!",
+    "currentLevel": "Current Level",
+    "recyclingOrders": "Recycling Orders",
+    "points": "Points",
+    "recycles": "Reycles",
+    "onlyMoreRecycles": "🚀 Only {{count}} more recycles to unlock {{level}}!",
+    "rewardLevelsTitle": "Reward Levels & Benefits",
+    "currentLevelBanner": "CURRENT LEVEL",
+    "benefits": "Benefits",
+    "howToEarnTitle": "How to Earn Points",
+    "earnRecyclingOrders": "Recycling Orders",
+    "earnRecyclingOrdersDesc": "Earn points for every recycling pickup based on your level",
+    "earnMonthlyBonuses": "Monthly Bonuses",
+    "earnMonthlyBonusesDesc": "Get bonus points every month based on your activity",
+    "earnReferrals": "Referrals",
+    "earnReferralsDesc": "Earn bonus points when you refer friends to our service",
+    "earnSpecialEvents": "Special Events",
+    "earnSpecialEventsDesc": "Participate in eco-challenges and special promotions",
+    "pointRedemptionTitle": "Point Redemption Options",
+    "cashRedemption": "Cash Redemption",
+    "cashRedemptionDesc": "Convert your points to cash with level-based bonuses:",
+    "cashRedemptionList": {
+      "baseRate": "Base rate: 100 points = $1",
+      "silver": "Silver+: 5% bonus",
+      "gold": "Gold+: 10% bonus",
+      "platinum": "Platinum+: 15% bonus",
+      "diamond": "Diamond: 20% bonus"
+    },
+    "vouchersRewards": "Vouchers & Rewards",
+    "vouchersRewardsDesc": "Redeem points for eco-friendly products and services:",
+    "vouchersRewardsList": {
+      "ecoProduct": "Eco-product vouchers",
+      "restaurant": "Restaurant gift cards",
+      "sustainable": "Sustainable brands discounts",
+      "local": "Local business coupons",
+      "charity": "Environmental charity donations"
+    },
+    "noActivity": "No activity yet"
   },
   "itemsModal": {
     "headerTitle": "Order Items",

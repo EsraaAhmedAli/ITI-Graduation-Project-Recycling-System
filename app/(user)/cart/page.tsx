@@ -242,8 +242,8 @@ export default function CartPage() {
       }));
     }
   };
-  const{t,locale} = useLanguage()
-
+  const { t, locale, convertNumber } = useLanguage();
+  const coin = locale === "en" ? "EGP" : "ج.م";
 
   // Handle input blur (when user finishes typing)
   const handleInputBlur = (itemId: string, item: CartItem) => {
@@ -395,11 +395,12 @@ export default function CartPage() {
           <Recycle className="w-8 h-8 text-green-600" />
           <h1 className="text-2xl font-bold text-white-900 tracking-tight">
             Confirm items you want to recycle
+            {t("cart.confirmItems")}
           </h1>
         </div>
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500"></div>
-          <span className="ml-3 text-gray-600">Checking inventory...</span>
+          <span className="ml-3 text-gray-600">{t("cart.check")}</span>
         </div>
       </div>
     );
@@ -410,12 +411,12 @@ export default function CartPage() {
       <div className="flex items-center gap-3 mb-6">
         <Recycle className="w-8 h-8 text-green-600" />
         <h1 className="text-2xl font-bold text-white-800 tracking-tight">
-          Confirm items you want to recycle
+          {t("cart.confirmItems")}
         </h1>
         {userRole === "buyer" && (
           <div className="ml-auto flex items-center gap-2 text-sm text-green-600">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            Live Inventory
+            {t("cart.liveInventory")}
           </div>
         )}
       </div>
@@ -424,11 +425,10 @@ export default function CartPage() {
         <div className="flex flex-col items-center justify-center mt-24 bg-gradient-to-br from-green-50 to-blue-50 p-10 rounded-2xl shadow-md transition-all duration-300">
           <Leaf className="w-16 h-16 text-green-500 mb-4 animate-bounce-slow" />
           <h2 className="text-xl font-semibold text-gray-700 mb-2">
-            Your recycling bin is empty
+            {t("cart.emptyCart.title")}
           </h2>
           <p className="text-gray-500 text-sm mb-6 text-center max-w-md">
-            Start making a positive impact on the environment. Browse available
-            recyclable items and add them to your bin!
+            {t("cart.emptyCart.description")}
           </p>
           <Button
             onClick={() =>
@@ -436,7 +436,7 @@ export default function CartPage() {
             }
             className="rounded-full px-6 py-3 shadow-lg hover:shadow-xl transition"
           >
-            Browse Recyclable Items
+            {t("cart.emptyCart.button")}
           </Button>
         </div>
       ) : (
@@ -447,25 +447,31 @@ export default function CartPage() {
             } gap-4`}
           >
             <div className="bg-white p-4 rounded-lg shadow-sm text-center">
-              <div className="text-gray-500 text-sm">Total Items</div>
+              <div className="text-gray-500 text-sm">
+                {t("cart.cartSummary.totalItems")}
+              </div>
               <div className="text-2xl font-bold text-green-600">
-                {totalItems}
+                {convertNumber(totalItems)}
               </div>
             </div>
             {user?.role == "customer" && (
               <div className="bg-white p-4 rounded-lg shadow-sm text-center">
-                <div className="text-gray-500 text-sm">Earned Points</div>
+                <div className="text-gray-500 text-sm">
+                  {t("cart.cartSummary.earnedPoints")}
+                </div>
                 <div className="text-2xl font-bold text-blue-600">
-                  {totalPoints}
+                  {convertNumber(totalPoints)}
                 </div>
               </div>
             )}
             <div className="bg-white p-4 rounded-lg shadow-sm text-center">
               <div className="text-gray-500 text-sm">
-                {user?.role == "customer" ? "Earned Money" : "Payed Money"}{" "}
+                {user?.role == "customer"
+                  ? t("cart.cartSummary.earnedMoney")
+                  : t("cart.cartSummary.payedMoney")}
               </div>
               <div className="text-2xl font-bold text-emerald-600">
-                {totalPrice.toFixed(2)} EGP
+                {convertNumber(totalPrice.toFixed(2))} {coin}
               </div>
             </div>
           </div>
@@ -491,7 +497,7 @@ export default function CartPage() {
                     {outOfStockItems[item._id] && (
                       <div className="absolute top-2 right-2 z-10">
                         <span className="bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-sm">
-                          Out of Stock
+                          {t("cart.item.outOfStock")}
                         </span>
                       </div>
                     )}
@@ -506,7 +512,7 @@ export default function CartPage() {
                           (item.measurement_unit === 1 ? 0.25 : 1) && (
                         <div className="absolute top-2 right-2 z-10">
                           <span className="bg-yellow-500 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-sm">
-                            Low Stock
+                            {t("cart.item.lowStock")}
                           </span>
                         </div>
                       )}
@@ -521,7 +527,7 @@ export default function CartPage() {
                           width={100}
                           height={100}
                           src={item.image}
-                          alt={item.name}
+                          alt={item.name[locale]}
                           className="object-contain"
                         />
                       ) : (
@@ -532,13 +538,6 @@ export default function CartPage() {
                     <div className="flex-1">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
-<<<<<<< HEAD
-                          <h3 className={`text-lg font-medium ${
-                            outOfStockItems[item._id] ? 'text-gray-500 line-through' : 'text-gray-800'
-                          }`}>
-            {typeof item.name === 'string' ? item.name : item.name[locale] || item.name.en || ''}
-                </h3>
-=======
                           <h3
                             className={`text-lg font-medium ${
                               outOfStockItems[item._id]
@@ -546,13 +545,16 @@ export default function CartPage() {
                                 : "text-gray-800"
                             }`}
                           >
-                            {item.name}
+                            {item.name[locale]}
                           </h3>
->>>>>>> newNotesEdits-SearchandFilter
-                          <p className="text-sm text-gray-500 mt-1">
-                            Category:{" "}
+                          <p className="text-sm flex gap-2 text-gray-500 mt-1">
+                            {t("cart.item.category")}
                             <span className="text-green-600">
-                              {typeof item.categoryName === 'string' ? item.categoryName : item.categoryName[locale] || item.categoryName.en || ''}
+                              {typeof item.categoryName === "string"
+                                ? item.categoryName
+                                : item.categoryName[locale] ||
+                                  item.categoryName.en ||
+                                  ""}
                             </span>
                           </p>
                         </div>
@@ -572,9 +574,11 @@ export default function CartPage() {
                       </div>
 
                       <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
-                        <div className="flex items-center text-gray-600">
-                          <Scale className="w-4 h-4 mr-1" />
-                          {item.measurement_unit === 1 ? "By Kilo" : "By Piece"}
+                        <div className="flex items-center gap-2 text-primary">
+                          <Scale className="w-4 h-4 mr-1 text-gray-500" />
+                          {item.measurement_unit === 1
+                            ? t("cart.item.byKilo")
+                            : t("cart.item.byPiece")}
                         </div>
                       </div>
 
@@ -587,12 +591,13 @@ export default function CartPage() {
                                 : "text-gray-500"
                             }`}
                           >
-                            Stock: {stockLevels[item._id] ?? "Loading..."}{" "}
-                            available
+                            {t("cart.item.stock")}:{" "}
+                            {stockLevels[item._id] ?? "Loading..."} available
                           </span>
                           {outOfStockItems[item._id] && (
                             <span className="text-red-600 font-semibold">
-                              • Requested: {item.quantity}
+                              • {t("cart.item.requested")}:{" "}
+                              {convertNumber(item.quantity)}
                             </span>
                           )}
                         </div>
@@ -602,7 +607,7 @@ export default function CartPage() {
                       {outOfStockItems[item._id] && (
                         <div className="mt-2 p-2 bg-red-100 border border-red-200 rounded-md">
                           <p className="text-sm text-red-700 font-medium">
-                            ⚠️ This item is currently out of stock.
+                            {t("cart.item.outOfStockWarning")}
                             {stockLevels[item._id] > 0
                               ? ` Only ${
                                   stockLevels[item._id]
@@ -620,13 +625,19 @@ export default function CartPage() {
                         }`}
                       >
                         <div>
-                          <span className="font-semibold">Price:</span>{" "}
-                          {item.price.toFixed(2)} EGP
+                          <span className="font-semibold  text-gray-500">
+                            {t("cart.item.price")}:
+                          </span>{" "}
+                          {convertNumber(item.price.toFixed(2))} {coin}
                         </div>
                         <div className="text-gray-600 text-sm">
-                          {item.quantity} × {item.price.toFixed(2)} ={" "}
-                          <span className="font-medium">
-                            {(item.quantity * item.price).toFixed(2)} EGP
+                          {convertNumber(item.quantity)} ×{" "}
+                          {convertNumber(item.price.toFixed(2))} =
+                          <span className="font-medium text-primary">
+                            {convertNumber(
+                              (item.quantity * item.price).toFixed(2)
+                            )}{" "}
+                            {coin}
                           </span>
                         </div>
                       </div>
@@ -724,8 +735,8 @@ export default function CartPage() {
                         {/* Helper text */}
                         <div className="text-xs text-gray-400">
                           {item.measurement_unit === 1
-                            ? "Min: 0.25 kg, increments of 0.25 kg"
-                            : "Whole numbers only"}
+                            ? t("cart.item.minIncrement")
+                            : t("cart.item.wholeNumbers")}
                         </div>
                       </div>
                     </div>
@@ -755,17 +766,16 @@ export default function CartPage() {
                   </div>
                   <div className="flex-1">
                     <h3 className="text-sm font-medium text-red-800">
-                      Some items are out of stock
+                      {t("cart.checkout.outOfStockTitle")}
                     </h3>
                     <p className="text-sm text-red-700 mt-1">
-                      Please remove out of stock items or adjust quantities
-                      before proceeding to checkout.
+                      {t("cart.checkout.outOfStockMessage")}
                     </p>
                     <button
                       onClick={handleRemoveOutOfStockItems}
                       className="mt-2 text-sm bg-red-600 text-white px-3 py-1 rounded-md hover:bg-red-700 transition-colors"
                     >
-                      Remove Out of Stock Items
+                      {t("cart.checkout.removeOutOfStock")}
                     </button>
                   </div>
                 </div>
@@ -778,14 +788,14 @@ export default function CartPage() {
                 onClick={(e) => {
                   e.preventDefault();
                   confirmAction({
-                    title: "Clear All?",
-                    text: "Are you sure you want to remove all items from your recycling collection?",
+                    title: t("cart.checkout.clearAll"),
+                    text: t("cart.checkout.clearConfirm"),
                     onConfirm: clearCart,
                   });
                 }}
                 className="border border-gray-300 text-gray-700 hover:bg-gray-50"
               >
-                Clear Collection
+                {t("cart.checkout.clearCollection")}
               </Button>
 
               <div className="flex flex-col items-end">
@@ -811,17 +821,17 @@ export default function CartPage() {
                     }`}
                   >
                     <Truck className="w-5 h-5" />
-                    Schedule Pickup
+                    {t("cart.checkout.schedulePickup")}
                   </Button>
                 </div>
                 {totalPrice < 100 && (
                   <p className="text-xs text-red-600 mt-1 text-right">
-                    You should reach at least 100 EGP
+                    {t("cart.checkout.minAmount")}
                   </p>
                 )}
                 {hasOutOfStockItems && (
                   <p className="text-xs text-red-600 mt-1 text-right">
-                    Remove out of stock items to continue
+                    {t("cart.checkout.removeOutOfStockToContinue")}
                   </p>
                 )}
               </div>

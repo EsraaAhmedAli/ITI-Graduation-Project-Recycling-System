@@ -820,6 +820,8 @@ export default function Page() {
                   {photoPreview ? (
                     <div className="relative">
                       <Image
+                        width={30}
+                        height={30}
                         src={photoPreview}
                         alt={t("courier.deliveryProof")}
                         className="w-full h-48 object-cover rounded-lg"

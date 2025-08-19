@@ -1,9 +1,8 @@
 // hooks/useCreateOrder.ts - Version that saves debug info to localStorage
 import { useState } from "react";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 import api from "@/lib/axios";
-import { CartItem } from "@/context/CartContext";
-
+import { CartItem } from "@/models/cart";
 // Save debug info that persists through redirects
 const saveDebugInfo = (info: any) => {
   try {
@@ -90,9 +89,9 @@ interface UseCreateOrderReturn {
 }
 
 export const useCreateOrder = ({
-  clearCart,
-  setCurrentStep,
-  setCreatedOrderId,
+  clearCart = () => {}, // fallback no-op
+  setCurrentStep = () => {}, // fallback no-op
+  setCreatedOrderId = () => {}, // fallback no-op
 }: UseCreateOrderParams): UseCreateOrderReturn => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 

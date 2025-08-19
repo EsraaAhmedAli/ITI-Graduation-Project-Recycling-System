@@ -17,7 +17,7 @@ export default function TierStatBox({
   totalRecycles: number;
 }) {
   const tier = getUserTier(totalRecycles);
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isNavigating, setIsNavigating] = useState(false);
@@ -38,37 +38,34 @@ export default function TierStatBox({
   return (
     <div
       className={`
-    p-4 rounded-xl shadow-sm flex flex-row flex-nowrap items-center justify-center border
-    ${tier.color} gap-4
-    w-full max-w-full
+    p-4 rounded-xl shadow-sm flex items-center justify-between border
+    ${tier.color} text-center
     transition-[max-width] duration-500 ease-in-out overflow-hidden
+    ${locale === "ar" ? "flex-row-reverse" : "flex-row"}
   `}
       style={{ borderColor: tier.color }}
     >
-      {/* Left: Tier Name */}
-      <div className="flex-grow min-w-0">
-        <p className="text-xl font-bold text-left truncate">
+      {/* Left / Center: Tier Name + Badge */}
+      <div className="flex items-center gap-3 justify-center flex-1">
+        <p className="text-xl font-bold truncate">
           {t(`profile.tires.${tier.name.replace(" ", "").toLowerCase()}`)}
         </p>
+        <tier.badge className="text-primary" />
       </div>
 
-      {/* Right: Badge + Icon Link */}
-      <div className="flex items-center gap-3 flex-shrink-0">
-        <tier.badge />
-
-        <button
-          onClick={handleNavigation}
-          disabled={isNavigating || isPending}
-          className="p-2 rounded-full hover:bg-white/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          title="View Rewards Program"
-        >
-          {isNavigating || isPending ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : (
-            <Info className="w-5 h-5" />
-          )}
-        </button>
-      </div>
+      {/* Right / End: Info Button */}
+      <button
+        onClick={handleNavigation}
+        disabled={isNavigating || isPending}
+        className="p-2 rounded-full hover:bg-white/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        title="View Rewards Program"
+      >
+        {isNavigating || isPending ? (
+          <Loader2 className="w-5 h-5 animate-spin" />
+        ) : (
+          <Info className="w-5 h-5" />
+        )}
+      </button>
     </div>
   );
 }
