@@ -75,7 +75,7 @@ export default function RootLayout({
                       <GuestSessionProvider>
                         <GoogleOAuthProvider
                           clientId={
-                            process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID!
+                            process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? ""
                           }
                         >
                           <ThemeProvider defaultTheme="system">
