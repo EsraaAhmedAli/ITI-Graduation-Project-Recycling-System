@@ -304,7 +304,7 @@ export default function PickupConfirmation() {
   ];
 
   if (loading) {
-    return <Loader title="your info" />;
+    return <Loader title={t('loaders.info')} />;
   }
 
   // Show message if user is not logged in instead of app UI

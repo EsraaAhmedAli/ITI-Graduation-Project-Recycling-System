@@ -10,6 +10,7 @@ import { Modal, ModalBody, ModalHeader, TextInput } from "flowbite-react";
 import Loader from "@/components/common/Loader";
 import { useQuery } from "@tanstack/react-query";
 import ReviewsModal from "@/components/ratingModal";
+import { useLanguage } from "@/context/LanguageContext";
 export interface DeliveryItem {
   userId: string; // unique user or courier ID
   name: string; // courier / applicant name
@@ -115,6 +116,7 @@ const ActionModal = ({
 export default function Page() {
   const [activeAttachments, setActiveAttachments] = useState<any | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const {t}=useLanguage()
 
   // Modal state
   const [showActionModal, setShowActionModal] = useState(false);
@@ -430,7 +432,7 @@ export default function Page() {
       </div>
 
       {loading ? (
-        <Loader title="delivery data" />
+        <Loader title={t('loaders.deliveryData')} />
       ) : (
         <>
           {/* Enhanced Summary stats */}

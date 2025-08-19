@@ -7,8 +7,8 @@ import html2canvas from "html2canvas";
 import Swal from "sweetalert2";
 import api from "@/lib/axios";
 import { UserAuthContext } from "@/context/AuthFormContext";
-// CHANGED: Import from context instead of custom hook
 import { useUserPoints } from "@/context/UserPointsContext";
+import { useLanguage } from "@/context/LanguageContext";
 
 const vouchers = [
   { id: "1", name: "Talabat Mart", value: "50 EGP", points: 500 },
@@ -17,7 +17,7 @@ const vouchers = [
 ];
 
 export default function RecyclingModal({
-  onPointsUpdated, // Add this
+  onPointsUpdated,
   modalOpen,
   closeModal,
 }: {
@@ -25,6 +25,7 @@ export default function RecyclingModal({
   closeModal: () => void;
   onPointsUpdated: () => void;
 }) {
+  const { t } = useLanguage();
   const [activeOption, setActiveOption] = useState<"money" | "voucher" | null>(
     null
   );
@@ -37,7 +38,6 @@ export default function RecyclingModal({
   const { user } = useContext(UserAuthContext);
   const userId = user?._id;
 
-  // CHANGED: Use context hook without parameters
   const { userPoints, pointsLoading, getUserPoints } = useUserPoints();
 
   const totalPoints = userPoints?.totalPoints || 0;
@@ -49,7 +49,7 @@ export default function RecyclingModal({
 
     if (activeOption === "money") {
       if (!amount || requiredPoints > totalPoints) {
-        Swal.fire("Invalid amount", "You don't have enough points", "error");
+        Swal.fire(t("invalidAmount"), t("notEnoughPoints"), "error");
         return;
       }
       try {
@@ -57,15 +57,15 @@ export default function RecyclingModal({
           points: requiredPoints,
           reason: `Cashback for ${amount} EGP`,
         });
-        await getUserPoints(); // Refresh points after successful redemption
-        onPointsUpdated?.(); // Call the callback
+        await getUserPoints();
+        onPointsUpdated?.();
 
-        Swal.fire("Success", "Cashback redeemed successfully!", "success");
+        Swal.fire(t("success"), t("cashbackRedeemed"), "success");
         setQrVisible(false);
       } catch (error) {
         Swal.fire(
-          "Error",
-          error.response?.data?.message || "Could not deduct points",
+          t("error"),
+          error.response?.data?.message || t("couldNotDeductPoints"),
           "error"
         );
       }
@@ -73,7 +73,7 @@ export default function RecyclingModal({
 
     if (activeOption === "voucher") {
       const voucher = vouchers.find((v) => v.id === selectedVoucher);
-      if (!voucher) return Swal.fire("Select a voucher", "", "warning");
+      if (!voucher) return Swal.fire(t("selectVoucher"), "", "warning");
 
       try {
         await api.post(`/users/${userId}/points/deduct`, {
@@ -83,24 +83,21 @@ export default function RecyclingModal({
         await getUserPoints();
         onPointsUpdated?.();
 
-        const qrText = `Voucher: ${voucher.name} - Value: ${voucher.value}`;
+        const qrText = `${t("voucher")}: ${voucher.name} - ${t("value")}: ${voucher.value}`;
         setQrValue(qrText);
         setQrVisible(true);
         setRedeemedVouchers([...redeemedVouchers, voucher.id]);
-        setSelectedVoucher(null); // reset after redeem
-        Swal.fire("Success", "Your voucher is ready!", "success");
+        setSelectedVoucher(null);
+        Swal.fire(t("success"), t("voucherReady"), "success");
       } catch (error) {
         Swal.fire(
-          "Error",
-          error.response?.data?.message || "Could not deduct points",
+          t("error"),
+          error.response?.data?.message || t("couldNotDeductPoints"),
           "error"
         );
       }
     }
   };
-
-  // REMOVED: useEffect that manually fetches points since context handles this automatically
-  // The context will automatically fetch points when user data is available
 
   const handleDownloadQR = async () => {
     if (!qrRef.current) return;
@@ -117,7 +114,7 @@ export default function RecyclingModal({
         <div className="flex flex-col w-full">
           <div className="flex justify-between items-center w-full">
             <h3 className="text-2xl font-bold text-gray-900">
-              Redeem Eco Points
+              {t("redeemEcoPoints")}
             </h3>
           </div>
           <div className="flex items-center mt-2">
@@ -134,8 +131,8 @@ export default function RecyclingModal({
                 />
               </svg>
               {pointsLoading
-                ? "Loading..."
-                : `${totalPoints?.toLocaleString()} Points`}
+                ? t("loading")
+                : `${totalPoints?.toLocaleString()} ${t("points")}`}
             </div>
           </div>
         </div>
@@ -169,7 +166,7 @@ export default function RecyclingModal({
                   d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4H5z"
                 />
               </svg>
-              Vouchers
+              {t("vouchers")}
             </div>
           </button>
           <button
@@ -197,7 +194,7 @@ export default function RecyclingModal({
                   d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
                 />
               </svg>
-              Cash Out
+              {t("cashOut")}
             </div>
           </button>
         </div>
@@ -240,11 +237,11 @@ export default function RecyclingModal({
                           canRedeem ? "text-green-600" : "text-gray-400"
                         }`}
                       >
-                        {voucher.points} pts
+                        {voucher.points} {t("pts")}
                       </span>
                       {isRedeemed ? (
                         <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                          Redeemed
+                          {t("redeemed")}
                         </span>
                       ) : selectedVoucher === voucher.id ? (
                         <svg
@@ -290,7 +287,7 @@ export default function RecyclingModal({
                           clipRule="evenodd"
                         />
                       </svg>
-                      You need {voucher.points - totalPoints} more points
+                      {t("needMorePoints", { points: voucher.points - totalPoints })}
                     </p>
                   )}
                   {isRedeemed && (
@@ -306,7 +303,7 @@ export default function RecyclingModal({
                           clipRule="evenodd"
                         />
                       </svg>
-                      Voucher successfully redeemed
+                      {t("voucherSuccessfullyRedeemed")}
                     </p>
                   )}
                 </button>
@@ -320,27 +317,27 @@ export default function RecyclingModal({
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Amount to Redeem (EGP)
+                {t("amountToRedeem")}
               </label>
               <div className="relative">
                 <input
                   type="number"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  placeholder="Enter amount"
+                  placeholder={t("enterAmount")}
                   min="1"
                   max={Math.floor(totalPoints / 19)}
                   className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 pr-20"
                 />
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-500">
-                  EGP
+                  {t("currency")}
                 </div>
               </div>
 
               {amount && (
                 <div className="mt-3 space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Required points:</span>
+                    <span className="text-gray-500">{t("requiredPoints")}:</span>
                     <span
                       className={`font-medium ${
                         requiredPoints > totalPoints
@@ -348,17 +345,17 @@ export default function RecyclingModal({
                           : "text-green-600"
                       }`}
                     >
-                      {requiredPoints} pts
+                      {requiredPoints} {t("pts")}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Remaining points:</span>
+                    <span className="text-gray-500">{t("remainingPoints")}:</span>
                     <span
                       className={`font-medium ${
                         remainingPoints < 0 ? "text-red-500" : "text-green-600"
                       }`}
                     >
-                      {remainingPoints} pts
+                      {remainingPoints} {t("pts")}
                     </span>
                   </div>
                   {requiredPoints > totalPoints && (
@@ -374,7 +371,7 @@ export default function RecyclingModal({
                           clipRule="evenodd"
                         />
                       </svg>
-                      You don't have enough points for this amount
+                      {t("notEnoughPointsForAmount")}
                     </div>
                   )}
                 </div>
@@ -396,10 +393,10 @@ export default function RecyclingModal({
                 </svg>
                 <div>
                   <p className="font-medium">
-                    Exchange Rate: 19 Points = 1 EGP
+                    {t("exchangeRate")}
                   </p>
                   <p className="mt-1 text-blue-700">
-                    Max available: {Math.floor(totalPoints / 19)} EGP
+                    {t("maxAvailable", { amount: Math.floor(totalPoints / 19) })}
                   </p>
                 </div>
               </div>
@@ -410,7 +407,7 @@ export default function RecyclingModal({
         {/* QR Section */}
         {qrVisible && (
           <div className="mt-6 flex flex-col items-center space-y-4">
-            <p className="font-medium text-gray-900">Your Voucher QR Code</p>
+            <p className="font-medium text-gray-900">{t("yourVoucherQR")}</p>
             <div
               ref={qrRef}
               className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm flex flex-col items-center"
@@ -437,7 +434,7 @@ export default function RecyclingModal({
                   d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
                 />
               </svg>
-              Download QR Code
+              {t("downloadQR")}
             </button>
           </div>
         )}
@@ -446,7 +443,7 @@ export default function RecyclingModal({
         <button
           onClick={handleRedeem}
           disabled={
-            pointsLoading || // Disable while loading
+            pointsLoading ||
             (activeOption === "voucher" &&
               (!selectedVoucher ||
                 totalPoints <
@@ -458,7 +455,7 @@ export default function RecyclingModal({
           className="mt-6 w-full py-3.5 rounded-lg font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 flex items-center justify-center"
         >
           {pointsLoading ? (
-            "Loading..."
+            t("loading")
           ) : activeOption === "voucher" ? (
             redeemedVouchers.includes(selectedVoucher || "") ? (
               <>
@@ -473,7 +470,7 @@ export default function RecyclingModal({
                     clipRule="evenodd"
                   />
                 </svg>
-                Already Redeemed
+                {t("alreadyRedeemed")}
               </>
             ) : (
               <>
@@ -490,7 +487,7 @@ export default function RecyclingModal({
                     d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4H5z"
                   />
                 </svg>
-                Redeem Voucher
+                {t("redeemVoucher")}
               </>
             )
           ) : (
@@ -508,7 +505,7 @@ export default function RecyclingModal({
                   d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
                 />
               </svg>
-              Transfer to Account
+              {t("transferToAccount")}
             </>
           )}
         </button>

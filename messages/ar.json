@@ -107,6 +107,27 @@
     "editProfile": "تعديل الملف الشخصي",
     "rewarding": "برنامج المكافآت",
     "pickup": "استلام"
+  },"toast": {
+  "cart": "! تمت إضافة {{itemName}} إلى سلة التسوق بنجاح"
+},
+  "loaders" : {
+"Categories" : "الفئات",
+"recipet" : "الايصال",
+"transactions": "المعاملات",
+"deliveryData" : "بيانات التسليم"
+,
+"items" : "الأشياء",
+"info" :"معلوماتك",
+"reviews" :"الاراء"
+,
+"orders" :"طلبات",
+"payments" : "المدفوعات"
+
+
+
+
+
+
   },
   "ecoAssist": {
     "welcome": {
@@ -586,6 +607,8 @@
     "addToCollection": "اضف لمجموعتك"
   },
   "common": {
+        "loading" : "جاري تحميل",
+
     "sold": "مباعة",
     "viewAll": "شاهد الكل",
 
@@ -899,5 +922,45 @@
     "paaper": {
       "news paper": "جرايد"
     }
-  }
+  },
+   "redeemEcoPoints": "استبدال النقاط البيئية",
+  "loading": "جارٍ التحميل...",
+  "points": "نقاط",
+  "vouchers": "قسائم",
+  "cashOut": "سحب نقدي",
+  "redeemed": "مُستبدل",
+  "needMorePoints": "تحتاج {{points}} نقطة إضافية",
+  "voucherSuccessfullyRedeemed": "تم استبدال القسيمة بنجاح",
+  "amountToRedeem": "المبلغ المراد استبداله (جنيه مصري)",
+  "enterAmount": "أدخل المبلغ",
+  "currency": "ج.م",
+  "requiredPoints": "النقاط المطلوبة",
+  "remainingPoints": "النقاط المتبقية",
+  "notEnoughPointsForAmount": "ليس لديك نقاط كافية لهذا المبلغ",
+  "exchangeRate": "سعر الصرف: 19 نقطة = 1 جنيه مصري",
+  "maxAvailable": "الحد الأقصى المتاح: {{amount}} ج.م",
+  "yourVoucherQR": "رمز QR الخاص بقسيمتك",
+  "downloadQR": "تحميل رمز QR",
+  "alreadyRedeemed": "مُستبدل بالفعل",
+  "redeemVoucher": "استبدال القسيمة",
+  "transferToAccount": "تحويل إلى الحساب",
+  "invalidAmount": "مبلغ غير صالح",
+  "notEnoughPoints": "ليس لديك نقاط كافية",
+  "success": "نجح",
+  "cashbackRedeemed": "تم استبدال الكاش باك بنجاح!",
+  "error": "خطأ",
+  "couldNotDeductPoints": "لا يمكن خصم النقاط",
+  "selectVoucher": "اختر قسيمة",
+  "voucher": "قسيمة",
+  "value": "القيمة",
+  "voucherReady": "قسيمتك جاهزة!",
+    "pointsHistory": "تاريخ النقاط",
+  "noPointsHistory": "لا يوجد تاريخ نقاط",
+  "noActivity": "لا يوجد نشاط حديث",
+
+  "redeem": "استبدال",
+  "cashback": "استرداد نقدي",
+  "earn": "كسب",
+  "bonus": "مكافأة",
+  "deduct": "خصم"
 }

@@ -127,7 +127,7 @@ export default function Page() {
   return (
     <>
       {isLoading ? (
-        <Loader title="categories" />
+        <Loader title={t('loaders.Categories')} />
       ) : error ? (
         <p className="text-center text-red-500 py-10">{error}</p>
       ) : data?.data?.length === 0 ? (

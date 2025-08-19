@@ -107,7 +107,7 @@ export default function ItemDetailsPage() {
 
   // Show loading state
   if (isLoading) {
-    return <Loader title="items" />;
+    return <Loader title={t('loaders.items')} />;
   }
 
   // Show error state

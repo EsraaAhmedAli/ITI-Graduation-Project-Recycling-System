@@ -596,10 +596,6 @@ const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
     }
   };
 
-  // Remove all loading states - just show data as it arrives
-  // if (isLoading && !searchTerm) {
-  //   return <Loader title="orders" />;
-  // }
 
   if (isError) {
     return (
