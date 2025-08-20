@@ -354,8 +354,23 @@
       }
     }
   },
-
   "charts": {
+    "weeklyOrdersDistribution": "Weekly Orders Distribution",
+    "loadingWeeklyData": "Loading weekly data...",
+    "orders": "Orders",
+    "numberOfOrders": "Number of Orders",
+    "dayOfWeek": "Day of Week",
+    "thisWeek": "This Week",
+    "lastWeek": "Last Week",
+    "last4Weeks": "Last 4 Weeks",
+    "last4WeeksAvg": "Last 4 Weeks Avg",
+    "currentDay": "Current day",
+    "index": "Index",
+    "notFoundInCurrentWeek": "Not found in current week",
+    "period": "Period",
+    "dailyAvg": "Daily Avg",
+    "peakDay": "Peak Day",
+    "vsPrevious": "vs Previous",
     "vsLastPeriod": "vs last period",
     "numbers": {
       "percent": "%"
@@ -385,7 +400,6 @@
     "loadingCitiesData": "Loading cities data...",
     "noCitiesData": "No cities data available",
     "checkBackLater": "Check back later for updates",
-
     "trends": {
       "up": "up",
       "down": "down",
@@ -516,7 +530,7 @@
     "totalOrders": "Total Orders",
     "avgPerCity": "Avg per City",
     "topCity": "Top City",
-       "cairo": "Cairo",
+    "cairo": "Cairo",
     "giza": "Giza",
     "alexandria": "Alexandria",
     "mansoura": "Mansoura",
@@ -529,11 +543,14 @@
     "sortByName": "By Name",
     "totalMaterials": "Total Materials",
     "totalQuantity": "Total Quantity",
-    "topMaterial": "Top"
+    "topMaterial": "Top",
+    "material": "Material"
   },
   "orderStatus": {
     "pending": "Pending",
     "processing": "Processing",
+    "collected": "Collected",
+    "assigntocourier": "Assigned to Courier",
     "shipped": "Shipped",
     "delivered": "Delivered",
     "cancelled": "Cancelled",
@@ -544,7 +561,6 @@
     "ready": "Ready",
     "failed": "Failed"
   },
-
   "profile": {
     "returnEarn": "Return & Earn",
     "editProfile": "Edit Profile",
@@ -669,7 +685,6 @@
     "transactions": {
       "title": "Recent Activity",
       "history": "Transaction History",
-
       "viewAll": "View All",
       "types": {
         "cashback": "Cashback",
@@ -781,11 +796,20 @@
     "addToCollection": "Add to Collection"
   },
   "common": {
-
+    "measurementUnit": "Measurement Unit",
+    "itemsIn": "items in category",
+    "addNewItem": "Add New Item",
+    "points": "Points",
+    "oops": "Oops...",
+    "success": "Success!",
+    "error": "Error",
+    "ok": "OK",
+    "remove": "Remove",
+    "somethingWentWrong": "Something went wrong!",
     "back": "Back",
     "currency": "EGP",
     "next": "Next",
-    "loading" : "Loading",
+    "loading": "Loading",
     "sold": "sold",
     "viewAll": "view all",
     "piece": "piece",
@@ -836,16 +860,17 @@
       "ecoFriendly": "Eco-Friendly"
     }
   },
-    "loaders" : {
-"Categories" : "Categories",
-"recipet" : "Receipt",
-"transactions": "Transactions",
-"deliveryData" : "Delivery Data",
-"items" : "items",
-"info" :"your info",
-"reviews" :"reviews",
-"orders" :"orders",
-"payments" : "payments"
+  "loaders": {
+    "categories": "Categories",
+    "recipet": "Receipt",
+    "transactions": "Transactions",
+    "deliveryData": "Delivery Data",
+    "items": "items",
+    "info": "your info",
+    "reviews": "reviews",
+    "orders": "orders",
+    "payments": "payments",
+    "users": "users"
   },
   "marketPlace": {
     "sustainableMarketplace": "Sustainable Marketplace",
@@ -873,9 +898,9 @@
     "default": "Contributes to a cleaner environment",
     "environmentalImpact": "Environmental Impact"
   },
-"toast": {
-  "cart": "{{itemName}} added to cart successfully!"
-},
+  "toast": {
+    "cart": "{{itemName}} added to cart successfully!"
+  },
   "categoryStats": {
     "totalItems": "Total Items",
     "pointsRange": "Points Range",
@@ -978,15 +1003,116 @@
     "dark_mode": "Dark Mode",
     "logout": "Logout"
   },
+  "editCategory": {
+    "title": "Edit Category",
+    "subtitle": "Update the details of your category",
+    "nameEnglish": "Name (English)",
+    "nameArabic": "Name (Arabic)",
+    "nameEnglishPlaceholder": "Enter category name in English",
+    "nameArabicPlaceholder": "أدخل اسم الفئة بالعربية",
+    "descriptionEnglish": "Description (English)",
+    "descriptionArabic": "Description (Arabic)",
+    "descriptionEnglishPlaceholder": "Enter category description in English",
+    "descriptionArabicPlaceholder": "أدخل وصف الفئة بالعربية",
+    "categoryImage": "Category Image",
+    "currentImage": "Current Image",
+    "currentCategoryAlt": "Current category",
+    "uploadFile": "Upload a file",
+    "orDragAndDrop": "or drag and drop",
+    "fileTypes": "PNG, JPG, GIF up to 5MB",
+    "uploadingImage": "Uploading image",
+    "saveChanges": "Save Changes",
+    "failedToFetchCategory": "Failed to fetch category",
+    "imageUploadFailed": "Image upload failed",
+    "updateSuccessTitle": "Updated!",
+    "updateSuccessText": "Category has been updated successfully",
+    "updateFailed": "Update failed"
+  },
+  "addCategory": {
+    "title": "Add New Category",
+    "subtitle": "Fill in the details below to create a new category",
+    "categoryNameEnglish": "Category Name (English)",
+    "categoryNameArabic": "Category Name (Arabic)",
+    "categoryNameEnglishPlaceholder": "Enter category name in English",
+    "categoryNameArabicPlaceholder": "أدخل اسم الفئة بالعربية",
+    "descriptionEnglish": "Description (English)",
+    "descriptionArabic": "Description (Arabic)",
+    "descriptionEnglishPlaceholder": "Enter category description in English",
+    "descriptionArabicPlaceholder": "أدخل وصف الفئة بالعربية",
+    "categoryImage": "Category Image",
+    "uploadFile": "Upload a file",
+    "orDragAndDrop": "or drag and drop",
+    "fileTypes": "PNG, JPG, GIF up to 5MB",
+    "selected": "Selected",
+    "preview": "Preview",
+    "addCategory": "Add Category",
+    "selectImageError": "Please select an image for the category!",
+    "categoryCreatedSuccess": "Category created successfully"
+  },
   "categories": {
-    "paaper": {
-      "name": "paaper",
-      "description": "testing paper"
+    "image": "Image",
+    "categoryName": "Category Name",
+    "subCategoryName": "Subcategory Name",
+    "description": "Description",
+    "categories": "Categories",
+    "addNewCategory": "Add New Category",
+    "startAddingCategory": "Start adding new category",
+    "noCategoriesFound": "No categories found.",
+    "errorLoadingCategories": "Error loading categories",
+    "deleteConfirmTitle": "Are you sure?",
+    "deleteConfirmText": "You are about to delete \"{{name}}\". This action cannot be undone!",
+    "confirmDelete": "Yes, delete it!",
+    "deleteSuccessTitle": "Deleted!",
+    "deleteSuccessText": "\"{{name}}\" has been deleted.",
+    "deleteErrorTitle": "Error",
+    "deleteErrorText": "Something went wrong while deleting.",
+    "cooking-oil": {
+      "name": "cooking-oil",
+      "description": "used cooking oil"
+    },
+    "paper": {
+      "name": "paper",
+      "description": "various paper items"
+    },
+    "metals": {
+      "name": "metals",
+      "description": "various metals"
+    },
+    "e-waste": {
+      "name": "e-waste",
+      "description": "electronic waste items"
     }
   },
   "items": {
     "paaper": {
       "news paper": "news paper"
+    },
+    "plastic": {
+      "chair": "chair",
+      "coleman-water": "coleman-water",
+      "plastic-barrel": "plastic-barrel",
+      "acrylic": "Acrylic",
+      "solid-plastic": "solid-plastic"
+    },
+    "paper": {
+      "news paper": "news paper",
+      "books": "books",
+      "card-board": "card-board",
+      "magazines": "magazines",
+      "paper": "paper",
+      "shredded-paper": "shredded-paper"
+    },
+    "cooking-oil": {
+      "used-cooking-oil": "used-cooking-oil"
+    },
+    "e-waste": {
+      "mobile": "Mobile",
+      "laptop": "laptop",
+      "router": "Router",
+      "computer-cpu": "computer-cpu",
+      "reciever": "reciever",
+      "tablet": "tablet",
+      "printer": "printer"
     }
   },
   "redeemEcoPoints": "Redeem Eco Points",
@@ -1019,27 +1145,27 @@
   "couldNotDeductPoints": "Could not deduct points",
   "selectVoucher": "Select a voucher",
   "voucher": "Voucher",
-  "value": "Value",  "pointsHistory": "Points History",
+  "value": "Value",
+  "pointsHistory": "Points History",
   "noPointsHistory": "No points history found",
   "noActivity": "No recent activity",
   "recentPointsActivity": "Recent Points Activity",
   "viewFullHistory": "View Full History",
   "redeem": "Redeem",
-  "cashback": "Cashback", 
+  "cashback": "Cashback",
   "earn": "Earn",
   "bonus": "Bonus",
   "deduct": "Deduct",
-   "addresses": {
+  "addresses": {
     "noAddressesTitle": "No addresses yet",
     "noAddressesDescription": "Add your first delivery address to get started",
     "selected": "Selected",
     "editAddress": "Edit Address",
     "deleteAddress": "Delete Address",
-    "choose" : "Choose Your Address",
-    "select" : "Select or add a delivery address",
-    "addNew" : "Add New Address"
+    "choose": "Choose Your Address",
+    "select": "Select or add a delivery address",
+    "addNew": "Add New Address"
   },
-  
   "addressForm": {
     "pickupAddress": "Pickup Address",
     "selectCity": "Select your city",
@@ -1056,7 +1182,7 @@
     "additionalNote": "Additional Note",
     "notesPlaceholder": "e.g. Don't ring the bell"
   },
-   "validation": {
+  "validation": {
     "areaRequired": "Area is required",
     "streetRequired": "Street is required",
     "buildingRequired": "Building is required",
@@ -1074,6 +1200,146 @@
     "total": "Total",
     "processing": "Processing...",
     "confirmOrder": "Confirm Order"
-  }
-
+  },
+  "delivery": {
+    "title": "Delivery Applications",
+    "description": "Manage delivery driver applications, approvals, reviews, and access",
+    "tableTitle": "Delivery Applications",
+    "columns": {
+      "userName": "User Name",
+      "email": "Email",
+      "phoneNumber": "Phone Number",
+      "reviewsRating": "Reviews & Rating",
+      "status": "Status",
+      "action": "Action",
+      "reapplyStatus": "Reapply Status",
+      "appliedDate": "Applied Date",
+      "attachments": "Attachments"
+    },
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "declined": "Declined",
+      "revoked": "Revoked"
+    },
+    "actions": {
+      "approve": "Approve",
+      "decline": "Decline",
+      "revoke": "Revoke",
+      "reapprove": "Re-approve",
+      "revokeAccess": "Revoke Access"
+    },
+    "reapplyStatus": {
+      "canReapply": "Can Reapply",
+      "active": "Active",
+      "na": "N/A"
+    },
+    "modal": {
+      "revokeAccess": "Revoke Access",
+      "declineApplication": "Decline Application",
+      "revokeConfirm": "Revoke",
+      "declineConfirm": "Decline",
+      "deliveryAccess": "'s delivery access",
+      "application": "'s application",
+      "activeOrdersNote": "Note: Active orders will be preserved",
+      "reason": "Reason",
+      "required": "(required)",
+      "optional": "(optional)"
+    },
+    "toasts": {
+      "approveSuccess": "{{name}} has been approved successfully!",
+      "approveError": "Failed to approve user",
+      "revokeSuccess": "{{name}} has been revoked successfully!",
+      "declineSuccess": "{{name}} has been declined successfully!",
+      "revokeError": "Failed to revoke user",
+      "declineError": "Failed to decline user",
+      "activeOrdersWarning": "User has {{count}} active orders that will be preserved"
+    },
+    "defaultReason": {
+      "revoke": "Access revoked by admin"
+    },
+    "notAvailable": "Not available",
+    "viewRatings": "view ratings",
+    "viewDocuments": "View Documents",
+    "processing": "Processing...",
+    "selectAction": "Select Action"
+  },
+  "deliveryAttachments": {
+    "title": "Delivery Attachments",
+    "subtitle": "Verification documents and images",
+    "sections": {
+      "verificationImages": {
+        "title": "Verification Images",
+        "description": "Profile, criminal record, and vehicle photos"
+      },
+      "personalInfo": {
+        "title": "Personal Information",
+        "description": "License, ID, and vehicle details"
+      }
+    },
+    "images": {
+      "deliveryPhoto": {
+        "title": "Delivery Photo",
+        "description": "Profile verification image"
+      },
+      "criminalRecord": {
+        "title": "Criminal Record",
+        "description": "Background check document"
+      },
+      "vehicleImage": {
+        "title": "Vehicle Image",
+        "description": "Vehicle registration photo"
+      }
+    },
+    "info": {
+      "licenseNumber": "License Number",
+      "nationalId": "National ID",
+      "vehicleType": "Vehicle Type"
+    },
+    "noImage": "No image",
+    "notProvided": "Not provided"
+  },
+  "days": {
+    "mon": "monday",
+    "tue": "tuesday",
+    "wed": "wednesday",
+    "thu": "thursday",
+    "fri": "friday",
+    "sat": "saturday",
+    "sun": "sunday"
+  },
+  "deleteConfirmation": {
+    "title": "Are you sure to delete this item?",
+    "text": "You are about to delete \"{{name}}\". This action cannot be undone!",
+    "confirmButton": "Yes, delete it!",
+    "cancelButton": "Cancel"
+  },
+  "addSubCategoryTo": "Add Sub-Category to",
+  "fillDetailsToAddSubCategory": "Fill in the details below to add a new sub-category",
+  "subCategoryNameEnglish": "Sub-Category Name (English)",
+  "subCategoryNameArabic": "Sub-Category Name (Arabic)",
+  "enterSubCategoryNameEnglish": "Enter sub-category name in English",
+  "enterSubCategoryNameArabic": "أدخل اسم الفئة الفرعية بالعربية",
+  "enterPoints": "Enter points",
+  "price": "Price",
+  "autoCalculatedPrice": "Auto-calculated price",
+  "quantity": "Quantity",
+  "enterQuantity": "Enter quantity",
+  "measurementUnit": "Measurement Unit",
+  "selectUnit": "Select unit",
+  "kilogramKg": "Kilogram (kg)",
+  "piece": "Piece",
+  "subCategoryImage": "Sub-Category Image",
+  "uploadFile": "Upload a file",
+  "orDragAndDrop": "or drag and drop",
+  "imageFormatLimit": "PNG, JPG, GIF up to 5MB",
+  "selected": "Selected",
+  "remove": "Remove",
+  "preview": "Preview",
+  "cancel": "Cancel",
+  "addSubCategory": "Add Sub-Category",
+  "processing": "Processing",
+  "invalidMeasurementUnit": "Invalid measurement unit",
+  "subCategoryAddedSuccessfully": "Sub-category added successfully!",
+  "somethingWentWrong": "Something went wrong!"
 }

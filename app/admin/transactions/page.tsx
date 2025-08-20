@@ -515,7 +515,7 @@ const{t}=useLanguage()
 
   // Loading state
   if (isLoading && payments.length === 0) {
-    return <Loader title={t('loader.transactions')} />;
+    return <Loader title={t('loaders.transactions')} />;
   }
 
   // Error state
@@ -631,7 +631,8 @@ const{t}=useLanguage()
           </div>
         </div>
       )}
-
+{isRefunding && <Loader title="refunding"/>
+}
       {/* Transactions Table */}
       <div className="bg-white rounded-lg shadow-sm border border-green-100">
         <DynamicTable<PaymentData>
@@ -835,15 +836,7 @@ const{t}=useLanguage()
         onConfirm={handleRefundConfirm}
       />
 
-      {/* Loading overlay for refunding */}
-      {isRefunding && (
-        <div className="fixed  bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 flex items-center gap-3">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500"></div>
-            <span>Processing refund...</span>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 };

@@ -6,6 +6,8 @@ import axios from "@/lib/axios";
 
 import Image from "next/image";
 import toast from "react-hot-toast";
+import { useLanguage } from "@/context/LanguageContext";
+
 const unitMap: Record<string, 1 | 2> = {
   kg: 1,
   g: 1,
@@ -16,6 +18,7 @@ const unitMap: Record<string, 1 | 2> = {
 export default function AddSubCategoryPage() {
   const router = useRouter();
   const { name } = useParams(); // category name from dynamic route
+  const { t } = useLanguage(); // Add this line
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
 
@@ -46,52 +49,81 @@ export default function AddSubCategoryPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
 
-    try {
-      const form = new FormData();
-      form.append("itemName", formData.itemName);
-      form.append("itemNameAr", formData.itemNameAr);
-      form.append("points", formData.points);
-      form.append("price", Math.floor(Number(formData.points)/19).toString());
-      form.append("quantity", formData.quantity);
+  try {
+    const form = new FormData();
+    form.append("itemName", formData.itemName);
+    form.append("itemNameAr", formData.itemNameAr);
+    form.append("points", formData.points);
+    form.append("price", Math.floor(Number(formData.points)/19).toString());
+    form.append("quantity", formData.quantity);
 
-      // convert measurement_unit string to number enum here:
-      const unitString = formData.measurement_unit.toLowerCase().trim();
-      const measurement_unit = unitMap[unitString];
-      if (!measurement_unit) {
-        throw new Error("Invalid measurement unit");
-      }
-      form.append("measurement_unit", measurement_unit.toString());
-
-      if (imageFile) {
-        form.append("image", imageFile);
-      }
-
-      await axios.post(`/categories/add-item/${name}`, form, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      toast.success("Sub-category added successfully!");
-      router.push("/admin/categories");
-    } catch (error: any) {
-      console.log(error);
-      toast.error(error?.response?.data?.message || "Something went wrong!");
-    } finally {
+    const unitString = formData.measurement_unit.toLowerCase().trim();
+    const measurement_unit = unitMap[unitString];
+    if (!measurement_unit) {
+      toast.error(t("invalidMeasurementUnit"));
       setLoading(false);
+      return;
     }
-  };
+    form.append("measurement_unit", measurement_unit.toString());
+
+    if (imageFile) {
+      form.append("image", imageFile);
+    }
+
+    await axios.post(`/categories/add-item/${name}`, form, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    toast.success(t("subCategoryAddedSuccessfully"));
+    
+    // Navigate to the sub-category page after a short delay to ensure the toast is shown
+    setTimeout(() => {
+      router.push(`/admin/categories/${name}/get-sub-category`);
+    }, 1000);
+
+  } catch (error) {
+    console.error("Error:", error);
+    
+    // Extract error message from the error object
+    let errorMessage = t("somethingWentWrong");
+    
+    if (error && typeof error === "object") {
+      // Try to get error message from response data
+      if ("response" in error && error.response && typeof error.response === "object") {
+        if ("data" in error.response && error.response.data && typeof error.response.data === "object") {
+          if ("message" in error.response.data) {
+            errorMessage = error.response.data.message;
+          } else if ("error" in error.response.data) {
+            errorMessage = error.response.data.error;
+          }
+        }
+      }
+      // Try to get error message directly from error object
+      else if ("message" in error) {
+        errorMessage = (error as { message: string }).message;
+      }
+    }
+    
+    toast.error(errorMessage);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <>
       <div className="max-w-2xl mx-auto p-6" style={{ background: "var(--background)" }}>
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           <div className="p-6 bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
-            <h1 className="text-2xl font-bold">Add Sub-Category to "{name}"</h1>
+            <h1 className="text-2xl font-bold">
+              {t("addSubCategoryTo")} {name}
+            </h1>
             <p className="mt-1 opacity-90">
-              Fill in the details below to add a new sub-category
+              {t("fillDetailsToAddSubCategory")}
             </p>
           </div>
 
@@ -99,7 +131,7 @@ export default function AddSubCategoryPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Sub-Category Name (English) *
+                  {t("subCategoryNameEnglish")} *
                 </label>
                 <input
                   type="text"
@@ -107,14 +139,14 @@ export default function AddSubCategoryPage() {
                   value={formData.itemName}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
-                  placeholder="Enter sub-category name in English"
+                  placeholder={t("enterSubCategoryNameEnglish")}
                   required
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Sub-Category Name (Arabic) *
+                  {t("subCategoryNameArabic")} *
                 </label>
                 <input
                   type="text"
@@ -122,7 +154,7 @@ export default function AddSubCategoryPage() {
                   value={formData.itemNameAr}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition text-right"
-                  placeholder="أدخل اسم الفئة الفرعية بالعربية"
+                  placeholder={t("enterSubCategoryNameArabic")}
                   dir="rtl"
                   required
                 />
@@ -132,7 +164,7 @@ export default function AddSubCategoryPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Points *
+                  {t("points")} *
                 </label>
                 <input
                   type="number"
@@ -140,14 +172,14 @@ export default function AddSubCategoryPage() {
                   value={formData.points}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
-                  placeholder="Enter points"
+                  placeholder={t("enterPoints")}
                   required
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Price *
+                  {t("price")} *
                 </label>
                 <input
                   disabled
@@ -155,14 +187,14 @@ export default function AddSubCategoryPage() {
                   name="price"
                   value={formData.points ? Math.floor(Number(formData.points)/19) : ''}
                   className="w-full px-4 py-2 border bg-gray-300 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
-                  placeholder="Auto-calculated price"
+                  placeholder={t("autoCalculatedPrice")}
                   required
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Quantity *
+                  {t("quantity")} *
                 </label>
                 <input
                   type="number"
@@ -170,7 +202,7 @@ export default function AddSubCategoryPage() {
                   value={formData.quantity}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
-                  placeholder="Enter quantity"
+                  placeholder={t("enterQuantity")}
                   required
                 />
               </div>
@@ -178,7 +210,7 @@ export default function AddSubCategoryPage() {
 
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">
-                Measurement Unit *
+                {t("measurementUnit")} *
               </label>
               <select
                 name="measurement_unit"
@@ -187,16 +219,15 @@ export default function AddSubCategoryPage() {
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
               >
-                <option value="">Select unit</option>
-                <option value="kg">Kilogram (kg)</option>
-                <option value="g">Gram (g)</option>
-                <option value="piece">Piece</option>
+                <option value="">{t("selectUnit")}</option>
+                <option value="kg">{t("kilogramKg")}</option>
+                <option value="piece">{t("piece")}</option>
               </select>
             </div>
 
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">
-                Sub-Category Image *
+                {t("subCategoryImage")} *
               </label>
               <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-emerald-400 transition-colors">
                 <div className="space-y-1 text-center">
@@ -219,7 +250,7 @@ export default function AddSubCategoryPage() {
                       htmlFor="file-upload"
                       className="relative cursor-pointer bg-white rounded-md font-medium text-emerald-600 hover:text-emerald-500 focus-within:outline-none"
                     >
-                      <span>Upload a file</span>
+                      <span>{t("uploadFile")}</span>
                       <input
                         id="file-upload"
                         name="image"
@@ -238,17 +269,17 @@ export default function AddSubCategoryPage() {
                         required
                       />
                     </label>
-                    <p className="pl-1">or drag and drop</p>
+                    <p className="pl-1">{t("orDragAndDrop")}</p>
                   </div>
                   <p className="text-xs text-gray-500">
-                    PNG, JPG, GIF up to 5MB
+                    {t("imageFormatLimit")}
                   </p>
                 </div>
               </div>
               {imageFile && (
                 <div className="mt-2 flex items-center space-x-4">
                   <p className="text-sm text-gray-500">
-                    <span className="font-medium">Selected:</span>{" "}
+                    <span className="font-medium">{t("selected")}:</span>{" "}
                     {imageFile.name}
                   </p>
                   <button
@@ -264,7 +295,7 @@ export default function AddSubCategoryPage() {
                     }}
                     className="px-2 py-1 text-sm text-red-600 hover:text-red-800 rounded-md border border-red-600 hover:bg-red-100 transition"
                   >
-                    Remove
+                    {t("remove")}
                   </button>
                 </div>
               )}
@@ -275,7 +306,7 @@ export default function AddSubCategoryPage() {
                     width={64}
                     height={64}
                     src={previewUrl}
-                    alt="Preview"
+                    alt={t("preview")}
                     className=" object-cover rounded-lg border border-gray-300 shadow"
                   />
                 </div>
@@ -289,7 +320,7 @@ export default function AddSubCategoryPage() {
                 className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
                 disabled={loading}
               >
-                Cancel
+                {t("cancel")}
               </button>
               <button
                 type="submit"
@@ -318,10 +349,10 @@ export default function AddSubCategoryPage() {
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       ></path>
                     </svg>
-                    Processing...
+                    {t("processing")}...
                   </span>
                 ) : (
-                  "Add Sub-Category"
+                  t("addSubCategory")
                 )}
               </button>
             </div>

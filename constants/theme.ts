@@ -17,6 +17,7 @@ export const STATUS_COLOR_MAP = {
   accepted: '#34d399',
   completed: '#10b981',
   cancelled: '#ef4444',
+  assigntocourier: '#09c',
   collected: '#A020F0'
 } as const;
 

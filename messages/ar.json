@@ -112,7 +112,7 @@
     "cart": "! تمت إضافة {{itemName}} إلى سلة التسوق بنجاح"
   },
   "loaders": {
-    "Categories": "الفئات",
+    "categories": "الفئات",
     "recipet": "الايصال",
     "transactions": "المعاملات",
     "deliveryData": "بيانات التسليم",
@@ -120,7 +120,8 @@
     "info": "معلوماتك",
     "reviews": "الاراء",
     "orders": "طلبات",
-    "payments": "المدفوعات"
+    "payments": "المدفوعات",
+    "users": "المستخدمين"
   },
   "ecoAssist": {
     "welcome": {
@@ -170,7 +171,6 @@
       "signingIn": "جارٍ تسجيل الدخول...",
       "signUp": "انشاء حساب جديد",
       "createAccount": "انشاء حساب جديد",
-
       "resetSuccess": "تم تغيير كلمة السر بنجاح",
       "signingUp": "جار انشاء الحساب...",
       "forgotResetMsg": "  ادخل بريدك الالكتروني لاستلام كود استرجاع الحساب. ",
@@ -191,7 +191,6 @@
       "typeOfAccount": "حدد نوع الحساب الذي ترغب في إنشائه.",
       "wait": "من فضلك انتظر.."
     },
-
     "otp": {
       "instruction": "أدخل الرمز المكوَّن من 6 أرقام. يمكنك لصق الرمز بالكامل مباشرة.",
       "resend_question": "لم تستلم الرمز؟",
@@ -231,7 +230,6 @@
             "placeholder": "رقم الرخصة",
             "required": "رقم الرخصة مطلوب"
           },
-
           "vehicleType": {
             "label": "نوع المركبة",
             "placeholder": "اختر نوع المركبة",
@@ -390,7 +388,6 @@
     "noOrders": "لا يوجد طلبيات",
     "noReveiws": "لا يوجد تقييمات",
     "noReveiwsSub": "اكمل طلبياتك واعطنا التقييم لكي تتمكن من رؤية تقييماتك",
-
     "tires": {
       "ecobeginner": "المبتدئ",
       "ecostarter": "الاخضر",
@@ -546,7 +543,6 @@
       "title": "النشاط الأخير",
       "history": "سجل المعاملات",
       "currency": "ج.م",
-
       "viewAll": "عرض الكل",
       "types": {
         "cashback": "استرداد نقدي",
@@ -657,20 +653,27 @@
     "addToCollection": "اضف لمجموعتك"
   },
   "common": {
-
+    "measurementUnit": "وحدة القياس",
+    "itemsIn": "الاشياء في فئة",
+    "addNewItem": "اضف عنصر جديد",
+    "points": "نقاط",
+    "oops": "عذراً...",
+    "success": "نجح!",
+    "error": "خطأ",
+    "ok": "موافق",
+    "remove": "إزالة",
+    "processing": "جاري المعالجة",
+    "somethingWentWrong": "حدث خطأ ما!",
     "back": "السابق",
     "currency": "جنيه",
     "next": "التالي",
     "loading": "جاري تحميل",
-
     "sold": "مباعة",
     "viewAll": "شاهد الكل",
-
     "piece": "قطعة",
     "item": "عنصر",
     "cancel": "إلغاء",
     "FeaturedItems": "العناصر المميزة",
-
     "kg": "كيلو",
     "invalidQuantity": "يرجى إدخال كمية صحيحة",
     "exceedsMaxQuantity": "الحد الأقصى المتاح هو {{max}}",
@@ -683,7 +686,6 @@
     "adding": "اضافة",
     "pointsAbbreviation": "نقاط",
     "inStock": "في المخزن",
-
     "allCategories": "جميع الفئات",
     "showing": "عرض",
     "showings": "عرض {{start}} إلى {{end}} من أصل {{total}} نتيجة",
@@ -715,7 +717,6 @@
     }
   },
   "collectionsOfCategory": "{{collections}}  {{category}}",
-
   "marketPlace": {
     "sustainableMarketplace": "الأسواق المستدامة",
     "marketPlaceDesc": "اكتشف العناصر القابلة لإعادة التدوير واكسب المكافآت"
@@ -843,13 +844,113 @@
     "dark_mode": "الوضع الليلي",
     "logout": "تسجيل الخروج"
   },
+  "editCategory": {
+    "title": "تعديل الفئة",
+    "subtitle": "قم بتحديث تفاصيل الفئة الخاصة بك",
+    "nameEnglish": "الاسم (إنجليزي)",
+    "nameArabic": "الاسم (عربي)",
+    "nameEnglishPlaceholder": "أدخل اسم الفئة بالإنجليزية",
+    "nameArabicPlaceholder": "أدخل اسم الفئة بالعربية",
+    "descriptionEnglish": "الوصف (إنجليزي)",
+    "descriptionArabic": "الوصف (عربي)",
+    "descriptionEnglishPlaceholder": "أدخل وصف الفئة بالإنجليزية",
+    "descriptionArabicPlaceholder": "أدخل وصف الفئة بالعربية",
+    "categoryImage": "صورة الفئة",
+    "currentImage": "الصورة الحالية",
+    "currentCategoryAlt": "الفئة الحالية",
+    "uploadFile": "رفع ملف",
+    "orDragAndDrop": "أو اسحب وأفلت",
+    "fileTypes": "PNG، JPG، GIF حتى 5 ميجابايت",
+    "uploadingImage": "جاري رفع الصورة",
+    "saveChanges": "حفظ التغييرات",
+    "failedToFetchCategory": "فشل في جلب بيانات الفئة",
+    "imageUploadFailed": "فشل في رفع الصورة",
+    "updateSuccessTitle": "تم التحديث!",
+    "updateSuccessText": "تم تحديث الفئة بنجاح",
+    "updateFailed": "فشل التحديث"
+  },
+  "addCategory": {
+    "title": "إضافة فئة جديدة",
+    "subtitle": "املأ التفاصيل أدناه لإنشاء فئة جديدة",
+    "categoryNameEnglish": "اسم الفئة (إنجليزي)",
+    "categoryNameArabic": "اسم الفئة (عربي)",
+    "categoryNameEnglishPlaceholder": "أدخل اسم الفئة بالإنجليزية",
+    "categoryNameArabicPlaceholder": "أدخل اسم الفئة بالعربية",
+    "descriptionEnglish": "الوصف (إنجليزي)",
+    "descriptionArabic": "الوصف (عربي)",
+    "descriptionEnglishPlaceholder": "أدخل وصف الفئة بالإنجليزية",
+    "descriptionArabicPlaceholder": "أدخل وصف الفئة بالعربية",
+    "subCategoryName": "عنوان الفئة الفرعية",
+    "uploadFile": "رفع ملف",
+    "orDragAndDrop": "أو اسحب وأفلت",
+    "fileTypes": "PNG، JPG، GIF حتى 5 ميجابايت",
+    "categoryImage": "صورة الفئة",
+    "selected": "المحدد",
+    "preview": "معاينة",
+    "addCategory": "إضافة فئة",
+    "selectImageError": "يرجى اختيار صورة للفئة!",
+    "categoryCreatedSuccess": "تم إنشاء الفئة بنجاح"
+  },
   "categories": {
-    "paaper": {
+    "image": "الصورة",
+    "categoryName": "اسم الفئة",
+    "subCategoryName": "اسم الفئة الفرعية",
+    "description": "الوصف",
+    "categories": "الفئات",
+    "addNewCategory": "إضافة فئة جديدة",
+    "startAddingCategory": "بدء إضافة فئة جديدة",
+    "noCategoriesFound": "لم يتم العثور على أي فئات.",
+    "errorLoadingCategories": "خطأ في تحميل الفئات",
+    "deleteConfirmTitle": "هل أنت متأكد؟",
+    "deleteConfirmText": "أنت على وشك حذف \"{{name}}\". لا يمكن التراجع عن هذا الإجراء!",
+    "confirmDelete": "نعم، احذف!",
+    "deleteSuccessTitle": "تم الحذف!",
+    "deleteSuccessText": "تم حذف \"{{name}}\" بنجاح.",
+    "deleteErrorTitle": "خطأ",
+    "deleteErrorText": "حدث خطأ أثناء الحذف.",
+    "cooking-oil": {
+      "name": "زيت طهي",
+      "description": "زيت طهي مستعمل"
+    },
+    "paper": {
       "name": "ورق",
       "description": "ورق"
+    },
+    "metals": {
+      "name": "معادن",
+      "description": "بعض من المعادن"
+    },
+    "e-waste": {
+      "name": "مخلفات الكترونية",
+      "description": "بعض من المخلفات الالكترونية"
     }
   },
+  "days": {
+    "mon": "الاثنين",
+    "tue": "الثلاثاء",
+    "wed": "الأربعاء",
+    "thu": "الخميس",
+    "fri": "الجمعة",
+    "sat": "السبت",
+    "sun": "الأحد"
+  },
   "charts": {
+    "weeklyOrdersDistribution": "توزيع الطلبات الأسبوعي",
+    "loadingWeeklyData": "جاري تحميل البيانات الأسبوعية...",
+    "orders": "الطلبات",
+    "numberOfOrders": "عدد الطلبات",
+    "dayOfWeek": "أيام الأسبوع",
+    "thisWeek": "هذا الأسبوع",
+    "lastWeek": "الأسبوع الماضي",
+    "last4Weeks": "آخر 4 أسابيع",
+    "last4WeeksAvg": "متوسط آخر 4 أسابيع",
+    "currentDay": "اليوم الحالي",
+    "index": "المؤشر",
+    "notFoundInCurrentWeek": "غير موجود في الأسبوع الحالي",
+    "period": "الفترة",
+    "dailyAvg": "المتوسط اليومي",
+    "peakDay": "أعلى يوم",
+    "vsPrevious": "مقارنة بالسابق",
     "totalOrders": "اجمالي الطلبات",
     "activeUsers": "المستخدمون النشطون",
     "materialTrack": "المواد المتعقبة",
@@ -875,7 +976,6 @@
     "loadingCitiesData": "جاري تحميل بيانات المدن...",
     "noCitiesData": "لا توجد بيانات مدن متاحة",
     "checkBackLater": "تحقق مرة أخرى لاحقاً للتحديثات",
-
     "trends": {
       "up": "ارتفاع",
       "down": "انخفاض",
@@ -894,7 +994,7 @@
     "totalOrders": "إجمالي الطلبات",
     "avgPerCity": "المتوسط لكل مدينة",
     "topCity": "أفضل مدينة",
-       "cairo": "القاهرة",
+    "cairo": "القاهرة",
     "giza": "الجيزة",
     "alexandria": "الإسكندرية",
     "mansoura": "المنصورة",
@@ -965,10 +1065,13 @@
     "sortByQuantity": "حسب الكمية",
     "sortByName": "حسب الاسم",
     "totalMaterials": "إجمالي المواد",
-    "totalQuantity": "الكمية الإجمالية",
-    "topMaterial": "الأعلى"
+    "totalQuantity": "إجمالي الكمية",
+    "topMaterial": "الأفضل",
+    "material": "المادة"
   },
   "orderStatus": {
+    "collected": "تم التحصيل",
+    "assigntocourier": "تم تعيين للمندوب",
     "pending": "قيد الانتظار",
     "processing": "قيد المعالجة",
     "shipped": "تم الشحن",
@@ -980,6 +1083,33 @@
   "items": {
     "paaper": {
       "news paper": "جرايد"
+    },
+    "plastic": {
+      "chair": "كرسي",
+      "coleman-water": "كولمان مياه",
+      "plastic-barrel": "برميل من البلاستيك",
+      "acrylic": "اكريلك",
+      "solid-plastic": "بلاستيك صلب"
+    },
+    "paper": {
+      "news paper": "جرايد",
+      "books": "كتب",
+      "card-board": "ورق مقوى",
+      "magazines": "مجلات",
+      "paper": "ورق",
+      "shredded-paper": "ورق متقطع"
+    },
+    "cooking-oil": {
+      "used-cooking-oil": "زيت طهي مستعمل"
+    },
+    "e-waste": {
+      "mobile": "هاتف محمول",
+      "laptop": "لابتوب",
+      "router": "راوتر",
+      "computer-cpu": "وحدة المعالجة المركزية",
+      "reciever": "جهاز استقبال",
+      "tablet": "تابليت",
+      "printer": "طابعة"
     }
   },
   "redeemEcoPoints": "استبدال النقاط البيئية",
@@ -1016,7 +1146,6 @@
   "pointsHistory": "تاريخ النقاط",
   "noPointsHistory": "لا يوجد تاريخ نقاط",
   "noActivity": "لا يوجد نشاط حديث",
-
   "redeem": "استبدال",
   "cashback": "استرداد نقدي",
   "earn": "كسب",
@@ -1030,8 +1159,7 @@
     "deleteAddress": "حذف العنوان",
     "choose": "اختر عنوانا",
     "select": "اختر او اضف عنوان للتوصيل",
-        "addNew" : "اضف عنوان جديد"
-
+    "addNew": "اضف عنوان جديد"
   },
   "addressForm": {
     "pickupAddress": "عنوان الاستلام",
@@ -1049,7 +1177,6 @@
     "additionalNote": "ملاحظة إضافية",
     "notesPlaceholder": "مثال: لا تدق الجرس"
   },
-
   "validation": {
     "areaRequired": "المنطقة مطلوبة",
     "streetRequired": "الشارع مطلوب",
@@ -1057,7 +1184,7 @@
     "floorRequired": "الطابق مطلوب",
     "apartmentRequired": "الشقة مطلوبة"
   },
-   "review": {
+  "review": {
     "reviewYourOrder": "راجع طلبك",
     "cartEmpty": "عربة التسوق فارغة.",
     "quantity": "الكمية",
@@ -1068,5 +1195,140 @@
     "total": "المجموع",
     "processing": "جاري المعالجة...",
     "confirmOrder": "تأكيد الطلب"
-  }
+  },
+  "delivery": {
+    "title": "طلبات التوصيل",
+    "description": "إدارة طلبات سائقي التوصيل والموافقات والمراجعات والوصول",
+    "tableTitle": "طلبات التوصيل",
+    "columns": {
+      "userName": "اسم المستخدم",
+      "email": "البريد الإلكتروني",
+      "phoneNumber": "رقم الهاتف",
+      "reviewsRating": "المراجعات والتقييم",
+      "status": "الحالة",
+      "action": "الإجراء",
+      "reapplyStatus": "حالة إعادة التقديم",
+      "appliedDate": "تاريخ التقديم",
+      "attachments": "المرفقات"
+    },
+    "status": {
+      "pending": "قيد الانتظار",
+      "approved": "مقبول",
+      "declined": "مرفوض",
+      "revoked": "مسحوب"
+    },
+    "actions": {
+      "approve": "قبول",
+      "decline": "رفض",
+      "revoke": "سحب",
+      "reapprove": "إعادة قبول",
+      "revokeAccess": "سحب الوصول"
+    },
+    "reapplyStatus": {
+      "canReapply": "يمكن إعادة التقديم",
+      "active": "نشط",
+      "na": "غير متاح"
+    },
+    "modal": {
+      "revokeAccess": "سحب الوصول",
+      "declineApplication": "رفض الطلب",
+      "revokeConfirm": "سحب",
+      "declineConfirm": "رفض",
+      "deliveryAccess": " وصول التوصيل لـ",
+      "application": " طلب",
+      "activeOrdersNote": "ملاحظة: سيتم الاحتفاظ بالطلبات النشطة",
+      "reason": "السبب",
+      "required": "(مطلوب)",
+      "optional": "(اختياري)"
+    },
+    "toasts": {
+      "approveSuccess": "تم قبول {{name}} بنجاح!",
+      "approveError": "فشل في قبول المستخدم",
+      "revokeSuccess": "تم سحب {{name}} بنجاح!",
+      "declineSuccess": "تم رفض {{name}} بنجاح!",
+      "revokeError": "فشل في سحب المستخدم",
+      "declineError": "فشل في رفض المستخدم",
+      "activeOrdersWarning": "المستخدم لديه {{count}} طلبات نشطة سيتم الاحتفاظ بها"
+    },
+    "defaultReason": {
+      "revoke": "تم سحب الوصول من قبل المدير"
+    },
+    "notAvailable": "غير متاح",
+    "viewRatings": "عرض التقييمات",
+    "viewDocuments": "عرض المستندات",
+    "processing": "جاري المعالجة...",
+    "selectAction": "اختر إجراء"
+  },
+  "loaders_ar": {
+    "deliveryData": "جاري تحميل بيانات التوصيل..."
+  },
+  "deliveryAttachments": {
+    "title": "مرفقات التوصيل",
+    "subtitle": "وثائق وصور التحقق",
+    "sections": {
+      "verificationImages": {
+        "title": "صور التحقق",
+        "description": "الملف الشخصي والسجل الجنائي وصور المركبة"
+      },
+      "personalInfo": {
+        "title": "المعلومات الشخصية",
+        "description": "الرخصة والهوية وتفاصيل المركبة"
+      }
+    },
+    "images": {
+      "deliveryPhoto": {
+        "title": "صورة التوصيل",
+        "description": "صورة التحقق من الملف الشخصي"
+      },
+      "criminalRecord": {
+        "title": "السجل الجنائي",
+        "description": "وثيقة فحص الخلفية"
+      },
+      "vehicleImage": {
+        "title": "صورة المركبة",
+        "description": "صورة تسجيل المركبة"
+      }
+    },
+    "info": {
+      "licenseNumber": "رقم الرخصة",
+      "nationalId": "الهوية الوطنية",
+      "vehicleType": "نوع المركبة"
+    },
+    "noImage": "لا توجد صورة",
+    "notProvided": "غير مقدم"
+  },
+  "deleteConfirmation": {
+    "title": "هل أنت متأكد من حذف هذا العنصر؟",
+    "text": "أنت على وشك حذف \"{{name}}\". لا يمكن التراجع عن هذا الإجراء!",
+    "confirmButton": "نعم، احذفه!",
+    "cancelButton": "إلغاء"
+  },
+  "addSubCategoryTo": "إضافة فئة فرعية إلى",
+  "fillDetailsToAddSubCategory": "املأ التفاصيل أدناه لإضافة فئة فرعية جديدة",
+  "subCategoryNameEnglish": "اسم الفئة الفرعية (إنجليزي)",
+  "subCategoryNameArabic": "اسم الفئة الفرعية (عربي)",
+  "enterSubCategoryNameEnglish": "Enter sub-category name in English",
+  "enterSubCategoryNameArabic": "أدخل اسم الفئة الفرعية بالعربية",
+  "enterPoints": "أدخل النقاط",
+  "price": "السعر",
+  "autoCalculatedPrice": "سعر محسوب تلقائياً",
+  "quantity": "الكمية",
+  "enterQuantity": "أدخل الكمية",
+  "measurementUnit": "وحدة القياس",
+  "selectUnit": "اختر الوحدة",
+  "kilogramKg": "كيلوغرام",
+  "piece": "قطعة",
+  "subCategoryImage": "صورة الفئة الفرعية",
+  "uploadFile": "رفع ملف",
+  "orDragAndDrop": "أو اسحب وأفلت",
+  "imageFormatLimit": "PNG, JPG, GIF حتى 5 ميجابايت",
+  "selected": "المحدد",
+  "remove": "إزالة",
+  "preview": "معاينة",
+  "cancel": "إلغاء",
+  "addSubCategory": "إضافة فئة فرعية",
+  "processing": "جاري المعالجة",
+  "invalidMeasurementUnit": "وحدة قياس غير صحيحة",
+  "subCategoryAddedSuccessfully": "تم إضافة الفئة الفرعية بنجاح!",
+  "somethingWentWrong": "حدث خطأ ما!"
 }
