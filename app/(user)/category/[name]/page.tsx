@@ -30,7 +30,8 @@ interface LocalizedItem {
   quantity: number;
   categoryId: string;
 }
-
+{console.log('esraaaaa')
+}
 export default function UserCategoryPage() {
 const {locale,t,convertNumber} = useLanguage()
   const params = useParams();
