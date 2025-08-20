@@ -16,9 +16,8 @@ import clsx from "clsx";
 import { useContext, useEffect, useState, useCallback, useMemo } from "react";
 import { UserAuthContext } from "@/context/AuthFormContext";
 import { FaMoneyBill } from "react-icons/fa";
-import { useLanguage } from "@/context/LanguageContext"; // your translation hook
+import { useLanguage } from "@/context/LanguageContext";
 
-// Only translation keys here
 const menuItemsConfig = [
   { key: "dashboard", icon: LayoutDashboard, href: "/admin/dashboard" },
   { key: "categories", icon: Layers, href: "/admin/categories" },
@@ -29,7 +28,7 @@ const menuItemsConfig = [
 ];
 
 export default function AdminSidebar() {
-  const { t,locale,setLocale } = useLanguage();
+  const { t, locale, setLocale } = useLanguage();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(true);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -38,7 +37,6 @@ export default function AdminSidebar() {
   const authContext = useContext(UserAuthContext);
   const logout = authContext?.logout;
 
-  // Apply translations dynamically
   const menuItems = useMemo(
     () =>
       menuItemsConfig.map((item) => ({
@@ -103,7 +101,7 @@ export default function AdminSidebar() {
             )}
           >
             <Icon size={20} />
-            {!collapsed && <span>{label}</span>}
+            {!collapsed && <span className="truncate">{label}</span>}
           </Link>
         </li>
       );
@@ -112,7 +110,7 @@ export default function AdminSidebar() {
 
   if (!isHydrated) {
     return (
-      <aside className="bg-white dark:bg-gray-900 shadow-lg h-full border-r border-gray-200 dark:border-gray-800 w-20 flex flex-col">
+      <aside className="bg-white dark:bg-gray-900  min-h-screen border-r border-gray-200 dark:border-gray-800 w-20 flex flex-col flex-shrink-0">
         <div className="flex items-center justify-center p-4 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
           X
         </div>
@@ -123,7 +121,7 @@ export default function AdminSidebar() {
   return (
     <aside
       className={clsx(
-        "shadow-lg h-full border-r transition-all duration-300 flex flex-col",
+        " min-h-screen border-r transition-all duration-300 flex flex-col flex-shrink-0",
         "bg-white border-gray-200",
         "dark:bg-gray-900 dark:border-gray-800",
         collapsed ? "w-20" : "w-64"
@@ -136,51 +134,57 @@ export default function AdminSidebar() {
         style={{ background: "var(--color-base-100)" }}
         onClick={toggleSidebar}
       >
-           
-        <span className="text-2xl font-extrabold bg-gradient-to-r from-accent-content to-success bg-clip-text text-transparent">
+        <span className="text-2xl font-extrabold bg-gradient-to-r from-accent-content to-success bg-clip-text text-transparent truncate">
           {collapsed ? "X" : "Xchange"}
         </span>
-        <span className="text-green-600 dark:text-green-400 text-sm ml-auto">
+        <span className="text-green-600 dark:text-green-400 text-sm ml-auto flex-shrink-0">
           {collapsed ? "»" : "«"}
         </span>
       </div>
-  <div className="hidden lg:flex items-center gap-1.5 px-2 py-1 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
-              <span
-                className={`text-xs font-medium ${
-                  locale === "en"
-                    ? "text-blue-600 dark:text-blue-400"
-                    : "text-gray-400 dark:text-gray-500"
-                }`}
-              >
-                EN
-              </span>
-              <button
-                onClick={() => setLocale(locale === "en" ? "ar" : "en")}
-                className="relative w-8 h-4 bg-gray-200 dark:bg-gray-600 rounded-full transition-colors duration-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+
+      {/* Language Toggle - Only show when expanded */}
+      {!collapsed && (
+        <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-800 overflow-hidden">
+          <div className="flex items-center justify-center gap-1 px-1 py-1 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors mx-auto max-w-[120px]">
+            <span
+              className={`text-xs font-medium ${
+                locale === "en"
+                  ? "text-blue-600 dark:text-blue-400"
+                  : "text-gray-400 dark:text-gray-500"
+              }`}
+            >
+              EN
+            </span>
+            <button
+              onClick={() => setLocale(locale === "en" ? "ar" : "en")}
+              className="relative w-6 h-3 bg-gray-200 dark:bg-gray-600 rounded-full transition-colors duration-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              style={{
+                backgroundColor:
+                  locale === "ar" ? "#3B82F6" : darkMode ? "#4B5563" : "#D1D5DB",
+              }}
+              title="Toggle Language"
+            >
+              <div
+                className="absolute top-0.5 left-0.5 w-2 h-2 bg-white dark:bg-gray-200 rounded-full shadow-sm transform transition-transform duration-200"
                 style={{
-                  backgroundColor:
-                    locale === "ar" ? "#3B82F6" : darkMode ? "#4B5563" : "#D1D5DB",
+                  transform:
+                    locale === "ar" ? "translateX(12px)" : "translateX(0)",
                 }}
-                title="Toggle Language"
-              >
-                <div
-                  className="absolute top-0.5 left-0.5 w-3 h-3 bg-white dark:bg-gray-200 rounded-full shadow-sm transform transition-transform duration-200"
-                  style={{
-                    transform:
-                      locale === "ar" ? "translateX(16px)" : "translateX(0)",
-                  }}
-                />
-              </button>
-              <span
-                className={`text-xs font-medium ${
-                  locale === "ar"
-                    ? "text-blue-600 dark:text-blue-400"
-                    : "text-gray-400 dark:text-gray-500"
-                }`}
-              >
-                AR
-              </span>
-            </div>
+              />
+            </button>
+            <span
+              className={`text-xs font-medium ${
+                locale === "ar"
+                  ? "text-blue-600 dark:text-blue-400"
+                  : "text-gray-400 dark:text-gray-500"
+              }`}
+            >
+              AR
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Menu */}
       <nav className="mt-4 flex-1 overflow-y-auto">
         <ul className="flex flex-col gap-1" style={{ color: "var(--foreground)" }}>
@@ -205,7 +209,7 @@ export default function AdminSidebar() {
                 )}
               >
                 {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-                {!collapsed && <span>{t("sidebar.dark_mode")}</span>}
+                {!collapsed && <span className="truncate">{t("sidebar.dark_mode")}</span>}
               </button>
             </li>
 
@@ -221,7 +225,7 @@ export default function AdminSidebar() {
                 )}
               >
                 <LogOutIcon size={20} />
-                {!collapsed && <span>{t("sidebar.logout")}</span>}
+                {!collapsed && <span className="truncate">{t("sidebar.logout")}</span>}
               </button>
             </li>
           </div>

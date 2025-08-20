@@ -376,8 +376,23 @@
       }
     }
   },
-
   "charts": {
+    "weeklyOrdersDistribution": "Weekly Orders Distribution",
+    "loadingWeeklyData": "Loading weekly data...",
+    "orders": "Orders",
+    "numberOfOrders": "Number of Orders",
+    "dayOfWeek": "Day of Week",
+    "thisWeek": "This Week",
+    "lastWeek": "Last Week",
+    "last4Weeks": "Last 4 Weeks",
+    "last4WeeksAvg": "Last 4 Weeks Avg",
+    "currentDay": "Current day",
+    "index": "Index",
+    "notFoundInCurrentWeek": "Not found in current week",
+    "period": "Period",
+    "dailyAvg": "Daily Avg",
+    "peakDay": "Peak Day",
+    "vsPrevious": "vs Previous",
     "vsLastPeriod": "vs last period",
     "numbers": {
       "percent": "%"
@@ -407,7 +422,6 @@
     "loadingCitiesData": "Loading cities data...",
     "noCitiesData": "No cities data available",
     "checkBackLater": "Check back later for updates",
-
     "trends": {
       "up": "up",
       "down": "down",
@@ -551,11 +565,14 @@
     "sortByName": "By Name",
     "totalMaterials": "Total Materials",
     "totalQuantity": "Total Quantity",
-    "topMaterial": "Top"
+    "topMaterial": "Top",
+    "material": "Material"
   },
   "orderStatus": {
     "pending": "Pending",
     "processing": "Processing",
+    "collected": "Collected",
+    "assigntocourier": "Assigned to Courier",
     "shipped": "Shipped",
     "delivered": "Delivered",
     "cancelled": "Cancelled",
@@ -566,7 +583,6 @@
     "ready": "Ready",
     "failed": "Failed"
   },
-
   "profile": {
     "returnEarn": "Return & Earn",
     "editProfile": "Edit Profile",
@@ -669,7 +685,7 @@
       "items": "items",
       "pcs": "Pcs",
       "pts": "Pts",
-      "more":"more items"
+      "more": "more items"
     },
     "checkout": {
       "outOfStockTitle": "Some items are out of stock",
@@ -695,7 +711,6 @@
     "transactions": {
       "title": "Recent Activity",
       "history": "Transaction History",
-
       "viewAll": "View All",
       "types": {
         "cashback": "Cashback",
@@ -1003,15 +1018,116 @@
     "dark_mode": "Dark Mode",
     "logout": "Logout"
   },
+  "editCategory": {
+    "title": "Edit Category",
+    "subtitle": "Update the details of your category",
+    "nameEnglish": "Name (English)",
+    "nameArabic": "Name (Arabic)",
+    "nameEnglishPlaceholder": "Enter category name in English",
+    "nameArabicPlaceholder": "أدخل اسم الفئة بالعربية",
+    "descriptionEnglish": "Description (English)",
+    "descriptionArabic": "Description (Arabic)",
+    "descriptionEnglishPlaceholder": "Enter category description in English",
+    "descriptionArabicPlaceholder": "أدخل وصف الفئة بالعربية",
+    "categoryImage": "Category Image",
+    "currentImage": "Current Image",
+    "currentCategoryAlt": "Current category",
+    "uploadFile": "Upload a file",
+    "orDragAndDrop": "or drag and drop",
+    "fileTypes": "PNG, JPG, GIF up to 5MB",
+    "uploadingImage": "Uploading image",
+    "saveChanges": "Save Changes",
+    "failedToFetchCategory": "Failed to fetch category",
+    "imageUploadFailed": "Image upload failed",
+    "updateSuccessTitle": "Updated!",
+    "updateSuccessText": "Category has been updated successfully",
+    "updateFailed": "Update failed"
+  },
+  "addCategory": {
+    "title": "Add New Category",
+    "subtitle": "Fill in the details below to create a new category",
+    "categoryNameEnglish": "Category Name (English)",
+    "categoryNameArabic": "Category Name (Arabic)",
+    "categoryNameEnglishPlaceholder": "Enter category name in English",
+    "categoryNameArabicPlaceholder": "أدخل اسم الفئة بالعربية",
+    "descriptionEnglish": "Description (English)",
+    "descriptionArabic": "Description (Arabic)",
+    "descriptionEnglishPlaceholder": "Enter category description in English",
+    "descriptionArabicPlaceholder": "أدخل وصف الفئة بالعربية",
+    "categoryImage": "Category Image",
+    "uploadFile": "Upload a file",
+    "orDragAndDrop": "or drag and drop",
+    "fileTypes": "PNG, JPG, GIF up to 5MB",
+    "selected": "Selected",
+    "preview": "Preview",
+    "addCategory": "Add Category",
+    "selectImageError": "Please select an image for the category!",
+    "categoryCreatedSuccess": "Category created successfully"
+  },
   "categories": {
-    "paaper": {
-      "name": "paaper",
-      "description": "testing paper"
+    "image": "Image",
+    "categoryName": "Category Name",
+    "subCategoryName": "Subcategory Name",
+    "description": "Description",
+    "categories": "Categories",
+    "addNewCategory": "Add New Category",
+    "startAddingCategory": "Start adding new category",
+    "noCategoriesFound": "No categories found.",
+    "errorLoadingCategories": "Error loading categories",
+    "deleteConfirmTitle": "Are you sure?",
+    "deleteConfirmText": "You are about to delete \"{{name}}\". This action cannot be undone!",
+    "confirmDelete": "Yes, delete it!",
+    "deleteSuccessTitle": "Deleted!",
+    "deleteSuccessText": "\"{{name}}\" has been deleted.",
+    "deleteErrorTitle": "Error",
+    "deleteErrorText": "Something went wrong while deleting.",
+    "cooking-oil": {
+      "name": "cooking-oil",
+      "description": "used cooking oil"
+    },
+    "paper": {
+      "name": "paper",
+      "description": "various paper items"
+    },
+    "metals": {
+      "name": "metals",
+      "description": "various metals"
+    },
+    "e-waste": {
+      "name": "e-waste",
+      "description": "electronic waste items"
     }
   },
   "items": {
     "paaper": {
       "news paper": "news paper"
+    },
+    "plastic": {
+      "chair": "chair",
+      "coleman-water": "coleman-water",
+      "plastic-barrel": "plastic-barrel",
+      "acrylic": "Acrylic",
+      "solid-plastic": "solid-plastic"
+    },
+    "paper": {
+      "news paper": "news paper",
+      "books": "books",
+      "card-board": "card-board",
+      "magazines": "magazines",
+      "paper": "paper",
+      "shredded-paper": "shredded-paper"
+    },
+    "cooking-oil": {
+      "used-cooking-oil": "used-cooking-oil"
+    },
+    "e-waste": {
+      "mobile": "Mobile",
+      "laptop": "laptop",
+      "router": "Router",
+      "computer-cpu": "computer-cpu",
+      "reciever": "reciever",
+      "tablet": "tablet",
+      "printer": "printer"
     }
   },
   "redeemEcoPoints": "Redeem Eco Points",

@@ -2,13 +2,15 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import Swal from "sweetalert2";
+import toast from "react-hot-toast";
 import api from "@/lib/axios";
 import Image from "next/image";
 import Button from "@/components/common/Button";
+import { useLocalization } from "@/utils/localiztionUtil";
 
 export default function AddCategoryPage() {
   const router = useRouter();
+  const { t } = useLocalization();
   const [name, setName] = useState("");
   const [nameAr, setNameAr] = useState("");
   const [description, setDescription] = useState("");
@@ -24,16 +26,11 @@ export default function AddCategoryPage() {
     descriptionAr.trim() !== "" &&
     imageFile !== null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+ const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!imageFile) {
-      Swal.fire({
-        icon: "error",
-        title: "Oops...",
-        text: "Please select an image for the category!",
-        confirmButtonColor: "#10b981",
-      });
+      toast.error(t("addCategory.selectImageError") || "Please select an image for the category!");
       return;
     }
 
@@ -47,33 +44,49 @@ export default function AddCategoryPage() {
       formData.append("descriptionAr", descriptionAr);
       formData.append("image", imageFile);
 
-      await api.post("/categories", formData, {
+      const response = await api.post("/categories", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
 
-      // Show success message first
-      await Swal.fire({
-        icon: "success",
-        title: "Success!",
-        text: "Category created successfully",
-        confirmButtonColor: "#10b981",
-      });
+      if (response.status === 201 || response.status === 200) {
+        toast.success(t("addCategory.categoryCreatedSuccess") || "Category created successfully");
+        
+        // Try multiple navigation methods with fallbacks
+        try {
+          // Method 1: Try router first
+          router.push('/admin/categories');
+          
+          // Method 2: Force refresh after a short delay
+          setTimeout(() => {
+            router.refresh();
+          }, 50);
+          
+          // Method 3: Fallback to hard redirect if router doesn't work
+          setTimeout(() => {
+            if (window.location.pathname !== '/admin/categories') {
+              window.location.href = '/admin/categories';
+            }
+          }, 200);
+          
+        } catch (navError) {
+          console.error('Navigation error:', navError);
+          window.location.href = '/admin/categories';
+        }
+      } else {
+        throw new Error(`Unexpected response status: ${response.status}`);
+      }
 
-      // Force hard navigation to ensure fresh data
-      window.location.href = "/admin/categories";
     } catch (err: any) {
-      console.error(err);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text:
-          err?.response?.data?.message ||
-          err.message ||
-          "Something went wrong!",
-        confirmButtonColor: "#10b981",
-      });
+      console.error('Submission error:', err);
+      const errorMessage = 
+        err?.response?.data?.message ||
+        err.message ||
+        t("common.somethingWentWrong") ||
+        "Something went wrong!";
+      
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -87,9 +100,9 @@ export default function AddCategoryPage() {
       >
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           <div className="p-6 bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
-            <h1 className="text-2xl font-bold">Add New Category</h1>
+            <h1 className="text-2xl font-bold">{t("addCategory.title") || "Add New Category"}</h1>
             <p className="mt-1 opacity-90">
-              Fill in the details below to create a new category
+              {t("addCategory.subtitle") || "Fill in the details below to create a new category"}
             </p>
           </div>
 
@@ -97,28 +110,28 @@ export default function AddCategoryPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Category Name (English) *
+                  {t("addCategory.categoryNameEnglish") || "Category Name (English)"} *
                 </label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
-                  placeholder="Enter category name in English"
+                  placeholder={t("addCategory.categoryNameEnglishPlaceholder") || "Enter category name in English"}
                   required
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Category Name (Arabic) *
+                  {t("addCategory.categoryNameArabic") || "Category Name (Arabic)"} *
                 </label>
                 <input
                   type="text"
                   value={nameAr}
                   onChange={(e) => setNameAr(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition text-right"
-                  placeholder="أدخل اسم الفئة بالعربية"
+                  placeholder={t("addCategory.categoryNameArabicPlaceholder") || "أدخل اسم الفئة بالعربية"}
                   dir="rtl"
                   required
                 />
@@ -128,28 +141,28 @@ export default function AddCategoryPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Description (English) *
+                  {t("addCategory.descriptionEnglish") || "Description (English)"} *
                 </label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
                   rows={3}
-                  placeholder="Enter category description in English"
+                  placeholder={t("addCategory.descriptionEnglishPlaceholder") || "Enter category description in English"}
                   required
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Description (Arabic) *
+                  {t("addCategory.descriptionArabic") || "Description (Arabic)"} *
                 </label>
                 <textarea
                   value={descriptionAr}
                   onChange={(e) => setDescriptionAr(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition text-right"
                   rows={3}
-                  placeholder="أدخل وصف الفئة بالعربية"
+                  placeholder={t("addCategory.descriptionArabicPlaceholder") || "أدخل وصف الفئة بالعربية"}
                   dir="rtl"
                   required
                 />
@@ -158,7 +171,7 @@ export default function AddCategoryPage() {
 
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">
-                Category Image *
+                {t("addCategory.categoryImage") || "Category Image"} *
               </label>
               <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-emerald-400 transition-colors">
                 <div className="space-y-1 text-center">
@@ -181,7 +194,7 @@ export default function AddCategoryPage() {
                       htmlFor="file-upload"
                       className="relative cursor-pointer bg-white rounded-md font-medium text-emerald-600 hover:text-emerald-500 focus-within:outline-none"
                     >
-                      <span>Upload a file</span>
+                      <span>{t("addCategory.uploadFile") || "Upload a file"}</span>
                       <input
                         id="file-upload"
                         name="file-upload"
@@ -200,10 +213,10 @@ export default function AddCategoryPage() {
                         required
                       />
                     </label>
-                    <p className="pl-1">or drag and drop</p>
+                    <p className="pl-1">{t("addCategory.orDragAndDrop") || "or drag and drop"}</p>
                   </div>
                   <p className="text-xs text-gray-500">
-                    PNG, JPG, GIF up to 5MB
+                    {t("addCategory.fileTypes") || "PNG, JPG, GIF up to 5MB"}
                   </p>
                 </div>
               </div>
@@ -211,7 +224,7 @@ export default function AddCategoryPage() {
               {imageFile && (
                 <div className="mt-2 flex items-center space-x-4">
                   <p className="text-sm text-gray-500">
-                    <span className="font-medium">Selected:</span>{" "}
+                    <span className="font-medium">{t("addCategory.selected") || "Selected"}:</span>{" "}
                     {imageFile.name}
                   </p>
                   <button
@@ -227,7 +240,7 @@ export default function AddCategoryPage() {
                     }}
                     className="px-2 py-1 text-sm text-red-600 hover:text-red-800 rounded-md border border-red-600 hover:bg-red-100 transition"
                   >
-                    Remove
+                    {t("common.remove") || "Remove"}
                   </button>
                 </div>
               )}
@@ -238,7 +251,7 @@ export default function AddCategoryPage() {
                     width={64}
                     height={64}
                     src={previewUrl}
-                    alt="Preview"
+                    alt={t("addCategory.preview") || "Preview"}
                     className="object-cover rounded-lg border border-gray-300 shadow"
                   />
                 </div>
@@ -252,7 +265,7 @@ export default function AddCategoryPage() {
                 className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
                 disabled={loading}
               >
-                Cancel
+                {t("common.cancel") || "Cancel"}
               </button>
               <Button
                 type="submit"
@@ -281,10 +294,10 @@ export default function AddCategoryPage() {
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       ></path>
                     </svg>
-                    Processing...
+                    {t("common.processing") || "Processing"}...
                   </span>
                 ) : (
-                  "Add Category"
+                  t("addCategory.addCategory") || "Add Category"
                 )}
               </Button>
             </div>

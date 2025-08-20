@@ -4,6 +4,7 @@ import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip, Legend } from 'chart.js';
 import { BAR_CHART_OPTIONS, CHART_COLORS } from '../../../../constants/theme';
 import { getCurrentDayLabels } from '../../../../utils/dataTransformers';
+import { useLanguage } from '@/context/LanguageContext';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
@@ -15,10 +16,24 @@ interface WeeklyOrdersChartProps {
 type TimePeriod = 'thisWeek' | 'lastWeek' | 'last4Weeks';
 
 const WeeklyOrdersChart = memo<WeeklyOrdersChartProps>(({ ordersPerDay, loading }) => {
+  const { t, convertNumber } = useLanguage();
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('thisWeek');
   
   // Get current day labels (this should return current week days starting from Monday)
-  const dayLabels = useMemo(() => getCurrentDayLabels(), []);
+  const dayLabels = useMemo(() => {
+    const labels = getCurrentDayLabels();
+    // Translate day names if in Arabic
+    return labels.map(label => {
+      const parts = label.split(' ');
+      const dayName = parts[0];
+      const dayNumber = parts[1] || '';
+      
+      // Translate English day names to Arabic
+      const translatedDay = t(`days.${dayName.toLowerCase()}`) || dayName;
+      
+      return dayNumber ? `${translatedDay} ${dayNumber}` : translatedDay;
+    });
+  }, [t]);
   
   // Get current day info for Egypt timezone
   const currentDayInfo = useMemo(() => {
@@ -68,7 +83,7 @@ const WeeklyOrdersChart = memo<WeeklyOrdersChartProps>(({ ordersPerDay, loading 
     return {
       labels: dayLabels,
       datasets: [{
-        label: 'Orders',
+        label: t('charts.orders'),
         data: data,
         backgroundColor: dayLabels.map((_, index) => {
           return index === currentDayInfo.index 
@@ -86,7 +101,7 @@ const WeeklyOrdersChart = memo<WeeklyOrdersChartProps>(({ ordersPerDay, loading 
         maxBarThickness: 60,
       }]
     };
-  }, [dayLabels, generateMockData, currentDayInfo.index]);
+  }, [dayLabels, generateMockData, currentDayInfo.index, t]);
 
   // Enhanced chart options
   const chartOptions = useMemo(() => ({
@@ -106,10 +121,10 @@ const WeeklyOrdersChart = memo<WeeklyOrdersChartProps>(({ ordersPerDay, loading 
             const dayLabel = context[0].label;
             const dayName = dayLabel.split(' ')[0]; // Extract day name from label
             const isToday = context[0].dataIndex === currentDayInfo.index;
-            return `${dayLabel}${isToday ? ' (Today)' : ''}`;
+            return `${dayLabel}${isToday ? ` (${t('common.today')})` : ''}`;
           },
           label: function(context: any) {
-            return `Orders: ${context.parsed.y.toLocaleString()}`;
+            return `${t('charts.orders')}: ${convertNumber(context.parsed.y.toString())}`;
           }
         }
       }
@@ -118,17 +133,17 @@ const WeeklyOrdersChart = memo<WeeklyOrdersChartProps>(({ ordersPerDay, loading 
       ...BAR_CHART_OPTIONS.scales,
       y: {
         ...BAR_CHART_OPTIONS.scales.y,
-        title: { display: true, text: 'Number of Orders' },
+        title: { display: true, text: t('charts.numberOfOrders') },
         ticks: {
           ...BAR_CHART_OPTIONS.scales.y.ticks,
           callback: function(value: any) {
-            return value.toLocaleString();
+            return convertNumber(value.toString());
           }
         }
       },
       x: {
         ...BAR_CHART_OPTIONS.scales.x,
-        title: { display: true, text: 'Day of Week' },
+        title: { display: true, text: t('charts.dayOfWeek') },
         ticks: {
           ...BAR_CHART_OPTIONS.scales.x.ticks,
           color: (context: any) => {
@@ -152,7 +167,7 @@ const WeeklyOrdersChart = memo<WeeklyOrdersChartProps>(({ ordersPerDay, loading 
         event.native.target.style.cursor = elements.length > 0 ? 'pointer' : 'default';
       }
     }
-  }), [currentDayInfo.index]);
+  }), [currentDayInfo.index, t, convertNumber]);
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -184,7 +199,7 @@ const WeeklyOrdersChart = memo<WeeklyOrdersChartProps>(({ ordersPerDay, loading 
         <div className="flex items-center justify-center h-full text-green-500">
           <div className="text-center">
             <div className="animate-spin rounded-full h-6 md:h-8 w-6 md:w-8 border-b-2 border-green-500 mx-auto mb-2"></div>
-            <p className="text-xs md:text-sm">Loading weekly data...</p>
+            <p className="text-xs md:text-sm">{t('charts.loadingWeeklyData')}</p>
           </div>
         </div>
       );
@@ -195,18 +210,18 @@ const WeeklyOrdersChart = memo<WeeklyOrdersChartProps>(({ ordersPerDay, loading 
 
   const getPeriodLabel = (period: TimePeriod) => {
     switch (period) {
-      case 'thisWeek': return 'This Week';
-      case 'lastWeek': return 'Last Week';
-      case 'last4Weeks': return 'Last 4 Weeks Avg';
-      default: return 'This Week';
+      case 'thisWeek': return t('charts.thisWeek');
+      case 'lastWeek': return t('charts.lastWeek');
+      case 'last4Weeks': return t('charts.last4WeeksAvg');
+      default: return t('charts.thisWeek');
     }
   };
 
   return (
-    <div className="bg-white rounded-xl p-4 md:p-6 shadow border border-green-100"   style={{ background:"var(--background)" }}>
+    <div className="bg-white rounded-xl p-4 md:p-6 shadow border border-green-100" style={{ background:"var(--background)" }}>
       <div className="flex justify-between items-center mb-2 flex-wrap gap-2">
         <span className="text-sm md:text-base font-medium text-green-800">
-          Weekly Orders Distribution
+          {t('charts.weeklyOrdersDistribution')}
         </span>
         <select 
           value={selectedPeriod}
@@ -214,9 +229,9 @@ const WeeklyOrdersChart = memo<WeeklyOrdersChartProps>(({ ordersPerDay, loading 
           className="text-xs border border-green-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white transition-colors"
           disabled={loading}
         >
-          <option value="thisWeek">This Week</option>
-          <option value="lastWeek">Last Week</option>
-          <option value="last4Weeks">Last 4 Weeks</option>
+          <option value="thisWeek">{t('charts.thisWeek')}</option>
+          <option value="lastWeek">{t('charts.lastWeek')}</option>
+          <option value="last4Weeks">{t('charts.last4Weeks')}</option>
         </select>
       </div>
       
@@ -228,11 +243,11 @@ const WeeklyOrdersChart = memo<WeeklyOrdersChartProps>(({ ordersPerDay, loading 
       <div className="mt-2 text-xs text-gray-500">
         <div className="flex items-center justify-between">
           <span>
-            Current day: <span className="font-medium text-amber-600">
-              {currentDayInfo.name} {currentDayInfo.index >= 0 ? `(Index: ${currentDayInfo.index})` : '(Not found in current week)'}
+            {t('charts.currentDay')}: <span className="font-medium text-amber-600">
+              {currentDayInfo.name} {currentDayInfo.index >= 0 ? `(${t('charts.index')}: ${currentDayInfo.index})` : ''}
             </span>
           </span>
-          <span>Period: {getPeriodLabel(selectedPeriod)}</span>
+          <span>{t('charts.period')}: {getPeriodLabel(selectedPeriod)}</span>
         </div>
       </div>
 
@@ -241,22 +256,22 @@ const WeeklyOrdersChart = memo<WeeklyOrdersChartProps>(({ ordersPerDay, loading 
         <div className="mt-4 pt-3 border-t border-green-100">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
             <div className="text-center p-2 bg-green-50 rounded">
-              <div className="font-semibold text-green-900">{stats.total}</div>
-              <div className="text-green-600">Total</div>
+              <div className="font-semibold text-green-900">{convertNumber(stats.total.toString())}</div>
+              <div className="text-green-600">{t('charts.total')}</div>
             </div>
             <div className="text-center p-2 bg-blue-50 rounded">
-              <div className="font-semibold text-blue-900">{stats.average}</div>
-              <div className="text-blue-600">Daily Avg</div>
+              <div className="font-semibold text-blue-900">{convertNumber(stats.average.toString())}</div>
+              <div className="text-blue-600">{t('charts.dailyAvg')}</div>
             </div>
             <div className="text-center p-2 bg-amber-50 rounded">
               <div className="font-semibold text-amber-900">{stats.maxDay}</div>
-              <div className="text-amber-600">Peak Day</div>
+              <div className="text-amber-600">{t('charts.peakDay')}</div>
             </div>
             <div className="text-center p-2 bg-purple-50 rounded">
               <div className={`font-semibold ${stats.changePercent >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                {stats.changePercent >= 0 ? '+' : ''}{stats.changePercent}%
+                {stats.changePercent >= 0 ? '+' : ''}{convertNumber(stats.changePercent.toString())}%
               </div>
-              <div className="text-purple-600">vs Previous</div>
+              <div className="text-purple-600">{t('charts.vsPrevious')}</div>
             </div>
           </div>
         </div>

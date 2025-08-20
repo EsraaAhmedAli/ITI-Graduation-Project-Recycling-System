@@ -22,6 +22,7 @@ import { useNotification } from "@/context/notificationContext";
 import { queryClient } from "@/lib/queryClient";
 import { backgroundClip } from "html2canvas/dist/types/css/property-descriptors/background-clip";
 import { useLanguage } from "@/context/LanguageContext";
+import Loader from "@/components/common/loader";
 
 type UserRole = "customer" | "buyer";
 const STATUS = {
@@ -629,18 +630,12 @@ const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
     );
   }
 
-  // Remove search loading state - just show data as it arrives
-  // if (
-  //   searchTerm &&
-  //   debouncedSearchTerm !== searchTerm &&
-  //   isFetching &&
-  //   !data?.data?.length
-  // ) {
-  //   return (
-  //     // ... search loading UI
-  //   );
-  // }
 
+if (isLoading) {
+  return (
+   <Loader />
+  );
+}
   const transformedData = orders.map((order: any) => ({
     orderId: order._id,
     onClickItemsId: () => {

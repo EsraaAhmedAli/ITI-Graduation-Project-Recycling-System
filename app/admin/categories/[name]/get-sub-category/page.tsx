@@ -5,8 +5,9 @@ import { useParams, useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 import React, { useEffect, useState } from "react";
 import api from "@/lib/axios";
-import Loader from "@/components/common/Loader";
 import { useLocalization } from "@/utils/localiztionUtil";
+import Button from "@/components/common/Button";
+import Loader from "@/components/common/loader";
 
 interface SubcategoryItem {
   _id: string;
@@ -36,17 +37,17 @@ export default function Page() {
   const router = useRouter();
   
   // Use shared localization utilities at component level
-  const { getDisplayName, getEnglishName, getMeasurementUnit, formatCurrency, t, locale } = useLocalization();
+  const { getDisplayName,  getMeasurementUnit, formatCurrency, t, locale } = useLocalization();
 
   const columns = [
     { 
       key: "image", 
-      label: t('itemsModal.image') || "Image", 
+      label: t('categories.image') || "Image", 
       type: "image" 
     },
     { 
       key: "name", 
-      label: t('itemsModal.name') || "Item Name", 
+      label: t('categories.subCategoryName') || "Item Name", 
       sortable: true,
       render: (item: SubcategoryItem) => getDisplayName(item) // Uses backend's displayName
     },
@@ -94,17 +95,16 @@ export default function Page() {
   const handleDelete = async (item: SubcategoryItem) => {
     const displayName = getDisplayName(item);
     
-    const result = await Swal.fire({
-      title: t('profile.orders.cancelConfirm') || "Are you sure?",
-      text: `You are about to delete "${displayName}". This action cannot be undone!`,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#aaa",
-      confirmButtonText: t('profile.orders.confirmYes') || "Yes, delete it!",
-      cancelButtonText: t('profile.orders.confirmNo') || "Cancel",
-    });
-
+ const result = await Swal.fire({
+  title: t('deleteConfirmation.title') || 'Are you sure to delete this item?',
+  text: t('deleteConfirmation.text', { name: displayName }) || `You are about to delete "${displayName}". This action cannot be undone!`,
+  icon: "warning",
+  showCancelButton: true,
+  confirmButtonColor: "#d33",
+  cancelButtonColor: "#aaa",
+  confirmButtonText: t('deleteConfirmation.confirmButton') || "Yes, delete it!",
+  cancelButtonText: t('deleteConfirmation.cancelButton') || "Cancel",
+});
     if (result.isConfirmed) {
       try {
         await api.delete(`/categories/item/${name}/${item._id}`);
@@ -112,7 +112,7 @@ export default function Page() {
 
         Swal.fire({
           icon: "success",
-          title: t('profile.orders.cancelled') || "Deleted!",
+          title: "Item Deleted",
           text: `"${displayName}" has been deleted.`,
           timer: 1500,
           showConfirmButton: false,
@@ -122,7 +122,7 @@ export default function Page() {
         Swal.fire({
           icon: "error",
           title: "Error",
-          text: t('profile.orders.failed') || "Something went wrong while deleting.",
+          text:  "Something went wrong while deleting.",
         });
       }
     }
@@ -141,18 +141,18 @@ export default function Page() {
   return (
     <>
       {loading ? (
-        <Loader title={`${t('common.items') || 'items'} ${t('common.in') || 'in'} ${categoryDisplayName}`} />
+        <Loader title={` ${categoryDisplayName}`} />
       ) : error ? (
         <p className="text-center text-red-500 py-10">{error}</p>
       ) : items.length === 0 ? (
-        <p className="text-center text-gray-500 py-10">
-          {t('profile.orders.empty') || 'No items found for this category.'}
-        </p>
+       <Button onClick={() => router.push(`/admin/categories/${name}/add-sub-category`)} className="m-10 p-3">
+        {t('common.addNewItem') || "Add New Item"}
+       </Button>
       ) : (
         <DynamicTable
           data={items}
           columns={columns}
-          title={`${t('common.items') || 'Items'} ${t('common.in') || 'in'} ${t('breadcrumbs.category') || 'Category'} ${categoryDisplayName}`}
+          title={`${t('common.itemsIn')} ${categoryDisplayName}`}
           itemsPerPage={5}
           addButtonText={t('common.addNewItem') || "Add New Item"}
           onAdd={() =>

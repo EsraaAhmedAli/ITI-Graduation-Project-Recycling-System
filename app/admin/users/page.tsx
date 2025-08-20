@@ -6,9 +6,10 @@ import api from "@/lib/axios";
 import { User } from "@/components/Types/Auser.type";
 import EditUserRoleModal from "./EditUserRoleModal";
 import Image from "next/image";
-import Loader from "@/components/common/Loader";
 import { useUsers } from "@/hooks/useGetUsers";
 import { useQueryClient } from "@tanstack/react-query";
+import Loader from "@/components/common/loader";
+import { useLanguage } from "@/context/LanguageContext";
 
 
 const AdminUsersPage = () => {
@@ -113,7 +114,7 @@ const AdminUsersPage = () => {
       toast.error("Delete failed");
     }
   };
-
+const{t}=useLanguage()
   // const handleChangeRole = async (user: User) => {
   //   const newRole = prompt(
   //     `Enter new role for ${user.name} (admin, customer, buyer, delivery):`,
@@ -245,7 +246,7 @@ const AdminUsersPage = () => {
   return (
     <>
       {isLoading ? (
-        <Loader title="users" />
+        <Loader title={t('loaders.users')}/>
       ) : error ? (
         <p className="text-center py-10 text-red-500">{error}</p>
       ) : users?.length === 0 ? (

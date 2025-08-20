@@ -1,13 +1,12 @@
 "use client";
 
-import { Select, TextInput } from "flowbite-react";
+import {  TextInput } from "flowbite-react";
 import FormError from "@/components/common/FormError";
 import { City, FormInputs } from "@/components/Types/address.type";
 import {
   UseFormRegister,
   FieldErrors,
   UseFormSetValue,
-  useFormContext,
   useForm,
 } from "react-hook-form";
 import { cityAreas } from "./cityAreas";

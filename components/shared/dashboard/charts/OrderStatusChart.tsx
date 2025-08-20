@@ -47,16 +47,20 @@ const LoadingDoughnut = () => (
 const OrderStatusChart = memo<OrderStatusChartProps>(({ orderStatus, loading }) => {
   const { t, convertNumber } = useLanguage();
 
-  // Memoize chart data
-  const normalizedStatus = useMemo(() => {
-    const normalized: Record<string, number> = {};
-    Object.entries(orderStatus).forEach(([key, value]) => {
-      const lower = key.toLowerCase();
-      normalized[lower] = (normalized[lower] || 0) + value;
-    });
-    return normalized;
-  }, [orderStatus]);
-
+const normalizedStatus = useMemo(() => {
+  const normalized: Record<string, number> = {};
+  Object.entries(orderStatus).forEach(([key, value]) => {
+    let normalizedKey = key.toLowerCase();
+    
+    // Handle assigntocourier variations
+    if (normalizedKey === 'assigntocourier' || normalizedKey === 'assignedtocourier') {
+      normalizedKey = 'assigntocourier';
+    }
+    
+    normalized[normalizedKey] = (normalized[normalizedKey] || 0) + value;
+  });
+  return normalized;
+}, [orderStatus]);
   const chartData = useMemo(() => {
     const statuses = Object.keys(normalizedStatus);
     const counts = Object.values(normalizedStatus);
@@ -68,7 +72,7 @@ const OrderStatusChart = memo<OrderStatusChartProps>(({ orderStatus, loading }) 
         backgroundColor: statuses.map(status => STATUS_COLOR_MAP[status] || '#d1d5db'),
         borderWidth: 0,
         hoverBackgroundColor: statuses.map(status =>
-          (STATUS_COLOR_MAP[status] || '#09c') + 'CC'
+          (STATUS_COLOR_MAP[status] || '#09c') 
         ),
         hoverBorderWidth: 2,
         hoverBorderColor: '#ffffff',

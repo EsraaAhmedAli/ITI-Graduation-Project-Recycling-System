@@ -1,4 +1,4 @@
-// Enhanced version of your delivery applications page with delivery reviews
+// Enhanced version of your delivery applications page with translations and improved readability
 "use client";
 import React, { useState } from "react";
 import api from "@/lib/axios";
@@ -11,6 +11,7 @@ import Loader from "@/components/common/Loader";
 import { useQuery } from "@tanstack/react-query";
 import ReviewsModal from "@/components/ratingModal";
 import { useLanguage } from "@/context/LanguageContext";
+
 export interface DeliveryItem {
   userId: string; // unique user or courier ID
   name: string; // courier / applicant name
@@ -37,6 +38,7 @@ const ActionModal = ({
   actionType?: "decline" | "revoke";
 }) => {
   const [reason, setReason] = useState("");
+  const { t } = useLanguage();
 
   const handleSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -60,16 +62,16 @@ const ActionModal = ({
           <div className="space-y-3">
             <div className="text-center">
               <h3 className="text-base font-medium text-gray-900 mb-1">
-                {isRevoke ? "Revoke Access" : "Decline Application"}
+                {isRevoke ? t('delivery.modal.revokeAccess') : t('delivery.modal.declineApplication')}
               </h3>
               <p className="text-sm text-gray-600">
-                {isRevoke ? "Revoke" : "Decline"}{" "}
-                <span className="font-medium">{userName}</span>&apos;s
-                {isRevoke ? "delivery access" : "application"}?
+                {isRevoke ? t('delivery.modal.revokeConfirm') : t('delivery.modal.declineConfirm')}{" "}
+                <span className="font-medium">{userName}</span>
+                {isRevoke ? t('delivery.modal.deliveryAccess') : t('delivery.modal.application')}?
               </p>
               {isRevoke && (
                 <p className="text-xs text-orange-600 mt-1">
-                  Note: Active orders will be preserved
+                  {t('delivery.modal.activeOrdersNote')}
                 </p>
               )}
             </div>
@@ -77,7 +79,7 @@ const ActionModal = ({
             <div>
               <TextInput
                 id="reason"
-                placeholder={`Reason ${isRevoke ? "(required)" : "(optional)"}`}
+                placeholder={`${t('delivery.modal.reason')} ${isRevoke ? t('delivery.modal.required') : t('delivery.modal.optional')}`}
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 disabled={isLoading}
@@ -93,7 +95,7 @@ const ActionModal = ({
                 disabled={isLoading}
                 className="flex-1"
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button
                 onClick={handleSubmit}
@@ -103,7 +105,7 @@ const ActionModal = ({
                   isRevoke ? "bg-orange-600" : "bg-red-600"
                 }`}
               >
-                {isRevoke ? "Revoke" : "Decline"}
+                {isRevoke ? t('delivery.actions.revoke') : t('delivery.actions.decline')}
               </Button>
             </div>
           </div>
@@ -116,7 +118,7 @@ const ActionModal = ({
 export default function Page() {
   const [activeAttachments, setActiveAttachments] = useState<any | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const {t}=useLanguage()
+  const { t } = useLanguage();
 
   // Modal state
   const [showActionModal, setShowActionModal] = useState(false);
@@ -138,15 +140,15 @@ export default function Page() {
       const response = await api.patch(`/delivery/approve/${userId}`);
       await refetch();
 
-      toast.success(`${item.name} has been approved successfully!`, {
+      toast.success(t('delivery.toasts.approveSuccess', { name: item.name }), {
         duration: 4000,
         position: "top-right",
       });
     } catch (error: any) {
       console.error("Error approving delivery user:", error);
       const errorMessage =
-        error.response?.data?.message || "Failed to approve user";
-      toast.error(`Error: ${errorMessage}`, {
+        error.response?.data?.message || t('delivery.toasts.approveError');
+      toast.error(`${t('common.error')}: ${errorMessage}`, {
         duration: 5000,
         position: "top-right",
       });
@@ -179,14 +181,14 @@ export default function Page() {
 
       if (actionType === "revoke") {
         response = await api.patch(`/delivery/revoke/${userId}`, {
-          reason: reason || "Access revoked by admin",
+          reason: reason || t('delivery.defaultReason.revoke'),
         });
-        successMessage = `${selectedUser.name} has been revoked successfully!`;
+        successMessage = t('delivery.toasts.revokeSuccess', { name: selectedUser.name });
       } else {
         response = await api.patch(`/delivery/decline/${userId}`, {
           reason: reason || undefined,
         });
-        successMessage = `${selectedUser.name} has been declined successfully!`;
+        successMessage = t('delivery.toasts.declineSuccess', { name: selectedUser.name });
       }
 
       await refetch();
@@ -197,7 +199,7 @@ export default function Page() {
 
       if (actionType === "revoke" && response.data.activeOrdersCount > 0) {
         toast.error(
-          `User has ${response.data.activeOrdersCount} active orders that will be preserved`,
+          t('delivery.toasts.activeOrdersWarning', { count: response.data.activeOrdersCount }),
           {
             duration: 6000,
             position: "top-right",
@@ -210,8 +212,8 @@ export default function Page() {
     } catch (error: any) {
       console.error(`Error ${actionType}ing delivery user:`, error);
       const errorMessage =
-        error.response?.data?.message || `Failed to ${actionType} user`;
-      toast.error(`Error: ${errorMessage}`, {
+        error.response?.data?.message || t(`delivery.toasts.${actionType}Error`);
+      toast.error(`${t('common.error')}: ${errorMessage}`, {
         duration: 5000,
         position: "top-right",
       });
@@ -245,25 +247,29 @@ export default function Page() {
   const columns = [
     {
       key: "name",
-      label: "User Name",
+      label: t('delivery.columns.userName'),
       sortable: true,
       priority: 1,
+      minWidth: "180px", // Increased from 150px
     },
     {
       key: "email",
-      label: "Email",
+      label: t('delivery.columns.email'),
       sortable: true,
       priority: 2,
+      minWidth: "220px", // Increased from 200px
     },
     {
       key: "phoneNumber",
-      label: "Phone Number",
+      label: t('delivery.columns.phoneNumber'),
       sortable: true,
       priority: 3,
+      minWidth: "160px", // Increased from 140px
     },
     {
       key: "rating",
-      label: "Reviews & Rating",
+      label: t('delivery.columns.reviewsRating'),
+      minWidth: "140px", // Increased from 120px
       render: (item: any) => {
         const rating = item.rating || 0;
         const totalReviews = item.totalReviews || 0;
@@ -271,35 +277,34 @@ export default function Page() {
 
         // Only show ratings for approved couriers or those who have reviews
         if (currentStatus !== "approved" && totalReviews === 0) {
-          return <span className="text-gray-400 text-sm">Not available</span>;
+          return <span className="text-gray-400 text-sm">{t('delivery.notAvailable')}</span>;
         }
 
         return (
-          <>
-            <div className="flex items-center gap-2">
-              <button
-                className="text-green-500 hover:text-green-700 underline text-sm"
-                onClick={() => {
-                  setSelectedCourier({ id: item.userId, name: item.name });
-                  setShowReviewsModal(true);
-                }}
-              >
-                view ratings
-              </button>
-            </div>
-          </>
+          <div className="flex items-center gap-2">
+            <button
+              className="text-green-500 hover:text-green-700 underline text-sm whitespace-nowrap"
+              onClick={() => {
+                setSelectedCourier({ id: item.userId, name: item.name });
+                setShowReviewsModal(true);
+              }}
+            >
+              {t('delivery.viewRatings')}
+            </button>
+          </div>
         );
       },
     },
     {
       key: "currentStatus",
-      label: "Status",
+      label: t('delivery.columns.status'),
+      minWidth: "120px", // Increased from 100px
       render: (item: any) => {
         const status = item.currentStatus || "pending";
 
         return (
           <span
-            className={`px-2 py-1 rounded-full text-xs font-medium ${
+            className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
               status === "approved"
                 ? "bg-green-100 text-green-800"
                 : status === "declined"
@@ -309,20 +314,15 @@ export default function Page() {
                 : "bg-yellow-100 text-yellow-800"
             }`}
           >
-            {status === "approved"
-              ? "Approved"
-              : status === "declined"
-              ? "Declined"
-              : status === "revoked"
-              ? "Revoked"
-              : "Pending"}
+            {t(`delivery.status.${status}`)}
           </span>
         );
       },
     },
     {
       key: "statusAction",
-      label: "Action",
+      label: t('delivery.columns.action'),
+      minWidth: "200px", // Significantly increased from 150px to prevent cropping
       render: (item: any) => {
         const isProcessing = actionLoading === item.userId;
         const currentStatus = item.currentStatus || "pending";
@@ -338,28 +338,28 @@ export default function Page() {
               else if (value === "revoke") handleRevokeClick(item);
               e.target.value = "";
             }}
-            className={`border border-gray-300 rounded-md px-3 py-1.5 text-sm text-gray-700 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${
+            className={`border w-full border-gray-300 rounded-md px-3 py-1.5 text-sm text-gray-700 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 min-w-[180px] ${
               isProcessing ? "opacity-50 cursor-not-allowed" : ""
             }`}
           >
             <option value="" disabled>
-              {isProcessing ? "Processing..." : "Select Action"}
+              {isProcessing ? t('delivery.processing') : t('delivery.selectAction')}
             </option>
 
             {currentStatus !== "approved" && (
               <option value="approve">
                 {currentStatus === "declined" || currentStatus === "revoked"
-                  ? "Re-approve"
-                  : "Approve"}
+                  ? t('delivery.actions.reapprove')
+                  : t('delivery.actions.approve')}
               </option>
             )}
 
             {currentStatus !== "declined" && currentStatus !== "revoked" && (
-              <option value="decline">Decline</option>
+              <option value="decline">{t('delivery.actions.decline')}</option>
             )}
 
             {currentStatus === "approved" && (
-              <option value="revoke">Revoke Access</option>
+              <option value="revoke">{t('delivery.actions.revokeAccess')}</option>
             )}
           </select>
         );
@@ -367,54 +367,43 @@ export default function Page() {
     },
     {
       key: "canReapply",
-      label: "Reapply Status",
+      label: t('delivery.columns.reapplyStatus'),
+      minWidth: "140px", // Increased from 120px
       render: (item: any) => {
         const currentStatus = item.currentStatus || "pending";
         const canReapply = item.canReapply;
 
         if (canReapply) {
           return (
-            <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-              Can Reapply
+            <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 whitespace-nowrap">
+              {t('delivery.reapplyStatus.canReapply')}
             </span>
           );
         } else if (currentStatus === "approved") {
           return (
-            <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-              Active
+            <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 whitespace-nowrap">
+              {t('delivery.reapplyStatus.active')}
             </span>
           );
         } else {
           return (
-            <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-              N/A
+            <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 whitespace-nowrap">
+              {t('delivery.reapplyStatus.na')}
             </span>
           );
         }
       },
     },
     {
-      key: "createdAt",
-      label: "Applied Date",
-      sortable: true,
-      render: (item: any) => {
-        const date = new Date(item.createdAt);
-        return (
-          <span className="text-sm text-gray-600">
-            {date.toLocaleDateString()}
-          </span>
-        );
-      },
-    },
-    {
       key: "attachments",
-      label: "Attachments",
+      label: t('delivery.columns.attachments'),
+      minWidth: "140px", // Increased from 120px
       render: (item: any) => (
         <button
-          className="text-green-500 hover:text-green-700 underline text-sm"
+          className="text-green-500 hover:text-green-700 underline text-sm whitespace-nowrap"
           onClick={() => setActiveAttachments(item.attachments)}
         >
-          View Documents
+          {t('delivery.viewDocuments')}
         </button>
       ),
     },
@@ -424,10 +413,10 @@ export default function Page() {
     <div className="p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">
-          Delivery Applications
+          {t('delivery.title')}
         </h1>
         <p className="text-gray-600 mt-1">
-          Manage delivery driver applications, approvals, reviews, and access
+          {t('delivery.description')}
         </p>
       </div>
 
@@ -438,7 +427,7 @@ export default function Page() {
           {/* Enhanced Summary stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <div className="text-sm font-medium text-yellow-800">Pending</div>
+              <div className="text-sm font-medium text-yellow-800">{t('delivery.status.pending')}</div>
               <div className="text-2xl font-bold text-yellow-900">
                 {
                   deliveryData.filter(
@@ -448,7 +437,7 @@ export default function Page() {
               </div>
             </div>
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <div className="text-sm font-medium text-green-800">Approved</div>
+              <div className="text-sm font-medium text-green-800">{t('delivery.status.approved')}</div>
               <div className="text-2xl font-bold text-green-900">
                 {
                   deliveryData.filter(
@@ -458,7 +447,7 @@ export default function Page() {
               </div>
             </div>
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <div className="text-sm font-medium text-red-800">Declined</div>
+              <div className="text-sm font-medium text-red-800">{t('delivery.status.declined')}</div>
               <div className="text-2xl font-bold text-red-900">
                 {
                   deliveryData.filter(
@@ -468,7 +457,7 @@ export default function Page() {
               </div>
             </div>
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-              <div className="text-sm font-medium text-orange-800">Revoked</div>
+              <div className="text-sm font-medium text-orange-800">{t('delivery.status.revoked')}</div>
               <div className="text-2xl font-bold text-orange-900">
                 {
                   deliveryData.filter(
@@ -480,7 +469,7 @@ export default function Page() {
           </div>
 
           <DynamicTable
-            title="Delivery Applications"
+            title={t('delivery.tableTitle')}
             data={deliveryData}
             columns={columns}
             showAddButton={false}

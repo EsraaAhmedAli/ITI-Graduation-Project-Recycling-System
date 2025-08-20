@@ -6,6 +6,7 @@ import Swal from "sweetalert2";
 import api from "@/lib/axios";
 import Image from "next/image";
 import { useLanguage } from "@/context/LanguageContext";
+import toast from "react-hot-toast";
 
 export default function EditItemPage() {
   const { name: rawName, itemId } = useParams();
@@ -91,48 +92,57 @@ export default function EditItemPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setUploading(true);
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setUploading(true);
 
+  try {
+    const data = new FormData();
+    data.append("name", formData.name);
+    data.append("nameAr", formData.itemNameAr);
+    data.append("points", formData.points);
+    data.append("price", Math.floor(+formData.points / 19).toString());
+    data.append("quantity", formData.quantity);
+    data.append("measurement_unit", formData.measurement_unit);
+    
+    if (formData.image) data.append("image", formData.image);
+
+    await api.put(`/categories/item/${name}/${itemId}`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    // Success toast
+    toast.success("Item updated successfully!");
+    
+    // Use the navigation pattern that works
     try {
-      const data = new FormData();
-      data.append("name", formData.name);
-      data.append("nameAr", formData.itemNameAr);
-      data.append("points", formData.points);
-      data.append("price", Math.floor(+formData.points / 19).toString());
-      data.append("quantity", formData.quantity);
-      data.append("measurement_unit", formData.measurement_unit);
+      router.replace(`/admin/categories/${name}/get-sub-category`);
       
-      if (formData.image) data.append("image", formData.image);
-
-      await api.put(`/categories/item/${name}/${itemId}`, data, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      await Swal.fire({
-        icon: "success",
-        title: "Success!",
-        text: "Item updated successfully",
-        confirmButtonColor: "#10b981",
-      });
-
+      // Fallback to hard redirect if router doesn't work
+      setTimeout(() => {
+        if (window.location.pathname !== `/admin/categories/${name}/get-sub-category`) {
+          window.location.href = `/admin/categories/${name}/get-sub-category`;
+        }
+      }, 200);
+      
+    } catch (navError) {
+      console.error('Navigation error:', navError);
       window.location.href = `/admin/categories/${name}/get-sub-category`;
-      
-    } catch (err: any) {
-      console.error(err.response?.data?.message);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: err.response?.data?.message || "Failed to update item",
-        confirmButtonColor: "#10b981",
-      });
-    } finally {
-      setUploading(false);
     }
-  };
+
+  } catch (err: any) {
+    console.error(err.response?.data?.message);
+    
+    // Error toast with detailed message
+    const errorMessage = err.response?.data?.message || "Failed to update item";
+    toast.error(errorMessage);
+    
+  } finally {
+    setUploading(false);
+  }
+};
 
   // Show loading while language context or data is loading
   if (loading || !isLoaded) {
