@@ -353,8 +353,124 @@ export function UserPointsProvider({
         clearTimeout(refreshTimeout.current);
       }
     };
-  }, [userId, debouncedSilentRefresh, userPoints?.totalPoints]);
+  }, [userId, debouncedSilentRefresh, userPoints]);
 
+  // Enhanced socket listeners with comprehensive real-time updates
+  useEffect(() => {
+    const socket = getSocket();
+    console.log("Socket instance in useEffect:", socket);
+
+    if (!userId || !socket) {
+      console.log("No userId or socket, skipping socket listener setup");
+      return;
+    }
+
+    // Join user-specific room for targeted updates
+    socket.emit("join-user-room", userId);
+
+    // Handle points updates
+    const handlePointsUpdate = (data: any) => {
+      console.log("Received points:updated event:", data);
+
+      // Immediate UI update for better UX
+      setUserPoints((prev) => {
+        const newPoints = data.totalPoints;
+        if (prev && prev.totalPoints !== newPoints) {
+          return { ...prev, totalPoints: newPoints };
+        }
+        return prev;
+      });
+
+      // Show notification for points changes
+      if (data.pointsChange !== 0) {
+        const message =
+          data.pointsChange > 0
+            ? `+${data.pointsChange} points: ${data.reason}`
+            : `${data.pointsChange} points: ${data.reason}`;
+
+        // You can use your preferred notification system here
+        console.log("Points change:", message);
+      }
+    };
+
+    // Handle tier upgrades
+
+    // Handle order completion
+    const handleOrderCompleted = (data: any) => {
+      console.log("Received order:completed event:", data);
+      setTotalCompletedOrders((prev) => prev + 1);
+
+      // Update points if provided
+      if (data.pointsEarned && userPoints) {
+        setUserPoints((prev) =>
+          prev
+            ? {
+                ...prev,
+                totalPoints: prev.totalPoints + data.pointsEarned,
+              }
+            : prev
+        );
+      }
+    };
+
+    // Handle order status updates
+    const handleOrderStatusUpdate = (data: any) => {
+      console.log("Received order:status:updated event:", data);
+
+      if (data.status === "completed") {
+        setTotalCompletedOrders((prev) => prev + 1);
+
+        if (data.pointsEarned && userPoints) {
+          setUserPoints((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  totalPoints: prev.totalPoints + data.pointsEarned,
+                }
+              : prev
+          );
+        }
+      }
+    };
+
+    // Handle recycling completion
+    const handleRecyclingCompleted = (data: any) => {
+      console.log("Received recycling:completed event:", data);
+
+      if (data.pointsEarned && userPoints) {
+        setUserPoints((prev) =>
+          prev
+            ? {
+                ...prev,
+                totalPoints: prev.totalPoints + data.pointsEarned,
+              }
+            : prev
+        );
+      }
+
+      if (data.orderCompleted) {
+        setTotalCompletedOrders((prev) => prev + 1);
+      }
+    };
+
+    // Set up all event listeners
+    socket.on("points:updated", handlePointsUpdate);
+    socket.on("order:completed", handleOrderCompleted);
+    socket.on("order:status:updated", handleOrderStatusUpdate);
+    socket.on("recycling:completed", handleRecyclingCompleted);
+
+    // Cleanup function
+    return () => {
+      // Leave user room
+      socket.emit("leave-user-room", userId);
+
+      // Remove all listeners
+      socket.off("points:updated", handlePointsUpdate);
+      socket.off("order:completed", handleOrderCompleted);
+      socket.off("order:status:updated", handleOrderStatusUpdate);
+      socket.off("recycling:completed", handleRecyclingCompleted);
+    };
+  }, [userId]); // Only depend on userId
   // Cleanup on unmount
   useEffect(() => {
     return () => {

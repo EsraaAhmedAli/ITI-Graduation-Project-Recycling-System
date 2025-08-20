@@ -9,6 +9,7 @@
       "drop": "Drop Your Waste!",
       "learn": "Learn More"
     },
+
     "features": {
       "voice": "Record Your Items",
       "schedule": "Choose a Date and Time",
@@ -45,6 +46,27 @@
       "success_message": "Subscribed successfully! 🎉",
       "error_message": "Something went wrong."
     }
+  },
+  "search": {
+    "title": "Search Items",
+    "placeholder": "What are you looking for?",
+    "buttonText": "Search",
+    "closeLabel": "Close search",
+    "tooltipSearch": "Search",
+    "browseByLetter": "Browse by First Letter",
+    "legendAvailable": "Available",
+    "legendNotAvailable": "Not available",
+    "resultsFor": "results for",
+    "noItemsFound": "No items found",
+    "tryDifferentTerm": "Try a different search term",
+    "clearAndBrowse": "Clear search and browse letters",
+    "readyToSearch": "Ready to search!",
+    "readyToSearchDesc": "Type in the search box above, or click on any available letter to browse items alphabetically",
+    "clickToSeeItems": "Click to see items starting with",
+    "noItemsStartWith": "No items start with",
+    "noResultsFound": "No results found",
+    "searchError": "Search error occurred",
+    "searching": "Searching..."
   },
   "navbar": {
     "home": "Home",
@@ -516,7 +538,7 @@
     "totalOrders": "Total Orders",
     "avgPerCity": "Avg per City",
     "topCity": "Top City",
-       "cairo": "Cairo",
+    "cairo": "Cairo",
     "giza": "Giza",
     "alexandria": "Alexandria",
     "mansoura": "Mansoura",
@@ -617,6 +639,7 @@
     "confirmItems": "Confirm items you want to recycle",
     "liveInventory": "Live Inventory",
     "check": "Checking inventory...",
+    "qty": "Qty",
     "emptyCart": {
       "title": "Your recycling bin is empty",
       "description": "Start making a positive impact on the environment. Browse available recyclable items and add them to your bin!",
@@ -643,7 +666,10 @@
       "minIncrement": "Min: 0.25 kg, increments of 0.25 kg",
       "wholeNumbers": "Whole numbers only",
       "kg": "kg",
-      "items": "items"
+      "items": "items",
+      "pcs": "Pcs",
+      "pts": "Pts",
+      "more":"more items"
     },
     "checkout": {
       "outOfStockTitle": "Some items are out of stock",
@@ -781,11 +807,10 @@
     "addToCollection": "Add to Collection"
   },
   "common": {
-
     "back": "Back",
     "currency": "EGP",
     "next": "Next",
-    "loading" : "Loading",
+    "loading": "Loading",
     "sold": "sold",
     "viewAll": "view all",
     "piece": "piece",
@@ -836,16 +861,16 @@
       "ecoFriendly": "Eco-Friendly"
     }
   },
-    "loaders" : {
-"Categories" : "Categories",
-"recipet" : "Receipt",
-"transactions": "Transactions",
-"deliveryData" : "Delivery Data",
-"items" : "items",
-"info" :"your info",
-"reviews" :"reviews",
-"orders" :"orders",
-"payments" : "payments"
+  "loaders": {
+    "Categories": "Categories",
+    "recipet": "Receipt",
+    "transactions": "Transactions",
+    "deliveryData": "Delivery Data",
+    "items": "items",
+    "info": "your info",
+    "reviews": "reviews",
+    "orders": "orders",
+    "payments": "payments"
   },
   "marketPlace": {
     "sustainableMarketplace": "Sustainable Marketplace",
@@ -873,9 +898,9 @@
     "default": "Contributes to a cleaner environment",
     "environmentalImpact": "Environmental Impact"
   },
-"toast": {
-  "cart": "{{itemName}} added to cart successfully!"
-},
+  "toast": {
+    "cart": "{{itemName}} added to cart successfully!"
+  },
   "categoryStats": {
     "totalItems": "Total Items",
     "pointsRange": "Points Range",
@@ -1019,27 +1044,28 @@
   "couldNotDeductPoints": "Could not deduct points",
   "selectVoucher": "Select a voucher",
   "voucher": "Voucher",
-  "value": "Value",  "pointsHistory": "Points History",
+  "value": "Value",
+  "pointsHistory": "Points History",
   "noPointsHistory": "No points history found",
   "noActivity": "No recent activity",
   "recentPointsActivity": "Recent Points Activity",
   "viewFullHistory": "View Full History",
   "redeem": "Redeem",
-  "cashback": "Cashback", 
+  "cashback": "Cashback",
   "earn": "Earn",
   "bonus": "Bonus",
   "deduct": "Deduct",
-   "addresses": {
+  "addresses": {
     "noAddressesTitle": "No addresses yet",
     "noAddressesDescription": "Add your first delivery address to get started",
     "selected": "Selected",
     "editAddress": "Edit Address",
     "deleteAddress": "Delete Address",
-    "choose" : "Choose Your Address",
-    "select" : "Select or add a delivery address",
-    "addNew" : "Add New Address"
+    "choose": "Choose Your Address",
+    "select": "Select or add a delivery address",
+    "addNew": "Add New Address"
   },
-  
+
   "addressForm": {
     "pickupAddress": "Pickup Address",
     "selectCity": "Select your city",
@@ -1056,7 +1082,7 @@
     "additionalNote": "Additional Note",
     "notesPlaceholder": "e.g. Don't ring the bell"
   },
-   "validation": {
+  "validation": {
     "areaRequired": "Area is required",
     "streetRequired": "Street is required",
     "buildingRequired": "Building is required",
@@ -1075,5 +1101,4 @@
     "processing": "Processing...",
     "confirmOrder": "Confirm Order"
   }
-
 }

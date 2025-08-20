@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import { useMemo } from "react";
 import { useCart } from "@/context/CartContext";
 import { CartItem } from "@/models/cart";
-import Loader from "@/components/common/loader";
+import Loader from "@/components/common/Loader";
 import { Recycle, Plus, Sparkles } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios";
@@ -86,7 +86,7 @@ export default function UserCategoryPage() {
       const categoryId = getCategoryIdByItemName(englishItemName);
 
       // Get category ID using English name (as you prefer)
-      const categoryId = getCategoryIdByItemName(englishItemName);
+      // const categoryId = getCategoryIdByItemName(englishItemName);
 
       // Get category names (handle both string and object cases)
       const categoryNameEn =

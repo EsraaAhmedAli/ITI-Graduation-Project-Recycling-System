@@ -47,7 +47,7 @@ export default function Navbar() {
   const { locale, setLocale } = useLanguage();
   const [darkMode, setDarkMode] = useState(false);
 
-  const { t } = useLanguage();
+  const { t, convertNumber } = useLanguage();
 
   useEffect(() => {
     if (darkMode) {
@@ -196,7 +196,9 @@ export default function Navbar() {
                   <Recycle className="w-5 h-5" />
                   {totalItems > 0 && (
                     <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-1 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center shadow-sm ring-1 ring-white">
-                      {totalItems > 99 ? "99+" : totalItems}
+                      {totalItems > 99
+                        ? convertNumber(99) + "+"
+                        : convertNumber(totalItems)}
                     </span>
                   )}
                 </div>
@@ -207,16 +209,17 @@ export default function Navbar() {
 
               {/* Cart Dropdown */}
               {isCartOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                <div className="fixed sm:absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 max-w-sm bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50 sm:max-h-[calc(100vh-120px)] max-h-[calc(100vh-80px)] overflow-hidden flex flex-col top-12 sm:top-auto">
                   <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-gray-700">
                     <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
                       {isBuyer ? t("navbar.myCart") : t("navbar.myCollection")}
                     </h3>
                     <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {t("navbar.totalItems")} {totalItems} {t("navbar.items")}
+                      {t("navbar.totalItems")} {convertNumber(totalItems)}{" "}
+                      {t("navbar.items")}
                     </span>
                   </div>
-                  <div className="max-h-72 overflow-y-auto">
+                  <div className="flex-1 overflow-y-auto">
                     {cart && cart.length > 0 ? (
                       cart.slice(0, 4).map((item, index) => (
                         <div
@@ -254,11 +257,14 @@ export default function Navbar() {
                             </p>
                             <div className="flex items-center gap-2 mt-0.5">
                               <p className="text-gray-400 dark:text-gray-500 text-xs">
-                                Qty: {item.quantity}{" "}
-                                {item.measurement_unit === 1 ? "kg" : "pcs"}
+                                {t("cart.qty")}: {convertNumber(item.quantity)}{" "}
+                                {item.measurement_unit === 1
+                                  ? t("cart.item.kg")
+                                  : t("cart.item.pcs")}
                               </p>
                               <p className="text-green-600 dark:text-green-400 text-xs font-medium">
-                                {item.points} pts
+                                {convertNumber(item.points)}{" "}
+                                {t("cart.item.pts")}
                               </p>
                             </div>
                           </div>
@@ -291,7 +297,7 @@ export default function Navbar() {
                     )}
                     {cart && cart.length > 4 && (
                       <div className="px-4 py-2 text-center text-xs text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-700">
-                        +{cart.length - 4} more items
+                        +{convertNumber(cart.length - 4)} {t("cart.item.more")}
                       </div>
                     )}
                   </div>
@@ -303,7 +309,7 @@ export default function Navbar() {
                             {t("navbar.totalItems")}
                           </span>
                           <span className="font-semibold text-gray-900 dark:text-white">
-                            {totalItems}
+                            {convertNumber(totalItems)}
                           </span>
                         </div>
                         <Link
