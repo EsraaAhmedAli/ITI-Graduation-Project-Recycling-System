@@ -6,10 +6,17 @@ import { CircleDollarSign, Mic, CalendarCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import { lazy, Suspense } from "react";
 import { useLanguage } from "@/context/LanguageContext";
+import dynamic from "next/dynamic";
 
 // Lazy load components that are below the fold
 const CategoryList = lazy(() => import("@/components/shared/CategoryList"));
 const SubscriptionForm = lazy(() => import("@/components/common/subscriptionForm/subscriptionForm"));
+
+// Lazy load FloatingRecorderButton for voice processing
+const FloatingRecorderButton = dynamic(
+  () => import('@/components/Voice Processing/FloatingRecorderButton'),
+  { ssr: false }
+);
 
 // Loading fallback components
 const CategoryListSkeleton = () => (
@@ -242,6 +249,9 @@ export default function Home() {
     </div>
   </div>
 </section>
+      
+      {/* Voice Processing Component */}
+      <FloatingRecorderButton />
     </>
   );
 }
