@@ -676,7 +676,7 @@ export default function CartPage() {
                                 value={
                                   inputValues[item._id] !== undefined
                                     ? inputValues[item._id]
-                                    : item.quantity.toString()
+                                    : convertNumber(item.quantity.toString())
                                 }
                                 onChange={(e) =>
                                   handleInputChange(
@@ -695,7 +695,9 @@ export default function CartPage() {
                                     : "border-gray-300 focus:ring-green-500 focus:border-green-500"
                                 }`}
                                 placeholder={
-                                  item.measurement_unit === 1 ? "0.25" : "1"
+                                  item.measurement_unit === 1
+                                    ? convertNumber(0.25)
+                                    : convertNumber(1)
                                 }
                               />
                             </div>
@@ -721,7 +723,9 @@ export default function CartPage() {
                             </button>
 
                             <span className="text-xs text-gray-500">
-                              {item.measurement_unit === 1 ? "kg" : "items"}
+                              {item.measurement_unit === 1
+                                ? t("cart.item.kg")
+                                : t("cart.item.items")}
                             </span>
                           </div>
                         </div>

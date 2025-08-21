@@ -9,6 +9,7 @@
       "drop": "Drop Your Waste!",
       "learn": "Learn More"
     },
+
     "features": {
       "voice": "Record Your Items",
       "schedule": "Choose a Date and Time",
@@ -45,6 +46,27 @@
       "success_message": "Subscribed successfully! 🎉",
       "error_message": "Something went wrong."
     }
+  },
+  "search": {
+    "title": "Search Items",
+    "placeholder": "What are you looking for?",
+    "buttonText": "Search",
+    "closeLabel": "Close search",
+    "tooltipSearch": "Search",
+    "browseByLetter": "Browse by First Letter",
+    "legendAvailable": "Available",
+    "legendNotAvailable": "Not available",
+    "resultsFor": "results for",
+    "noItemsFound": "No items found",
+    "tryDifferentTerm": "Try a different search term",
+    "clearAndBrowse": "Clear search and browse letters",
+    "readyToSearch": "Ready to search!",
+    "readyToSearchDesc": "Type in the search box above, or click on any available letter to browse items alphabetically",
+    "clickToSeeItems": "Click to see items starting with",
+    "noItemsStartWith": "No items start with",
+    "noResultsFound": "No results found",
+    "searchError": "Search error occurred",
+    "searching": "Searching..."
   },
   "navbar": {
     "home": "Home",
@@ -633,6 +655,7 @@
     "confirmItems": "Confirm items you want to recycle",
     "liveInventory": "Live Inventory",
     "check": "Checking inventory...",
+    "qty": "Qty",
     "emptyCart": {
       "title": "Your recycling bin is empty",
       "description": "Start making a positive impact on the environment. Browse available recyclable items and add them to your bin!",
@@ -659,7 +682,10 @@
       "minIncrement": "Min: 0.25 kg, increments of 0.25 kg",
       "wholeNumbers": "Whole numbers only",
       "kg": "kg",
-      "items": "items"
+      "items": "items",
+      "pcs": "Pcs",
+      "pts": "Pts",
+      "more": "more items"
     },
     "checkout": {
       "outOfStockTitle": "Some items are out of stock",
@@ -864,7 +890,7 @@
     }
   },
   "loaders": {
-    "categories": "Categories",
+    "Categories": "Categories",
     "recipet": "Receipt",
     "transactions": "Transactions",
     "deliveryData": "Delivery Data",
@@ -872,8 +898,7 @@
     "info": "your info",
     "reviews": "reviews",
     "orders": "orders",
-    "payments": "payments",
-    "users": "users"
+    "payments": "payments"
   },
   "marketPlace": {
     "sustainableMarketplace": "Sustainable Marketplace",
@@ -1169,6 +1194,7 @@
     "select": "Select or add a delivery address",
     "addNew": "Add New Address"
   },
+
   "addressForm": {
     "pickupAddress": "Pickup Address",
     "selectCity": "Select your city",
@@ -1203,146 +1229,5 @@
     "total": "Total",
     "processing": "Processing...",
     "confirmOrder": "Confirm Order"
-  },
-  "delivery": {
-    "title": "Delivery Applications",
-    "description": "Manage delivery driver applications, approvals, reviews, and access",
-    "tableTitle": "Delivery Applications",
-    "columns": {
-      "userName": "User Name",
-      "email": "Email",
-      "phoneNumber": "Phone Number",
-      "reviewsRating": "Reviews & Rating",
-      "status": "Status",
-      "action": "Action",
-      "reapplyStatus": "Reapply Status",
-      "appliedDate": "Applied Date",
-      "attachments": "Attachments"
-    },
-    "status": {
-      "pending": "Pending",
-      "approved": "Approved",
-      "declined": "Declined",
-      "revoked": "Revoked"
-    },
-    "actions": {
-      "approve": "Approve",
-      "decline": "Decline",
-      "revoke": "Revoke",
-      "reapprove": "Re-approve",
-      "revokeAccess": "Revoke Access"
-    },
-    "reapplyStatus": {
-      "canReapply": "Can Reapply",
-      "active": "Active",
-      "na": "N/A"
-    },
-    "modal": {
-      "revokeAccess": "Revoke Access",
-      "declineApplication": "Decline Application",
-      "revokeConfirm": "Revoke",
-      "declineConfirm": "Decline",
-      "deliveryAccess": "'s delivery access",
-      "application": "'s application",
-      "activeOrdersNote": "Note: Active orders will be preserved",
-      "reason": "Reason",
-      "required": "(required)",
-      "optional": "(optional)"
-    },
-    "toasts": {
-      "approveSuccess": "{{name}} has been approved successfully!",
-      "approveError": "Failed to approve user",
-      "revokeSuccess": "{{name}} has been revoked successfully!",
-      "declineSuccess": "{{name}} has been declined successfully!",
-      "revokeError": "Failed to revoke user",
-      "declineError": "Failed to decline user",
-      "activeOrdersWarning": "User has {{count}} active orders that will be preserved"
-    },
-    "defaultReason": {
-      "revoke": "Access revoked by admin"
-    },
-    "notAvailable": "Not available",
-    "viewRatings": "view ratings",
-    "viewDocuments": "View Documents",
-    "processing": "Processing...",
-    "selectAction": "Select Action"
-  },
-  "deliveryAttachments": {
-    "title": "Delivery Attachments",
-    "subtitle": "Verification documents and images",
-    "sections": {
-      "verificationImages": {
-        "title": "Verification Images",
-        "description": "Profile, criminal record, and vehicle photos"
-      },
-      "personalInfo": {
-        "title": "Personal Information",
-        "description": "License, ID, and vehicle details"
-      }
-    },
-    "images": {
-      "deliveryPhoto": {
-        "title": "Delivery Photo",
-        "description": "Profile verification image"
-      },
-      "criminalRecord": {
-        "title": "Criminal Record",
-        "description": "Background check document"
-      },
-      "vehicleImage": {
-        "title": "Vehicle Image",
-        "description": "Vehicle registration photo"
-      }
-    },
-    "info": {
-      "licenseNumber": "License Number",
-      "nationalId": "National ID",
-      "vehicleType": "Vehicle Type"
-    },
-    "noImage": "No image",
-    "notProvided": "Not provided"
-  },
-  "days": {
-    "mon": "monday",
-    "tue": "tuesday",
-    "wed": "wednesday",
-    "thu": "thursday",
-    "fri": "friday",
-    "sat": "saturday",
-    "sun": "sunday"
-  },
-  "deleteConfirmation": {
-    "title": "Are you sure to delete this item?",
-    "text": "You are about to delete \"{{name}}\". This action cannot be undone!",
-    "confirmButton": "Yes, delete it!",
-    "cancelButton": "Cancel"
-  },
-  "addSubCategoryTo": "Add Sub-Category to",
-  "fillDetailsToAddSubCategory": "Fill in the details below to add a new sub-category",
-  "subCategoryNameEnglish": "Sub-Category Name (English)",
-  "subCategoryNameArabic": "Sub-Category Name (Arabic)",
-  "enterSubCategoryNameEnglish": "Enter sub-category name in English",
-  "enterSubCategoryNameArabic": "أدخل اسم الفئة الفرعية بالعربية",
-  "enterPoints": "Enter points",
-  "price": "Price",
-  "autoCalculatedPrice": "Auto-calculated price",
-  "quantity": "Quantity",
-  "enterQuantity": "Enter quantity",
-  "measurementUnit": "Measurement Unit",
-  "selectUnit": "Select unit",
-  "kilogramKg": "Kilogram (kg)",
-  "piece": "Piece",
-  "subCategoryImage": "Sub-Category Image",
-  "uploadFile": "Upload a file",
-  "orDragAndDrop": "or drag and drop",
-  "imageFormatLimit": "PNG, JPG, GIF up to 5MB",
-  "selected": "Selected",
-  "remove": "Remove",
-  "preview": "Preview",
-  "cancel": "Cancel",
-  "addSubCategory": "Add Sub-Category",
-  "processing": "Processing",
-  "invalidMeasurementUnit": "Invalid measurement unit",
-  "subCategoryAddedSuccessfully": "Sub-category added successfully!",
-  "somethingWentWrong": "Something went wrong!"
+  }
 }

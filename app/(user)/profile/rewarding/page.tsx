@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Star, Gift, Recycle, Trophy, Infinity } from "lucide-react";
 import { rewardLevels } from "@/constants/rewardsTiers";
 import { useUserAuth } from "@/context/AuthFormContext";
@@ -12,7 +12,7 @@ const RecyclingRewardsSystem = () => {
 
   // Sample customer data - replace with real data from your API
   const { user } = useUserAuth();
-  const { userPoints, getUserPoints, silentRefresh, totalCompletedOrders } =
+  const { userPoints, totalCompletedOrders, refreshUserPoints } =
     useUserPoints();
 
   // Function to calculate current level based on points
@@ -35,17 +35,17 @@ const RecyclingRewardsSystem = () => {
   };
 
   // Function to calculate points needed for next level
-  const calculatePointsToNext = (orders) => {
+  const calculatePointsToNext = useCallback((orders) => {
     const nextLevel = calculateNextLevel(orders);
     if (nextLevel) {
       return nextLevel.minRecycles - orders;
     }
     return 0; // Already at max level
-  };
+  }, []);
 
   useEffect(() => {
-    silentRefresh();
-  }, [silentRefresh]);
+    refreshUserPoints();
+  }, [refreshUserPoints]);
 
   // Recompute customer data whenever points or orders update
   useEffect(() => {
@@ -65,7 +65,7 @@ const RecyclingRewardsSystem = () => {
       nextLevel: nextLevelData?.name || t("program.maxLevelReached"),
       pointsToNext: pointsToNextLevel,
     });
-  }, [userPoints, totalCompletedOrders, user, t]);
+  }, [userPoints, totalCompletedOrders, user, t, calculatePointsToNext]);
 
   // Initialize customer data with calculations
   const currentUserPoints = userPoints?.totalPoints || 0;
@@ -189,7 +189,7 @@ const RecyclingRewardsSystem = () => {
 
                 {/* Green progress fill - no text */}
                 <div
-                  className="absolute top-1/2 left-0 h-2 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full -translate-y-1/2 transition-all duration-1000 ease-out"
+                  className="absolute top-1/2 start-0 h-2 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full -translate-y-1/2 transition-all duration-1000 ease-out"
                   style={{ width: `${Math.min(progressPercentage, 100)}%` }}
                 ></div>
               </div>

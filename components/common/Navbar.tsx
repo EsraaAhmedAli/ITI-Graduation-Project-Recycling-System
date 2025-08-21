@@ -1,6 +1,3 @@
-
-
-
 // "use client";
 
 // import Link from "next/link";
@@ -706,7 +703,7 @@ export default function Navbar() {
   const { locale, setLocale } = useLanguage();
   const [darkMode, setDarkMode] = useState(false);
 
-  const { t } = useLanguage();
+  const { t, convertNumber } = useLanguage();
 
   useEffect(() => {
     if (darkMode) {
@@ -792,7 +789,7 @@ export default function Navbar() {
             <Link
               prefetch={true}
               href={user?.role == "buyer" ? "/home" : "/"}
-              className={`nav-link ${darkMode ? 'dark' : 'light'}`}
+              className={`nav-link ${darkMode ? "dark" : "light"}`}
             >
               <HousePlus className="nav-icon" />
               <span>{t("navbar.home")}</span>
@@ -801,9 +798,8 @@ export default function Navbar() {
             <Link
               prefetch={true}
               href={isBuyer ? "/marketplace" : "/category"}
-              className={`nav-link ${darkMode ? 'dark' : 'light'}`}
+              className={`nav-link ${darkMode ? "dark" : "light"}`}
             >
-              
               {isBuyer ? (
                 <Store className="nav-icon" />
               ) : (
@@ -817,7 +813,7 @@ export default function Navbar() {
             <Link
               prefetch={true}
               href="/ideas"
-              className={`nav-link ${darkMode ? 'dark' : 'light'}`}
+              className={`nav-link ${darkMode ? "dark" : "light"}`}
             >
               <FaRobot className="nav-icon" />
               <span>{t("navbar.ecoAssist")}</span>
@@ -830,7 +826,9 @@ export default function Navbar() {
             <button
               onClick={() => setDarkMode(!darkMode)}
               className={`theme-toggle p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors`}
-              aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+              aria-label={
+                darkMode ? "Switch to light mode" : "Switch to dark mode"
+              }
             >
               {darkMode ? (
                 <Sun className="w-5 h-5" />
@@ -843,14 +841,16 @@ export default function Navbar() {
             <div className="relative" ref={cartRef}>
               <button
                 onClick={() => setIsCartOpen(!isCartOpen)}
-                className={`cart-button ${darkMode ? 'dark' : 'light'}`}
+                className={`cart-button ${darkMode ? "dark" : "light"}`}
                 title={isBuyer ? t("navbar.myCart") : t("navbar.myCollection")}
               >
                 <div className="relative">
                   <Recycle className="w-5 h-5" />
                   {totalItems > 0 && (
-                    <span className="cart-indicator">
-                      {totalItems > 99 ? "99+" : totalItems}
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-1 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center shadow-sm ring-1 ring-white">
+                      {totalItems > 99
+                        ? convertNumber(99) + "+"
+                        : convertNumber(totalItems)}
                     </span>
                   )}
                 </div>
@@ -861,16 +861,21 @@ export default function Navbar() {
 
               {/* Cart Dropdown */}
               {isCartOpen && (
-                <div className={`nav-dropdown absolute right-0 mt-2 w-80 rounded-lg bg-white shadow-lg border py-2 z-50 ${darkMode ? 'dark' : 'light'}`}>
+                <div
+                  className={`nav-dropdown absolute right-0 mt-2 w-80 rounded-lg bg-white shadow-lg border py-2 z-50 ${
+                    darkMode ? "dark" : "light"
+                  }`}
+                >
                   <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-gray-700">
                     <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
                       {isBuyer ? t("navbar.myCart") : t("navbar.myCollection")}
                     </h3>
                     <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {t("navbar.totalItems")} {totalItems} {t("navbar.items")}
+                      {t("navbar.totalItems")} {convertNumber(totalItems)}{" "}
+                      {t("navbar.items")}
                     </span>
                   </div>
-                  <div className="max-h-72 overflow-y-auto">
+                  <div className="flex-1 overflow-y-auto">
                     {cart && cart.length > 0 ? (
                       cart.slice(0, 4).map((item, index) => (
                         <div
@@ -881,7 +886,7 @@ export default function Navbar() {
                             {item.image ? (
                               <Link
                                 href={`/category/${encodeURIComponent(
-                                  item.categoryName
+                                  item.categoryName[locale]
                                 )}`}
                                 onClick={() => setIsCartOpen(false)}
                               >
@@ -889,7 +894,7 @@ export default function Navbar() {
                                   height={24}
                                   width={24}
                                   src={item.image}
-                                  alt={item.name || "Item"}
+                                  alt={item.name[locale] || "Item"}
                                   className="w-full h-full object-contain"
                                 />
                               </Link>
@@ -901,19 +906,21 @@ export default function Navbar() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-gray-900 dark:text-white text-xs truncate">
-                           
-                              {'itemName'}
+                              {item.name[locale]}
                             </p>
                             <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">
-                              {'caregname'}
+                              {item.categoryName[locale]}
                             </p>
                             <div className="flex items-center gap-2 mt-0.5">
                               <p className="text-gray-400 dark:text-gray-500 text-xs">
-                                Qty: {item.quantity}{" "}
-                                {item.measurement_unit === 1 ? "kg" : "pcs"}
+                                {t("cart.qty")}: {convertNumber(item.quantity)}{" "}
+                                {item.measurement_unit === 1
+                                  ? t("cart.item.kg")
+                                  : t("cart.item.pcs")}
                               </p>
                               <p className="text-green-600 dark:text-green-400 text-xs font-medium">
-                                {item.points} pts
+                                {convertNumber(item.points)}{" "}
+                                {t("cart.item.pts")}
                               </p>
                             </div>
                           </div>
@@ -946,7 +953,7 @@ export default function Navbar() {
                     )}
                     {cart && cart.length > 4 && (
                       <div className="px-4 py-2 text-center text-xs text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-700">
-                        +{cart.length - 4} more items
+                        +{convertNumber(cart.length - 4)} {t("cart.item.more")}
                       </div>
                     )}
                   </div>
@@ -958,7 +965,7 @@ export default function Navbar() {
                             {t("navbar.totalItems")}
                           </span>
                           <span className="font-semibold text-gray-900 dark:text-white">
-                            {totalItems}
+                            {convertNumber(totalItems)}
                           </span>
                         </div>
                         <Link
@@ -976,7 +983,9 @@ export default function Navbar() {
             </div>
 
             {/* Language Switcher */}
-            <div className={`language-toggle hidden lg:flex items-center gap-1.5 px-2 py-1 rounded-lg border-gray-200 border hover:border-gray-300 dark:hover:border-gray-600 transition-colors`}>
+            <div
+              className={`language-toggle hidden lg:flex items-center gap-1.5 px-2 py-1 rounded-lg border-gray-200 border hover:border-gray-300 dark:hover:border-gray-600 transition-colors`}
+            >
               <span
                 className={`text-xs font-medium ${
                   locale === "en"
@@ -991,7 +1000,11 @@ export default function Navbar() {
                 className="relative w-8 h-4 bg-gray-200 dark:bg-gray-600 rounded-full transition-colors duration-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 style={{
                   backgroundColor:
-                    locale === "ar" ? "#3B82F6" : darkMode ? "#4B5563" : "#D1D5DB",
+                    locale === "ar"
+                      ? "#3B82F6"
+                      : darkMode
+                      ? "#4B5563"
+                      : "#D1D5DB",
                 }}
                 title="Toggle Language"
               >
@@ -1028,7 +1041,7 @@ export default function Navbar() {
               <div className="relative" ref={profileRef}>
                 <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className={`nav-link ${darkMode ? 'dark' : 'light'} p-1`}
+                  className={`nav-link ${darkMode ? "dark" : "light"} p-1`}
                 >
                   <div className="relative">
                     {user.imgUrl ? (
@@ -1137,7 +1150,7 @@ export default function Navbar() {
                 <Link
                   prefetch={true}
                   href="/newAuth"
-                  className={`nav-link ${darkMode ? 'dark' : 'light'}`}
+                  className={`nav-link ${darkMode ? "dark" : "light"}`}
                 >
                   <KeyRound className="nav-icon" />
                   {t("navbar.login")}
@@ -1149,7 +1162,7 @@ export default function Navbar() {
             <div className="lg:hidden ml-1">
               <button
                 onClick={toggleMenu}
-                className={`nav-link ${darkMode ? 'dark' : 'light'} w-9 h-9`}
+                className={`nav-link ${darkMode ? "dark" : "light"} w-9 h-9`}
                 aria-label="Toggle menu"
               >
                 {isOpen ? (
@@ -1210,7 +1223,9 @@ export default function Navbar() {
                       className="absolute top-0.5 left-0.5 w-3 h-3 bg-white dark:bg-gray-200 rounded-full shadow-sm transform transition-transform duration-200"
                       style={{
                         transform:
-                          locale === "ar" ? "translateX(16px)" : "translateX(0)",
+                          locale === "ar"
+                            ? "translateX(16px)"
+                            : "translateX(0)",
                       }}
                     />
                   </button>
@@ -1230,7 +1245,7 @@ export default function Navbar() {
               <Link
                 href="/"
                 onClick={() => setIsOpen(false)}
-                className={`nav-link ${darkMode ? 'dark' : 'light'}`}
+                className={`nav-link ${darkMode ? "dark" : "light"}`}
               >
                 <HousePlus className="nav-icon" />
                 <span>{t("navbar.home")}</span>
@@ -1238,7 +1253,7 @@ export default function Navbar() {
               <Link
                 href={isBuyer ? "/marketplace" : "/category"}
                 onClick={() => setIsOpen(false)}
-                className={`nav-link ${darkMode ? 'dark' : 'light'}`}
+                className={`nav-link ${darkMode ? "dark" : "light"}`}
               >
                 {isBuyer ? (
                   <Store className="nav-icon" />
@@ -1252,7 +1267,7 @@ export default function Navbar() {
               <Link
                 href="/ideas"
                 onClick={() => setIsOpen(false)}
-                className={`nav-link ${darkMode ? 'dark' : 'light'}`}
+                className={`nav-link ${darkMode ? "dark" : "light"}`}
               >
                 <FaRobot className="nav-icon" />
                 <span>{t("navbar.ecoAssist")}</span>
@@ -1261,7 +1276,7 @@ export default function Navbar() {
                 <Link
                   href="/profile"
                   onClick={() => setIsOpen(false)}
-                  className={`nav-link ${darkMode ? 'dark' : 'light'}`}
+                  className={`nav-link ${darkMode ? "dark" : "light"}`}
                 >
                   <UserRoundPen className="nav-icon" />
                   <span>{t("navbar.profile")}</span>
@@ -1274,7 +1289,9 @@ export default function Navbar() {
                   <Link
                     href="/newAuth"
                     onClick={() => setIsOpen(false)}
-                    className={`nav-link ${darkMode ? 'dark' : 'light'} w-full justify-center border border-gray-200 dark:border-gray-700`}
+                    className={`nav-link ${
+                      darkMode ? "dark" : "light"
+                    } w-full justify-center border border-gray-200 dark:border-gray-700`}
                   >
                     {t("navbar.login")}
                   </Link>

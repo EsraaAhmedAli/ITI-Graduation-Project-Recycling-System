@@ -1,13 +1,23 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { CartItem, useCart } from "@/context/CartContext";
-import { Recycle, Plus, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
+import { useCart } from "@/context/CartContext";
+import { CartItem } from "@/models/cart";
+import Loader from "@/components/common/Loader";
+import {
+  Recycle,
+  Plus,
+  Sparkles,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import Image from "next/image";
 import { useCategories } from "@/hooks/useGetCategories";
 import { useLanguage } from "@/context/LanguageContext";
-import { useGetItemsPaginated, LocalizedItem } from "@/hooks/useGetItemsPaginated";
-import Loader from "@/components/common/loader";
+import {
+  useGetItemsPaginated,
+  LocalizedItem,
+} from "@/hooks/useGetItemsPaginated";
 
 export default function UserCategoryPage() {
   const { locale, t, convertNumber } = useLanguage();
@@ -25,7 +35,7 @@ export default function UserCategoryPage() {
     currentPage,
     handlePageChange,
     generatePageNumbers,
-    categoryStats
+    categoryStats,
   } = useGetItemsPaginated({
     categoryName,
     itemsPerPage: 12,
@@ -34,28 +44,32 @@ export default function UserCategoryPage() {
 
   const handleAddToCollection = async (item: LocalizedItem) => {
     try {
-      const englishItemName = typeof item.name === 'string' ? item.name : item.name?.en || '';
-      const arabicItemName = typeof item.name === 'string' ? '' : item.name?.ar || '';
-      
+      const englishItemName =
+        typeof item.name === "string" ? item.name : item.name?.en || "";
+      const arabicItemName =
+        typeof item.name === "string" ? "" : item.name?.ar || "";
+
       const categoryId = getCategoryIdByItemName(englishItemName);
 
-      const categoryNameEn = typeof item.categoryName === 'string' 
-        ? item.categoryName 
-        : item.categoryName?.en || '';
-      const categoryNameAr = typeof item.categoryName === 'string' 
-        ? '' 
-        : item.categoryName?.ar || '';
+      const categoryNameEn =
+        typeof item.categoryName === "string"
+          ? item.categoryName
+          : item.categoryName?.en || "";
+      const categoryNameAr =
+        typeof item.categoryName === "string"
+          ? ""
+          : item.categoryName?.ar || "";
 
       const cartItem: CartItem = {
         _id: item._id,
         categoryId: categoryId,
         categoryName: {
           en: categoryNameEn,
-          ar: categoryNameAr
+          ar: categoryNameAr,
         },
         name: {
           en: englishItemName,
-          ar: arabicItemName
+          ar: arabicItemName,
         },
         image: item.image,
         points: item.points,
@@ -75,7 +89,7 @@ export default function UserCategoryPage() {
   };
 
   if (isLoading) return <Loader />;
-  
+
   if (error) {
     console.error("Query Error:", error);
     return <p className="text-red-500 text-center">Failed to load items.</p>;
@@ -103,7 +117,32 @@ export default function UserCategoryPage() {
             </div>
           </div>
 
-     
+          {categoryStats && (
+            <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-4 border border-slate-200/50 shadow-sm">
+              <div className="flex items-center gap-1.5 mb-2">
+                <Sparkles className="w-4 h-4 text-emerald-500" />
+                <span className="font-semibold text-slate-700 text-sm">
+                  {t("environmentalImpact.environmentalImpact")}
+                </span>
+              </div>
+              <p className="text-slate-600 mb-3 text-sm">
+                {t("categoryStats.estimatedImpact")}:{" "}
+                {/* You can add impact data to backend too */}
+                {t(`environmentalImpact.${categoryName}`)}
+              </p>
+
+              <div className="flex flex-wrap gap-3 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-500">
+                    {t("categoryStats.totalItems")}:
+                  </span>
+                  <span className="font-semibold text-slate-700">
+                    {convertNumber(categoryStats.totalItems)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Loading overlay for pagination */}
@@ -120,11 +159,17 @@ export default function UserCategoryPage() {
           {data.map((item) => (
             <div
               key={item._id}
-              className="group rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300 hover:-translate-y-1" style={{background:"var(--color-card)"}}>
+              className="group rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300 hover:-translate-y-1"
+              style={{ background: "var(--color-card)" }}
+            >
               {/* Image Container */}
-          <div  style={{
-    backgroundImage: "linear-gradient(to bottom right, var(--card-gradient-start), var(--card-gradient-end))"
-  }} className="relative ">
+              <div
+                style={{
+                  backgroundImage:
+                    "linear-gradient(to bottom right, var(--card-gradient-start), var(--card-gradient-end))",
+                }}
+                className="relative "
+              >
                 <div className="relative w-full h-40">
                   <Image
                     src={item.image}
@@ -186,10 +231,20 @@ export default function UserCategoryPage() {
             {/* Pagination Info */}
             <div className="text-sm text-slate-600 text-center">
               {t("common.showing", {
-                start: (pagination.currentPage - 1) * pagination.itemsPerPage + 1,
-                end: Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems),
-                total: pagination.totalItems
-              }) || `Showing ${(pagination.currentPage - 1) * pagination.itemsPerPage + 1}-${Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} of ${pagination.totalItems} items`}
+                start:
+                  (pagination.currentPage - 1) * pagination.itemsPerPage + 1,
+                end: Math.min(
+                  pagination.currentPage * pagination.itemsPerPage,
+                  pagination.totalItems
+                ),
+                total: pagination.totalItems,
+              }) ||
+                `Showing ${
+                  (pagination.currentPage - 1) * pagination.itemsPerPage + 1
+                }-${Math.min(
+                  pagination.currentPage * pagination.itemsPerPage,
+                  pagination.totalItems
+                )} of ${pagination.totalItems} items`}
             </div>
 
             {/* Pagination Buttons */}
@@ -209,14 +264,18 @@ export default function UserCategoryPage() {
                 {generatePageNumbers().map((pageNum, index) => (
                   <button
                     key={index}
-                    onClick={() => typeof pageNum === 'number' ? handlePageChange(pageNum) : undefined}
-                    disabled={pageNum === '...'}
+                    onClick={() =>
+                      typeof pageNum === "number"
+                        ? handlePageChange(pageNum)
+                        : undefined
+                    }
+                    disabled={pageNum === "..."}
                     className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                       pageNum === currentPage
-                        ? 'bg-emerald-500 text-white'
-                        : pageNum === '...'
-                        ? 'text-slate-400 cursor-default'
-                        : 'text-slate-600 bg-white border border-slate-200 hover:bg-slate-50'
+                        ? "bg-emerald-500 text-white"
+                        : pageNum === "..."
+                        ? "text-slate-400 cursor-default"
+                        : "text-slate-600 bg-white border border-slate-200 hover:bg-slate-50"
                     }`}
                   >
                     {pageNum}
@@ -247,8 +306,10 @@ export default function UserCategoryPage() {
               {t("common.noItemsAvailable") || "No items available"}
             </h3>
             <p className="text-slate-500 max-w-md mx-auto">
-              {t("common.workingOnAddingItems") || 
-                `We're working on adding more recyclable ${categoryStats?.categoryDisplayName || categoryName} items. Check back soon for new additions!`}
+              {t("common.workingOnAddingItems") ||
+                `We're working on adding more recyclable ${
+                  categoryStats?.categoryDisplayName || categoryName
+                } items. Check back soon for new additions!`}
             </p>
           </div>
         )}
