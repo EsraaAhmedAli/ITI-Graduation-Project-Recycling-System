@@ -1,9 +1,9 @@
-"use client";
+ "use client";
 
-import { useEffect, useState, useMemo, useCallback, memo, startTransition, useTransition } from "react";
+import { useEffect, useState, useMemo, useCallback, memo,useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Search, ChevronLeft, ChevronRight, Filter, Frown } from "lucide-react";
+import { Search, Filter, Frown } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import { useLanguage } from "@/context/LanguageContext";
@@ -12,7 +12,23 @@ import { Badge } from "flowbite-react";
 import { useGetItems } from "@/hooks/useGetItems";
 import { useItemSocket } from "@/hooks/useItemSocket";
 import LazyPagination from "@/components/common/lazyPagination";
-
+const normalizeArabicText = (text: string): string => {
+  if (!text) return text;
+  
+  return text
+    // Normalize different forms of Alef
+    .replace(/[آأإا]/g, 'ا')
+    // Normalize different forms of Hamza
+    .replace(/[ؤئء]/g, 'ء')
+    // Normalize different forms of Yaa
+    .replace(/[يى]/g, 'ي')
+    // Normalize different forms of Haa
+    .replace(/[هة]/g, 'ه')
+    // Remove diacritics/tashkeel
+    .replace(/[ًٌٍَُِّْٰ]/g, '')
+    // Normalize Taa Marbouta
+    .replace(/ة/g, 'ه');
+};
 interface Item {
   _id: string;
   name: {
@@ -47,8 +63,6 @@ interface MarketplaceClientProps {
   initialData: ServerData;
 }
 
-
-
 // Preload critical images using requestIdleCallback
 const preloadCriticalImages = (items: Item[]) => {
   if (typeof window === 'undefined') return;
@@ -77,7 +91,29 @@ const preloadCriticalImages = (items: Item[]) => {
     }, 100);
   }
 };
-
+const createEnhancedSearch = (searchTerm: string, text: { en: string; ar: string }): boolean => {
+  if (!searchTerm || !searchTerm.trim()) return true;
+  
+  const normalizedSearchTerm = searchTerm.toLowerCase().trim();
+  const normalizedArabicSearchTerm = normalizeArabicText(normalizedSearchTerm);
+  
+  // Check English text
+  const englishMatch = text.en.toLowerCase().includes(normalizedSearchTerm);
+  
+  // Check Arabic text (both original and normalized)
+  const arabicMatch = text.ar.toLowerCase().includes(normalizedSearchTerm);
+  const normalizedArabicMatch = normalizeArabicText(text.ar.toLowerCase()).includes(normalizedArabicSearchTerm);
+  
+  // Cross-language search: English term searching in Arabic text
+  const englishInArabic = !/[\u0600-\u06FF]/.test(searchTerm) ? 
+    normalizeArabicText(text.ar.toLowerCase()).includes(normalizedSearchTerm) : false;
+  
+  // Cross-language search: Arabic term searching in English text  
+  const arabicInEnglish = /[\u0600-\u06FF]/.test(searchTerm) ?
+    text.en.toLowerCase().includes(normalizedSearchTerm) : false;
+  
+  return englishMatch || arabicMatch || normalizedArabicMatch || englishInArabic || arabicInEnglish;
+};
 // Move outside component to prevent recreation
 const getOptimizedImageUrl = (url: string, width: number = 300) => {
   if (url.includes("cloudinary.com")) {
@@ -86,32 +122,58 @@ const getOptimizedImageUrl = (url: string, width: number = 300) => {
   return url;
 };
 
-// Simplified image component - remove unnecessary state and effects for better TBT
+// Generate a neutral blur placeholder
+const generateBlurDataURL = (width: number = 280, height: number = 280) => {
+  const svg = `
+    <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100%" height="100%" fill="#f8fafc"/>
+    </svg>
+  `;
+  return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
+};
+
+// Fixed image component - prevent flash by using better background and blur
 const OptimizedItemImage = memo(({
   item,
   priority = false,
-  index = 0,
 }: {
   item: Item;
   priority?: boolean;
   index?: number;
 }) => {
   const optimizedSrc = useMemo(() => getOptimizedImageUrl(item.image, 280), [item.image]);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   return (
-    <div className="relative aspect-square bg-gray-50 overflow-hidden">
+    <div className="relative aspect-square bg-slate-50 overflow-hidden">
+      {/* Background pattern to prevent flash */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-slate-100" />
+      
       <Image
         src={optimizedSrc}
         alt={item.name.en}
         fill
-        className="object-contain p-2"
+        className={`object-contain p-2 transition-opacity duration-300 ${
+          imageLoaded ? 'opacity-100' : 'opacity-0'
+        }`}
         sizes="(max-width: 640px) 150px, (max-width: 768px) 120px, (max-width: 1024px) 180px, 200px"
         priority={priority}
         quality={priority ? 85 : 70}
         placeholder="blur"
-        blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+        blurDataURL={generateBlurDataURL()}
         loading={priority ? "eager" : "lazy"}
+        onLoad={() => setImageLoaded(true)}
+        style={{
+          backgroundColor: '#f8fafc', // Fallback background
+        }}
       />
+      
+      {/* Loading indicator for non-priority images */}
+      {!imageLoaded && !priority && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-400 rounded-full animate-spin" />
+        </div>
+      )}
     </div>
   );
 });
@@ -342,19 +404,20 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
 
   const uniqueCategories = categoriesData || initialData.categories;
 
-  // Optimized filtering with early returns
-  const filteredItems = useMemo(() => {
+const filteredItems = useMemo(() => {
     if (!debouncedSearchTerm && selectedCategory === "all") {
       return items;
     }
 
     return items.filter((item) => {
+      // Enhanced search that works across languages and normalizes Arabic
       if (debouncedSearchTerm) {
-        const term = debouncedSearchTerm.toLowerCase();
-        const matchesSearch = 
-          item.name[locale].toLowerCase().includes(term) ||
-          item.categoryName[locale].toLowerCase().includes(term);
-        if (!matchesSearch) return false;
+        const matchesItemName = createEnhancedSearch(debouncedSearchTerm, item.name);
+        const matchesCategoryName = createEnhancedSearch(debouncedSearchTerm, item.categoryName);
+        
+        if (!matchesItemName && !matchesCategoryName) {
+          return false;
+        }
       }
       
       if (selectedCategory !== "all") {
@@ -364,8 +427,58 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
       
       return true;
     });
-  }, [debouncedSearchTerm, selectedCategory, items, locale]);
-
+  }, [debouncedSearchTerm, selectedCategory, items]);
+  const sortedFilteredItems = useMemo(() => {
+    if (!debouncedSearchTerm) return filteredItems;
+    
+    const searchTerm = debouncedSearchTerm.toLowerCase().trim();
+    const normalizedSearchTerm = normalizeArabicText(searchTerm);
+    
+    return [...filteredItems].sort((a, b) => {
+      // Calculate search scores for sorting
+      const getSearchScore = (item: Item): number => {
+        let score = 0;
+        
+        // Exact matches get highest score (100)
+        if (item.name.en.toLowerCase() === searchTerm || item.name.ar.toLowerCase() === searchTerm) {
+          score += 100;
+        }
+        
+        // Normalized Arabic exact match gets high score (90)
+        if (normalizeArabicText(item.name.ar.toLowerCase()) === normalizedSearchTerm) {
+          score += 90;
+        }
+        
+        // Starts with match gets medium score (50)
+        if (item.name.en.toLowerCase().startsWith(searchTerm) || 
+            item.name.ar.toLowerCase().startsWith(searchTerm) ||
+            normalizeArabicText(item.name.ar.toLowerCase()).startsWith(normalizedSearchTerm)) {
+          score += 50;
+        }
+        
+        // Category name matches get bonus score (25)
+        if (createEnhancedSearch(debouncedSearchTerm, item.categoryName)) {
+          score += 25;
+        }
+        
+        // Contains match gets base score (10)
+        if (score === 0) score = 10;
+        
+        return score;
+      };
+      
+      const scoreA = getSearchScore(a);
+      const scoreB = getSearchScore(b);
+      
+      // Sort by score descending, then alphabetically
+      if (scoreA !== scoreB) {
+        return scoreB - scoreA;
+      }
+      
+      // Fallback to alphabetical sort based on current locale
+      return a.name[locale].localeCompare(b.name[locale]);
+    });
+  }, [filteredItems, debouncedSearchTerm, locale]);
   const handlePageChange = useCallback(
     (page: number) => {
       if (page >= 1 && page <= pagination.totalPages) {
@@ -405,11 +518,11 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
     />
   ), [locale, convertNumber, t, getMeasurementText]);
 
-  // Loading skeleton
+  // Updated Loading skeleton with proper background
   const LoadingSkeleton = memo(() => (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
       {[...Array(8)].map((_, i) => (
-        <div key={i} className="bg-gray-100 rounded-lg h-40 animate-pulse" />
+        <div key={i} className="bg-slate-50 rounded-lg h-40 animate-pulse border border-gray-200" />
       ))}
     </div>
   ));
@@ -449,9 +562,9 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
       </section>
 
       {/* Results Info */}
-      <div className="flex justify-between items-center mb-3 px-1">
+ <div className="flex justify-between items-center mb-3 px-1">
         <span className="text-xs text-gray-500">
-          {t("common.showing")} {convertNumber(filteredItems.length)} {t("common.of")} {convertNumber(pagination.totalItems)} {t("common.items")}
+          {t("common.showing")} {convertNumber(sortedFilteredItems.length)} {t("common.of")} {convertNumber(pagination.totalItems)} {t("common.items")}
         </span>
         <span className="text-xs text-gray-500">
           {t("common.page")} {convertNumber(pagination.currentPage)} {t("common.of")} {convertNumber(pagination.totalPages)}
@@ -459,24 +572,31 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
       </div>
 
       {/* Main Content */}
-      <main>
+   <main>
         {isLoading && !items.length ? (
           <LoadingSkeleton />
-        ) : filteredItems.length === 0 ? (
+        ) : sortedFilteredItems.length === 0 ? (
           <div className="text-center py-12">
             <Frown className="mx-auto h-10 w-10 text-gray-400" />
-            <h2 className="mt-2 text-sm font-medium text-gray-900">No items found</h2>
+            <h2 className="mt-2 text-sm font-medium text-gray-900">
+              {t("common.noItemsFound") || "No items found"}
+            </h2>
             <p className="mt-1 text-xs text-gray-500">
               {debouncedSearchTerm || selectedCategory !== "all"
-                ? "Try different search terms"
-                : "No items available yet"}
+                ? t("common.tryDifferentSearch") || "Try different search terms or check spelling"
+                : t("common.noItemsAvailable") || "No items available yet"}
             </p>
+            {debouncedSearchTerm && (
+              <p className="mt-1 text-xs text-gray-400">
+                {t("search.crossLanguageHint") || "Search works across Arabic and English languages"}
+              </p>
+            )}
           </div>
         ) : (
           <>
-            {/* Use Virtual Grid for better performance */}
+            {/* Use Virtual Grid with sorted items */}
             <VirtualizedGrid 
-              items={filteredItems}
+              items={sortedFilteredItems}
               renderItem={renderItem}
             />
 
