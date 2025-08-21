@@ -114,28 +114,13 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
   }, [isLoggedIn, cart, getDisplayName]);
 
   // Improved function to fetch all items at once with role-based pricing
-  const fetchAllItemsFromDatabase = async (): Promise<DatabaseItem[]> => {
+  const fetchAllItemsFromDatabase = useCallback(async (): Promise<DatabaseItem[]> => {
     try {
       console.log("🔍 Fetching all items from database...");
 
-      // Determine user role for pricing
-      let userRole = "customer"; // Default to customer pricing
-
-      try {
-        // Check if user is logged in and has buyer role
-        const token = localStorage.getItem("token");
-        if (token) {
-          // Decode token to check user role (you might need to adjust this based on your token structure)
-          const tokenPayload = JSON.parse(atob(token.split(".")[1]));
-          if (tokenPayload.role === "buyer") {
-            userRole = "buyer";
-          }
-        }
-      } catch {
-        console.log("🔍 Could not determine user role, using customer pricing");
-      }
-
-      console.log(`💰 Using ${userRole} pricing`);
+      // Determine user role for pricing - use user object from auth context
+      const userRole = user?.role === "buyer" ? "buyer" : "customer";
+      console.log(`💰 Using ${userRole} pricing for user:`, user?._id || "guest");
 
       // Use the get-items endpoint with role-based pricing
       const response = await api.get(
@@ -146,12 +131,18 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
       console.log(
         `✅ Retrieved ${allItems.length} items from database with ${userRole} pricing`
       );
+      console.log("📊 Sample item pricing:", allItems[0] ? {
+        name: allItems[0].name,
+        price: allItems[0].price,
+        points: allItems[0].points
+      } : "No items found");
+      
       return allItems;
     } catch (error) {
       console.error("❌ Error fetching all items:", error);
       return [];
     }
-  };
+  }, [user?.role, user?._id]);
 
   // Memoize the findMatchingItem function to avoid dependency issues
   const findMatchingItem = useMemo(() => {
@@ -438,7 +429,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
     } finally {
       setIsLoading(false);
     }
-  }, [items, findMatchingItem, locale]);
+  }, [items, findMatchingItem, locale, fetchAllItemsFromDatabase]);
 
   useEffect(() => {
     enrichItems();

@@ -18,6 +18,13 @@ import {
   useGetItemsPaginated,
   LocalizedItem,
 } from "@/hooks/useGetItemsPaginated";
+import dynamic from "next/dynamic";
+
+// Lazy load FloatingRecorderButton for voice processing
+const FloatingRecorderButton = dynamic(
+  () => import('@/components/Voice Processing/FloatingRecorderButton'),
+  { ssr: false }
+);
 
 export default function UserCategoryPage() {
   const { locale, t, convertNumber } = useLanguage();
@@ -314,6 +321,9 @@ export default function UserCategoryPage() {
           </div>
         )}
       </div>
+      
+      {/* Voice Processing Component */}
+      <FloatingRecorderButton />
     </div>
   );
 }

@@ -3,15 +3,17 @@ import { useCart } from "@/context/CartContext";
 import Swal from "sweetalert2";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { X, Leaf, Recycle, Truck, Scale, Package } from "lucide-react";
+import { X, Leaf, Recycle, Truck, Scale, Package, AlertTriangle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "flowbite-react";
 import Image from "next/image";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { CartItem } from "@/models/cart";
 import { toast } from "react-hot-toast";
-import { useGetItems } from "@/hooks/useGetItems"; // Import your hook
 import { useLanguage } from "@/context/LanguageContext";
+import { useQueryClient } from '@tanstack/react-query';
+import { useItemSocket } from "@/hooks/useItemSocket";
+import { useGetCartItems } from "@/hooks/cart/useGetCartItems";
 
 const itemVariants = {
   hidden: { opacity: 0, y: 10 },
@@ -20,34 +22,39 @@ const itemVariants = {
 };
 
 export default function CartPage() {
-  const { cart, removeFromCart, clearCart, userRole, updateCartState } =
-    useCart();
+  const { cart, removeFromCart, clearCart, userRole, updateCartState } = useCart();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [totalItems, setTotalItems] = useState(0);
   const [totalPoints, setTotalPoints] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
   const { user } = useUserAuth();
+    const { t, locale, convertNumber } = useLanguage();
+
   // States for input handling
   const [inputValues, setInputValues] = useState<{ [key: string]: string }>({});
   const [inputErrors, setInputErrors] = useState<{ [key: string]: string }>({});
 
-  // Out of stock tracking
-  const [outOfStockItems, setOutOfStockItems] = useState<{
-    [key: string]: boolean;
-  }>({});
-  const [hasOutOfStockItems, setHasOutOfStockItems] = useState(false);
-  const [canIncrease, setCanIncrease] = useState<{ [key: string]: boolean }>(
-    {}
-  );
+  // Enhanced stock tracking
+  const [exceedsStockItems, setExceedsStockItems] = useState<{ [key: string]: boolean }>({});
+  const [hasExceedsStockItems, setHasExceedsStockItems] = useState(false);
+  const [canIncrease, setCanIncrease] = useState<{ [key: string]: boolean }>({});
+  const [stockWarnings, setStockWarnings] = useState<{ [key: string]: string }>({});
 
-  // Use React Query to get real-time inventory data
+  // Get unique item IDs from cart to fetch only needed items
+  const cartItemIds = useMemo(() => cart.map(item => item._id), [cart]);
+
+  // Use the new hook to fetch only cart items
   const {
     data: itemsData,
     isLoading: isLoadingItems,
     error: itemsError,
-  } = useGetItems({
-    currentPage: 1,
-    itemsPerPage: 10000, // Get all items to ensure we have stock data for cart items
+    refetch: refetchItems,
+  } = useGetCartItems(cartItemIds, userRole, locale);
+
+  // Initialize socket connection for real-time updates on cart items only
+  useItemSocket({
+    itemIds: cartItemIds, 
     userRole: userRole || "buyer",
   });
 
@@ -66,46 +73,117 @@ export default function CartPage() {
     return stockMap;
   }, [itemsData, cart, userRole]);
 
+  // Real-time stock change detection and notification
+  const [previousStockLevels, setPreviousStockLevels] = useState<{ [key: string]: number }>({});
+  
+  // Initialize previous stock levels on first load
+  useEffect(() => {
+    if (userRole === "buyer" && Object.keys(stockLevels).length > 0 && Object.keys(previousStockLevels).length === 0) {
+      setPreviousStockLevels({ ...stockLevels });
+    }
+  }, [stockLevels, userRole, previousStockLevels]);
 
-   console.log("Esraa");
-  // Check inventory status whenever stockLevels or cart changes
+  // Socket-based stock change notifications
+  useEffect(() => {
+    if (userRole === "buyer" && Object.keys(stockLevels).length > 0) {
+      // Check for stock changes
+      Object.keys(stockLevels).forEach(itemId => {
+        const currentStock = stockLevels[itemId];
+        const previousStock = previousStockLevels[itemId];
+        
+        if (previousStock !== undefined && currentStock !== previousStock && previousStock !== 0) {
+          const cartItem = cart.find(item => item._id === itemId);
+          if (cartItem) {
+            const stockChange = currentStock - previousStock;
+            const itemName = typeof cartItem.name === 'string' 
+              ? cartItem.name 
+              : cartItem.name[locale] || cartItem.name.en;
+            
+            if (stockChange < 0) {
+              toast.error(
+                `Stock Alert: ${itemName} - ${Math.abs(stockChange)} units removed from inventory (Now: ${currentStock})`,
+                { duration: 5000 }
+              );
+            } else if (stockChange > 0) {
+              toast.success(
+                `Stock Alert: ${itemName} - ${stockChange} units added to inventory (Now: ${currentStock})`,
+                { duration: 4000 }
+              );
+            }
+          }
+        }
+      });
+      
+      setPreviousStockLevels({ ...stockLevels });
+    }
+  }, [stockLevels, cart, userRole,  locale]);
+
+  // Remove the aggressive refresh mechanisms and keep only essential ones
+  useEffect(() => {
+    const handleFocus = () => {
+      if (userRole === "buyer") {
+        refetchItems();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [userRole, refetchItems]);
+
   useEffect(() => {
     if (userRole !== "buyer" || cart.length === 0) {
       const results: { [key: string]: boolean } = {};
-      const outOfStock: { [key: string]: boolean } = {};
+      const exceedsStock: { [key: string]: boolean } = {};
+      const warnings: { [key: string]: string } = {};
+      
       cart.forEach((item) => {
         results[item._id] = true;
-        outOfStock[item._id] = false;
+        exceedsStock[item._id] = false;
+        warnings[item._id] = "";
       });
+      
       setCanIncrease(results);
-      setOutOfStockItems(outOfStock);
-      setHasOutOfStockItems(false);
+      setExceedsStockItems(exceedsStock);
+      setStockWarnings(warnings);
+      setHasExceedsStockItems(false);
       return;
     }
 
     const results: { [key: string]: boolean } = {};
-    const outOfStock: { [key: string]: boolean } = {};
-    let hasAnyOutOfStock = false;
+    const exceedsStock: { [key: string]: boolean } = {};
+    const warnings: { [key: string]: string } = {};
+    let hasAnyExceedsStock = false;
 
     cart.forEach((item) => {
       const increment = item.measurement_unit === 1 ? 0.25 : 1;
       const availableStock = stockLevels[item._id] || 0;
+      const itemName = typeof item.name === 'string' 
+        ? item.name 
+        : item.name[locale] || item.name.en;
 
-      // Check if item is out of stock (quantity in cart exceeds available stock)
-      const isOutOfStock = availableStock < item.quantity;
-      outOfStock[item._id] = isOutOfStock;
+      // Check if cart quantity exceeds available stock
+      const exceedsAvailableStock = item.quantity > availableStock;
+      exceedsStock[item._id] = exceedsAvailableStock;
 
-      if (isOutOfStock) {
-        hasAnyOutOfStock = true;
+      if (exceedsAvailableStock) {
+        hasAnyExceedsStock = true;
+        if (availableStock === 0) {
+          warnings[item._id] = `${itemName} is currently out of stock`;
+        } else {
+          warnings[item._id] = `Only ${availableStock} available, you have ${item.quantity} in cart`;
+        }
+      } else {
+        warnings[item._id] = "";
       }
 
-      // Check if we can increase quantity
+      // Check if we can increase quantity (allow increase only if within stock limits)
       results[item._id] = availableStock >= item.quantity + increment;
     });
 
     setCanIncrease(results);
-    setOutOfStockItems(outOfStock);
-    setHasOutOfStockItems(hasAnyOutOfStock);
+    setExceedsStockItems(exceedsStock);
+    setStockWarnings(warnings);
+    setHasExceedsStockItems(hasAnyExceedsStock);
   }, [cart, userRole, stockLevels]);
 
   // Initialize input values when cart changes
@@ -134,21 +212,23 @@ export default function CartPage() {
     setTotalPrice(price);
   }, [cart]);
 
-  // Auto-remove out of stock items after a delay (optional)
+  // Show notification for stock issues
   useEffect(() => {
-    if (hasOutOfStockItems) {
+    if (hasExceedsStockItems) {
       const timer = setTimeout(() => {
-        // Show a toast notification about out of stock items
         toast.error(
-          "Some items in your cart are out of stock. Please review and remove them."
+          "Some items exceed available stock. Please adjust quantities to continue.",
+          { duration: 4000 }
         );
       }, 1000);
 
       return () => clearTimeout(timer);
     }
-  }, [hasOutOfStockItems]);
+  }, [hasExceedsStockItems]);
 
-  // Validation function for quantity input
+  const coin = locale === "en" ? "EGP" : "ج.م";
+
+  // Enhanced validation function
   const validateQuantity = (
     value: string,
     measurementUnit: 1 | 2,
@@ -157,7 +237,6 @@ export default function CartPage() {
   ): { isValid: boolean; errorMessage: string; validValue: number } => {
     const numValue = parseFloat(value);
 
-    // Check if it's a valid number
     if (isNaN(numValue) || numValue <= 0) {
       return {
         isValid: false,
@@ -166,16 +245,15 @@ export default function CartPage() {
       };
     }
 
-    // Check maximum limit (for buyers only)
+    // For buyers, allow quantities up to available stock (not strict blocking)
     if (userRole === "buyer" && numValue > maxQuantity) {
       return {
-        isValid: false,
-        errorMessage: `Maximum available quantity is ${maxQuantity}`,
-        validValue: maxQuantity,
+        isValid: true, // Allow but will be marked as exceeds stock
+        errorMessage: `Requested quantity exceeds available stock (${maxQuantity} available)`,
+        validValue: numValue,
       };
     }
 
-    // For measurement unit 2 (pieces) - only whole numbers, minimum 1
     if (measurementUnit === 2) {
       if (!Number.isInteger(numValue)) {
         return {
@@ -193,7 +271,6 @@ export default function CartPage() {
       }
     }
 
-    // For measurement unit 1 (kg) - minimum 0.25, multiples of 0.25
     if (measurementUnit === 1) {
       const minValue = 0.25;
       if (numValue < minValue) {
@@ -204,10 +281,9 @@ export default function CartPage() {
         };
       }
 
-      // Check if it's a multiple of 0.25
-      const remainder = (numValue * 100) % 25; // Convert to avoid floating point issues
+      const remainder = (numValue * 100) % 25;
       if (remainder !== 0) {
-        const roundedValue = Math.round(numValue * 4) / 4; // Round to nearest 0.25
+        const roundedValue = Math.round(numValue * 4) / 4;
         return {
           isValid: false,
           errorMessage: "Quantity must be in increments of 0.25 kg",
@@ -235,7 +311,7 @@ export default function CartPage() {
       itemId
     );
 
-    if (validation.isValid) {
+    if (validation.isValid && parseFloat(value) <= maxQuantity) {
       setInputErrors((prev) => ({ ...prev, [itemId]: "" }));
     } else {
       setInputErrors((prev) => ({
@@ -244,10 +320,8 @@ export default function CartPage() {
       }));
     }
   };
-  const { t, locale, convertNumber } = useLanguage();
-  const coin = locale === "en" ? "EGP" : "ج.م";
 
-  // Handle input blur (when user finishes typing)
+  // Handle input blur
   const handleInputBlur = (itemId: string, item: CartItem) => {
     const value = inputValues[itemId] || "1";
     const maxQuantity = userRole === "buyer" ? stockLevels[itemId] || 999 : 999;
@@ -259,7 +333,6 @@ export default function CartPage() {
     );
 
     if (!validation.isValid) {
-      // Auto-correct to valid value
       const correctedValue = validation.validValue;
       setInputValues((prev) => ({
         ...prev,
@@ -267,16 +340,15 @@ export default function CartPage() {
       }));
       setInputErrors((prev) => ({ ...prev, [itemId]: "" }));
 
-      // Update cart with corrected value
       const updatedCart = cart.map((ci) =>
         ci._id === itemId ? { ...ci, quantity: correctedValue } : ci
       );
       updateCartState(updatedCart);
 
-      // Show toast with correction message
-      toast.error(validation.errorMessage);
+      if (validation.errorMessage !== `Requested quantity exceeds available stock (${maxQuantity} available)`) {
+        toast.error(validation.errorMessage);
+      }
     } else {
-      // Update cart with valid value
       const updatedCart = cart.map((ci) =>
         ci._id === itemId ? { ...ci, quantity: validation.validValue } : ci
       );
@@ -321,12 +393,11 @@ export default function CartPage() {
       const increment = item.measurement_unit === 1 ? 0.25 : 1;
       const newQuantity = item.quantity + increment;
 
-      // Check stock availability for buyers before allowing increase
       if (userRole === "buyer") {
         const availableStock = stockLevels[item._id] || 0;
         if (newQuantity > availableStock) {
           toast.error(
-            `Sorry, only ${availableStock} units available in stock. You currently have ${item.quantity} in your cart.`
+            `Cannot increase: Only ${availableStock} units available. Current cart: ${item.quantity}`
           );
           return;
         }
@@ -349,8 +420,6 @@ export default function CartPage() {
       if (item.quantity <= minValue) return;
 
       const newQuantity = item.quantity - decrement;
-
-      // Ensure we don't go below minimum
       const finalQuantity = Math.max(newQuantity, minValue);
 
       const updatedCart = cart.map((ci) =>
@@ -362,31 +431,10 @@ export default function CartPage() {
     [cart, updateCartState]
   );
 
-  // Function to handle removing all out of stock items
-  const handleRemoveOutOfStockItems = async () => {
-    const result = await Swal.fire({
-      title: "Remove Out of Stock Items?",
-      text: "This will remove all items that are currently out of stock from your cart.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Yes, Remove Them",
-      cancelButtonText: "Cancel",
-      confirmButtonColor: "#16a34a",
-      cancelButtonColor: "#d33",
-    });
-
-    if (result.isConfirmed) {
-      const availableItems = cart.filter((item) => !outOfStockItems[item._id]);
-      updateCartState(availableItems);
-
-      Swal.fire({
-        icon: "success",
-        title: "Items Removed!",
-        text: "Out of stock items have been removed from your cart.",
-        timer: 1500,
-        showConfirmButton: false,
-      });
-    }
+  // Manual refresh function for the button
+  const handleManualRefresh = () => {
+    refetchItems();
+    toast.success('Stock data refreshed!', { duration: 2000 });
   };
 
   // Show loading state while fetching inventory data
@@ -396,7 +444,6 @@ export default function CartPage() {
         <div className="flex items-center gap-3 mb-6">
           <Recycle className="w-8 h-8 text-green-600" />
           <h1 className="text-2xl font-bold text-white-900 tracking-tight">
-            Confirm items you want to recycle
             {t("cart.confirmItems")}
           </h1>
         </div>
@@ -418,7 +465,13 @@ export default function CartPage() {
         {userRole === "buyer" && (
           <div className="ml-auto flex items-center gap-2 text-sm text-green-600">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            {t("cart.liveInventory")}
+            Real-time inventory
+            <button
+              onClick={handleManualRefresh}
+              className="ml-2 text-xs bg-green-100 hover:bg-green-200 text-green-700 px-2 py-1 rounded-md transition-colors"
+            >
+              🔄 Refresh
+            </button>
           </div>
         )}
       </div>
@@ -465,7 +518,7 @@ export default function CartPage() {
               </div>
             )}
             <div className="bg-white p-4 rounded-lg shadow-sm text-center" style={{background:"var(--background)"}}>
-              <div className="text-gray-500 text-sm" >
+              <div className="text-gray-500 text-sm">
                 {user?.role == "customer"
                   ? t("cart.cartSummary.earnedMoney")
                   : t("cart.cartSummary.payedMoney")}
@@ -488,41 +541,37 @@ export default function CartPage() {
                   layout
                   style={{ background: "var(--color-card)" }}
                   className={`bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-shadow ${
-                    outOfStockItems[item._id]
-                      ? "border-red-200 bg-red-50"
+                    exceedsStockItems[item._id]
+                      ? "border-orange-200 bg-orange-50"
                       : "border-gray-100"
                   }`}
                 >
                   <div className="p-4 flex flex-col sm:flex-row gap-4 relative">
-                    {/* Out of Stock Badge */}
-                    {outOfStockItems[item._id] && (
+                    {/* Stock Warning Badge */}
+                    {exceedsStockItems[item._id] && (
                       <div className="absolute top-2 right-2 z-10">
-                        <span className="bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-sm">
-                          {t("cart.item.outOfStock")}
+                        <span className="bg-orange-500 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-sm flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3" />
+                          Exceeds Stock
                         </span>
                       </div>
                     )}
 
-                    {/* Stock Warning Badge */}
+                    {/* Low Stock Badge */}
                     {userRole === "buyer" &&
-                      !outOfStockItems[item._id] &&
+                      !exceedsStockItems[item._id] &&
                       stockLevels[item._id] !== undefined &&
                       stockLevels[item._id] > 0 &&
                       stockLevels[item._id] <
-                        item.quantity +
-                          (item.measurement_unit === 1 ? 0.25 : 1) && (
+                        item.quantity + (item.measurement_unit === 1 ? 0.25 : 1) && (
                         <div className="absolute top-2 right-2 z-10">
                           <span className="bg-yellow-500 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-sm">
-                            {t("cart.item.lowStock")}
+                            Low Stock
                           </span>
                         </div>
                       )}
 
-                    <div
-                      className={`bg-green-50 rounded-lg w-full sm:w-24 h-24 flex-shrink-0 flex items-center justify-center relative ${
-                        outOfStockItems[item._id] ? "opacity-50" : ""
-                      }`}
-                    >
+                    <div className="bg-green-50 rounded-lg w-full sm:w-24 h-24 flex-shrink-0 flex items-center justify-center relative">
                       {item.image ? (
                         <Image
                           width={100}
@@ -539,13 +588,7 @@ export default function CartPage() {
                     <div className="flex-1">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
-                          <h3
-                            className={`text-lg font-medium ${
-                              outOfStockItems[item._id]
-                                ? "text-gray-500 line-through"
-                                : "text-gray-800"
-                            }`}
-                          >
+                          <h3 className="text-lg font-medium text-gray-800">
                             {item.name[locale]}
                           </h3>
                           <p className="text-sm flex gap-2 text-gray-500 mt-1">
@@ -564,7 +607,7 @@ export default function CartPage() {
                             e.preventDefault();
                             confirmAction({
                               title: "Remove Item?",
-                              text: `Remove ${item.name} from your recycling collection?`,
+                              text: `Remove ${item.name[locale]} from your recycling collection?`,
                               onConfirm: () => removeFromCart(item),
                             });
                           }}
@@ -585,48 +628,37 @@ export default function CartPage() {
 
                       {userRole === "buyer" && (
                         <div className="text-xs mt-1 flex items-center gap-2">
-                          <span
-                            className={`${
-                              outOfStockItems[item._id]
-                                ? "text-red-600 font-semibold"
-                                : "text-gray-500"
-                            }`}
-                          >
-                            {t("cart.item.stock")}:{" "}
-                            {stockLevels[item._id] ?? "Loading..."} available
+                          <span className="text-gray-500">
+                            Stock: {stockLevels[item._id] ?? "Loading..."} available
                           </span>
-                          {outOfStockItems[item._id] && (
-                            <span className="text-red-600 font-semibold">
-                              • {t("cart.item.requested")}:{" "}
-                              {convertNumber(item.quantity)}
+                          <button
+                            onClick={handleManualRefresh}
+                            className="text-xs text-blue-600 hover:text-blue-800 underline"
+                          >
+                            refresh
+                          </button>
+                          {exceedsStockItems[item._id] && (
+                            <span className="text-orange-600 font-semibold">
+                              • Cart: {convertNumber(item.quantity)}
                             </span>
                           )}
                         </div>
                       )}
 
-                      {/* Out of Stock Warning Message */}
-                      {outOfStockItems[item._id] && (
-                        <div className="mt-2 p-2 bg-red-100 border border-red-200 rounded-md">
-                          <p className="text-sm text-red-700 font-medium">
-                            {t("cart.item.outOfStockWarning")}
-                            {stockLevels[item._id] > 0
-                              ? ` Only ${
-                                  stockLevels[item._id]
-                                } available, but you have ${
-                                  item.quantity
-                                } in cart.`
-                              : " No stock available."}
+                      {/* Stock Warning Message */}
+                      {stockWarnings[item._id] && (
+                        <div className="mt-2 p-2 bg-orange-100 border border-orange-200 rounded-md">
+                          <p className="text-sm text-orange-700 font-medium flex items-center gap-2">
+                            <AlertTriangle className="w-4 h-4" />
+                            {stockWarnings[item._id]}
                           </p>
+                         
                         </div>
                       )}
 
-                      <div
-                        className={`text-emerald-600 text-sm space-y-1 mt-2 ${
-                          outOfStockItems[item._id] ? "opacity-50" : ""
-                        }`}
-                      >
+                      <div className="text-emerald-600 text-sm space-y-1 mt-2">
                         <div>
-                          <span className="font-semibold  text-gray-500">
+                          <span className="font-semibold text-gray-500">
                             {t("cart.item.price")}:
                           </span>{" "}
                           {convertNumber(item.price.toFixed(2))} {coin}
@@ -635,15 +667,12 @@ export default function CartPage() {
                           {convertNumber(item.quantity)} ×{" "}
                           {convertNumber(item.price.toFixed(2))} =
                           <span className="font-medium text-primary">
-                            {convertNumber(
-                              (item.quantity * item.price).toFixed(2)
-                            )}{" "}
-                            {coin}
+                            {convertNumber((item.quantity * item.price).toFixed(2))} {coin}
                           </span>
                         </div>
                       </div>
 
-                      {/* Enhanced Quantity Controls - Disabled for out of stock items */}
+                      {/* Enhanced Quantity Controls */}
                       <div className="mt-4 space-y-2">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
@@ -653,15 +682,9 @@ export default function CartPage() {
                                 e.preventDefault();
                                 handleDecrease(item);
                               }}
-                              disabled={
-                                outOfStockItems[item._id] ||
-                                item.quantity <=
-                                  (item.measurement_unit === 1 ? 0.25 : 1)
-                              }
+                              disabled={item.quantity <= (item.measurement_unit === 1 ? 0.25 : 1)}
                               className={`w-8 h-8 flex items-center justify-center rounded-full border transition-all ${
-                                outOfStockItems[item._id] ||
-                                item.quantity <=
-                                  (item.measurement_unit === 1 ? 0.25 : 1)
+                                item.quantity <= (item.measurement_unit === 1 ? 0.25 : 1)
                                   ? "text-gray-300 bg-gray-100 border-gray-200 cursor-not-allowed"
                                   : "text-gray-600 hover:bg-gray-50 border-gray-300"
                               }`}
@@ -669,7 +692,6 @@ export default function CartPage() {
                               -
                             </button>
 
-                            {/* Input Field */}
                             <div className="flex flex-col">
                               <input
                                 type="text"
@@ -678,26 +700,19 @@ export default function CartPage() {
                                     ? inputValues[item._id]
                                     : convertNumber(item.quantity.toString())
                                 }
-                                onChange={(e) =>
-                                  handleInputChange(
-                                    item._id,
-                                    e.target.value,
-                                    item
-                                  )
-                                }
+                                onChange={(e) => handleInputChange(item._id, e.target.value, item)}
                                 onBlur={() => handleInputBlur(item._id, item)}
-                                disabled={outOfStockItems[item._id]}
                                 className={`w-16 px-2 py-1 text-center text-sm font-medium border rounded-md focus:outline-none focus:ring-2 ${
-                                  outOfStockItems[item._id]
-                                    ? "bg-gray-100 text-gray-600 cursor-not-allowed"
-                                    : inputErrors[item._id]
+                                  inputErrors[item._id]
                                     ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                                    : exceedsStockItems[item._id]
+                                    ? "border-orange-300 focus:ring-orange-500 focus:border-orange-500"
                                     : "border-gray-300 focus:ring-green-500 focus:border-green-500"
                                 }`}
                                 placeholder={
                                   item.measurement_unit === 1
-                                    ? convertNumber(0.25)
-                                    : convertNumber(1)
+                                    ? convertNumber("0.25")
+                                    : convertNumber("1")
                                 }
                               />
                             </div>
@@ -708,13 +723,9 @@ export default function CartPage() {
                                 e.preventDefault();
                                 handleIncrease(item);
                               }}
-                              disabled={
-                                outOfStockItems[item._id] ||
-                                (userRole === "buyer" && !canIncrease[item._id])
-                              }
+                              disabled={userRole === "buyer" && !canIncrease[item._id]}
                               className={`w-8 h-8 flex items-center justify-center rounded-full border transition-all ${
-                                outOfStockItems[item._id] ||
-                                (userRole === "buyer" && !canIncrease[item._id])
+                                userRole === "buyer" && !canIncrease[item._id]
                                   ? "text-gray-300 bg-gray-100 border-gray-200 cursor-not-allowed"
                                   : "text-gray-600 hover:bg-gray-50 border-gray-300"
                               }`}
@@ -752,36 +763,28 @@ export default function CartPage() {
           </div>
 
           <div className="mt-8 bg-white rounded-xl shadow p-6" style={{background:"var(--color-card)"}}>
-            {/* Out of Stock Warning */}
-            {hasOutOfStockItems && (
-              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg" >
+            {/* Stock Exceeds Warning */}
+            {hasExceedsStockItems && (
+              <div className="mb-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
                 <div className="flex items-start gap-3">
                   <div className="flex-shrink-0">
-                    <svg
-                      className="w-5 h-5 text-red-500 mt-0.5"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
+                    <AlertTriangle className="w-5 h-5 text-orange-500 mt-0.5" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-sm font-medium text-red-800">
-                      {t("cart.checkout.outOfStockTitle")}
+                    <h3 className="text-sm font-medium text-orange-800">
+                      Some Items Exceed Available Stock
                     </h3>
-                    <p className="text-sm text-red-700 mt-1">
-                      {t("cart.checkout.outOfStockMessage")}
+                    <p className="text-sm text-orange-700 mt-1">
+                      You can continue shopping, but please adjust quantities to available stock levels before checkout.
                     </p>
-                    <button
-                      onClick={handleRemoveOutOfStockItems}
-                      className="mt-2 text-sm bg-red-600 text-white px-3 py-1 rounded-md hover:bg-red-700 transition-colors"
-                    >
-                      {t("cart.checkout.removeOutOfStock")}
-                    </button>
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        onClick={handleManualRefresh}
+                        className="text-sm bg-gray-600 text-white px-3 py-1 rounded-md hover:bg-gray-700 transition-colors"
+                      >
+                        🔄 Refresh Stock
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -806,7 +809,7 @@ export default function CartPage() {
               <div className="flex flex-col items-end">
                 <div
                   className={
-                    totalPrice < 100 || hasOutOfStockItems
+                    totalPrice < 100 || hasExceedsStockItems
                       ? "pointer-events-none"
                       : ""
                   }
@@ -814,13 +817,13 @@ export default function CartPage() {
                   <Button
                     onClick={(e) => {
                       e.preventDefault();
-                      if (!hasOutOfStockItems && totalPrice >= 100) {
+                      if (!hasExceedsStockItems && totalPrice >= 100) {
                         router.push("/pickup");
                       }
                     }}
-                    disabled={totalPrice < 100 || hasOutOfStockItems}
+                    disabled={totalPrice < 100 || hasExceedsStockItems}
                     className={`flex items-center gap-2 px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg ${
-                      totalPrice < 100 || hasOutOfStockItems
+                      totalPrice < 100 || hasExceedsStockItems
                         ? "bg-gray-300 text-white cursor-not-allowed"
                         : "bg-green-500 hover:bg-green-600 text-white"
                     }`}
@@ -834,9 +837,9 @@ export default function CartPage() {
                     {t("cart.checkout.minAmount")}
                   </p>
                 )}
-                {hasOutOfStockItems && (
-                  <p className="text-xs text-red-600 mt-1 text-right">
-                    {t("cart.checkout.removeOutOfStockToContinue")}
+                {hasExceedsStockItems && (
+                  <p className="text-xs text-orange-600 mt-1 text-right">
+                    Please adjust quantities to available stock levels to continue
                   </p>
                 )}
               </div>

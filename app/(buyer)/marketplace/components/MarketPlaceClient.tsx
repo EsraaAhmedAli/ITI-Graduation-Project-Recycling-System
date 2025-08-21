@@ -12,6 +12,13 @@ import { Badge } from "flowbite-react";
 import { useGetItems } from "@/hooks/useGetItems";
 import { useItemSocket } from "@/hooks/useItemSocket";
 import LazyPagination from "@/components/common/lazyPagination";
+import dynamic from "next/dynamic";
+
+// Lazy load FloatingRecorderButton for voice processing
+const FloatingRecorderButton = dynamic(
+  () => import('@/components/Voice Processing/FloatingRecorderButton'),
+  { ssr: false }
+);
 const normalizeArabicText = (text: string): string => {
   if (!text) return text;
   
@@ -611,6 +618,9 @@ const filteredItems = useMemo(() => {
           </>
         )}
       </main>
+      
+      {/* Voice Processing Component */}
+      <FloatingRecorderButton />
     </>
   );
 }

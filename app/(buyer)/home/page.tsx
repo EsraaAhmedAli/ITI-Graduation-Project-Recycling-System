@@ -7,6 +7,13 @@ import PromotionSlider from "@/components/buyer/PromotionSlider";
 import { ChevronRight, Frown, Leaf, Zap, Recycle, AlertTriangle } from "lucide-react";
 import api from "@/lib/axios";
 import { useLanguage } from "@/context/LanguageContext";
+import dynamic from "next/dynamic";
+
+// Lazy load FloatingRecorderButton for voice processing
+const FloatingRecorderButton = dynamic(
+  () => import('@/components/Voice Processing/FloatingRecorderButton'),
+  { ssr: false }
+);
 
 interface Item {
   _id: string;
@@ -509,6 +516,9 @@ export default function BuyerHomePage() {
             </div>
           )}
         </section>
+        
+        {/* Voice Processing Component */}
+        <FloatingRecorderButton />
       </div>
     </div>
   );

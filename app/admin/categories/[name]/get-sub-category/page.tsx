@@ -3,13 +3,12 @@
 import DynamicTable from "@/components/shared/dashboardTable";
 import { useParams, useRouter } from "next/navigation";
 import Swal from "sweetalert2";
-import React from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import api from "@/lib/axios";
 import { useLocalization } from "@/utils/localiztionUtil";
 import Button from "@/components/common/Button";
 import Loader from "@/components/common/loader";
 import { useGetItemsPaginated } from "@/hooks/useGetItemsPaginated";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface SubcategoryItem {
   _id: string;
@@ -38,8 +37,21 @@ export default function Page() {
   
   // Use shared localization utilities at component level
   const { getDisplayName, getMeasurementUnit, formatCurrency, t, locale } = useLocalization();
+  
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [previousPage, setPreviousPage] = useState(1);
 
-  // Use the shared hook for pagination
+  // Debounce search term to avoid excessive API calls
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Use the shared hook for pagination with debounced search term
   const {
     data: items,
     pagination,
@@ -52,10 +64,44 @@ export default function Page() {
     categoryStats
   } = useGetItemsPaginated({
     categoryName: decodedName,
-    itemsPerPage: 5, // Items per page for admin table
+    itemsPerPage: 5,
     keepPreviousData: true,
-    role: 'seller' // Add role if your API supports it
+    searchTerm: debouncedSearchTerm // Use debounced search term
   });
+
+  // Store the previous page when starting a new search
+  useEffect(() => {
+    if (debouncedSearchTerm && currentPage === 1) {
+      // Only store previous page when we're starting a fresh search
+      if (searchTerm === debouncedSearchTerm) {
+        setPreviousPage(currentPage);
+      }
+    }
+  }, [debouncedSearchTerm, currentPage, searchTerm]);
+
+  const handleSearchChange = useCallback((term: string) => {
+    setSearchTerm(term);
+    // Only reset to first page when the debounced search actually changes
+    // This prevents page resets on every keystroke
+  }, []);
+
+  // Reset to page 1 only when debounced search term actually changes
+  useEffect(() => {
+    if (debouncedSearchTerm !== searchTerm) return; // Wait for debounce
+    
+    if (debouncedSearchTerm && currentPage !== 1) {
+      handlePageChange(1);
+    }
+  }, [debouncedSearchTerm, currentPage, handlePageChange, searchTerm]);
+
+  const handleBackToResults = useCallback(() => {
+    setSearchTerm('');
+    setDebouncedSearchTerm('');
+    // Optionally go back to the previous page
+    if (previousPage > 1) {
+      handlePageChange(previousPage);
+    }
+  }, [previousPage, handlePageChange]);
 
   const columns = [
     { 
@@ -66,7 +112,7 @@ export default function Page() {
     { 
       key: "name", 
       label: t('categories.subCategoryName') || "Item Name", 
-      sortable: false, // Disable sorting since we're using server-side pagination
+      sortable: false,
       render: (item: SubcategoryItem) => getDisplayName(item)
     },
     { 
@@ -110,7 +156,6 @@ export default function Page() {
         await api.delete(`/categories/item/${name}/${item._id}`);
         
         // Force a refetch after deletion by reloading the page
-        // The hook will automatically handle going to the previous page if needed
         window.location.reload();
 
         Swal.fire({
@@ -139,14 +184,10 @@ export default function Page() {
     if (items.length > 0 && items[0].categoryDisplayName) {
       return items[0].categoryDisplayName;
     }
-    return decodedName; // Fallback to URL parameter
+    return decodedName;
   };
 
   const categoryDisplayName = getCategoryDisplayName();
-
-  // if (loading) {
-  //   return <Loader  />;
-  // }
 
   if (error) {
     return (
@@ -164,7 +205,42 @@ export default function Page() {
     );
   }
 
-  if (items.length === 0 && !loading) {
+  // Show no results found with back button when searching
+  if (items.length === 0 && !loading && debouncedSearchTerm) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-10">
+          <div className="mb-6">
+            <div className="text-6xl mb-4">🔍</div>
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">
+              No results found
+            </h3>
+            <p className="text-gray-500 mb-6">
+              No items found matching "{debouncedSearchTerm}" in {categoryDisplayName}
+            </p>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+            <Button 
+              onClick={handleBackToResults}
+              className="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white"
+            >
+              ← Back to All Items
+            </Button>
+            <Button 
+              onClick={() => router.push(`/admin/categories/${name}/add-sub-category`)} 
+              className="px-6 py-3"
+            >
+              {t('common.addNewItem') || "Add New Item"}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show empty state when no items at all
+  if (items.length === 0 && !loading && !debouncedSearchTerm) {
     return (
       <div className="text-center py-10">
         <p className="text-gray-500 mb-4">No items found in this category.</p>
@@ -180,83 +256,62 @@ export default function Page() {
 
   return (
     <div className="space-y-6">
-    
+      {isFetching && <Loader />}
 
-      {/* Dynamic Table */}
-     <DynamicTable
-      data={items}
-      columns={columns}
-      title={`${t('common.itemsIn') || 'Items in'} ${categoryDisplayName}`}
-      addButtonText={t('common.addNewItem') || "Add New Item"}
-      onAdd={() => router.push(`/admin/categories/${name}/add-sub-category`)}
-      onEdit={(item) => router.push(`/admin/categories/${name}/edit-sub-category/${item._id}`)}
-      onDelete={handleDelete}
-      onImageClick={(item) => router.push(`/admin/categories`)}
-      // Disable internal pagination controls since we're using backend pagination
-      showPagination={false}
-      // Add loading state for fetching
-      isFetching={isFetching}
-      // Disable client-side search since we're using server-side pagination
-      disableClientSideSearch={true}
-
-      onPageChange={handlePageChange}
-  
-    />
-    {pagination && pagination.totalPages > 1 && (
-      <div className="flex flex-col items-center gap-4 bg-white rounded-lg shadow-sm border border-green-100 p-4">
-        {/* Pagination Info */}
-     
-        
-        {/* Pagination Buttons */}
-        <div className="flex items-center gap-2">
-          {/* Previous Button */}
-          <button
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            {t("common.previous") || "Previous"}
-          </button>
-          
-          {/* Page Numbers */}
-          <div className="flex gap-1">
-            {generatePageNumbers().map((pageNum, index) => (
-              <button
-                key={index}
-                onClick={() => typeof pageNum === 'number' ? handlePageChange(pageNum) : undefined}
-                disabled={pageNum === '...'}
-                className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  pageNum === currentPage
-                    ? 'bg-emerald-500 text-white'
-                    : pageNum === '...'
-                    ? 'text-slate-400 cursor-default'
-                    : 'text-slate-600 bg-white border border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                {pageNum}
-              </button>
-            ))}
+      {/* Show search status */}
+      {debouncedSearchTerm && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-blue-600 font-medium">
+                Searching for: "{debouncedSearchTerm}"
+              </span>
+              <span className="text-blue-500 text-sm">
+                ({pagination?.totalItems || 0} results found)
+              </span>
+            </div>
+            <button
+              onClick={handleBackToResults}
+              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+            >
+              Clear search ×
+            </button>
           </div>
-          
-          {/* Next Button */}
-          <button
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={!pagination?.hasNextPage}
-            className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {t("common.next") || "Next"}
-            <ChevronRight className="w-4 h-4" />
-          </button>
         </div>
-      </div>
-    )}
-
-   
-      {/* Loading overlay during pagination */}
-      {isFetching && (
-   <Loader/>
       )}
+
+      {/* Dynamic Table with built-in pagination */}
+      <DynamicTable
+        data={items}
+        columns={columns}
+        title={`${t('common.itemsIn') || 'Items in'} ${categoryDisplayName}`}
+        addButtonText={t('common.addNewItem') || "Add New Item"}
+        onAdd={() => router.push(`/admin/categories/${name}/add-sub-category`)}
+        onEdit={(item) => router.push(`/admin/categories/${name}/edit-sub-category/${item._id}`)}
+        onDelete={handleDelete}
+        onImageClick={(item) => router.push(`/admin/categories`)}
+        
+        showPagination={true}
+        disableClientSideSearch={true}
+        searchTerm={searchTerm} // Use immediate search term for UI
+        onSearchChange={handleSearchChange}
+        showFilter={false}
+        
+        paginationInfo={{
+          currentPage: currentPage,
+          totalPages: pagination?.totalPages || 1,
+          totalItems: pagination?.totalItems || items.length,
+          itemsPerPage: 5,
+          hasNextPage: pagination?.hasNextPage || false,
+          hasPrevPage: pagination?.hasPrevPage || false,
+        }}
+        
+        onPageChange={handlePageChange}
+        isFetching={isFetching}
+        isLoading={loading}
+        disableClientSideSearch={true}
+        itemsPerPage={5}
+      />
     </div>
   );
 }

@@ -11,6 +11,13 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useCategories } from "@/hooks/useGetCategories";
 import toast from "react-hot-toast";
 import Loader from "@/components/common/loader";
+import dynamic from "next/dynamic";
+
+// Lazy load FloatingRecorderButton for voice processing
+const FloatingRecorderButton = dynamic(
+  () => import('@/components/Voice Processing/FloatingRecorderButton'),
+  { ssr: false }
+);
 
 interface Item {
   _id: string;
@@ -632,6 +639,9 @@ const fetchItemByName = async () => {
           </div>
         </div>
       </div>
+      
+      {/* Voice Processing Component */}
+      <FloatingRecorderButton />
     </div>
   );
 }
