@@ -1356,5 +1356,9 @@
   "processing": "جاري المعالجة",
   "invalidMeasurementUnit": "وحدة قياس غير صحيحة",
   "subCategoryAddedSuccessfully": "تم إضافة الفئة الفرعية بنجاح!",
-  "somethingWentWrong": "حدث خطأ ما!"
+  "somethingWentWrong": "حدث خطأ ما!",
+  "navigation": {
+    "pages": "الصفحات",
+    "of": "من"
+  }
 }

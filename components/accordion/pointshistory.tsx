@@ -1,63 +1,143 @@
-// src/components/points/PointsHistoryList.tsx
-import { Clock, CheckCircle2, XCircle, PlusCircle } from "lucide-react";
+// Memoized modal component
 
-export default function PointsHistoryList({ pointsHistory }: { pointsHistory: any[] }) {
-  if (!pointsHistory?.length) {
+import { useUserAuth } from "@/context/AuthFormContext";
+import { memo, useCallback, useEffect, useState } from "react";
+import { PointsEntry } from "../Types/points.type";
+import api from "@/lib/axios";
+import { Calendar, X } from "lucide-react";
+import PointsEntryItem from "./PointsEntryItem";
+import Pagination from "../common/Pagintaion";
+import Loader from "../common/Loader";
+
+const PointsHistoryModal = memo(
+  ({
+    isOpen,
+    onClose,
+    t,
+  }: {
+    isOpen: boolean;
+    onClose: () => void;
+    t: (key: string) => string;
+  }) => {
+    const { user } = useUserAuth();
+    const [pointsHistory, setPointsHistory] = useState<PointsEntry[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const itemsPerPage = 3;
+
+    const loadPointsHistory = useCallback(
+      async (page: number = 1) => {
+        if (!user?._id || !isOpen) return;
+
+        setLoading(true);
+        try {
+          const response = await api.get(`/users/${user._id}/points`, {
+            params: { page, limit: itemsPerPage },
+          });
+          const data = response.data.data;
+          setPointsHistory(data.pointsHistory);
+          setTotalPages(data.pagination.totalPages);
+        } catch (err) {
+          console.error("Failed to load points history", err);
+          setPointsHistory([]);
+        } finally {
+          setLoading(false);
+        }
+      },
+      [user?._id, isOpen, itemsPerPage]
+    );
+
+    useEffect(() => {
+      if (isOpen) {
+        loadPointsHistory(1);
+      }
+    }, [isOpen, loadPointsHistory]);
+
+    const handlePageChange = useCallback(
+      (page: number) => {
+        setCurrentPage(page);
+        loadPointsHistory(page);
+      },
+      [loadPointsHistory]
+    );
+
+    useEffect(() => {
+      if (!isOpen) {
+        setCurrentPage(1);
+      }
+    }, [isOpen]);
+
+    // Memoize backdrop click handler
+    const handleBackdropClick = useCallback(
+      (e: React.MouseEvent) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      },
+      [onClose]
+    );
+
+    if (!isOpen) {
+      return null;
+    }
+
     return (
-      <div className="bg-white rounded-xl shadow-sm p-8 text-center">
-        <h3 className="text-gray-500">No points activity yet</h3>
-        <p className="text-sm text-gray-400 mt-2">
-          Your points history will appear here when you earn or redeem points
-        </p>
+      <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div
+          className="fixed inset-0 bg-opacity-50 backdrop-blur-sm transition-opacity"
+          onClick={handleBackdropClick}
+        />
+
+        <div className="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col">
+          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <Calendar className="w-6 h-6 text-primary" />
+              {t("pointsHistory")}
+            </h2>
+            <button
+              onClick={onClose}
+              className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <X className="w-6 h-6 text-gray-500" />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-6">
+            {loading ? (
+              <div className="text-center">
+                <Loader fullScreen={false} />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {pointsHistory.map((entry) => (
+                  <PointsEntryItem key={entry._id} entry={entry} t={t} />
+                ))}
+
+                {pointsHistory.length === 0 && (
+                  <p className="text-center text-gray-500 py-8">
+                    {t("noPointsHistory")}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          <Pagination
+            pagination={{
+              currentPage,
+              totalPages,
+              hasNextPage: currentPage < totalPages,
+              hasPreviousPage: currentPage > 1,
+            }}
+            onPageChange={handlePageChange}
+            pageGroupSize={3} // optional, default = 5
+          />
+        </div>
       </div>
     );
   }
+);
 
-  return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-gray-800 mb-4">Recent Activity</h2>
-      
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        {pointsHistory.map((entry, index) => (
-          <div 
-            key={index} 
-            className={`p-5 flex items-center justify-between border-b border-gray-100 last:border-b-0 hover:bg-green-50 transition-colors`}
-          >
-            <div className="flex items-center space-x-4">
-              <div className={`p-3 rounded-full ${entry.points > 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                {entry.points > 0 ? (
-                  <PlusCircle size={24} />
-                ) : (
-                  <XCircle size={24} />
-                )}
-              </div>
-              
-              <div>
-                <h4 className="font-medium text-gray-800">{entry.reason}</h4>
-                <p className="text-sm text-gray-500">
-                  {new Date(entry.timestamp).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </p>
-              </div>
-            </div>
-            
-            <div className={`text-lg font-semibold ${entry.points > 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {entry.points > 0 ? '+' : ''}{entry.points} pts
-            </div>
-          </div>
-        ))}
-      </div>
-      
-      {pointsHistory.length > 5 && (
-        <button className="w-full py-3 text-green-600 font-medium hover:bg-green-50 rounded-lg transition-colors">
-          Load More Activity
-        </button>
-      )}
-    </div>
-  );
-}
+PointsHistoryModal.displayName = "PointsHistoryModal";
+export default PointsHistoryModal;
