@@ -92,7 +92,7 @@ export default function Home() {
         <div className="absolute bottom-32 right-16 w-32 h-32 bg-blue-400/10 rounded-full blur-xl animate-pulse delay-1000" />
       </motion.section>
 
-      <section className="flex flex-col md:flex-row justify-between items-stretch gap-6 px-4 py-10 text-2xl bg-base-100 text-center rounded-2xl mx-15">
+      <section className="flex flex-col md:flex-row justify-between items-stretch gap-6 px-4 py-10 text-2xl bg-base-100 text-center rounded-2xl mx-15" style={{ background: "var(--color-green-100)" }}>
         <div className="flex-1 flex flex-col items-center">
           <Mic className="w-10 h-10 text-green-600 mx-auto md:mx-0 mb-2" />
           <h2 className="font-bold text-primary mb-2">
@@ -116,79 +116,98 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="max-w-6xl mx-auto px-4 py-16 md:py-24">
-        <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-accent-content">
+      <section className="max-w-7xl mx-auto px-4 py-16 md:py-24">
+        <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 "style={{ color: "var(--section-gradient)" }}>
           {t("indexPage.steps.howItWorks")}
         </h2>
-        <div className="flex flex-col md:flex-row justify-center items-stretch gap-6 md:gap-8">
+
+        <div className="flex flex-col md:flex-row justify-center items-stretch gap-8 md:gap-8">
           {/* Step 1 */}
-          <div className="flex-1 max-w-md flex flex-col items-center">
+          <div className="flex-1 flex flex-col items-center group max-w-md mx-auto">
             <div className="relative mb-6">
-              <div className="absolute -inset-4 bg-primary/10 rounded-full blur-md opacity-75"></div>
-              <div className="relative flex items-center justify-center w-16 h-16 rounded-full bg-primary text-white text-2xl font-bold shadow-lg">
-                1
+              <div className="absolute -inset-4 bg-green-100 dark:bg-green-900/30 rounded-full blur-xl opacity-70 group-hover:opacity-100 transition-opacity"></div>
+              <div className="relative flex items-center justify-center w-24 h-24 rounded-full bg-green-500 text-white text-2xl font-bold shadow-lg transform group-hover:scale-110 transition-transform">
+                <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                </svg>
               </div>
             </div>
-            <div className="bg-base-200 rounded-2xl p-8 w-full text-center shadow-sm hover:shadow-md transition-all duration-300 h-full">
-              <h3 className="text-2xl font-semibold mb-4">
+            <div className="bg-green-50 dark:bg-green-900/20 rounded-2xl p-8 w-full text-center border-2 border-green-200 dark:border-green-800 shadow-sm group-hover:shadow-xl transition-all duration-300 h-full min-h-[280px] flex flex-col justify-center">
+              <h3 className="text-2xl md:text-2xl font-semibold mb-4 text-green-700 dark:text-green-400">
                 {t("indexPage.steps.step1.title")}
               </h3>
-              <p className="text-lg opacity-90">
+              <p className="text-lg md:text-xl text-green-600 dark:text-green-300 leading-relaxed">
                 {t("indexPage.steps.step1.desc")}
               </p>
             </div>
           </div>
 
-          {/* Step 2 */}
+          {/* Step 2 Connector */}
           <div className="hidden md:flex items-center justify-center py-16">
-            <div className="w-16 h-1 bg-gradient-to-r from-primary to-secondary"></div>
+            <div className="flex items-center">
+              <div className="w-16 h-1 bg-gradient-to-r from-green-400 to-blue-400 rounded-full"></div>
+              <div className="w-4 h-4 rounded-full bg-green-400 mx-2"></div>
+              <div className="w-16 h-1 bg-gradient-to-r from-blue-400 to-yellow-400 rounded-full"></div>
+            </div>
           </div>
-          <div className="flex-1 max-w-md flex flex-col items-center">
+
+          {/* Step 2 */}
+          <div className="flex-1 flex flex-col items-center group max-w-md mx-auto">
             <div className="relative mb-6">
-              <div className="absolute -inset-4 bg-secondary/10 rounded-full blur-md opacity-75"></div>
-              <div className="relative flex items-center justify-center w-16 h-16 rounded-full bg-secondary text-white text-2xl font-bold shadow-lg">
-                2
+              <div className="absolute -inset-4 bg-blue-100 dark:bg-blue-900/30 rounded-full blur-xl opacity-70 group-hover:opacity-100 transition-opacity"></div>
+              <div className="relative flex items-center justify-center w-24 h-24 rounded-full bg-blue-500 text-white text-2xl font-bold shadow-lg transform group-hover:scale-110 transition-transform">
+                <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                </svg>
               </div>
             </div>
-            <div className="bg-base-200 rounded-2xl p-8 w-full text-center shadow-sm hover:shadow-md transition-all duration-300 h-full">
-              <h3 className="text-2xl font-semibold mb-4">
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-2xl p-10 w-full text-center border-2 border-blue-200 dark:border-blue-800 shadow-sm group-hover:shadow-xl transition-all duration-300 h-full min-h-[280px] flex flex-col justify-center">
+              <h3 className="text-2xl md:text-2xl font-semibold mb-4 text-blue-700 dark:text-blue-400">
                 {t("indexPage.steps.step2.title")}
               </h3>
-              <p className="text-lg opacity-90">
+              <p className="text-lg md:text-xl text-blue-600 dark:text-blue-300 leading-relaxed">
                 {t("indexPage.steps.step2.desc")}
               </p>
             </div>
           </div>
 
-          {/* Step 3 */}
+          {/* Step 3 Connector */}
           <div className="hidden md:flex items-center justify-center py-16">
-            <div className="w-16 h-1 bg-gradient-to-r from-secondary to-accent"></div>
+            <div className="flex items-center">
+              <div className="w-16 h-1 bg-gradient-to-r from-blue-400 to-yellow-400 rounded-full"></div>
+              <div className="w-4 h-4 rounded-full bg-yellow-400 mx-2"></div>
+              <div className="w-16 h-1 bg-gradient-to-r from-yellow-400 to-green-400 rounded-full"></div>
+            </div>
           </div>
-          <div className="flex-1 max-w-md flex flex-col items-center">
+
+          {/* Step 3 */}
+          <div className="flex-1 flex flex-col items-center group max-w-md mx-auto">
             <div className="relative mb-6">
-              <div className="absolute -inset-4 bg-accent/10 rounded-full blur-md opacity-75"></div>
-              <div className="relative flex items-center justify-center w-16 h-16 rounded-full bg-accent text-white text-2xl font-bold shadow-lg">
-                3
+              <div className="absolute -inset-4 bg-yellow-100 dark:bg-yellow-900/30 rounded-full blur-xl opacity-70 group-hover:opacity-100 transition-opacity"></div>
+              <div className="relative flex items-center justify-center w-24 h-24 rounded-full bg-yellow-500 text-white text-2xl font-bold shadow-lg transform group-hover:scale-110 transition-transform">
+                <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
               </div>
             </div>
-            <div className="bg-base-200 rounded-2xl p-8 w-full text-center shadow-sm hover:shadow-md transition-all duration-300 h-full">
-              <h3 className="text-2xl font-semibold mb-4">
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-2xl p-10 w-full text-center border-2 border-yellow-200 dark:border-yellow-800 shadow-sm group-hover:shadow-xl transition-all duration-300 h-full min-h-[280px] flex flex-col justify-center">
+              <h3 className="text-2xl md:text-2xl font-semibold mb-4 text-yellow-700 dark:text-yellow-400">
                 {t("indexPage.steps.step3.title")}
               </h3>
-              <p className="text-lg opacity-90">
+              <p className="text-lg md:text-xl text-yellow-600 dark:text-yellow-300 leading-relaxed">
                 {t("indexPage.steps.step3.desc")}
               </p>
             </div>
           </div>
         </div>
       </section>
-
       {/* Lazy loaded CategoryList with fallback */}
       <Suspense fallback={<CategoryListSkeleton />}>
         <CategoryList maxToShow={20} basePath="/category" horizontal />
       </Suspense>
 
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/10 py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-8 rounded-3xl mx-4 sm:mx-8 lg:mx-16 my-12 sm:my-16 lg:my-20">
+
+    <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/10 py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-8 rounded-3xl mx-4 sm:mx-8 lg:mx-16 my-12 sm:my-16 lg:my-20" style={{background: "var(--color-green-100)"}}>
         {/* Background decorative elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/10 rounded-full blur-2xl"></div>
@@ -201,7 +220,7 @@ export default function Home() {
           <div className="mb-8 sm:mb-12">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 text-accent-content leading-tight">
               {t("indexPage.community.title")}{" "}
-              <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              <span className="bg-clip-text text-transparent" style={{color:"var(--foreground)"}}>
                 {t("indexPage.community.highlight")}
               </span>
             </h2>
@@ -215,9 +234,9 @@ export default function Home() {
           </div>
 
           {/* Lazy loaded SubscriptionForm with fallback */}
-          <Suspense fallback={<SubscriptionFormSkeleton />}>
+         <Suspense fallback={<SubscriptionFormSkeleton />}>
             <SubscriptionForm />
-          </Suspense>
+          </Suspense> 
         </div>
       </section>
     </>

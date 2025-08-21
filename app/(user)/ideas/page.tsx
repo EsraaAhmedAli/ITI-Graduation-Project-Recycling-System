@@ -168,7 +168,7 @@ const callApi = async (query: string) => {
       <div 
   className="min-h-screen" 
   style={{ 
-    background: "linear-gradient(to right, var(--section-gradient-start), var(--section-gradient-end))",
+    background: "linear-gradient(to right, var(--color-green-50), var(--color-green-50))",
     color: "var(--foreground)" 
   }}
 >

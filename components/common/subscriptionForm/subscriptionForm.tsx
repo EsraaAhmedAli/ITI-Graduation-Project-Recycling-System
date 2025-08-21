@@ -42,7 +42,9 @@ export default function SubscriptionForm() {
 
         <Button
           onClick={handleSubscribe}
-          className="px-8 py-4 sm:py-5 bg-gradient-to-r from-primary to-primary-focus hover:from-primary-focus hover:to-primary text-white font-bold rounded-2xl transition-all duration-300 transform hover:scale-105 hover:shadow-xl active:scale-95 text-base sm:text-lg whitespace-nowrap shadow-lg"
+          className="px-8 py-4 sm:py-5 hover:to-primary  font-bold rounded-2xl transition-all duration-300 transform hover:scale-105 hover:shadow-xl active:scale-95 text-base sm:text-lg whitespace-nowrap shadow-lg"
+    
+
         >
           <span className="flex items-center gap-2">
             {t("indexPage.subscribe.subscribe_now")}

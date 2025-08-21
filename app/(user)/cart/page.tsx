@@ -442,11 +442,9 @@ export default function CartPage() {
       ) : (
         <>
           <div
-            className={`bg-green-50 rounded-xl p-4 mb-6 grid grid-cols-1 ${
-              user?.role == "customer" ? "md:grid-cols-3" : "md:grid-cols-2"
-            } gap-4`}
-          >
-            <div className="bg-white p-4 rounded-lg shadow-sm text-center">
+           className={`rounded-xl p-4 mb-6 grid grid-cols-1 ${user?.role == 'customer' ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`} style={{background:"var(--color-green-50)"}}>
+          
+            <div className="bg-white p-4 rounded-lg shadow-sm text-center" style={{background:"var(--background)"}}>
               <div className="text-gray-500 text-sm">
                 {t("cart.cartSummary.totalItems")}
               </div>
@@ -455,7 +453,7 @@ export default function CartPage() {
               </div>
             </div>
             {user?.role == "customer" && (
-              <div className="bg-white p-4 rounded-lg shadow-sm text-center">
+              <div className="bg-white p-4 rounded-lg shadow-sm text-center" style={{background:"var(--background)"}}>
                 <div className="text-gray-500 text-sm">
                   {t("cart.cartSummary.earnedPoints")}
                 </div>
@@ -464,8 +462,8 @@ export default function CartPage() {
                 </div>
               </div>
             )}
-            <div className="bg-white p-4 rounded-lg shadow-sm text-center">
-              <div className="text-gray-500 text-sm">
+            <div className="bg-white p-4 rounded-lg shadow-sm text-center" style={{background:"var(--background)"}}>
+              <div className="text-gray-500 text-sm" >
                 {user?.role == "customer"
                   ? t("cart.cartSummary.earnedMoney")
                   : t("cart.cartSummary.payedMoney")}
@@ -486,6 +484,7 @@ export default function CartPage() {
                   animate="visible"
                   exit="exit"
                   layout
+                  style={{ background: "var(--color-card)" }}
                   className={`bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-shadow ${
                     outOfStockItems[item._id]
                       ? "border-red-200 bg-red-50"
@@ -746,10 +745,10 @@ export default function CartPage() {
             </AnimatePresence>
           </div>
 
-          <div className="mt-8 bg-white rounded-xl shadow p-6">
+          <div className="mt-8 bg-white rounded-xl shadow p-6" style={{background:"var(--color-card)"}}>
             {/* Out of Stock Warning */}
             {hasOutOfStockItems && (
-              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg" >
                 <div className="flex items-start gap-3">
                   <div className="flex-shrink-0">
                     <svg
