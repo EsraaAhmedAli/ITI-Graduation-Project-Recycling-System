@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import { useCart } from "@/context/CartContext";
 import { CartItem } from "@/models/cart";
@@ -11,6 +11,8 @@ import { useLanguage } from "@/context/LanguageContext";
 import toast from "react-hot-toast";
 import Loader from "@/components/common/loader";
 import dynamic from "next/dynamic";
+import { useUserAuth } from "@/context/AuthFormContext";
+import { useItemSocket } from "@/hooks/useItemSocket";
 
 // Lazy load FloatingRecorderButton for voice processing
 const FloatingRecorderButton = dynamic(
@@ -56,7 +58,6 @@ export default function ItemDetailsPage() {
     updateCartState,
   } = useCart();
   const { t,locale,convertNumber } = useLanguage();
-  // const { getCategoryIdByItemName } = useCategories();
 
   useEffect(() => {
   const decodedName = decodeURIComponent(itemName.toString().toLowerCase());
@@ -97,7 +98,7 @@ const fetchItemByName = async () => {
     throw error;
   }
 };
-
+const{user}=useUserAuth()
   const {
     data: item,
     isLoading,
@@ -107,6 +108,16 @@ const fetchItemByName = async () => {
     queryFn: fetchItemByName,
     enabled: !!decodedName,
   });
+    useItemSocket({
+    itemId: item?._id,
+    itemName: decodedName,
+    userRole: user?.role,
+  });
+
+
+  const queryClient = useQueryClient();
+const cachedItem = queryClient.getQueryData(["item-details", decodedName]) as Item;
+const currentStock = cachedItem?.quantity ?? item?.quantity ?? 0;
 
   const syncCartWithChanges = (quantity: number) => {
     if (cart.find((ci) => ci._id === item._id)) {
@@ -240,12 +251,8 @@ const fetchItemByName = async () => {
     setInputValue(value);
 
     if (!item) return;
+const validation = validateQuantity(value, item.measurement_unit, currentStock);
 
-    const validation = validateQuantity(
-      value,
-      item.measurement_unit,
-      item.quantity
-    );
 
     if (validation.isValid) {
       setSelectedQuantity(validation.validValue);
@@ -307,14 +314,11 @@ const fetchItemByName = async () => {
   }
 
 
-  const remainingQuantity = item?.quantity - selectedQuantity;
-  const isLowStock = item?.quantity <= 5;
-  const isOutOfStock = item?.quantity <= 0;
+const remainingQuantity = currentStock - selectedQuantity;
+const isLowStock = currentStock <= 5;
+const isOutOfStock = currentStock <= 0;
   const isInCart = cart.some((cartItem) => cartItem._id === item._id);
-  const stockPercentage = Math.max(
-    0,
-    Math.min(100, (remainingQuantity / item.quantity) * 100)
-  );
+const stockPercentage = Math.max(0, Math.min(100, (remainingQuantity / currentStock) * 100));
 
   const handleAddToCart = () => {
     if (!isOutOfStock && remainingQuantity >= 0) {

@@ -1087,6 +1087,7 @@
       "assigntocourier": "مخصص للمندوب"
     },
     "role": {
+      "buyer" : "مشتري",
       "customer": "عميل",
       "merchant": "تاجر",
       "admin": "مدير"
