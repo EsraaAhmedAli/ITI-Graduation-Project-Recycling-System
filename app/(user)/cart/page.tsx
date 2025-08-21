@@ -462,39 +462,7 @@ export default function CartPage() {
     [cart, updateCartState]
   );
 
-  // Function to adjust quantities to available stock
-  const handleAdjustToStock = async () => {
-    const result = await Swal.fire({
-      title: "Adjust Quantities?",
-      text: "This will automatically adjust all item quantities to match available stock.",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonText: "Yes, Adjust",
-      cancelButtonText: "Cancel",
-      confirmButtonColor: "#16a34a",
-      cancelButtonColor: "#d33",
-    });
 
-    if (result.isConfirmed) {
-      const adjustedCart = cart.map((item) => {
-        const availableStock = stockLevels[item._id] || 0;
-        if (item.quantity > availableStock) {
-          return { ...item, quantity: Math.max(availableStock, 0) };
-        }
-        return item;
-      }).filter(item => item.quantity > 0); // Remove items with 0 stock
-
-      updateCartState(adjustedCart);
-
-      Swal.fire({
-        icon: "success",
-        title: "Quantities Adjusted!",
-        text: "All items have been adjusted to available stock levels.",
-        timer: 1500,
-        showConfirmButton: false,
-      });
-    }
-  };
 
   // Show loading state while fetching inventory data
   if (isLoadingItems && userRole === "buyer") {
