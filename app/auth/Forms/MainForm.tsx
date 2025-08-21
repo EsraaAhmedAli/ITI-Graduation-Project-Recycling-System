@@ -145,9 +145,18 @@ export default function MainForm() {
 
   return (
     <>
-      {/* Header */}
       <div className="flex items-start justify-between p-5 border-b border-solid border-gray-200 rounded-t">
-        <h3 className="text-xl font-semibold">{headerTitle}</h3>
+        <h3 className="text-xl font-semibold">
+          {mode === "role-select"
+            ? t("auth.login.ChooseYourRole")
+            : mode === "login"
+            ? t("auth.login.signIn")
+            : mode === "forgot-password"
+            ? t("auth.login.forgotPassword")
+            : selectedRole
+            ? roleConfig[selectedRole]?.title
+            : t("auth.login.signUp")}
+        </h3>
         <button
           className="p-1 ms-auto bg-transparent border-0 text-gray-400 hover:text-gray-600 float-end text-3xl leading-none font-semibold outline-none focus:outline-none"
           onClick={onClose}

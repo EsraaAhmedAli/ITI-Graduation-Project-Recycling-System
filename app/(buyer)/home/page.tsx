@@ -7,6 +7,13 @@ import PromotionSlider from "@/components/buyer/PromotionSlider";
 import { ChevronRight, Frown, Leaf, Zap, Recycle, AlertTriangle } from "lucide-react";
 import api from "@/lib/axios";
 import { useLanguage } from "@/context/LanguageContext";
+import dynamic from "next/dynamic";
+
+// Lazy load FloatingRecorderButton for voice processing
+const FloatingRecorderButton = dynamic(
+  () => import('@/components/Voice Processing/FloatingRecorderButton'),
+  { ssr: false }
+);
 
 interface Item {
   _id: string;
@@ -41,7 +48,7 @@ const generateBlurDataURL = (w: number, h: number) => {
       <rect id="r" width="${w}" height="${h}" fill="url(#g)" />
       <animate xlink:href="#r" attributeName="x" from="-${w}" to="${w}" dur="1s" repeatCount="indefinite"  />
     </svg>`;
-  
+
   const buffer = Buffer.from(shimmer(w, h));
   return `data:image/svg+xml;base64,${buffer.toString('base64')}`;
 };
@@ -66,7 +73,7 @@ export default function BuyerHomePage() {
 
   const formatQuantity = useCallback((quantity: number, unit: number) => {
     if (quantity === 0) return t('common.outOfStock');
-    
+
     const unitText = getMeasurementText(unit);
     if (quantity < 10) {
       return `${t('common.only')} ${convertNumber(quantity)} ${unitText} ${t('common.left')}`;
@@ -120,8 +127,8 @@ export default function BuyerHomePage() {
   const filteredItems = useMemo(() => {
     const term = searchTerm.toLowerCase();
     const filtered = items.filter((item) => {
-      const matchesSearch = item.name[locale]?.toLowerCase().includes(term) || 
-                           item.categoryName[locale]?.toLowerCase().includes(term);
+      const matchesSearch = item.name[locale]?.toLowerCase().includes(term) ||
+        item.categoryName[locale]?.toLowerCase().includes(term);
       const matchesCategory = selectedCategory === "all" || item.categoryName[locale] === selectedCategory;
       return matchesSearch && matchesCategory;
     });
@@ -144,24 +151,24 @@ export default function BuyerHomePage() {
   }, []);
 
   const statsData = useMemo(() => [
-    { 
-      icon: <Zap className="w-5 h-5 text-yellow-300" />, 
-      value: "1,250+", 
+    {
+      icon: <Zap className="w-5 h-5 text-yellow-300" />,
+      value: "1,250+",
       label: t('recyclingBanner.stats.dailyRecyclers')
     },
-    { 
-      icon: <Recycle className="w-5 h-5 text-emerald-300" />, 
-      value: "5.2K", 
+    {
+      icon: <Recycle className="w-5 h-5 text-emerald-300" />,
+      value: "5.2K",
       label: t('recyclingBanner.stats.itemsRecycled')
     },
-    { 
-      icon: <Leaf className="w-5 h-5 text-green-300" />, 
-      value: "28K+", 
+    {
+      icon: <Leaf className="w-5 h-5 text-green-300" />,
+      value: "28K+",
       label: t('recyclingBanner.stats.co2Reduced')
     },
-    { 
-      icon: <span className="text-base">♻️</span>, 
-      value: "100%", 
+    {
+      icon: <span className="text-base">♻️</span>,
+      value: "100%",
       label: t('recyclingBanner.stats.ecoFriendly')
     }
   ], [t]);
@@ -185,11 +192,11 @@ export default function BuyerHomePage() {
   // Data fetching with cleanup
   useEffect(() => {
     let isMounted = true;
-    
+
     if (isMounted) {
       fetchItems();
     }
-    
+
     return () => {
       isMounted = false;
     };
@@ -197,11 +204,11 @@ export default function BuyerHomePage() {
 
   useEffect(() => {
     let isMounted = true;
-    
+
     if (isMounted) {
       fetchMaterials();
     }
-    
+
     return () => {
       isMounted = false;
     };
@@ -211,16 +218,18 @@ export default function BuyerHomePage() {
   const ItemCard = useCallback(({ item }: { item: Item }) => {
     const [imageError, setImageError] = useState(false);
     const [imageLoaded, setImageLoaded] = useState(false);
-    
+
     const handleImageError = () => {
       setImageError(true);
     };
-    
+
     const handleImageLoad = () => {
       setImageLoaded(true);
     };
-    
+
     return (
+
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -229,10 +238,9 @@ export default function BuyerHomePage() {
         className="relative"
       >
         <Link href={`/marketplace/${encodeURIComponent(item.name.en)}`} passHref>
-          <div className={`bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-emerald-200 transition-all hover:shadow-sm h-full relative ${
-            item.quantity === 0 ? 'opacity-75' : ''
-          }`}>
-            
+          <div style={{ background: "var(--color-card-home)" }} className={`bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-emerald-200 transition-all hover:shadow-sm h-full relative ${item.quantity === 0 ? 'opacity-75' : ''
+            }`}>
+
             {/* Stock badges */}
             {item.quantity === 0 && (
               <div className="absolute top-2 right-2 z-10">
@@ -252,7 +260,7 @@ export default function BuyerHomePage() {
               </div>
             )}
 
-            <div className="relative aspect-square w-full mb-3 bg-white rounded-lg overflow-hidden flex items-center justify-center">
+            <div style={{ backgroundColor: item.image ? 'var(--color-image)' : 'var(--color-card)' }} className="relative aspect-square w-full mb-3 bg-white rounded-lg overflow-hidden flex items-center justify-center">
               {item.image && !imageError ? (
                 <>
                   {!imageLoaded && (
@@ -263,9 +271,8 @@ export default function BuyerHomePage() {
                     alt={item.name[locale] || item.name.en || 'Product image'}
                     width={200}
                     height={200}
-                    className={`w-full h-full object-contain p-3 transition-opacity duration-300 ${
-                      item.quantity === 0 ? 'grayscale' : ''
-                    } ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                    className={`w-full h-full object-contain p-3 transition-opacity duration-300 ${item.quantity === 0 ? 'grayscale' : ''
+                      } ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
                     loading="lazy"
                     placeholder="blur"
                     blurDataURL={BLUR_DATA}
@@ -279,11 +286,11 @@ export default function BuyerHomePage() {
                 </div>
               )}
             </div>
-            
+
             <h3 className="text-base font-medium text-gray-800 truncate mb-2">
               {item.name[locale] || item.name.en}
             </h3>
-            
+
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-base font-bold text-emerald-600">
@@ -293,10 +300,10 @@ export default function BuyerHomePage() {
                   /{getMeasurementText(item.measurement_unit)}
                 </span>
               </div>
-              
+
               <div className={`text-xs font-medium ${getStockColor(item.quantity)}`}>
                 {formatQuantity(item.quantity, item.measurement_unit)}
-              </div>  
+              </div>
             </div>
           </div>
         </Link>
@@ -308,25 +315,25 @@ export default function BuyerHomePage() {
   const MaterialCard = useCallback(({ material, index }: { material: Material, index: number }) => {
     const [imageError, setImageError] = useState(false);
     const [imageLoaded, setImageLoaded] = useState(false);
-    
+
     const handleImageError = () => {
       setImageError(true);
     };
-    
+
     const handleImageLoad = () => {
       setImageLoaded(true);
     };
-    
+
     return (
-      <Link key={index} href={`/marketplace/${encodeURIComponent(material.name.en)}`} passHref>
+      <Link style={{ background: "var(--color-card-home)" }} key={index} href={`/marketplace/${encodeURIComponent(material.name.en)}`} passHref>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
           whileHover={{ y: -5 }}
         >
-          <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-emerald-200 transition-all hover:shadow-sm">
-            <div className="relative aspect-square w-full mb-3 bg-white rounded-lg overflow-hidden flex items-center justify-center">
+          <div style={{ backgroundColor: 'var(--color-card)' }} className=" rounded-xl p-4 border border-gray-100 hover:border-emerald-200 transition-all hover:shadow-sm">
+            <div style={{ backgroundColor: 'var(--color-image)' }} className="relative aspect-square w-full mb-3 bg-white rounded-lg overflow-hidden flex items-center justify-center">
               {material.image && !imageError ? (
                 <>
                   {!imageLoaded && (
@@ -337,9 +344,8 @@ export default function BuyerHomePage() {
                     alt={material.name[locale] || material.name.en || 'Recycled material'}
                     width={200}
                     height={200}
-                    className={`w-full h-full object-contain p-3 transition-opacity duration-300 ${
-                      imageLoaded ? 'opacity-100' : 'opacity-0'
-                    }`}
+                    className={`w-full h-full object-contain p-3 transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'
+                      }`}
                     loading="lazy"
                     placeholder="blur"
                     blurDataURL={BLUR_DATA}
@@ -357,8 +363,8 @@ export default function BuyerHomePage() {
               {material.name[locale] || material.name.en}
             </h3>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">
-                <span className="text-sm text-gray-600 font-bold">{convertNumber(material.totalRecycled)}</span>
+              <span className="text-sm" style={{color:"var( --text-gray-700)"}}>
+                <span className="text-sm font-bold" style={{color:"var( --text-gray-700)"}}>{convertNumber(material.totalRecycled)}</span>
                 {material.unit == "pieces" ? t('common.piece') : t('common.kg')} {t('common.sold')}
               </span>
             </div>
@@ -369,17 +375,21 @@ export default function BuyerHomePage() {
   }, [locale, convertNumber, t]);
 
   return (
+
     <div className="dark:bg-black-200 min-h-screen">
+         <PromotionSlider />
       <div className="container mx-auto px-4 py-8 dark:bg-black-200">
+        {/* إضافة PromotionSlider في بداية الصفحة */}
+     <br/>
         {/* Items Section */}
         <section className="mb-12">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-800">
+            <h2 className="text-xl font-semibold" style={{ color: "var(--text-gray-800)" }}>
               {selectedCategory === "all" ? `${t('common.FeaturedItems')}` : selectedCategory}
             </h2>
             <Link href="/marketplace" passHref>
               <button aria-label="view all items" className="text-emerald-600 hover:text-emerald-700 font-medium flex items-center text-sm transition-colors">
-               {t('common.viewAll')}
+                {t('common.viewAll')}
                 <ChevronRight className="w-4 h-4 ml-1" />
               </button>
             </Link>
@@ -471,7 +481,7 @@ export default function BuyerHomePage() {
 
               <div className="grid grid-cols-2 gap-2 lg:w-1/2 max-w-xs">
                 {statsData.map((stat, i) => (
-                  <motion.div 
+                  <motion.div
                     key={i}
                     whileHover={{ y: -2 }}
                     className="bg-white/10 backdrop-blur-sm p-2 rounded-lg border border-white/20"
@@ -489,7 +499,7 @@ export default function BuyerHomePage() {
         {/* Top Materials Section */}
         <section className="mb-12">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-800">{t('charts.topRecycledMaterials')}</h2>
+            <h2 className="text-xl font-semibold text-gray-800" style={{color:"var(  --text-gray-800)"}}>{t('charts.topRecycledMaterials')}</h2>
           </div>
 
           {materialsLoading ? (
@@ -499,13 +509,16 @@ export default function BuyerHomePage() {
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-5" style={{color:"var( --text-gray-700)"}}>
               {materials.map((material, index) => (
                 <MaterialCard key={`${material.name.en}-${index}`} material={material} index={index} />
-              ))}
+              ))} 
             </div>
           )}
         </section>
+        
+        {/* Voice Processing Component */}
+        <FloatingRecorderButton />
       </div>
     </div>
   );

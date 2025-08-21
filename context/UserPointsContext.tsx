@@ -66,8 +66,11 @@ export function UserPointsProvider({
   token,
 }: UserPointsProviderProps) {
   const queryClient = useQueryClient();
+  
+  // Check if user is a customer
+  const isCustomer = role === "customer";
 
-  // Fetch user points with React Query
+  // Fetch user points with React Query - only for customers
   const {
     data: userPoints,
     isLoading: pointsLoading,
@@ -82,7 +85,7 @@ export function UserPointsProvider({
 
       return res.data.data;
     },
-    enabled: !!userId,
+    enabled: !!userId && isCustomer, // Only enabled for customers
     staleTime: Infinity, // Never consider stale
     gcTime: 30 * 60 * 1000, // 30 minutes cache
     refetchOnMount: false,
@@ -90,7 +93,7 @@ export function UserPointsProvider({
     refetchOnReconnect: false,
   });
 
-  // Fetch completed orders count with React Query
+  // Fetch completed orders count with React Query - only for customers
   const { data: totalCompletedOrders = 0 } = useQuery({
     queryKey: ["completed-orders", userId],
     queryFn: async () => {
@@ -99,26 +102,30 @@ export function UserPointsProvider({
       const res = await api.get("/orders?status=completed&limit=1");
       return res.data.totalCount || 0;
     },
-    enabled: !!userId && role === "customer",
+    enabled: !!userId && isCustomer, // Only enabled for customers
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 
-  // Set up socket for real-time updates (will update React Query cache automatically)
+  // Set up socket for real-time updates - only for customers
   useUserPointsSocket({
     userId,
-    enabled: !!userId,
+    enabled: !!userId && isCustomer, // Only enabled for customers
   });
 
   const refreshUserPoints = useCallback(async () => {
+    // Only refresh if user is a customer
+    if (!isCustomer) return;
+    
     await Promise.allSettled([
       refetchPoints(),
       queryClient.invalidateQueries({ queryKey: ["completed-orders", userId] }),
     ]);
-  }, [refetchPoints, queryClient, userId]);
+  }, [refetchPoints, queryClient, userId, isCustomer]);
 
   const updateUserPoints = useCallback(
     (updates: Partial<UserPointsType>) => {
-      if (!userId) return;
+      // Only update if user is a customer
+      if (!userId || !isCustomer) return;
 
       // Optimistically update the cache
       queryClient.setQueryData(
@@ -129,24 +136,24 @@ export function UserPointsProvider({
         }
       );
     },
-    [queryClient, userId]
+    [queryClient, userId, isCustomer]
   );
 
   const clearUserPoints = useCallback(() => {
-    if (userId) {
+    if (userId && isCustomer) {
       queryClient.removeQueries({ queryKey: ["user-points", userId] });
       queryClient.removeQueries({ queryKey: ["completed-orders", userId] });
     }
-  }, [queryClient, userId]);
+  }, [queryClient, userId, isCustomer]);
 
   const value = {
-    userPoints: userPoints || null,
-    pointsLoading,
-    totalCompletedOrders,
+    userPoints: isCustomer ? (userPoints || null) : null,
+    pointsLoading: isCustomer ? pointsLoading : false,
+    totalCompletedOrders: isCustomer ? totalCompletedOrders : 0,
     refreshUserPoints,
     updateUserPoints,
     clearUserPoints,
-    totalPointsHistoryLength: userPoints?.pagination.totalItems,
+    totalPointsHistoryLength: isCustomer ? userPoints?.pagination.totalItems : undefined,
   };
 
   return (

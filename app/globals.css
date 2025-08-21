@@ -29,6 +29,7 @@
   --color-green-50: #ecfdf5;
   --color-green-100: #d1fae5;
   --color-green-600: #059669;
+  --color-green-60:#ecfdf5;
   
   /* Cards */
   --color-card: #ffffff;
@@ -37,6 +38,7 @@
   --card-border: #e5e7eb;
   --card-text: #111827;
   --card-subtext: #4b5563;
+   
   
   /* Gradients */
   --section-gradient-start: #255c42;
@@ -62,6 +64,8 @@
   --color-warning: #ff9800;
      --color-card:#ffffff;
   --color-error: #f44336;
+  --color-image:#ffffff;
+   --color-card-home:#F9FAFB;
   
   /* Radius */
   --radius-selector: 0.5rem;
@@ -73,12 +77,15 @@
   --background: #000000;
   --foreground: #ededed;
   --border-color: #1a1a1a;
+    --color-image:#535353;
+      --color-base-800:#e0e0e0;
   
   --color-base-100: #202833;
   --color-base-200: #222;
   --color-base-300: #1a1a1a;
   --color-base-content: #e0e0e0;
    --section-gradient: #d1fae5;
+   --color-green-60:#000000;
   
   --text-gray-100: #535353;
   --text-gray-400: #f7f3f3;
@@ -90,6 +97,7 @@
   --color-card: #535353;
   --color-card-home: #535353;
   --card-bg: #535353;
+    --color-card-home:#535353;
   
   --section-gradient-start: #064e3b;
   --section-gradient-middle: #022c22;
@@ -103,6 +111,7 @@
   --icon-bg-purple: #5b21b6;
   --icon-text-purple: #c4b5fd;
   --color-card:#535353;
+
 }
 
 /* Base Styles */

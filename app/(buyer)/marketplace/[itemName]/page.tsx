@@ -8,9 +8,15 @@ import { useCart } from "@/context/CartContext";
 import { CartItem } from "@/models/cart";
 import { Recycle, Leaf, Package, Minus, Plus } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
-import { useCategories } from "@/hooks/useGetCategories";
 import toast from "react-hot-toast";
 import Loader from "@/components/common/loader";
+import dynamic from "next/dynamic";
+
+// Lazy load FloatingRecorderButton for voice processing
+const FloatingRecorderButton = dynamic(
+  () => import('@/components/Voice Processing/FloatingRecorderButton'),
+  { ssr: false }
+);
 
 interface Item {
   _id: string;
@@ -50,7 +56,7 @@ export default function ItemDetailsPage() {
     updateCartState,
   } = useCart();
   const { t,locale,convertNumber } = useLanguage();
-  const { getCategoryIdByItemName } = useCategories();
+  // const { getCategoryIdByItemName } = useCategories();
 
   useEffect(() => {
   const decodedName = decodeURIComponent(itemName.toString().toLowerCase());
@@ -115,7 +121,7 @@ const fetchItemByName = async () => {
         typeof item.name === "string" ? item.name : item.name?.en || "";
       const arabicItemName =
         typeof item.name === "string" ? "" : item.name?.ar || "";
-      const categoryId = getCategoryIdByItemName(englishItemName);
+      const categoryId = item._id;
       const categoryNameEn =
         typeof item.categoryName === "string"
           ? item.categoryName
@@ -143,7 +149,7 @@ const fetchItemByName = async () => {
         quantity: quantity ?? item.quantity,
       };
     },
-    [getCategoryIdByItemName]
+    []
   );
 
   // const categoryName_display =
@@ -632,6 +638,9 @@ const fetchItemByName = async () => {
           </div>
         </div>
       </div>
+      
+      {/* Voice Processing Component */}
+      <FloatingRecorderButton />
     </div>
   );
 }

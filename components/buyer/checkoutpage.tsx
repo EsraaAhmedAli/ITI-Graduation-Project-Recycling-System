@@ -598,6 +598,7 @@ const CheckoutPage = ({ amount, checkoutData }: CheckoutPageProps) => {
 
                 <Button
                   type="submit"
+                  
                   disabled={
                     !stripe ||
                     loading ||
@@ -605,7 +606,8 @@ const CheckoutPage = ({ amount, checkoutData }: CheckoutPageProps) => {
                     paymentSuccessful ||
                     !localCheckoutData
                   }
-                  className="w-full disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
+                  
+                  className="w-full disabled:opacity-50 bg-green-700 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
                 >
                   {loading ? (
                     <div className="flex items-center justify-center space-x-2">

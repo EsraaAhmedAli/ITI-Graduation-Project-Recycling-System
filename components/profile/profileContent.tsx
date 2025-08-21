@@ -145,7 +145,7 @@ const ProfileContent = memo(function ProfileContent({
   const isCustomer = user.role === "customer";
 
   return (
-    <div className="min-h-screen px-4 py-6" style={{ background: "var(--color-green-50)" }}>
+    <div className="min-h-screen px-4 py-6" style={{ background: "var(--color-green-60)" }}>
       <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-xl p-6 space-y-6" style={{ background: "var(--background)" }}>
         {/* Header Section */}
         <ProfileHeader

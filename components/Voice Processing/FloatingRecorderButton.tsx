@@ -222,15 +222,15 @@ const FloatingRecorderButton = () => {
       )}
 
       {showCard && (
-        <div className="absolute bottom-20 right-0 bg-white rounded-2xl shadow-2xl border border-gray-200 p-6 w-80 mb-4 transform transition-all duration-300 ease-in-out">
+        <div className="absolute bottom-20 right-0  rounded-2xl shadow-2xl border border-gray-200 p-6 w-80 mb-4 transform transition-all duration-300 ease-in-out" style={{ background: "var(--color-green-60)" }}>
           <div className="flex flex-col space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-800">
+              <h3 className="text-lg font-semibold" style={{ color: "var(--text-gray-800)" }}>
                 {isRecording
                   ? "Recording..."
                   : audioBlob
-                  ? "Recording Complete"
-                  : "Voice Recording"}
+                    ? "Recording Complete"
+                    : "Voice Recording"}
               </h3>
               <button
                 onClick={cancelRecording}
@@ -333,11 +333,10 @@ const FloatingRecorderButton = () => {
               {[...Array(20)].map((_, i) => (
                 <div
                   key={i}
-                  className={`w-1 bg-gradient-to-t from-primary to-secondary rounded-full transition-all duration-150 ${
-                    isRecording
-                      ? `animate-pulse h-${Math.floor(Math.random() * 8) + 2}`
-                      : "h-2"
-                  }`}
+                  className={`w-1 bg-gradient-to-t from-primary to-secondary rounded-full transition-all duration-150 ${isRecording
+                    ? `animate-pulse h-${Math.floor(Math.random() * 8) + 2}`
+                    : "h-2"
+                    }`}
                   style={{
                     animationDelay: `${i * 0.1}s`,
                     height: isRecording
@@ -359,123 +358,132 @@ const FloatingRecorderButton = () => {
               </div>
             )}
 
-            <div className="flex space-x-3">
-                {!isRecording && !audioBlob && (
-                  <button
-                    onClick={startRecording}
-                    className="flex-1 bg-primary hover:bg-primary/90 text-white font-medium py-3 px-4 rounded-xl transition-colors duration-200 flex items-center justify-center space-x-2"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-                      />
-                    </svg>
-                    <span>Start Recording</span>
-                  </button>
-                )}
+            <div className="flex space-x-3" >
+              {!isRecording && !audioBlob && (
+                <button
+                  onClick={startRecording}
 
-                {isRecording && (
-                  <button
-                    onClick={stopRecording}
-                    className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-3 px-4 rounded-xl transition-colors duration-200 flex items-center justify-center space-x-2"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 10h6v4H9z"
-                      />
-                    </svg>
-                    <span>Stop Recording</span>
-                  </button>
-                )}
+                  className="
+    flex-1 
+    bg-green-600 hover:bg-green-700 
+    dark:bg-green-400 dark:hover:bg-green-500 
+    text-white dark:text-gray-900
+    font-medium py-3 px-4 rounded-xl 
+    transition-colors duration-200 
+    flex items-center justify-center space-x-2
+  "
 
-                {audioBlob && !isRecording && (
-                  <>
-                    <button
-                      onClick={cancelRecording}
-                      disabled={isLoading || loading}
-                      className={`flex-1 font-medium py-3 px-4 rounded-xl transition-colors duration-200 ${
-                        isLoading || loading
-                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                          : "bg-gray-500 hover:bg-gray-600 text-white"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                    />
+                  </svg>
+                  <span>Start Recording</span>
+                </button>
+              )}
+
+              {isRecording && (
+                <button
+                  onClick={stopRecording}
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-3 px-4 rounded-xl transition-colors duration-200 flex items-center justify-center space-x-2"
+                >
+                  <svg
+                    className="w-5 h-5"
+
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 10h6v4H9z"
+                    />
+                  </svg>
+                  <span>Stop Recording</span>
+                </button>
+              )}
+
+              {audioBlob && !isRecording && (
+                <>
+                  <button
+                    onClick={cancelRecording}
+                    disabled={isLoading || loading}
+                    className={`flex-1 font-medium py-3 px-4 rounded-xl transition-colors duration-200 ${isLoading || loading
+                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      : "bg-gray-500 hover:bg-gray-600 text-white"
                       }`}
-                    >
-                      Cancel
-                    </button>
-                    
-                    {!lastTranscription && (
-                      <button
-                        onClick={handleDoneClick}
-                        disabled={isLoading || loading}
-                        className={`flex-1 font-medium py-3 px-4 rounded-xl transition-colors duration-200 flex items-center justify-center space-x-2 ${
-                          isLoading || loading
-                            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                            : "bg-primary hover:bg-primary/90 text-white"
+                  >
+                    Cancel
+                  </button>
+
+                  {!lastTranscription && (
+                    <button
+                      onClick={handleDoneClick}
+                      className={`flex-1 font-medium py-3 px-4 rounded-xl transition-colors duration-200 flex items-center justify-center space-x-2 ${isLoading || loading
+                          ? "bg-green-300 text-gray-500 cursor-not-allowed"
+                          : "bg-green-600 hover:bg-green-700 text-white"
                         }`}
-                      >
-                        {isLoading || loading ? (
-                          <>
-                            <div className="w-5 h-5 border-2 border-gray-500 border-t-transparent rounded-full animate-spin"></div>
-                            <span>
-                              {isLoading ? "Processing..." : "AI Analyzing..."}
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <svg
-                              className="w-5 h-5"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M5 13l4 4L19 7"
-                              />
-                            </svg>
-                            <span>Done</span>
-                          </>
-                        )}
-                      </button>
-                    )}
-                    
-                    {lastTranscription && (isLoading || loading) && (
-                      <button
-                        disabled
-                        className="flex-1 bg-gray-300 text-gray-500 cursor-not-allowed font-medium py-3 px-4 rounded-xl transition-colors duration-200 flex items-center justify-center space-x-2"
-                      >
-                        <div className="w-5 h-5 border-2 border-gray-500 border-t-transparent rounded-full animate-spin"></div>
-                        <span>
-                          {isLoading ? "Processing..." : "AI Analyzing..."}
-                        </span>
-                      </button>
-                    )}
-                  </>
-                )}
-              </div>
+                    >
+                      {isLoading || loading ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-gray-500 border-t-transparent rounded-full animate-spin"></div>
+                          <span>
+                            {isLoading ? "Processing..." : "AI Analyzing..."}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                          <span>Done</span>
+                        </>
+                      )}
+                    </button>
+
+                  )}
+
+                  {lastTranscription && (isLoading || loading) && (
+                    <button
+                      disabled
+                      className="flex-1 bg-gray-300 text-gray-500 cursor-not-allowed font-medium py-3 px-4 rounded-xl transition-colors duration-200 flex items-center justify-center space-x-2"
+                    >
+                      <div className="w-5 h-5 border-2 border-gray-500 border-t-transparent rounded-full animate-spin"></div>
+                      <span>
+                        {isLoading ? "Processing..." : "AI Analyzing..."}
+                      </span>
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -483,26 +491,26 @@ const FloatingRecorderButton = () => {
       <button
         onClick={handleButtonClick}
         className={`
-          group relative w-14 h-14 rounded-full shadow-lg transition-all duration-300 transform hover:scale-110
-          ${
-            isRecording
-              ? "bg-red-500 hover:bg-red-600 animate-pulse"
-              : showItemsCard
-              ? "bg-success hover:bg-success/90"
+  group relative w-14 h-14 rounded-full shadow-lg transition-all duration-300 transform hover:scale-110
+  ${isRecording
+            ? "bg-red-500 hover:bg-red-600 animate-pulse"
+            : showItemsCard
+              ? "bg-green-600 hover:bg-green-700"
               : showCard
-              ? "bg-gray-500 hover:bg-gray-600"
-              : "bg-primary hover:bg-primary/90"
+                ? "bg-gray-500 hover:bg-gray-600"
+                : "bg-green-600 hover:bg-green-700 dark:bg-green-400 dark:hover:bg-green-500"
           }
-          text-white font-bold flex items-center justify-center
-        `}
+  text-white font-bold flex items-center justify-center
+`}
+
         title={
           isRecording
             ? "Stop Recording"
             : showItemsCard
-            ? "Close Items"
-            : showCard
-            ? "Close"
-            : "Start Recording"
+              ? "Close Items"
+              : showCard
+                ? "Close"
+                : "Start Recording"
         }
       >
         {!showCard && (

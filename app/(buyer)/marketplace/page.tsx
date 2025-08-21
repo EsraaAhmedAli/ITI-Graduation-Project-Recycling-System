@@ -170,7 +170,7 @@ export default async function MarketplacePage() {
     <div className="max-w-7xl mx-auto px-4 py-6">
       {/* Server-rendered header */}
       <header className="mb-6 text-center">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
+        <h1 className="text-2xl md:text-3xl font-bold mb-2"style={{color:"var(--color-base-800)"}}>
           ♻️ Sustainable Marketplace
         </h1>
         <p className="text-gray-600 text-sm md:text-base">
