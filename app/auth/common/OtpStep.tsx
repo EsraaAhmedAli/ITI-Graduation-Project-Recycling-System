@@ -101,7 +101,7 @@ export default function OTPInput({ comeFrom }: OTPInputProps) {
 
     try {
       await verifyOtp({ email, otpCode: otpValue });
-      if (comeFrom === "signup") {
+      if (selectedRole !== "delivery" && comeFrom === "signup") {
         await createUser();
         return;
       }
