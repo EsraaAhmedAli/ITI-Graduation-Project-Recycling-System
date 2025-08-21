@@ -108,7 +108,7 @@ export default function MainForm() {
 
   return (
     <>
-      <div className="flex items-start justify-between p-5 border-b border-solid border-gray-200 rounded-t">
+      <div className="flex items-start justify-between p-5 border-b border-solid border-gray-200 rounded-t" >
         <h3 className="text-xl font-semibold">
           {mode === "role-select"
             ? t("auth.login.ChooseYourRole")

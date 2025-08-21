@@ -530,7 +530,7 @@ const filteredItems = useMemo(() => {
   return (
     <>
       {/* Simplified Search Controls */}
-      <section className="mb-4 bg-white rounded-lg shadow-sm p-3 sticky top-0 z-10">
+      <section className="mb-4 rounded-lg shadow-sm p-3 sticky top-0 z-10"  style={{ background: "var(--background)" }}>
         <div className="flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
             <Search className="absolute top-3 left-3 h-4 w-4 text-gray-400" />
@@ -547,6 +547,7 @@ const filteredItems = useMemo(() => {
             <Filter className="absolute top-2 left-3 h-4 w-4 text-gray-400" />
             <select
               value={selectedCategory}
+              style={{ background: "var(--background)" }}
               onChange={(e) => handleCategoryChange(e.target.value)}
               className="pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg w-full appearance-none bg-white focus:ring-1 focus:ring-green-500 focus:outline-none"
             >
@@ -577,11 +578,11 @@ const filteredItems = useMemo(() => {
           <LoadingSkeleton />
         ) : sortedFilteredItems.length === 0 ? (
           <div className="text-center py-12">
-            <Frown className="mx-auto h-10 w-10 text-gray-400" />
+            <Frown className="mx-auto h-10 w-10 text-gray-400"/>
             <h2 className="mt-2 text-sm font-medium text-gray-900">
               {t("common.noItemsFound") || "No items found"}
             </h2>
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-gray-500" >
               {debouncedSearchTerm || selectedCategory !== "all"
                 ? t("common.tryDifferentSearch") || "Try different search terms or check spelling"
                 : t("common.noItemsAvailable") || "No items available yet"}

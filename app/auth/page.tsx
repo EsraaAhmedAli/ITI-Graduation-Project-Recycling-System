@@ -21,7 +21,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   if (!isOpen) return null;
 
   return (
-    <Wrapper>
+    <Wrapper >
       <AuthenticationProvider onClose={onClose}>
         <FormProvider {...methods}>
           <MainForm />

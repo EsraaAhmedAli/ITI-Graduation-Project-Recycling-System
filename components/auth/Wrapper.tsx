@@ -8,6 +8,7 @@ export default function Wrapper({ children, bg = "base-100" }: WrapperProps) {
     <div className="w-full max-w-2xl mx-auto p-4 sm:p-6 lg:p-8 max-h-svh overflow-hidden flex flex-col">
       <div
         className={`relative bg-${bg} rounded-2xl shadow-md p-6 sm:p-8 overflow-y-auto flex-1 max-h-full`}
+        style={{ background: "var(--color-green-50)" }}
       >
         {children}
       </div>

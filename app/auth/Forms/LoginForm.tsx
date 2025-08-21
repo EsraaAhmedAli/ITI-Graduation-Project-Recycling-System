@@ -235,12 +235,14 @@ const LoginForm = () => {
         disabled={loading}
         onClick={handleSubmit(onSubmit)}
         className="inline-flex items-center justify-center w-full p-2 rounded-lg text-white bg-primary hover:bg-secondary font-medium text-sm text-center disabled:opacity-50 disabled:cursor-not-allowed"
+           style={{ background: "var(--color-green-600)"}}
       >
         {loading && (
           <svg
             aria-hidden="true"
             role="status"
             className="inline w-4 h-4 me-2 animate-spin"
+         
             viewBox="0 0 100 101"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
@@ -260,7 +262,9 @@ const LoginForm = () => {
       <button
         type="button"
         onClick={navigateToForgot}
-        className="flex ms-auto text-sm text-gray-500 hover:underline"
+        className="flex ms-auto text-sm hover:underline"
+        style={{ color: "var(--text-gray-600)" }}
+      
       >
         {t("auth.login.forgotPassword")}
       </button>
