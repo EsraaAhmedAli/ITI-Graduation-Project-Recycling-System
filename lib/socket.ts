@@ -35,15 +35,23 @@ export const initSocket = (token: string): Socket => {
       console.log("❌ Disconnected from Socket.IO server");
     });
 
-  socket.on("connect_error", (err) => {
-    console.error("⚠️ Socket connection error:", err.message);
-    console.error("Error details:", err);
-    
-    // If authentication fails, try to reconnect with fresh token
-    if (err.message.includes("Authentication") || err.message.includes("Invalid token")) {
-      console.log("🔄 Authentication failed, will retry with fresh token");
-    }
-  });
+    socket.on("connect_error", (err: any) => {
+      const message = String(err?.message || "");
+      console.error("⚠️ Socket connection error:", message);
+      console.error("Error details:", err);
+      if (/blocked/i.test(message)) {
+        if (typeof window !== "undefined") {
+          alert("Your account is blocked due to repeated reports.");
+          window.location.assign("/blocked");
+        }
+        socket?.disconnect();
+        return;
+      }
+      // If authentication fails, try to reconnect with fresh token
+      if (message.includes("Authentication") || message.includes("Invalid token")) {
+        console.log("🔄 Authentication failed, will retry with fresh token");
+      }
+    });
 
 
     // Add error handling

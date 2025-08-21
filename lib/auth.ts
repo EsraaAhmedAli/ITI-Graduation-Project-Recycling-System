@@ -65,7 +65,16 @@ export const loginUser = async (data: {
   password: string;
 }): Promise<AuthResponse> => {
   const res = await api.post<AuthResponse>("/auth/login", data);
-  return res.data;
+  const { user, accessToken } = res.data as any;
+  if (user?.isBlocked) {
+    // Mirror backend blocked handling
+    const error: any = new Error(
+      "Your account is blocked due to repeated reports."
+    );
+    error.response = { status: 403, data: { message: error.message } };
+    throw error;
+  }
+  return { user, accessToken };
 };
 
 export const forgotPassword = async (email: string) => {

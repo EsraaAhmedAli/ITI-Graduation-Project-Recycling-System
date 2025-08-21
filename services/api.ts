@@ -41,6 +41,14 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Global blocked user redirect
+    if (error?.response?.status === 403) {
+      const message = error?.response?.data?.message || "";
+      if (/blocked/i.test(message) && typeof window !== "undefined") {
+        window.location.assign("/blocked");
+      }
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
@@ -88,3 +96,63 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+// === Reports & Block Management APIs ===
+export async function reportDeliveryUser({
+  deliveryUserId,
+  reason,
+  orderId,
+  accessToken,
+}: {
+  deliveryUserId: string;
+  reason: string;
+  orderId?: string;
+  accessToken: string;
+}) {
+  const res = await api.post(
+    `/reports/delivery/${deliveryUserId}`,
+    { reason, orderId },
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+  const { warningsCount, user, message } = res.data;
+  return {
+    warningsCount: warningsCount ?? 0,
+    isBlocked: Boolean(user?.isBlocked),
+    message,
+  };
+}
+
+export async function fetchBlockedUsers({
+  page = 1,
+  limit = 20,
+  search,
+  role = "delivery",
+  accessToken,
+}: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  role?: "delivery" | "customer" | "buyer" | "admin";
+  accessToken: string;
+}) {
+  const res = await api.get("/users/blocked", {
+    params: { page, limit, search, role },
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  return res.data;
+}
+
+export async function unblockUser({
+  userId,
+  accessToken,
+}: {
+  userId: string;
+  accessToken: string;
+}) {
+  const res = await api.post(
+    `/users/${userId}/unblock`,
+    {},
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+  return res.data;
+}

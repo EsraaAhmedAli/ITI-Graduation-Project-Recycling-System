@@ -111,6 +111,14 @@ api.interceptors.response.use(
       }
     }
 
+    // === Handle Blocked Accounts (Global handling) ===
+    if (status === 403 && /blocked/i.test(message || "")) {
+      if (typeof window !== "undefined") {
+        window.location.assign("/blocked");
+      }
+      return Promise.reject(error);
+    }
+
     // === Handle Invalid Session ===
     if (status === 403 && message === "Invalid session") {
       console.warn("⚠️ Session invalidated. Cleaning up...");
@@ -123,3 +131,19 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+// === Global 403 Guard for default axios instance ===
+// Ensures calls made via plain axios (not the api instance) are also handled
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error?.response?.status;
+    const message = error?.response?.data?.message;
+    if (status === 403 && /blocked/i.test(message || "")) {
+      if (typeof window !== "undefined") {
+        window.location.assign("/blocked");
+      }
+    }
+    return Promise.reject(error);
+  }
+);

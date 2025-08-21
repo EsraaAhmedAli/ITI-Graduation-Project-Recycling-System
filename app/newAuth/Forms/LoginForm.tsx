@@ -31,6 +31,8 @@ const LoginForm = () => {
       const { email, password } = getValues();
       const res = await loginUser({ email, password });
 
+      // If blocked, loginUser will throw 403 with message; catch below handles redirect via axios guard
+
       // Check if user is a delivery user
       if (res.user.role === "delivery") {
         let deliveryUserData = {
@@ -126,8 +128,19 @@ const LoginForm = () => {
 
       router.push("/");
       toast.success(t("auth.login.loginSuccess") || "Login successful!");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Login error:", err);
+
+      // Explicit handling for blocked accounts
+      const status = err?.response?.status;
+      const message = err?.response?.data?.message || err?.message || "";
+      if (status === 403 && /blocked/i.test(message)) {
+        if (typeof window !== "undefined") {
+          window.location.assign("/blocked");
+        }
+        setLoading(false);
+        return;
+      }
 
       if (err.response?.data?.deliveryStatus === "declined") {
         const errorData = err.response.data;
