@@ -35,14 +35,14 @@ export default function SubscriptionForm() {
             placeholder={t("indexPage.subscribe.enter_email")}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-6 py-4 sm:py-5 pr-12 rounded-2xl border-2 border-gray-200 focus:outline-none focus:ring-4 focus:ring-primary/20 focus:border-primary transition-all duration-300 shadow-sm hover:shadow-md text-base sm:text-lg bg-white/80 backdrop-blur-sm placeholder-gray-500"
+            className="w-full px-6 py-4 sm:py-5 pr-12 rounded-2xl border-2 border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-4 focus:ring-emerald-500/20 dark:focus:ring-emerald-400/20 focus:border-emerald-500 dark:focus:border-emerald-400 transition-all duration-300 shadow-sm hover:shadow-md text-base sm:text-lg bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-gray-100"
             required
           />
         </div>
 
         <Button
           onClick={handleSubscribe}
-          className="px-8 py-4 sm:py-5 bg-gradient-to-r from-primary to-primary-focus hover:from-primary-focus hover:to-primary text-white font-bold rounded-2xl transition-all duration-300 transform hover:scale-105 hover:shadow-xl active:scale-95 text-base sm:text-lg whitespace-nowrap shadow-lg"
+          className="px-8 py-4 sm:py-5 bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 dark:from-emerald-500 dark:to-blue-500 dark:hover:from-emerald-600 dark:hover:to-blue-600 text-white font-bold rounded-2xl transition-all duration-300 transform hover:scale-105 hover:shadow-xl active:scale-95 text-base sm:text-lg whitespace-nowrap shadow-lg group"
         >
           <span className="flex items-center gap-2">
             {t("indexPage.subscribe.subscribe_now")}

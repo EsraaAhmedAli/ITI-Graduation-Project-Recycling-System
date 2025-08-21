@@ -325,7 +325,7 @@ export default function PickupConfirmation() {
   }
 
   return (
-    <div className="lg:w-3xl w-full mx-auto md:p-8 p-5 bg-white rounded-2xl shadow-lg border border-green-100">
+    <div className="lg:w-3xl w-full mx-auto md:p-8 p-5 rounded-2xl shadow-lg border border-green-100" style={{background:"var(--color-card)"}}>
       <div className="flex my-3 flex-col md:flex-row items-start md:items-center gap-4 md:gap-0">
         <Step
           label={t("pickup.steps.address")}

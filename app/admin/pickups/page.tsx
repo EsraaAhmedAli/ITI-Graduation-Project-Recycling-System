@@ -9,21 +9,17 @@ import CourierSelectionModal from "../../../components/courierSelectionModal";
 import Swal from "sweetalert2";
 import { toast } from "react-toastify";
 import { useUsers } from "@/hooks/useGetUsers";
-import { usePagination } from "@/hooks/usePagination";
-import { TablePagination } from "../../../components/tablePagination/tablePagination";
+
 import { useUserAuth } from "@/context/AuthFormContext";
 import Button from "@/components/common/Button";
 import ProofOfDeliveryModal from "../../../components/proofDeliveryDetails";
 import api from "../../../lib/axios";
 import { Modal, ModalBody, ModalHeader } from "flowbite-react";
-import { get } from "http";
-import { useUserPoints } from "@/context/UserPointsContext";
-import { useNotification } from "@/context/notificationContext";
-import { queryClient } from "@/lib/queryClient";
-import { backgroundClip } from "html2canvas/dist/types/css/property-descriptors/background-clip";
+
 import { useLanguage } from "@/context/LanguageContext";
 import Loader from "@/components/common/loader";
-
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useValueDebounce } from "@/hooks/useValueDebounce";
 type UserRole = "customer" | "buyer";
 const STATUS = {
   PENDING: "pending",
@@ -98,15 +94,16 @@ export default function Page() {
       active: [],
     },
   ]);
-  const [activeTab, setActiveTab] = useState<UserRole>("customer");
-  const [searchTerm, setSearchTerm] = useState(""); // Add search term state
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(""); // Add debounced search term
-  const { currentPage, itemsPerPage, handlePageChange } = usePagination(1, 5);
+
   const [isProofModalOpen, setIsProofModalOpen] = useState(false);
+  
+  
   const [selectedCompletedOrder, setSelectedCompletedOrder] =
     useState<any>(null);
   const [orderStatus, setOrderStatus] = useState(null);
-
+const searchParams = useSearchParams();
+const router = useRouter();
+const pathname = usePathname();
   const getFilteredFilters = () => {
     return filters.map((filter) => {
       if (filter.name === "status" && activeTab === "buyer") {
@@ -120,6 +117,49 @@ export default function Page() {
       return filter;
     });
   };
+  const [activeTab, setActiveTab] = useState<UserRole>(
+  (searchParams.get('tab') as UserRole) || 'customer'
+);
+const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
+    const debouncedSearchTerm = useValueDebounce(searchTerm, 500); // 500ms delay
+
+
+const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page') || '1'));
+const [itemsPerPage, setItemsPerPage] = useState(parseInt(searchParams.get('limit') || '5'));
+
+const handlePageChange = (page: number) => {
+  setCurrentPage(page);
+  updateSearchParams({ page: page.toString() });
+};
+
+const handleItemsPerPageChange = (newItemsPerPage: number) => {
+  setItemsPerPage(newItemsPerPage);
+  setCurrentPage(1);
+  updateSearchParams({ 
+    limit: newItemsPerPage.toString(),
+    page: '1'
+  });
+};
+
+
+
+const updateSearchParams = (updates: Record<string, string | null>) => {
+  const current = new URLSearchParams(Array.from(searchParams.entries()));
+  
+  Object.entries(updates).forEach(([key, value]) => {
+    if (value === null || value === '') {
+      current.delete(key);
+    } else {
+      current.set(key, value);
+    }
+  });
+
+  const search = current.toString();
+  const query = search ? `?${search}` : '';
+  router.push(`${pathname}${query}`);
+};
+
+
   const handleOpenCompletedDetails = (order: any) => {
     setSelectedCompletedOrder({
       orderId: order.orderId,
@@ -418,27 +458,25 @@ const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
     }
   }, [couriers, refetch]);
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 500);
 
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [searchTerm]);
-
-  const handleTabChange = (tab: UserRole) => {
-    setActiveTab(tab);
-    handlePageChange(1); // Reset to first page when changing tabs
-    setSearchTerm(""); // Clear search when changing tabs
-  };
-
-  // Add search handler function
-  const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
-    handlePageChange(1); // Reset to first page when searching
-  };
+const handleTabChange = (tab: UserRole) => {
+  setActiveTab(tab);
+  handlePageChange(1);
+  setSearchTerm('');
+  updateSearchParams({
+    tab,
+    page: '1',
+    search: null,
+  });
+};
+const handleSearchChange = (value: string) => {
+  setSearchTerm(value);
+  handlePageChange(1);
+  updateSearchParams({
+    search: value || null,
+    page: '1',
+  });
+};
 
   const handleDeleteOrder = async (orderId: string) => {
     const result = await Swal.fire({
@@ -549,18 +587,7 @@ const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
         toast.success("Order marked as completed successfully");
 
         refetch();
-        // refetch both points and orders count
-        // await refetch();
-        // await refetchNotifications();
-        // await getUserPoints();
-        // await fetchCompletedOrdersCount();
-        // await Promise.all([
-        //   refetch(),
-        //   getUserPoints(),
-        //   fetchCompletedOrdersCount(),
-        //   refetchNotifications(),
-        // ]);
-        // await Promise.all([getUserPoints(), fetchCompletedOrdersCount()]);
+    
       } catch (err) {
         console.error("Failed to mark order as completed:", err);
         toast.error("Failed to mark order as completed");
@@ -745,12 +772,12 @@ if (isLoading) {
             <div className="flex items-center gap-2">
               <Button
                 onClick={() => handleOpenCompletedDetails(order)}
-                className="px-3 py-2 text-sm font-semibold rounded-md bg-purple-500 text-purple-800 hover:bg-purple-200 transition-colors">
-                see collection info
+                className="px-5 py-2 text-xs font-semibold rounded-md bg-purple-500 text-purple-800 hover:bg-purple-200 transition-colors">
+                see collection
               </Button>
               <button
                 onClick={() => handleMarkAsCompleted(order.orderId)}
-                className="px-3 py-2 text-sm font-semibold rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors"
+                className="px-5 py-2 text-xs font-semibold rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors"
                 title="Mark as completed">
                 click to complete
               </button>
@@ -907,50 +934,37 @@ if (isLoading) {
         <>
       
 
-          <DynamicTable
-            data={transformedData}
-            columns={columns}
-            title={`${
-              activeTab.charAt(0).toUpperCase() + activeTab.slice(1)
-            } Orders`}
-            itemsPerPage={itemsPerPage}
-            showAddButton={false}
-            showFilter
-            showSearch={true} // Enable search
-            searchTerm={searchTerm} // Pass search term
-            onSearchChange={handleSearchChange} // Pass search handler
-            filtersConfig={getFilteredFilters()}
-            externalFilters={activeFilters}
-            onExternalFiltersChange={(updated) => {
-              setFilters((prev) =>
-                prev.map((f) => {
-                  if (f.name === "status" && activeTab === "buyer") {
-                    // For buyers, filter out 'collected' from any filter updates
-                    const filteredActive = (updated[f.name] || []).filter(
-                      (status: string) => status !== "collected"
-                    );
-                    return {
-                      ...f,
-                      active: filteredActive,
-                    };
-                  }
-                  return {
-                    ...f,
-                    active: updated[f.name] || [],
-                  };
-                })
-              );
-              handlePageChange(1);
-              setSearchTerm(""); // Clear search when filters change
-            }}
-            activeFiltersCount={filters.reduce(
-              (acc, f) => acc + (f.active?.length || 0),
-              0
-            )}
-            onDelete={(id: string) => handleDeleteOrder(id)}
-          />
+   <DynamicTable
+  data={transformedData}
+  columns={columns}
+  title={`${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Orders`}
+  itemsPerPage={itemsPerPage}
+  showAddButton={false}
+  
+  showFilter
+  showSearch={true}
+  searchTerm={searchTerm}
+  onSearchChange={handleSearchChange}
+  filtersConfig={getFilteredFilters()}
+  externalFilters={activeFilters}
+  onExternalFiltersChange={(updated) => {
+    // your existing filter logic
+  }}
+  activeFiltersCount={filters.reduce((acc, f) => acc + (f.active?.length || 0), 0)}
+  onDelete={(id: string) => handleDeleteOrder(id)}
+  paginationInfo={{
+    currentPage: data?.currentPage || currentPage,
+    totalPages: data?.totalPages || 1,
+    totalItems: data?.totalOrders || 0,
+    itemsPerPage: itemsPerPage,
+    hasNextPage: currentPage < (data?.totalPages || 1),
+    hasPrevPage: currentPage > 1,
+  }}
+  onPageChange={handlePageChange}
+  onItemsPerPageChange={handleItemsPerPageChange}
+  disableClientSideSearch={true}
+/>
 
-          {totalPages > 1 && <TablePagination {...paginationProps} />}
         </>
       )}
 

@@ -22,6 +22,6 @@ export interface CartItem {
   price: number;
   measurement_unit: number;
   quantity: number;
-  paymentMethod: string;
-  deliveryFee: number;
+  paymentMethod?: string;
+  deliveryFee?: number;
 }

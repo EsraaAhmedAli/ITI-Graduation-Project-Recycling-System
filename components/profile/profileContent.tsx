@@ -1,35 +1,38 @@
 // components/profile/ProfileContent.tsx
 "use client";
 
-import React, { memo, useState, useCallback, useMemo, Suspense } from "react";
+import React, {
+  memo,
+  useState,
+  useCallback,
+  useMemo,
+  Suspense,
+  lazy,
+  startTransition,
+} from "react";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { useUserPoints } from "@/context/UserPointsContext";
 import { useRouter } from "next/navigation";
 
-import dynamic from "next/dynamic";
 import { useProfileLogic } from "@/hooks/useProfileLogic";
 import ProfileHeader from "./profileHeader";
 import StatsSection from "./statsSection";
 import TabNavigation from "./tabNavigation";
 import TabContent from "./tabContent";
 
+// Lazy imports - only load when needed
+const RecyclingModal = lazy(
+  () => import("@/components/eWalletModal/ewalletModal")
+);
+const ItemsModal = lazy(() => import("@/components/shared/itemsModal"));
+const PointsActivity = lazy(() => import("@/components/accordion/accordion"));
 
-// Dynamic imports
-const RecyclingModal = dynamic(() => import("@/components/eWalletModal/ewalletModal"), {
-  loading: () => null,
-  ssr: false
-});
-
-const ItemsModal = dynamic(() => import("@/components/shared/itemsModal"), {
-  loading: () => null,
-  ssr: false
-});
-
-const PointsActivity = dynamic(() => import("@/components/accordion/accordion"), {
-  loading: () => <div className="animate-pulse h-16 bg-gray-200 rounded" />,
-  ssr: false
-});
+// Minimal loading components
+const ModalSkeleton = () => null;
+const PointsActivitySkeleton = () => (
+  <div className="animate-pulse h-20 bg-gray-200 rounded" />
+);
 
 interface ProfileContentProps {
   openReviewModal: (order: any) => void;
@@ -45,23 +48,34 @@ const ProfileContent = memo(function ProfileContent({
   isReviewsLoading,
 }: ProfileContentProps) {
   const { user } = useUserAuth();
-  const { userPoints, pointsLoading, totalCompletedOrders, silentRefresh, totalPointsHistoryLength } = useUserPoints();
+  const {
+    userPoints,
+    pointsLoading,
+    totalCompletedOrders,
+    totalPointsHistoryLength,
+  } = useUserPoints();
   const { t } = useLanguage();
   const router = useRouter();
-  
-  // State management
+
+  // Simplified state management
   const [activeTab, setActiveTab] = useState("incoming");
   const [isRecyclingModalOpen, setIsRecyclingModalOpen] = useState(false);
   const [isItemsModalOpen, setIsItemsModalOpen] = useState(false);
   const [selectedOrderItems, setSelectedOrderItems] = useState<any[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<any[]>([]);
-  const [selectedOrderStatus, setSelectedOrderStatus] = useState<string | null>(null);
+  const [selectedOrderStatus, setSelectedOrderStatus] = useState<string | null>(
+    null
+  );
 
-  // Custom hook for complex profile logic
+  // Minimal profile config - only essential data
+  const profileConfig = useMemo(
+    () => ({ activeTab, user, totalCompletedOrders }),
+    [activeTab, user, totalCompletedOrders]
+  );
+
   const {
     allOrders,
     isLoading,
-    hasNextPage,
     isFetchingNextPage,
     tier,
     tabs,
@@ -70,20 +84,33 @@ const ProfileContent = memo(function ProfileContent({
     loadMoreOrders,
     handleCancelOrder,
     handleRecyclingPointsUpdate,
-  } = useProfileLogic({
-    activeTab,
-    user,
-    totalCompletedOrders,
-    silentRefresh,
-  });
+  } = useProfileLogic(profileConfig);
 
-  // Modal handlers
-  const openItemsModal = useCallback((items: any[], orderStatus: string, order: any) => {
-    setSelectedOrderItems(items);
-    setSelectedOrderStatus(orderStatus);
-    setSelectedOrder(order);
-    setIsItemsModalOpen(true);
+  // Optimized handlers with startTransition for non-urgent updates
+  const handleTabChange = useCallback((tab: string) => {
+    startTransition(() => {
+      setActiveTab(tab);
+    });
   }, []);
+
+  const openRecyclingModal = useCallback(
+    () => setIsRecyclingModalOpen(true),
+    []
+  );
+  const closeRecyclingModal = useCallback(
+    () => setIsRecyclingModalOpen(false),
+    []
+  );
+
+  const openItemsModal = useCallback(
+    (items: any[], orderStatus: string, order: any) => {
+      setSelectedOrderItems(items);
+      setSelectedOrderStatus(orderStatus);
+      setSelectedOrder(order);
+      setIsItemsModalOpen(true);
+    },
+    []
+  );
 
   const closeItemsModal = useCallback(() => {
     setSelectedOrderItems([]);
@@ -92,28 +119,41 @@ const ProfileContent = memo(function ProfileContent({
     setIsItemsModalOpen(false);
   }, []);
 
+  const handleRecyclingUpdate = useCallback(
+    (points: number) => {
+      handleRecyclingPointsUpdate(points);
+      closeRecyclingModal();
+    },
+    [handleRecyclingPointsUpdate, closeRecyclingModal]
+  );
+
+  // Early return for loading state
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-green-50 px-4 py-6">
+        <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-xl p-6">
+          <div className="animate-pulse space-y-6">
+            <div className="h-20 bg-gray-200 rounded" />
+            <div className="h-32 bg-gray-200 rounded" />
+            <div className="h-16 bg-gray-200 rounded" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const isCustomer = user.role === "customer";
+
   return (
-    <div className="min-h-screen bg-green-50 px-4 py-6">
-      <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-xl p-6 space-y-6">
+    <div className="min-h-screen px-4 py-6" style={{ background: "var(--color-green-50)" }}>
+      <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-xl p-6 space-y-6" style={{ background: "var(--background)" }}>
         {/* Header Section */}
-        <ProfileHeader 
-          user={user} 
-          tier={tier} 
-          onOpenRecyclingModal={() => setIsRecyclingModalOpen(true)}
+        <ProfileHeader
+          user={user}
+          tier={tier}
+          onOpenRecyclingModal={openRecyclingModal}
           t={t}
         />
-
-        {/* Recycling Modal */}
-        {isRecyclingModalOpen && (
-          <Suspense fallback={null}>
-            <RecyclingModal
-              onPointsUpdated={handleRecyclingPointsUpdate}
-              modalOpen={isRecyclingModalOpen}
-              closeModal={() => setIsRecyclingModalOpen(false)}
-              totalPoints={userPoints?.totalPoints}
-            />
-          </Suspense>
-        )}
 
         {/* Stats Section */}
         <StatsSection
@@ -124,9 +164,9 @@ const ProfileContent = memo(function ProfileContent({
           t={t}
         />
 
-        {/* Points Activity - Only for customers */}
-        {user.role === "customer" && (
-          <Suspense fallback={<div className="animate-pulse h-20 bg-gray-200 rounded" />}>
+        {/* Points Activity - Only for customers, load only when needed */}
+        {isCustomer && (
+          <Suspense fallback={<PointsActivitySkeleton />}>
             <PointsActivity
               userPoints={userPoints}
               userPointsLength={totalPointsHistoryLength}
@@ -135,10 +175,10 @@ const ProfileContent = memo(function ProfileContent({
         )}
 
         {/* Tabs Navigation */}
-        <TabNavigation 
+        <TabNavigation
           tabs={tabs}
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={handleTabChange}
           t={t}
         />
 
@@ -161,9 +201,20 @@ const ProfileContent = memo(function ProfileContent({
           t={t}
         />
 
-        {/* Items Modal */}
+        {/* Modals - Only render when open to reduce DOM size */}
+        {isRecyclingModalOpen && (
+          <Suspense fallback={<ModalSkeleton />}>
+            <RecyclingModal
+              onPointsUpdated={handleRecyclingUpdate}
+              modalOpen={isRecyclingModalOpen}
+              closeModal={closeRecyclingModal}
+              totalPoints={userPoints?.totalPoints}
+            />
+          </Suspense>
+        )}
+
         {isItemsModalOpen && (
-          <Suspense fallback={null}>
+          <Suspense fallback={<ModalSkeleton />}>
             <ItemsModal
               selectedOrder={selectedOrder}
               orderStatus={selectedOrderStatus}

@@ -1,32 +1,30 @@
 // components/profile/hooks/useProfileLogic.ts
-import { useState, useEffect, useCallback, useMemo, startTransition } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import useOrders from "@/hooks/useGetOrders";
 import { rewardLevels } from "@/constants/rewardsTiers";
 import { getSocket } from "@/lib/socket";
-import { useDebounce } from "./useDebounce";
 
 interface UseProfileLogicProps {
   activeTab: string;
   user: any;
   totalCompletedOrders: number;
-  silentRefresh: () => void;
 }
 
 export function useProfileLogic({
   activeTab,
   user,
   totalCompletedOrders,
-  silentRefresh
 }: UseProfileLogicProps) {
   const queryClient = useQueryClient();
+  const isMountedRef = useRef(true);
 
   // Memoized status parameter
   const statusParam = useMemo(() => {
     const statusMap: Record<string, string> = {
       incoming: "incoming",
-      completed: "completed", 
-      cancelled: "cancelled"
+      completed: "completed",
+      cancelled: "cancelled",
     };
     return statusMap[activeTab] || "";
   }, [activeTab]);
@@ -45,51 +43,42 @@ export function useProfileLogic({
     status: statusParam,
   });
 
-  // Debounced refresh function
-  const debouncedRefresh = useDebounce(() => {
-    if (!document.hidden) {
-      silentRefresh();
-      refetch();
-    }
-  }, 300);
-
-  // Optimized load more with virtual scrolling consideration
+  // Optimized load more
   const loadMoreOrders = useCallback(async () => {
     if (hasNextPage && !isFetchingNextPage) {
-      startTransition(() => {
-        fetchNextPage();
-      });
+      await fetchNextPage();
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   // Enhanced refresh after recycling
   const handleRecyclingPointsUpdate = useCallback(async () => {
     try {
-      await Promise.all([
-        silentRefresh(),
-        queryClient.invalidateQueries({ queryKey: ["orders"] })
-      ]);
-      
-      requestIdleCallback(() => refetch(), { timeout: 2000 });
+      await queryClient.invalidateQueries({
+        queryKey: ["orders"],
+        exact: false,
+      });
     } catch (error) {
       console.error("Failed to refresh after recycling:", error);
     }
-  }, [silentRefresh, queryClient, refetch]);
+  }, [queryClient]);
 
   // Optimized cancel order function
-  const handleCancelOrder = useCallback(async (orderId: string) => {
-    try {
-      await hookHandleCancelOrder(orderId);
-      await Promise.all([refetch(), silentRefresh()]);
-    } catch (error) {
-      console.error("Failed to cancel order:", error);
-    }
-  }, [hookHandleCancelOrder, refetch, silentRefresh]);
+  const handleCancelOrder = useCallback(
+    async (orderId: string) => {
+      try {
+        await hookHandleCancelOrder(orderId);
+        await refetch();
+      } catch (error) {
+        console.error("Failed to cancel order:", error);
+      }
+    },
+    [hookHandleCancelOrder, refetch]
+  );
 
   // Memoized filtered orders
   const filteredOrders = useMemo(() => {
     if (user?.role === "buyer") {
-      return allOrders.filter(order => order.status !== "cancelled");
+      return allOrders.filter((order) => order.status !== "cancelled");
     }
     return allOrders;
   }, [allOrders, user?.role]);
@@ -97,116 +86,73 @@ export function useProfileLogic({
   // Memoized tabs
   const tabs = useMemo(() => {
     const baseTabs = ["incoming", "completed"];
-    
+
     if (user?.role === "buyer") {
       baseTabs.push("payments");
     } else {
       baseTabs.push("cancelled");
     }
-    
+
     if (user?.role === "customer" || user?.role === "buyer") {
       baseTabs.push("reviews");
     }
-    
+
     return baseTabs;
   }, [user?.role]);
 
   // Memoized tier
   const tier = useMemo(() => {
-    return rewardLevels.find(tier =>
-      totalCompletedOrders >= tier.minRecycles &&
-      totalCompletedOrders <= tier.maxRecycles
+    return rewardLevels.find(
+      (tier) =>
+        totalCompletedOrders >= tier.minRecycles &&
+        totalCompletedOrders <= tier.maxRecycles
     );
   }, [totalCompletedOrders]);
 
   const shouldShowSeeMore = hasNextPage && filteredOrders.length >= 6;
 
-  // Socket listeners
+  // Optimized socket listeners - only set up once and use refs
   useEffect(() => {
     const socket = getSocket();
     if (!socket) return;
 
-    const handleOrderStatusUpdate = (data: any) => {
-      startTransition(() => {
-        queryClient.invalidateQueries({ queryKey: ["orders"] });
-        
-        if (data.status === "completed") {
-          if (activeTab === "incoming") {
-            refetch();
-          } else if (activeTab === "completed") {
-            setTimeout(() => refetch(), 300);
-          }
-        } else {
-          refetch();
-        }
-      });
-    };
+    isMountedRef.current = true;
 
-    const handlePointsUpdate = (data: any) => {
-      startTransition(() => {
-        setTimeout(() => refetch(), 100);
-      });
-    };
+    // Move the callback definition outside of useEffect or use useCallback at the top level
+    const handleSocketEvent = (data: any) => {
+      if (!isMountedRef.current) return;
 
-    const handleRecyclingCompleted = (data: any) => {
-      startTransition(() => {
-        queryClient.invalidateQueries({ queryKey: ["orders"] });
-        
-        if (activeTab === "incoming") {
-          refetch();
-        } else if (activeTab === "completed") {
+      // Batch updates with requestAnimationFrame
+      requestAnimationFrame(() => {
+        if (!isMountedRef.current) return;
+
+        queryClient.invalidateQueries({
+          queryKey: ["orders"],
+          exact: false,
+          refetchType: "active", // Only refetch active queries
+        });
+
+        // Only refetch if the tab is relevant to the event
+        if (data.status === "completed" && activeTab === "completed") {
           setTimeout(() => refetch(), 300);
+        } else if (activeTab === "incoming") {
+          setTimeout(() => refetch(), 200);
         }
       });
     };
 
-    socket.on("order:status:updated", handleOrderStatusUpdate);
-    socket.on("points:updated", handlePointsUpdate);
-    socket.on("recycling:completed", handleRecyclingCompleted);
-    socket.on("order:completed", handleOrderStatusUpdate);
+    // Single generic handler for all order events
+    socket.on("order:status:updated", handleSocketEvent);
+    socket.on("order:completed", handleSocketEvent);
+    socket.on("recycling:completed", handleSocketEvent);
 
     return () => {
-      socket.off("order:status:updated", handleOrderStatusUpdate);
-      socket.off("points:updated", handlePointsUpdate);
-      socket.off("recycling:completed", handleRecyclingCompleted);
-      socket.off("order:completed", handleOrderStatusUpdate);
+      isMountedRef.current = false;
+      socket.off("order:status:updated", handleSocketEvent);
+      socket.off("order:completed", handleSocketEvent);
+      socket.off("recycling:completed", handleSocketEvent);
     };
   }, [queryClient, refetch, activeTab]);
-
-  // Periodic refresh
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    let isVisible = true;
-
-    const handleVisibilityChange = () => {
-      isVisible = !document.hidden;
-      if (isVisible) {
-        debouncedRefresh();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange, { passive: true });
-
-    if (isVisible) {
-      const intervalTime = activeTab === "completed" ? 8000 : 
-                          activeTab === "incoming" ? 12000 : 25000;
-
-      interval = setInterval(() => {
-        if (isVisible && !document.hidden) {
-          silentRefresh();
-          
-          if (activeTab === "incoming" || activeTab === "completed") {
-            refetch();
-          }
-        }
-      }, intervalTime);
-    }
-
-    return () => {
-      if (interval) clearInterval(interval);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [silentRefresh, activeTab, refetch, debouncedRefresh]);
 
   return {
     allOrders,

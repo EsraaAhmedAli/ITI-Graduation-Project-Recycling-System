@@ -34,9 +34,19 @@ type Column<T> = {
   filterable?: boolean;
   filterType?: FilterType;
   filterOptions?: FilterOption[];
-  width?: string; // Add width control
-  minWidth?: string; // Add min-width control
-  sortKey?: string; // Add sortKey property
+  width?: string;
+  minWidth?: string;
+  sortKey?: string;
+};
+
+// Add pagination info type
+type PaginationInfo = {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  itemsPerPage: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
 };
 
 type DynamicTableProps<T> = {
@@ -57,32 +67,41 @@ type DynamicTableProps<T> = {
   onViewDetails?: (item: T) => void;
   onAddSubCategory?: (item: T) => void;
   onImageClick?: (item: T) => void;
+  
   filters?: {
     limit: number;
     page: number;
-    [key: string]: unknown; // Allow additional properties
+    [key: string]: unknown;
   };
   setFilters?: (filters: (prev: { limit: number; page: number; [key: string]: unknown }) => { limit: number; page: number; [key: string]: unknown }) => void;
   setShowFilters?: (show: boolean) => void;
   activeFiltersCount?: number;
   refetch?: () => void;
   isFetching?: boolean;
-  addButtonLoading?: boolean; // Add this new prop
+  addButtonLoading?: boolean;
 
   searchTerm?: string;
   onSearchChange?: (searchTerm: string) => void;
   externalFilters?: Record<string, string[]>;
   onExternalFiltersChange?: (filters: Record<string, string[]>) => void;
   filtersConfig?: FilterConfig[];
+  showPagination?: boolean;
+  isLoading?: boolean;
+  
+  // Add pagination props
+  paginationInfo?: PaginationInfo;
+  onPageChange?: (page: number) => void;
+  onItemsPerPageChange?: (itemsPerPage: number) => void;
 };
 
 function DynamicTable<T extends { [key: string]: unknown; id?: string | number }>({
   data = [],
   columns = [],
   title = "Product",
-  itemsPerPage = 10,
-    addButtonLoading = false, // Add this with default value
-
+  itemsPerPage = 5,
+  addButtonLoading = false,
+  showPagination = true,
+  isLoading = false,
   showActions = true,
   showSearch = true,
   showFilter = true,
@@ -105,6 +124,11 @@ function DynamicTable<T extends { [key: string]: unknown; id?: string | number }
   onExternalFiltersChange,
   disableClientSideSearch = false,
   filtersConfig,
+  
+  // New pagination props
+  paginationInfo,
+  onPageChange,
+  onItemsPerPageChange,
 }: DynamicTableProps<T>) {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -114,17 +138,6 @@ function DynamicTable<T extends { [key: string]: unknown; id?: string | number }
   const [expandedRows, setExpandedRows] = useState<Set<string | number>>(
     new Set()
   );
-  const [pageGroupSize, setPageGroupSize] = useState(5);
-
-  useEffect(() => {
-    const updatePageGroupSize = () => {
-      setPageGroupSize(window.innerWidth < 768 ? 3 : 5);
-    };
-    updatePageGroupSize();
-    window.addEventListener('resize', updatePageGroupSize);
-    
-    return () => window.removeEventListener('resize', updatePageGroupSize);
-  }, []);
 
   const currentSearchTerm = externalSearchTerm !== undefined ? externalSearchTerm : searchTerm;
 
@@ -169,11 +182,18 @@ function DynamicTable<T extends { [key: string]: unknown; id?: string | number }
     });
   }, [filteredData, sortColumn, sortDirection]);
 
-  const totalPages = Math.ceil(sortedData.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
+  // Use backend pagination info if available, otherwise use client-side
+  const totalPages = paginationInfo?.totalPages || Math.ceil(sortedData.length / itemsPerPage);
+  const isBackendPagination = !!paginationInfo && !!onPageChange;
+  const currentPageValue = isBackendPagination ? paginationInfo.currentPage : currentPage;
+  const totalItems = paginationInfo?.totalItems || sortedData.length;
   
-  const currentData = disableClientSideSearch ? sortedData : sortedData.slice(startIndex, endIndex);
+  // For backend pagination, we show all data passed (already paginated)
+  // For client-side pagination, we slice the data
+  const currentData = disableClientSideSearch ? sortedData : sortedData.slice(
+    (currentPageValue - 1) * itemsPerPage, 
+    currentPageValue * itemsPerPage
+  );
 
   const mobileColumns = useMemo(() => {
     return columns
@@ -192,7 +212,13 @@ function DynamicTable<T extends { [key: string]: unknown; id?: string | number }
   };
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+    if (isBackendPagination) {
+      // For backend pagination, only call the external handler, don't update local state
+      onPageChange!(page);
+    } else {
+      // For client-side pagination, update local state
+      setCurrentPage(page);
+    }
   };
 
   const toggleMenu = (id: string | number) => {
@@ -260,6 +286,35 @@ function DynamicTable<T extends { [key: string]: unknown; id?: string | number }
     }
 
     return String(value) as unknown as React.ReactNode;
+  };
+
+  // New generatePageNumbers function
+  const generatePageNumbers = (): (number | string)[] => {
+    const delta = 2; // Number of pages to show before and after current page
+    const range: (number | string)[] = [];
+    const rangeWithDots: (number | string)[] = [];
+
+    for (let i = Math.max(2, currentPageValue - delta); i <= Math.min(totalPages - 1, currentPageValue + delta); i++) {
+      range.push(i);
+    }
+
+    if (currentPageValue - delta > 2) {
+      rangeWithDots.push(1, '...');
+    } else {
+      rangeWithDots.push(1);
+    }
+
+    rangeWithDots.push(...range);
+
+    if (currentPageValue + delta < totalPages - 1) {
+      rangeWithDots.push('...', totalPages);
+    } else if (totalPages > 1) {
+      rangeWithDots.push(totalPages);
+    }
+
+    return rangeWithDots.filter((item, index, arr) => arr.indexOf(item) === index && item !== currentPageValue).length > 0 
+      ? [1, ...range, totalPages].filter((item, index, arr) => arr.indexOf(item) === index)
+      : rangeWithDots;
   };
 
   const renderMobileCard = (item: T, index: number) => {
@@ -381,55 +436,6 @@ function DynamicTable<T extends { [key: string]: unknown; id?: string | number }
     );
   };
 
-  const renderPagination = () => {
-    const pages = [];
-    const currentGroup = Math.floor((currentPage - 1) / pageGroupSize);
-    const startPage = currentGroup * pageGroupSize + 1;
-    const endPage = Math.min(startPage + pageGroupSize - 1, totalPages);
-
-    if (startPage > 1) {
-      pages.push(
-        <button
-          key="prev-group"
-          onClick={() => handlePageChange(startPage - 1)}
-          className="px-2 md:px-3 py-1 rounded text-sm bg-white border border-green-200 hover:bg-green-50 text-green-700 transition-colors"
-        >
-          &laquo;
-        </button>
-      );
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(
-        <button
-          key={i}
-          onClick={() => handlePageChange(i)}
-          className={`px-2 md:px-3 py-1 rounded text-sm transition-colors ${
-            i === currentPage
-              ? "bg-green-500 text-white"
-              : "bg-white text-gray-700 hover:bg-green-50 border border-green-200"
-          }`}
-        >
-          {i}
-        </button>
-      );
-    }
-
-    if (endPage < totalPages) {
-      pages.push(
-        <button
-          key="next-group"
-          onClick={() => handlePageChange(endPage + 1)}
-          className="px-2 md:px-3 py-1 rounded text-sm bg-white border border-green-200 hover:bg-green-50 text-green-700 transition-colors"
-        >
-          &raquo;
-        </button>
-      );
-    }
-
-    return pages;
-  };
-
   return (
     <div className="bg-white rounded-lg shadow-sm border border-green-100 w-full max-w-full overflow-hidden">
       {/* Header */}
@@ -441,23 +447,17 @@ function DynamicTable<T extends { [key: string]: unknown; id?: string | number }
             </h1>
             <span className="text-xs md:text-sm text-green-600 bg-green-100 px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0">
               {t("common.showing_of", {
-                count: Math.min(itemsPerPage, sortedData.length),
-                total: sortedData.length
+                count: currentData.length,
+                total: totalItems
               })}
             </span>
           </div>
 
           <div className="flex items-center gap-2 md:gap-3 overflow-x-auto flex-shrink-0">
-            {filters && setFilters && (
+            {onItemsPerPageChange && (
               <select
-                value={filters.limit}
-                onChange={(e) =>
-                  setFilters((prev) => ({
-                    ...prev,
-                    limit: parseInt(e.target.value),
-                    page: 1,
-                  }))
-                }
+                value={itemsPerPage}
+                onChange={(e) => onItemsPerPageChange(parseInt(e.target.value))}
                 className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 flex-shrink-0"
               >
                 <option value={10}>10 per page</option>
@@ -540,33 +540,33 @@ function DynamicTable<T extends { [key: string]: unknown; id?: string | number }
                 </span>
               </button>
             )}
-{showAddButton && (
-    <button
-      onClick={onAdd}
-      disabled={addButtonLoading}
-      className={`
-        flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg transition-colors shadow-sm whitespace-nowrap text-sm flex-shrink-0
-        ${addButtonLoading 
-          ? 'bg-green-400 cursor-not-allowed opacity-75 text-white' 
-          : 'bg-green-500 text-white hover:bg-green-600'
-        }
-      `}
-    >
-      {addButtonLoading ? (
-        <>
-          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-          <span className="hidden sm:inline">{addButtonText}</span>
-          <span className="sm:hidden">Adding...</span>
-        </>
-      ) : (
-        <>
-          <Plus className="w-4 h-4" />
-          <span className="hidden sm:inline">{addButtonText}</span>
-          <span className="sm:hidden">Add</span>
-        </>
-      )}
-    </button>
-  )}
+            {showAddButton && (
+              <button
+                onClick={onAdd}
+                disabled={addButtonLoading}
+                className={`
+                  flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg transition-colors shadow-sm whitespace-nowrap text-sm flex-shrink-0
+                  ${addButtonLoading 
+                    ? 'bg-green-400 cursor-not-allowed opacity-75 text-white' 
+                    : 'bg-green-500 text-white hover:bg-green-600'
+                  }
+                `}
+              >
+                {addButtonLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                    <span className="hidden sm:inline">{addButtonText}</span>
+                    <span className="sm:hidden">Adding...</span>
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4" />
+                    <span className="hidden sm:inline">{addButtonText}</span>
+                    <span className="sm:hidden">Add</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -584,160 +584,163 @@ function DynamicTable<T extends { [key: string]: unknown; id?: string | number }
         </div>
       </div>
 
-      {/* Desktop Table View - FIXED */}
-      <div className="hidden md:block">
-        <div className="overflow-x-auto max-w-full" onClick={() => setOpenMenuId(null)}>
-          <table className="w-full table-fixed">
-            <thead className="bg-green-50">
-              <tr>
-                {columns.map((column, index) => (
-                  <th
-                    key={column.key}
-                    className={`px-6 py-3 text-left text-xs font-medium text-green-700 uppercase tracking-wider truncate ${
-                      column.sortable ? "cursor-pointer hover:bg-green-100" : ""
-                    }`}
-                    style={{
-                      width: column.width || 'auto',
-                      minWidth: column.minWidth || (index === 0 ? '120px' : '100px'),
-                      maxWidth: column.width || '200px'
-                    }}
-                    onClick={() => column.sortable && handleSort(column.key)}
-                  >
-                    <div className="flex items-center gap-2 truncate">
-                      <span className="truncate">{column.label}</span>
-                      {column.sortable && sortColumn === column.key && (
-                        <span className="text-green-600 flex-shrink-0">
-                          {sortDirection === "asc" ? "↑" : "↓"}
-                        </span>
-                      )}
-                    </div>
-                  </th>
-                ))}
-                {showActions && (
-                  <th 
-                    className="px-6 py-3 text-left text-xs font-medium text-green-700 uppercase tracking-wider"
-                    style={{ width: '120px', minWidth: '120px' }}
-                  >
-                    Actions
-                  </th>
+ {/* Desktop Table View - FIXED */}
+<div className="hidden md:block">
+  <div className="overflow-x-auto max-w-full" onClick={() => setOpenMenuId(null)}>
+    <table className="w-full table-auto"><thead className="bg-green-50"><tr>
+          {columns.map((column, index) => (
+            <th
+              key={column.key}
+              className={`px-3 py-3 text-left text-xs font-medium text-green-700 uppercase tracking-wider ${
+                column.sortable ? "cursor-pointer hover:bg-green-100" : ""
+              }`}
+              style={{
+                width: column.width,
+                minWidth: column.minWidth,
+              }}
+              onClick={() => column.sortable && handleSort(column.key)}
+            >
+              <div className="flex items-center gap-2">
+                <span>{column.label}</span>
+                {column.sortable && sortColumn === column.key && (
+                  <span className="text-green-600 flex-shrink-0">
+                    {sortDirection === "asc" ? "↑" : "↓"}
+                  </span>
                 )}
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-green-100">
-              {currentData.map((item, index) => (
-                <tr key={index} className="hover:bg-green-25 transition-colors">
-                  {columns.map((column) => (
-                    <td
-                      key={column.key}
-                      className="px-6 py-4 text-sm text-gray-900"
-                      style={{
-                        maxWidth: column.width || '200px',
-                        minWidth: column.minWidth || '100px'
-                      }}
-                    >
-                      <div className="truncate">
-                        {column.render
-                          ? column.render(item)
-                          : renderCellValue(item[column.key], column)}
-                      </div>
-                    </td>
-                  ))}
-
-                  {showActions && (
-                    <td className="px-6 py-4 text-sm text-gray-500" style={{ width: '120px' }}>
-                      <div className="relative">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleMenu(item.id || index);
-                          }}
-                          className="p-2 hover:bg-green-50 rounded-full text-green-600 transition-colors"
-                        >
-                          <MoreHorizontal className="w-4 h-4" />
-                        </button>
-
-                        {openMenuId === (item.id || index) && (
-                          <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-green-200">
-                            <div className="py-1">
-                              {onAddSubCategory && (
-                                <button
-                                  onClick={() =>
-                                    handleMenuAction("add-sub", item)
-                                  }
-                                  className="flex items-center gap-2 w-full px-4 py-2 text-sm text-green-700 hover:bg-green-50 transition-colors"
-                                >
-                                  <Plus className="w-4 h-4" />
-                                  Add Sub Category
-                                </button>
-                              )}
-                              <button
-                                onClick={() => handleMenuAction("edit", item)}
-                                className="flex items-center gap-2 w-full px-4 py-2 text-sm text-green-700 hover:bg-green-50 transition-colors"
-                              >
-                                <Edit className="w-4 h-4" />
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => handleMenuAction("view", item)}
-                                className="flex items-center gap-2 w-full px-4 py-2 text-sm text-green-700 hover:bg-green-50 transition-colors"
-                              >
-                                <Eye className="w-4 h-4" />
-                                View Details
-                              </button>
-                              <hr className="my-1 border-green-100" />
-                              <button
-                                onClick={() => handleMenuAction("delete", item)}
-                                className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                                Delete
-                              </button>
-                            </div>
-                          </div>
+              </div>
+            </th>
+          ))}
+          {showActions && (
+            <th 
+              className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase tracking-wider whitespace-nowrap"
+              style={{ width: '140px', minWidth: '140px' }}
+            >
+              Actions
+            </th>
+          )}
+        </tr></thead><tbody className="bg-white divide-y divide-green-100">
+        {currentData.map((item, index) => (
+          <tr key={index} className="hover:bg-green-25 transition-colors">
+            {columns.map((column) => (
+              <td
+                key={column.key}
+                className="px-4 py-4 text-sm text-gray-900 whitespace-nowrap"
+                style={{
+                  minWidth: column.minWidth || '120px',
+                  maxWidth: column.width || '300px',
+                }}
+              >
+                <div className="overflow-hidden text-ellipsis">
+                  {column.render
+                    ? column.render(item)
+                    : renderCellValue(item[column.key], column)}
+                </div>
+              </td>
+            ))}
+            {showActions && (
+              <td className="px-4 py-4 text-sm text-gray-500" style={{ width: '140px', minWidth: '140px' }}>
+                <div className="relative">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleMenu(item.id || index);
+                    }}
+                    className="p-2 hover:bg-green-50 rounded-full text-green-600 transition-colors"
+                  >
+                    <MoreHorizontal className="w-4 h-4" />
+                  </button>
+                  {openMenuId === (item.id || index) && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-green-200">
+                      <div className="py-1">
+                        {onAddSubCategory && (
+                          <button
+                            onClick={() =>
+                              handleMenuAction("add-sub", item)
+                            }
+                            className="flex items-center gap-2 w-full px-4 py-2 text-sm text-green-700 hover:bg-green-50 transition-colors"
+                          >
+                            <Plus className="w-4 h-4" />
+                            Add Sub Category
+                          </button>
                         )}
+                        <button
+                          onClick={() => handleMenuAction("edit", item)}
+                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-green-700 hover:bg-green-50 transition-colors"
+                        >
+                          <Edit className="w-4 h-4" />
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleMenuAction("view", item)}
+                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-green-700 hover:bg-green-50 transition-colors"
+                        >
+                          <Eye className="w-4 h-4" />
+                          View Details
+                        </button>
+                        <hr className="my-1 border-green-100" />
+                        <button
+                          onClick={() => handleMenuAction("delete", item)}
+                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Delete
+                        </button>
                       </div>
-                    </td>
+                    </div>
                   )}
-                </tr>
+                </div>
+              </td>
+            )}
+          </tr>
+        ))}
+      </tbody></table>
+  </div>
+</div>
+
+      {/* New Pagination Component */}
+      {showPagination && totalPages > 1 && (
+        <div className="flex flex-col items-center gap-4 bg-white rounded-lg shadow-sm border border-green-100 p-4">
+          {/* Pagination Buttons */}
+          <div className="flex items-center gap-2">
+            {/* Previous Button */}
+            <button
+              onClick={() => handlePageChange(currentPageValue - 1)}
+              disabled={currentPageValue === 1}
+              className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              {t("common.previous") || "Previous"}
+            </button>
+           
+            {/* Page Numbers */}
+            <div className="flex gap-1">
+              {generatePageNumbers().map((pageNum, index) => (
+                <button
+                  key={index}
+                  onClick={() => typeof pageNum === 'number' ? handlePageChange(pageNum) : undefined}
+                  disabled={pageNum === '...'}
+                  className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    pageNum === currentPageValue
+                      ? 'bg-emerald-500 text-white'
+                      : pageNum === '...'
+                      ? 'text-slate-400 cursor-default'
+                      : 'text-slate-600 bg-white border border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  {pageNum}
+                </button>
               ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="px-4 md:px-6 py-4 border-t border-green-100 bg-green-25">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="text-xs md:text-sm text-green-700 order-2 sm:order-1">
-              {t("common.showings", {
-                start: startIndex + 1,
-                end: Math.min(endIndex, sortedData.length),
-                total: sortedData.length,
-              })}
             </div>
-
-            <div className="flex items-center gap-2 order-1 sm:order-2">
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="flex items-center gap-1 px-2 md:px-3 py-1 rounded text-sm bg-white border border-green-200 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed text-green-700 transition-colors"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                <span className="hidden sm:inline">Previous</span>
-              </button>
-
-              <div className="flex gap-1">{renderPagination()}</div>
-
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="flex items-center gap-1 px-2 md:px-3 py-1 rounded text-sm bg-white border border-green-200 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed text-green-700 transition-colors"
-              >
-                <span className="hidden sm:inline">Next</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
+           
+            {/* Next Button */}
+            <button
+              onClick={() => handlePageChange(currentPageValue + 1)}
+              disabled={currentPageValue === totalPages || (paginationInfo && !paginationInfo?.hasNextPage)}
+              className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {t("common.next") || "Next"}
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
         </div>
       )}

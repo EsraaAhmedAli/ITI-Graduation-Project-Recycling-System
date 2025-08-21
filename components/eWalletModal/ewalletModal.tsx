@@ -38,7 +38,7 @@ export default function RecyclingModal({
   const { user } = useContext(UserAuthContext);
   const userId = user?._id;
 
-  const { userPoints, pointsLoading, getUserPoints } = useUserPoints();
+  const { userPoints, pointsLoading, refreshUserPoints } = useUserPoints();
 
   const totalPoints = userPoints?.totalPoints || 0;
   const requiredPoints = amount ? parseInt(amount) * 19 : 0;
@@ -57,7 +57,7 @@ export default function RecyclingModal({
           points: requiredPoints,
           reason: `Cashback for ${amount} EGP`,
         });
-        await getUserPoints();
+        await refreshUserPoints();
         onPointsUpdated?.();
 
         Swal.fire(t("success"), t("cashbackRedeemed"), "success");
@@ -80,10 +80,12 @@ export default function RecyclingModal({
           points: voucher.points,
           reason: `Voucher redeemed: ${voucher.name}`,
         });
-        await getUserPoints();
+        await refreshUserPoints();
         onPointsUpdated?.();
 
-        const qrText = `${t("voucher")}: ${voucher.name} - ${t("value")}: ${voucher.value}`;
+        const qrText = `${t("voucher")}: ${voucher.name} - ${t("value")}: ${
+          voucher.value
+        }`;
         setQrValue(qrText);
         setQrVisible(true);
         setRedeemedVouchers([...redeemedVouchers, voucher.id]);
@@ -287,7 +289,9 @@ export default function RecyclingModal({
                           clipRule="evenodd"
                         />
                       </svg>
-                      {t("needMorePoints", { points: voucher.points - totalPoints })}
+                      {t("needMorePoints", {
+                        points: voucher.points - totalPoints,
+                      })}
                     </p>
                   )}
                   {isRedeemed && (
@@ -337,7 +341,9 @@ export default function RecyclingModal({
               {amount && (
                 <div className="mt-3 space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">{t("requiredPoints")}:</span>
+                    <span className="text-gray-500">
+                      {t("requiredPoints")}:
+                    </span>
                     <span
                       className={`font-medium ${
                         requiredPoints > totalPoints
@@ -349,7 +355,9 @@ export default function RecyclingModal({
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">{t("remainingPoints")}:</span>
+                    <span className="text-gray-500">
+                      {t("remainingPoints")}:
+                    </span>
                     <span
                       className={`font-medium ${
                         remainingPoints < 0 ? "text-red-500" : "text-green-600"
@@ -392,11 +400,11 @@ export default function RecyclingModal({
                   />
                 </svg>
                 <div>
-                  <p className="font-medium">
-                    {t("exchangeRate")}
-                  </p>
+                  <p className="font-medium">{t("exchangeRate")}</p>
                   <p className="mt-1 text-blue-700">
-                    {t("maxAvailable", { amount: Math.floor(totalPoints / 19) })}
+                    {t("maxAvailable", {
+                      amount: Math.floor(totalPoints / 19),
+                    })}
                   </p>
                 </div>
               </div>

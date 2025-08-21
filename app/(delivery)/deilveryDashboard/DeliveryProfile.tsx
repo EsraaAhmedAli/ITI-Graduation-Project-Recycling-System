@@ -136,9 +136,14 @@ const CourierProfile = ({ setEdit }) => {
 
           {/* Modern Pagination */}
           <Pagination
-            currentPage={currentPage}
+            pagination={{
+              currentPage,
+              totalPages: data.pagination.totalPages,
+              hasNextPage: currentPage < data.pagination.totalPages,
+              hasPreviousPage: currentPage > 1,
+            }}
             onPageChange={setCurrentPage}
-            totalPages={data.pagination.totalPages}
+            pageGroupSize={3} // optional, default = 5
           />
         </div>
       </div>
