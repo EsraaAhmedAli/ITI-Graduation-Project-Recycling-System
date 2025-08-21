@@ -222,10 +222,10 @@ const FloatingRecorderButton = () => {
       )}
 
       {showCard && (
-        <div className="absolute bottom-20 right-0  rounded-2xl shadow-2xl border border-gray-200 p-6 w-80 mb-4 transform transition-all duration-300 ease-in-out" style={{ background: "var(----color-green-50)" }}>
+        <div className="absolute bottom-20 right-0  rounded-2xl shadow-2xl border border-gray-200 p-6 w-80 mb-4 transform transition-all duration-300 ease-in-out" style={{ background: "var(--color-green-60)" }}>
           <div className="flex flex-col space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-800">
+              <h3 className="text-lg font-semibold" style={{ color: "var(--text-gray-800)" }}>
                 {isRecording
                   ? "Recording..."
                   : audioBlob
