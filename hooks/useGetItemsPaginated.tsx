@@ -44,6 +44,8 @@
     enabled?: boolean;
     keepPreviousData?: boolean;
     staleTime?: number;
+    searchTerm?: string; // Add search term parameter
+
     role?: 'buyer' | 'seller';
     }
 
@@ -84,7 +86,9 @@
         enabled = true,
         keepPreviousData = true,
         staleTime = 60 * 1000,
-        role
+        role,
+            searchTerm = '' ,// Default to empty string
+
     } = options;
 
     const { locale } = useLanguage();
@@ -108,8 +112,10 @@ useEffect(() => {
         const key = ["items-paginated", currentPage, locale, itemsPerPage];
         if (categoryName) key.push(categoryName);
         if (role) key.push(role);
+            if (searchTerm) key.push(searchTerm); // Include search term in query key
+
         return key;
-    }, [categoryName, locale, currentPage, itemsPerPage, role]);
+    }, [categoryName, locale, currentPage, itemsPerPage, role,searchTerm]);
 
     // Build API endpoint and params
     const { endpoint, params } = useMemo(() => {
@@ -122,6 +128,10 @@ useEffect(() => {
         if (role) {
         baseParams.role = role;
         }
+          if (searchTerm) {
+      baseParams.search = searchTerm; // Add search parameter
+    }
+
 
         if (categoryName) {
         // Use category-specific endpoint
@@ -136,7 +146,7 @@ useEffect(() => {
             params: baseParams
         };
         }
-    }, [categoryName, locale, currentPage, itemsPerPage, role]);
+    }, [categoryName, locale, currentPage, itemsPerPage, role,searchTerm]);
 
     const { 
         data: apiResponse, 
