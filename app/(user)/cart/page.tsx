@@ -717,21 +717,7 @@ export default function CartPage() {
                             <AlertTriangle className="w-4 h-4" />
                             {stockWarnings[item._id]}
                           </p>
-                          {userRole === "buyer" && stockLevels[item._id] > 0 && (
-                            <button
-                              onClick={() => {
-                                const availableStock = stockLevels[item._id];
-                                const updatedCart = cart.map((ci) =>
-                                  ci._id === item._id ? { ...ci, quantity: availableStock } : ci
-                                );
-                                updateCartState(updatedCart);
-                                toast.success(`Quantity adjusted to ${availableStock}`);
-                              }}
-                              className="text-xs bg-orange-600 text-white px-2 py-1 rounded-md hover:bg-orange-700 transition-colors mt-2"
-                            >
-                              Adjust to Available Stock ({stockLevels[item._id]})
-                            </button>
-                          )}
+                         
                         </div>
                       )}
 
@@ -857,12 +843,7 @@ export default function CartPage() {
                       You can continue shopping, but please adjust quantities to available stock levels before checkout.
                     </p>
                     <div className="mt-2 flex gap-2">
-                      <button
-                        onClick={handleAdjustToStock}
-                        className="text-sm bg-orange-600 text-white px-3 py-1 rounded-md hover:bg-orange-700 transition-colors"
-                      >
-                        Auto-Adjust All Quantities
-                      </button>
+                    
                       <button
                         onClick={() => {
                           queryClient.invalidateQueries(['items']);
