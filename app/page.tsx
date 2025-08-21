@@ -207,38 +207,41 @@ export default function Home() {
       </Suspense>
 
 
-    <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/10 py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-8 rounded-3xl mx-4 sm:mx-8 lg:mx-16 my-12 sm:my-16 lg:my-20" style={{background: "var(--color-green-100)"}}>
-        {/* Background decorative elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/10 rounded-full blur-2xl"></div>
-          <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-secondary/10 rounded-full blur-2xl"></div>
-          <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-accent/5 rounded-full blur-xl"></div>
-        </div>
+  <section className="relative overflow-hidden bg-gradient-to-br from-emerald-50/80 via-blue-50/40 to-purple-50/60 dark:from-emerald-950/20 dark:via-blue-950/10 dark:to-purple-950/15 py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 rounded-2xl mx-4 sm:mx-6 lg:mx-12 my-8 sm:my-12 border border-white/20 dark:border-white/5 backdrop-blur-sm">
+  {/* Modern background decorative elements */}
+  <div className="absolute inset-0 overflow-hidden">
+    <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-br from-emerald-400/20 to-blue-400/20 dark:from-emerald-400/10 dark:to-blue-400/10 rounded-full blur-2xl animate-pulse"></div>
+    <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-gradient-to-br from-purple-400/15 to-pink-400/15 dark:from-purple-400/8 dark:to-pink-400/8 rounded-full blur-2xl animate-pulse delay-1000"></div>
+    <div className="absolute top-1/3 right-1/4 w-16 h-16 bg-gradient-to-br from-blue-400/10 to-emerald-400/10 dark:from-blue-400/5 dark:to-emerald-400/5 rounded-full blur-xl"></div>
+  </div>
 
-        <div className="relative max-w-4xl mx-auto text-center">
-          {/* Header with enhanced typography */}
-          <div className="mb-8 sm:mb-12">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 text-accent-content leading-tight">
-              {t("indexPage.community.title")}{" "}
-              <span className="bg-clip-text text-transparent" style={{color:"var(--foreground)"}}>
-                {t("indexPage.community.highlight")}
-              </span>
-            </h2>
-            <p className="text-base sm:text-lg lg:text-xl mb-2 text-gray-700 max-w-2xl mx-auto leading-relaxed">
-              {t("indexPage.community.desc1")}
-            </p>
-            <p className="text-sm sm:text-base text-gray-600 max-w-xl mx-auto">
-              {/* For the embedded HTML like <1>10,000+</1>, we'll need to handle it specially */}
-              {t("indexPage.community.desc2").replace(/<1>(.*?)<\/1>/g, "$1")}
-            </p>
-          </div>
+  <div className="relative max-w-3xl mx-auto text-center">
+    {/* Compact header with modern typography */}
+    <div className="mb-8 sm:mb-10">
+      <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4 text-gray-900 dark:text-gray-100 leading-tight tracking-tight">
+        {t("indexPage.community.title")}{" "}
+        <span className="bg-gradient-to-r from-emerald-600 via-blue-600 to-purple-600 dark:from-emerald-400 dark:via-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
+          {t("indexPage.community.highlight")}
+        </span>
+      </h2>
+      <div className="space-y-2">
+        <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
+          {t("indexPage.community.desc1")}
+        </p>
+        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 max-w-xl mx-auto font-medium">
+          {t("indexPage.community.desc2").replace(/<1>(.*?)<\/1>/g, "$1")}
+        </p>
+      </div>
+    </div>
 
-          {/* Lazy loaded SubscriptionForm with fallback */}
-         <Suspense fallback={<SubscriptionFormSkeleton />}>
-            <SubscriptionForm />
-          </Suspense> 
-        </div>
-      </section>
+    {/* Subscription form with enhanced spacing */}
+    <div className="relative">
+      <Suspense fallback={<SubscriptionFormSkeleton />}>
+        <SubscriptionForm />
+      </Suspense>
+    </div>
+  </div>
+</section>
     </>
   );
 }

@@ -796,6 +796,9 @@
     "addToCollection": "Add to Collection"
   },
   "common": {
+    "only": "Only",
+    "left": "left",
+    "previous": "previous",
     "measurementUnit": "Measurement Unit",
     "itemsIn": "items in category",
     "addNewItem": "Add New Item",

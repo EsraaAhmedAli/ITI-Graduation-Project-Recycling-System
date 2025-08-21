@@ -250,26 +250,29 @@ export default function Page() {
       label: t('delivery.columns.userName'),
       sortable: true,
       priority: 1,
-      minWidth: "180px", // Increased from 150px
+      width: "15%",
+      minWidth: "140px", // Increased from 150px
     },
     {
       key: "email",
       label: t('delivery.columns.email'),
       sortable: true,
       priority: 2,
-      minWidth: "220px", // Increased from 200px
+         width: "20%", // Use percentage
+    minWidth: "180px"
     },
     {
       key: "phoneNumber",
       label: t('delivery.columns.phoneNumber'),
       sortable: true,
       priority: 3,
-      minWidth: "160px", // Increased from 140px
+     width: "12%", // Use percentage
+    minWidth: "130px", // Reduced slightly
     },
     {
       key: "rating",
       label: t('delivery.columns.reviewsRating'),
-      minWidth: "140px", // Increased from 120px
+      minWidth: "120px", // Increased from 120px
       render: (item: any) => {
         const rating = item.rating || 0;
         const totalReviews = item.totalReviews || 0;
@@ -338,9 +341,9 @@ export default function Page() {
               else if (value === "revoke") handleRevokeClick(item);
               e.target.value = "";
             }}
-            className={`border w-full border-gray-300 rounded-md px-3 py-1.5 text-sm text-gray-700 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 min-w-[180px] ${
-              isProcessing ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            className={`border border-gray-300 rounded-md px-1.5 py-1 text-xs text-gray-700 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 w-full ${
+  isProcessing ? "opacity-50 cursor-not-allowed" : ""
+}`}
           >
             <option value="" disabled>
               {isProcessing ? t('delivery.processing') : t('delivery.selectAction')}
@@ -368,7 +371,8 @@ export default function Page() {
     {
       key: "canReapply",
       label: t('delivery.columns.reapplyStatus'),
-      minWidth: "140px", // Increased from 120px
+    width: "8%", // Use percentage
+    minWidth: "90px", // Reduced from 140px
       render: (item: any) => {
         const currentStatus = item.currentStatus || "pending";
         const canReapply = item.canReapply;

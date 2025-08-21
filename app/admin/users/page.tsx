@@ -1,22 +1,28 @@
 "use client";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import DynamicTable from "@/components/shared/dashboardTable";
 import api from "@/lib/axios";
 import { User } from "@/components/Types/Auser.type";
 import EditUserRoleModal from "./EditUserRoleModal";
 import Image from "next/image";
-import { useUsers } from "@/hooks/useGetUsers";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Loader from "@/components/common/loader";
 import { useLanguage } from "@/context/LanguageContext";
-
+import { useValueDebounce } from "@/hooks/useValueDebounce";
 
 const AdminUsersPage = () => {
   const queryClient = useQueryClient();
+  const { t } = useLanguage();
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const { data: users, isLoading, error } = useUsers();
-  const [ setIsFilterOpen] = useState(false);
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+  const debouncedSearchTerm = useValueDebounce(searchTerm, 500); // 500ms delay
+
+
   const [userFilters, setUserFilters] = useState([
     {
       name: "role",
@@ -54,56 +60,48 @@ const AdminUsersPage = () => {
     },
   ]);
 
+  const fetchUsers = async (page = 1, limit = 5, filters = {}, search = '') => {
+    const params: any = { page, limit };
+    
+    // Add filter params
+    if (filters.role?.length) params.role = filters.role.join(',');
+    if (filters.status?.length) params.status = filters.status.join(',');
+    if (filters.prefix?.length) params.prefix = filters.prefix.join(',');
+    
+    // Add search param - make sure this matches what your backend expects
+    if (search && search.trim()) {
+      params.search = search.trim();
+    }
+    
+    const { data } = await api.get('/users', { params });
+    return data;
+  };
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
 
-  const filteredUsers = users?.filter((user) => {
-    // === Role Filter ===
-    const roleFilterActive =
-      userFilters.find((f) => f.name === "role")?.active || [];
-    const roleFilter =
-      roleFilterActive.length === 0 || roleFilterActive.includes(user.role);
+  const activeFilters = useMemo(() => ({
+    role: userFilters.find(f => f.name === 'role')?.active || [],
+    status: userFilters.find(f => f.name === 'status')?.active || [],
+    prefix: userFilters.find(f => f.name === 'prefix')?.active || []
+  }), [userFilters]);
 
-    // === Status Filter ===
-    const statusFilterActive =
-      userFilters.find((f) => f.name === "status")?.active || [];
+  const { data, isLoading, error } = useQuery({
+queryKey: ['users', currentPage, itemsPerPage, activeFilters, debouncedSearchTerm],
 
-    const lastActive = new Date(user.lastActiveAt);
-    const FIVE_MINUTES = 5 * 60 * 1000;
-    const isOnline = Date.now() - lastActive.getTime() < FIVE_MINUTES;
-    const status = isOnline ? "online" : "offline";
-
-    const statusFilter =
-      statusFilterActive.length === 0 || statusFilterActive.includes(status);
-
-    // === Phone Prefix Filter ===
-    const prefixFilterActive =
-      userFilters.find((f) => f.name === "prefix")?.active || [];
-    const userPrefix = user.phoneNumber?.slice(0, 3);
-    const prefixFilter =
-      prefixFilterActive.length === 0 ||
-      prefixFilterActive.includes(userPrefix);
-
-    return roleFilter && statusFilter && prefixFilter;
+    queryFn: () => fetchUsers(currentPage, itemsPerPage, activeFilters, debouncedSearchTerm)
   });
 
-  // const fetchUsers = async () => {
-  //   try {
-  //     const res = await api.get("/users"); // Your admin-protected endpoint
-  //     console.log(res.data.data);
+  const users = data?.data || [];
 
-  //     setUsers(res.data.data || res.data); // Adjust if paginated
-  //   } catch (err: any) {
-  //     setError(err?.response?.data?.message || "Failed to load users");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
-  // useEffect(() => {
-  //   fetchUsers();
-  // }, []);
-  // useEffect(() => {
-  // }, [users]);
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1);
+  };
 
   const handleDelete = async (user: User) => {
     try {
@@ -114,27 +112,6 @@ const AdminUsersPage = () => {
       toast.error("Delete failed");
     }
   };
-const{t}=useLanguage()
-  // const handleChangeRole = async (user: User) => {
-  //   const newRole = prompt(
-  //     `Enter new role for ${user.name} (admin, customer, buyer, delivery):`,
-  //     user.role
-  //   );
-  //   if (
-  //     !newRole ||
-  //     !["admin", "customer", "buyer", "delivery"].includes(newRole)
-  //   ) {
-  //     return toast.error("Invalid role");
-  //   }
-
-  //   try {
-  //     await api.put(`/users/${user._id}`, { role: newRole });
-  //     toast.success(`Role updated to ${newRole}`);
-  //     fetchUsers();
-  //   } catch {
-  //     toast.error("Failed to update role");
-  //   }
-  // };
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -148,16 +125,12 @@ const{t}=useLanguage()
     try {
       await api.patch(`/users/${id}`, { role: newRole });
       toast.success("Role updated!");
-
-      // 🔁 Refetch the users list
       queryClient.invalidateQueries({ queryKey: ["users"] });
-
       setIsModalOpen(false);
     } catch (error) {
       toast.error(`Failed to update role ${error}`);
     }
   };
-  // Inside return:
 
   const columns = [
     {
@@ -176,22 +149,20 @@ const{t}=useLanguage()
           );
         } else if (user.role == "delivery") {
           return (
-            <Image
-              width={30}
-              height={30}
-              src={user.attachments.deliveryImage}
-              alt={user.name}
-              className=" rounded-full object-cover"
-            />
+      <Image
+  width={30}
+  height={30}
+  src={user.attachments.deliveryImage || '/default-avatar.png'}
+  alt={user.name}
+  className="rounded-full object-cover"
+/>
           );
         }
-        {
-          return (
-            <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-semibold uppercase">
-              {user.name?.charAt(0) || "?"}
-            </div>
-          );
-        }
+        return (
+          <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-semibold uppercase">
+            {user.name?.charAt(0) || "?"}
+          </div>
+        );
       },
     },
     {
@@ -209,16 +180,13 @@ const{t}=useLanguage()
       label: "Phone",
       render: (user: User) => <span>{user.phoneNumber.padStart(11, "0")}</span>,
     },
-
     {
       key: "role",
       label: "Role",
-
       render: (user: User) => (
         <button onClick={() => handleChangeRole(user)}>{user.role}</button>
       ),
     },
-
     {
       key: "status",
       label: "Status",
@@ -226,7 +194,6 @@ const{t}=useLanguage()
       render: (user: User) => {
         const lastActive = new Date(user?.lastActiveAt || 0);
         const FIVE_MINUTES = 5 * 60 * 1000;
-
         const isOnline = Date.now() - lastActive.getTime() < FIVE_MINUTES;
 
         return (
@@ -248,38 +215,49 @@ const{t}=useLanguage()
       {isLoading ? (
         <Loader title={t('loaders.users')}/>
       ) : error ? (
-        <p className="text-center py-10 text-red-500">{error}</p>
+        <p className="text-center py-10 text-red-500">{error.message}</p>
       ) : users?.length === 0 ? (
         <p className="text-center py-10 text-gray-400">No users found.</p>
       ) : (
         <DynamicTable
-          data={filteredUsers}
+          data={users}
           columns={columns}
           title="Users"
-          itemsPerPage={5}
+          itemsPerPage={itemsPerPage}
+          searchTerm={searchTerm} // Make sure this is passed
+          onSearchChange={handleSearchChange}
           addButtonText="Add User"
-          showFilter={true} // ✅ add this!
+          showFilter={true}
           showAddButton={false}
+          showPagination={true}
           onDelete={handleDelete}
           onEdit={handleChangeRole}
-          filtersConfig={userFilters} // ✅ pass filtersConfig
-          externalFilters={Object.fromEntries(
-            userFilters.map((f) => [f.name, f.active])
-          )} // ✅ convert your filter shape
-          onExternalFiltersChange={(updated) => {
+          filtersConfig={userFilters}
+          externalFilters={activeFilters}
+          onExternalFiltersChange={(updated: any) => {
             setUserFilters((prev) =>
               prev.map((f) => ({
                 ...f,
                 active: updated[f.name] || [],
               }))
             );
+            setCurrentPage(1);
           }}
-          setShowFilters={setIsFilterOpen}
           activeFiltersCount={userFilters.reduce(
             (count, f) => count + (f.active?.length || 0),
             0
           )}
-          
+          paginationInfo={{
+            currentPage: data?.pagination?.currentPage || currentPage,
+            totalPages: data?.pagination?.totalPages || 1,
+            totalItems: data?.pagination?.totalUsers || 0,
+            itemsPerPage: itemsPerPage,
+            hasNextPage: data?.pagination?.hasNextPage || false,
+            hasPrevPage: data?.pagination?.hasPrevPage || false,
+          }}
+          onPageChange={handlePageChange}
+          onItemsPerPageChange={handleItemsPerPageChange}
+          disableClientSideSearch={true} // This should be true since you're handling search server-side
         />
       )}
 

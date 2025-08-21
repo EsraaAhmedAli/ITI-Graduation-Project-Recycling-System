@@ -861,7 +861,7 @@ export default function Navbar() {
 
               {/* Cart Dropdown */}
               {isCartOpen && (
-                <div className={`nav-dropdown absolute right-0 mt-2 w-80 rounded-lg shadow-lg border py-2 z-50 ${darkMode ? 'dark' : 'light'}`}>
+                <div className={`nav-dropdown absolute right-0 mt-2 w-80 rounded-lg bg-white shadow-lg border py-2 z-50 ${darkMode ? 'dark' : 'light'}`}>
                   <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-gray-700">
                     <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
                       {isBuyer ? t("navbar.myCart") : t("navbar.myCollection")}
@@ -976,7 +976,7 @@ export default function Navbar() {
             </div>
 
             {/* Language Switcher */}
-            <div className={`language-toggle hidden lg:flex items-center gap-1.5 px-2 py-1 rounded-lg border hover:border-gray-300 dark:hover:border-gray-600 transition-colors`}>
+            <div className={`language-toggle hidden lg:flex items-center gap-1.5 px-2 py-1 rounded-lg border-gray-200 border hover:border-gray-300 dark:hover:border-gray-600 transition-colors`}>
               <span
                 className={`text-xs font-medium ${
                   locale === "en"
@@ -1050,7 +1050,7 @@ export default function Navbar() {
 
                 {/* Profile Dropdown */}
                 {isProfileOpen && (
-                  <div className="nav-dropdown absolute right-0 mt-2 w-56 rounded-lg shadow-lg border py-2 z-50">
+                  <div className="nav-dropdown bg-white absolute right-0 mt-2 w-56 rounded-lg shadow-lg border py-2 z-50">
                     <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
                       <div className="flex items-center gap-3">
                         <div className="relative">

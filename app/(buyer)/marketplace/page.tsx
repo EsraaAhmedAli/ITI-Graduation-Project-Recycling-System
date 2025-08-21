@@ -3,7 +3,6 @@ import { Metadata } from "next";
 import { Suspense } from "react";
 import MarketplaceClient from "./components/MarketPlaceClient";
 import api from "@/lib/axios";
-import Loader from "@/components/common/Loader";
 
 // Enhanced SEO metadata
 export const metadata: Metadata = {
@@ -16,7 +15,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og-marketplace.jpg", // Add this image to your public folder
+        url: "/og-marketplace.jpg",
         width: 1200,
         height: 630,
         alt: "Sustainable Marketplace Banner",
@@ -64,7 +63,7 @@ interface ServerData {
   };
 }
 
-// Optimized server-side data fetching with better error handling and caching
+// Optimized server-side data fetching
 async function getServerData(): Promise<ServerData> {
   const defaultData: ServerData = {
     items: [],
@@ -80,44 +79,34 @@ async function getServerData(): Promise<ServerData> {
   };
 
   try {
-    // Use Promise.allSettled for better error resilience
-    const [itemsResult, categoriesResult] = await Promise.allSettled([
-      api.get("/categories/get-items?page=1&limit=10", {
-        timeout: 5000, // 5 second timeout
-        headers: {
-          'Cache-Control': 'public, max-age=60', // Cache for 1 minute
-        }
-      }),
-      api.get("/categories/get-items?page=1&limit=50", {
-        timeout: 8000, // 8 second timeout for larger request
-        headers: {
-          'Cache-Control': 'public, max-age=300', // Cache categories for 5 minutes
-        }
-      }),
-    ]);
+    // Single API call to get both items and categories
+    const itemsResult = await api.get("/get-items?page=1&limit=50", {
+      timeout: 8000,
+      headers: {
+        'Cache-Control': 'public, max-age=300',
+      }
+    });
 
-    let items: Item[] = [];
-    let pagination = defaultData.pagination;
+    const items = itemsResult.data?.data || [];
     
-    if (itemsResult.status === 'fulfilled') {
-      items = itemsResult.value.data?.data || [];
-      pagination = itemsResult.value.data?.pagination || defaultData.pagination;
-    } else {
-      console.error("Items fetch failed:", itemsResult.reason);
-    }
+    // Extract categories from items
+    const categories = [...new Set(
+      items.map((item: Item) => item.categoryName.en)
+    )].sort();
 
-    let categories: string[] = [];
-    if (categoriesResult.status === 'fulfilled') {
-      const allItems = categoriesResult.value.data?.data || [];
-      categories = [...new Set(
-        allItems.map((item: Item) => item.categoryName.en)
-      )].sort();
-    } else {
-      console.error("Categories fetch failed:", categoriesResult.reason);
-    }
+    // Paginate items for initial display
+    const paginatedItems = items.slice(0, 10);
+    const pagination = {
+      currentPage: 1,
+      itemsPerPage: 10,
+      totalItems: items.length,
+      totalPages: Math.ceil(items.length / 10),
+      hasNextPage: items.length > 10,
+      hasPreviousPage: false,
+    };
 
     return {
-      items,
+      items: paginatedItems,
       categories,
       pagination,
     };
@@ -155,7 +144,7 @@ function MarketplaceLoader() {
   );
 }
 
-// Main server component with streaming and error boundaries
+// Main server component
 export default async function MarketplacePage() {
   let serverData: ServerData;
   
@@ -163,7 +152,6 @@ export default async function MarketplacePage() {
     serverData = await getServerData();
   } catch (error) {
     console.error("Failed to fetch server data:", error);
-    // Fallback to empty data rather than throwing
     serverData = {
       items: [],
       categories: [],
@@ -180,7 +168,7 @@ export default async function MarketplacePage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
-      {/* Server-rendered header for better SEO and immediate content */}
+      {/* Server-rendered header */}
       <header className="mb-6 text-center">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
           ♻️ Sustainable Marketplace
@@ -188,7 +176,6 @@ export default async function MarketplacePage() {
         <p className="text-gray-600 text-sm md:text-base">
           Discover eco-friendly products and sustainable solutions
         </p>
-        {/* Add some server-rendered stats for instant content */}
         {serverData.pagination.totalItems > 0 && (
           <p className="text-xs text-gray-500 mt-1">
             Over {serverData.pagination.totalItems} sustainable products available
@@ -204,5 +191,4 @@ export default async function MarketplacePage() {
   );
 }
 
-// Optional: Add revalidation for ISR if using App Router with static generation
-export const revalidate = 300; // Revalidate every 5 minutes
+export const revalidate = 300;
