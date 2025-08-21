@@ -12,9 +12,24 @@ interface ProfileHeaderProps {
   t: (key: string) => string;
 }
 
-// Pre-defined constants to avoid recreation
-const DEFAULT_AVATAR = "https://api.dicebear.com/7.x/bottts/svg?seed=user123";
+// Pre-defined constants
 const DEFAULT_NAME = "John Doe";
+
+// Helper function to get user initials
+const getUserInitials = (name: string): string => {
+  if (!name) return "JD"; // Default initials
+  
+  const nameParts = name.trim().split(/\s+/);
+  if (nameParts.length === 1) {
+    // If only one name, use first two characters
+    return nameParts[0].substring(0, 2).toUpperCase();
+  }
+  
+  // Use first letter of first name and first letter of last name
+  const firstInitial = nameParts[0].charAt(0);
+  const lastInitial = nameParts[nameParts.length - 1].charAt(0);
+  return `${firstInitial}${lastInitial}`.toUpperCase();
+};
 
 // Memoized TierBadge component
 const TierBadge = memo(({ tier }: { tier: any }) => (
@@ -29,15 +44,30 @@ const TierBadge = memo(({ tier }: { tier: any }) => (
 ));
 TierBadge.displayName = "TierBadge";
 
-// Memoized Avatar component with optimized image handling
+// Memoized Initials component for fallback
+const InitialsAvatar = memo(
+  ({ initials, size = 64 }: { initials: string; size?: number }) => (
+    <div
+      className="rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-semibold shadow-md"
+      style={{ width: size, height: size, fontSize: size * 0.4 }}
+    >
+      {initials}
+    </div>
+  )
+);
+InitialsAvatar.displayName = "InitialsAvatar";
+
+// Memoized Avatar component with initials fallback
 const OptimizedAvatar = memo(
   ({
     imgUrl,
     alt,
+    userName,
     size = 64,
   }: {
     imgUrl: string;
     alt: string;
+    userName: string;
     size?: number;
   }) => {
     const [imageError, setImageError] = useState(false);
@@ -51,7 +81,16 @@ const OptimizedAvatar = memo(
       setImageLoaded(true);
     }, []);
 
-    const imageSrc = imageError ? DEFAULT_AVATAR : imgUrl;
+    const userInitials = useMemo(() => getUserInitials(userName), [userName]);
+
+    // If no image URL is provided or image failed to load, show initials
+    if (!imgUrl || imageError) {
+      return (
+        <div className="relative">
+          <InitialsAvatar initials={userInitials} size={size} />
+        </div>
+      );
+    }
 
     return (
       <div className="relative">
@@ -61,7 +100,7 @@ const OptimizedAvatar = memo(
           }`}
         >
           <Image
-            src={imageSrc}
+            src={imgUrl}
             alt={alt}
             width={size}
             height={size}
@@ -72,6 +111,12 @@ const OptimizedAvatar = memo(
             loading="lazy" // Lazy load below-fold avatars
             priority={false} // Don't prioritize avatar images
           />
+          {/* Show initials while image is loading */}
+          {!imageLoaded && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <InitialsAvatar initials={userInitials} size={size} />
+            </div>
+          )}
         </div>
       </div>
     );
@@ -104,7 +149,7 @@ const ProfileHeader = memo(
 
       return {
         formattedPhoneNumber,
-        userImage: user?.imgUrl || DEFAULT_AVATAR,
+        userImage: user?.imgUrl, // Remove default fallback here
         userName: user?.name || DEFAULT_NAME,
         userEmail: user?.email,
         showTierBadge: user?.role === "customer" && tier,
@@ -128,6 +173,7 @@ const ProfileHeader = memo(
             <OptimizedAvatar
               imgUrl={userImage}
               alt={`${userName}'s avatar`}
+              userName={userName}
               size={64}
             />
 
