@@ -36,31 +36,45 @@ export function useGetItems({
       itemsPerPage,
       userRole,
       category,
-      search,
+      search?.trim() || '', // Normalize search term
     ],
     queryFn: async () => {
-      const res = await api.get(`/categories/get-items`, {
-        params: {
-          page: currentPage,
-          limit: itemsPerPage,
-          role: userRole,
-          category: category === "all" ? undefined : category,
-          search: search || undefined,
-        },
-      });
-      console.log("📦 Fetched items:", res.data.data);
-      console.log("📦 Pagination info:", res.data.pagination);
+      // Build parameters object
+      const params: any = {
+        page: currentPage,
+        limit: itemsPerPage,
+      };
+      
+      // Only add parameters if they have meaningful values
+      if (userRole) {
+        params.role = userRole;
+      }
+      
+      if (category && category !== "all") {
+        params.category = category;
+      }
+      
+      if (search && search.trim()) {
+        params.search = search.trim();
+      }
+      
+      console.log('🔍 API Request params:', params);
+      
+      const res = await api.get(`/get-items`, { params });
+      
+      console.log("📦 API Response - Items found:", res.data.data?.length || 0);
+      console.log("📦 API Response - Total items:", res.data.pagination?.totalItems || 0);
+      
       return {
         data: res.data.data || [],
         pagination: res.data.pagination,
       };
     },
-    // Only enable the query when userRole is "buyer"
-    enabled: userRole === "buyer",
-    staleTime: Infinity, // Never consider data stale
-    gcTime: Infinity, // Keep in cache forever (previously cacheTime)
-    refetchOnMount: true, // Don't refetch when component mounts
-    refetchOnWindowFocus: false, // Don't refetch when window gains focus
-    refetchOnReconnect: true, // Don't refetch when network reconnects
+    // Enable the query for all users, not just buyers
+    enabled: true, // Remove the userRole === "buyer" restriction if not needed
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
   });
 }

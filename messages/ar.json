@@ -679,7 +679,10 @@
     "addToCollection": "اضف لمجموعتك"
   },
   "common": {
-    "measurementUnit": "وحدة القياس",
+    "previous": "السابق",
+    "removeFromRecyclingCart" : "إزالة من سلة إعادة التدوير",
+    "only": "فقط",
+    "left": "متبقي",
     "itemsIn": "الاشياء في فئة",
     "addNewItem": "اضف عنصر جديد",
     "points": "نقاط",
