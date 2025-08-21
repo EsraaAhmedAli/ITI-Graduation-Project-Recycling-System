@@ -12,7 +12,6 @@ import {
   ChevronRight,
 } from "lucide-react";
 import Image from "next/image";
-import { useCategories } from "@/hooks/useGetCategories";
 import { useLanguage } from "@/context/LanguageContext";
 import {
   useGetItemsPaginated,
@@ -31,7 +30,6 @@ export default function UserCategoryPage() {
   const params = useParams();
   const categoryName = decodeURIComponent(params.name as string);
   const { addToCart, loadingItemId } = useCart();
-  const { getCategoryIdByItemName } = useCategories();
 
   const {
     data,
@@ -48,15 +46,21 @@ export default function UserCategoryPage() {
     itemsPerPage: 12,
     keepPreviousData: true,
   });
+console.log(data,'dddd');
+// const catId= data.map((cat=>cat.categoryId))
+// const test = getCategoryIdByItemName(item?.name.en)
+// console.log(test,'test');
 
-  const handleAddToCollection = async (item: LocalizedItem) => {
+
+
+  const handleAddToCollection = async (item: LocalizedItem,catId) => {
     try {
       const englishItemName =
         typeof item.name === "string" ? item.name : item.name?.en || "";
       const arabicItemName =
         typeof item.name === "string" ? "" : item.name?.ar || "";
 
-      const categoryId = getCategoryIdByItemName(englishItemName);
+      const categoryId = catId;
 
       const categoryNameEn =
         typeof item.categoryName === "string"
@@ -212,7 +216,7 @@ export default function UserCategoryPage() {
                 </div>
 
                 <button
-                  onClick={() => handleAddToCollection(item)}
+                  onClick={() => handleAddToCollection(item,item.categoryId)}
                   disabled={loadingItemId === item._id}
                   className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white py-2 px-3 rounded-xl font-semibold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm hover:shadow-md group/button"
                 >
