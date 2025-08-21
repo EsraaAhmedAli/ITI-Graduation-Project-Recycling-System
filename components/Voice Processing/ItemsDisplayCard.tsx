@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { useUserAuth } from "@/context/AuthFormContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { CartItem } from "@/models/cart";
 import api from "@/lib/axios";
 import Image from "next/image";
@@ -15,25 +16,36 @@ type ValidatedItem = {
   unit: "KG" | "pieces" | "piece";
 };
 
+interface ItemName {
+  en: string;
+  ar: string;
+}
+
+interface CategoryName {
+  en: string;
+  ar: string;
+}
+
 interface DatabaseItem {
   _id: string;
-  name: string;
+  name: ItemName;
   image: string;
   points: number;
   price: number;
   measurement_unit: 1 | 2;
   categoryId: string;
-  categoryName: string;
+  categoryName: CategoryName;
 }
 
 interface EnrichedItem extends ValidatedItem {
   _id?: string;
+  name?: ItemName;
   image?: string;
   points?: number;
   price?: number;
   measurement_unit?: 1 | 2;
   categoryId?: string;
-  categoryName?: string;
+  categoryName?: CategoryName;
   found: boolean;
 }
 
@@ -49,9 +61,17 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const { cart, updateCartState } = useCart();
   const { user } = useUserAuth();
+  const { locale } = useLanguage();
   const router = useRouter();
 
   const isLoggedIn = !!user?._id;
+
+  // Helper function to safely get display name from bilingual name field
+  const getDisplayName = useCallback((nameField: string | { en: string; ar: string } | undefined): string => {
+    if (!nameField) return '';
+    if (typeof nameField === 'string') return nameField;
+    return nameField[locale] || nameField.en || '';
+  }, [locale]);
 
   // Debug: Monitor cart changes
   useEffect(() => {
@@ -62,13 +82,13 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
   }, [cart]);
 
   // Function to get fresh cart state
-  const getFreshCartState = (): CartItem[] => {
+  const getFreshCartState = useCallback((): CartItem[] => {
     if (isLoggedIn) {
       // For logged-in users, use the cart from context (which loads from database)
       console.log(
         `🔄 Fresh cart state from context (logged-in user): ${cart.length} items`,
         cart.map((item: CartItem) => ({
-          name: item.name,
+          name: getDisplayName(item.name),
           quantity: item.quantity,
         }))
       );
@@ -81,7 +101,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
         console.log(
           `🔄 Fresh cart state from storage (guest user): ${freshCart.length} items`,
           freshCart.map((item: CartItem) => ({
-            name: item.name,
+            name: getDisplayName(item.name),
             quantity: item.quantity,
           }))
         );
@@ -91,7 +111,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
         return cart; // Fallback to component state
       }
     }
-  };
+  }, [isLoggedIn, cart, getDisplayName]);
 
   // Improved function to fetch all items at once with role-based pricing
   const fetchAllItemsFromDatabase = async (): Promise<DatabaseItem[]> => {
@@ -185,11 +205,15 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
         `🔍 Searching for: "${itemName}" (normalized: "${normalizedSearchName}")`
       );
       console.log(
-        `📋 Available items: ${allItems.map((item) => item.name).join(", ")}`
+        `📋 Available items: ${allItems.map((item) => `${item.name.en}|${item.name.ar}`).join(", ")}`
       );
 
       // Clean function to remove Arabic diacritics and normalize text
       const cleanText = (text: string) => {
+        // Add null/undefined check
+        if (!text || typeof text !== 'string') {
+          return '';
+        }
         return (
           text
             .toLowerCase()
@@ -205,12 +229,15 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
       const cleanedSearchName = cleanText(normalizedSearchName);
 
       // Try EXACT match first (most reliable) - case insensitive
+      // Check both English and Arabic names
       let found = allItems.find(
-        (item) => cleanText(item.name) === cleanedSearchName
+        (item) => 
+          cleanText(item.name.en) === cleanedSearchName || 
+          cleanText(item.name.ar) === cleanedSearchName
       );
 
       if (found) {
-        console.log(`✅ Exact match found: ${itemName} -> ${found.name}`);
+        console.log(`✅ Exact match found: ${itemName} -> ${found.name.en}|${found.name.ar}`);
         return found;
       }
 
@@ -223,10 +250,13 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
       for (const variation of pluralVariations) {
         if (variation !== cleanedSearchName && variation.length > 2) {
           // Don't repeat the same search and avoid very short strings
-          found = allItems.find((item) => cleanText(item.name) === variation);
+          found = allItems.find((item) => 
+            cleanText(item.name.en) === variation || 
+            cleanText(item.name.ar) === variation
+          );
           if (found) {
             console.log(
-              `✅ Exact pluralization match found: ${itemName} -> ${found.name} (via "${variation}")`
+              `✅ Exact pluralization match found: ${itemName} -> ${found.name.en}|${found.name.ar} (via "${variation}")`
             );
             return found;
           }
@@ -249,11 +279,13 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
       if (commonVariations[cleanedSearchName]) {
         for (const variation of commonVariations[cleanedSearchName]) {
           found = allItems.find(
-            (item) => cleanText(item.name) === cleanText(variation)
+            (item) => 
+              cleanText(item.name.en) === cleanText(variation) ||
+              cleanText(item.name.ar) === cleanText(variation)
           );
           if (found) {
             console.log(
-              `✅ Common variation match found: ${itemName} -> ${found.name} (via "${variation}")`
+              `✅ Common variation match found: ${itemName} -> ${found.name.en}|${found.name.ar} (via "${variation}")`
             );
             return found;
           }
@@ -262,17 +294,22 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
 
       // Try fuzzy matching for database typos (like "Solid Plasitc" -> "solid plastic")
       found = allItems.find((item) => {
-        const cleanItemName = cleanText(item.name);
-        const similarity = calculateSimilarity(
+        const cleanItemNameEn = cleanText(item.name.en);
+        const cleanItemNameAr = cleanText(item.name.ar);
+        const similarityEn = calculateSimilarity(
           cleanedSearchName,
-          cleanItemName
+          cleanItemNameEn
         );
-        return similarity > 0.85; // 85% similarity threshold
+        const similarityAr = calculateSimilarity(
+          cleanedSearchName,
+          cleanItemNameAr
+        );
+        return similarityEn > 0.85 || similarityAr > 0.85; // 85% similarity threshold
       });
 
       if (found) {
         console.log(
-          `✅ Fuzzy match found: ${itemName} -> ${found.name} (similarity match)`
+          `✅ Fuzzy match found: ${itemName} -> ${found.name.en}|${found.name.ar} (similarity match)`
         );
         return found;
       }
@@ -312,8 +349,9 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
 
           const enrichedItem: EnrichedItem = {
             ...item,
-            material: dbItem.name, // Use database name instead of AI name
+            material: dbItem.name[locale] || dbItem.name.en, // Use localized database name instead of AI name
             _id: dbItem._id,
+            name: dbItem.name, // Store full bilingual name
             image: dbItem.image,
             points: dbItem.points,
             price: dbItem.price,
@@ -327,7 +365,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
           if (mergedItems.has(dbItem._id)) {
             const existingItem = mergedItems.get(dbItem._id)!;
             console.log(
-              `🔄 Merging duplicate item: ${item.material} + ${existingItem.material} (both map to ${dbItem.name})`
+              `🔄 Merging duplicate item: ${item.material} + ${existingItem.material} (both map to ${dbItem.name[locale] || dbItem.name.en})`
             );
 
             // Merge quantities
@@ -337,7 +375,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
             );
           } else {
             console.log(
-              `➕ Adding new database item: ${dbItem.name} (${item.quantity} ${item.unit})`
+              `➕ Adding new database item: ${dbItem.name[locale] || dbItem.name.en} (${item.quantity} ${item.unit})`
             );
             mergedItems.set(dbItem._id, enrichedItem);
           }
@@ -356,7 +394,8 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
             price: item.unit === "KG" ? 1.5 : 0.5, // Default price
             measurement_unit: item.unit === "KG" ? 1 : 2,
             image: "/placeholder-item.jpg", // Default image
-            categoryName: item.material,
+            categoryName: { en: item.material, ar: item.material }, // This will be replaced later anyway
+            material: item.material, // Keep original material for fallback
             found: false,
           };
 
@@ -399,7 +438,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
     } finally {
       setIsLoading(false);
     }
-  }, [items, findMatchingItem]);
+  }, [items, findMatchingItem, locale]);
 
   useEffect(() => {
     enrichItems();
@@ -577,7 +616,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
           _id: item._id,
           categoryId: item.categoryId!,
           categoryName: item.categoryName!,
-          name: item.material,
+          name: item.name!, // Use the bilingual name object instead of material string
           image: item.image!,
           points: item.points!,
           price: item.price!,
@@ -612,14 +651,14 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
             quantity: newQuantity,
           };
           console.log(
-            `🔄 Updated existing item: ${newItem.name} (${existingItem.quantity} + ${newItem.quantity} = ${newQuantity})`
+            `🔄 Updated existing item: ${getDisplayName(newItem.name)} (${existingItem.quantity} + ${newItem.quantity} = ${newQuantity})`
           );
           updatedCount++;
         } else {
           // New item, add to cart
           mergedCart.push(newItem);
           console.log(
-            `➕ Added new item: ${newItem.name} (${newItem.quantity} ${
+            `➕ Added new item: ${getDisplayName(newItem.name)} (${newItem.quantity} ${
               newItem.measurement_unit === 1 ? "KG" : "pieces"
             })`
           );
@@ -642,7 +681,10 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
       console.log(`📊 Final results: Cart has ${finalCart.length} items`);
       console.log(
         "🔍 Final cart contents:",
-        finalCart.map((item) => ({ name: item.name, quantity: item.quantity }))
+        finalCart.map((item) => ({ 
+          name: getDisplayName(item.name), 
+          quantity: item.quantity 
+        }))
       );
 
       setShowSuccess(true);
@@ -666,7 +708,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
     } finally {
       setIsAddingToCart(false);
     }
-  }, [localItems, updateCartState, isLoggedIn, cart]);
+  }, [localItems, updateCartState, isLoggedIn, getFreshCartState, getDisplayName]);
 
   const handleCheckout = async () => {
     console.log("🚀 Starting checkout process...");
@@ -866,7 +908,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                         item.image !== "/placeholder-item.jpg" ? (
                           <Image
                             src={item.image}
-                            alt={item.material}
+                            alt={item.found && item.name ? getDisplayName(item.name) : item.material}
                             width={64}
                             height={64}
                             className="w-full h-full object-cover rounded-lg"
@@ -907,7 +949,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                       <div className="flex-1">
                         <div className="flex items-start justify-between">
                           <h4 className="font-semibold text-gray-800 text-xl mb-2">
-                            {item.material}
+                            {item.found && item.name ? getDisplayName(item.name) : item.material}
                             {!item.found && (
                               <span className="ml-2 text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded-full">
                                 Not in catalog

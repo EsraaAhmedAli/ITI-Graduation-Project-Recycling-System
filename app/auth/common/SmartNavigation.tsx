@@ -56,7 +56,8 @@ export default function SmartNavigation({
       </button>
 
       <div className="ml-auto">
-        {!GoogleUser && step < roleConfig[selectedRole]?.steps ? (
+        {selectedRole === "delivery" &&
+        step < roleConfig[selectedRole]?.steps ? (
           <button
             type="button"
             onClick={nextStep}

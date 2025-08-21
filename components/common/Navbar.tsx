@@ -1149,7 +1149,7 @@ export default function Navbar() {
               <div className="flex items-center gap-2">
                 <Link
                   prefetch={true}
-                  href="/newAuth"
+                  href="/auth"
                   className={`nav-link ${darkMode ? "dark" : "light"}`}
                 >
                   <KeyRound className="nav-icon" />
@@ -1287,7 +1287,7 @@ export default function Navbar() {
               {!user ? (
                 <div className="pt-2 space-y-2">
                   <Link
-                    href="/newAuth"
+                    href="/auth"
                     onClick={() => setIsOpen(false)}
                     className={`nav-link ${
                       darkMode ? "dark" : "light"
