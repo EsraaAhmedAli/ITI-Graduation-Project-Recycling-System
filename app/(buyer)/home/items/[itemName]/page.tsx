@@ -10,6 +10,13 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { useCategories } from "@/hooks/useGetCategories";
 import Loader from "@/components/common/loader";
+import dynamic from "next/dynamic";
+
+// Lazy load FloatingRecorderButton for voice processing
+const FloatingRecorderButton = dynamic(
+  () => import('@/components/Voice Processing/FloatingRecorderButton'),
+  { ssr: false }
+);
 
 interface Item {
   _id: string;
@@ -415,6 +422,9 @@ export default function ItemDetailsPage() {
           <RecyclingProcess t={t} />
         </div>
       </div>
+      
+      {/* Voice Processing Component */}
+      <FloatingRecorderButton />
     </div>
   );
 }
