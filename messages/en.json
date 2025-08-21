@@ -482,6 +482,7 @@
       "assigntocourier": "Assigned to Courier"
     },
     "role": {
+      "buyer":"Buyer",
       "customer": "Customer",
       "merchant": "Merchant",
       "admin": "Admin"

@@ -1,11 +1,6 @@
-import { Item } from "./../components/Types/categories.type";
 import { useEffect } from "react";
 import { getSocket } from "@/lib/socket";
-import { queryClient } from "@/lib/queryClient";
-import { Category } from "@/components/Types/categories.type";
 import { useQueryClient } from "@tanstack/react-query";
-import { CartItem } from "@/models/cart";
-import { GetCartItemsResponse } from "./cart/useGetCartItems";
 
 interface ItemUpdatePayload {
   itemId: string;
@@ -13,19 +8,21 @@ interface ItemUpdatePayload {
   quantity: number;
 }
 
+interface ItemSocketParams {
+  itemIds: string[]; // Array of item IDs to listen for
+  userRole: string;
+}
+
 export function useItemSocket({
-  itemIds, // Changed from pagination params to specific item IDs
+  itemIds,
   userRole,
-}: {
-  itemIds: string[]; // Only listen for updates to these specific items
-  userRole?: string;
-}) {
+}: ItemSocketParams) {
   const queryClient = useQueryClient();
   const socket = getSocket();
   
   useEffect(() => {
-    console.log("🔌 Setting up cart item socket listeners for:", itemIds);
-    if (!socket || itemIds?.length === 0) return;
+    console.log("🔌 Setting up item socket listener for items:", itemIds);
+    if (!socket || !itemIds?.length) return;
 
     const handleItemUpdated = (updatedItem: ItemUpdatePayload) => {
       // Only process updates for items in our cart
@@ -33,50 +30,54 @@ export function useItemSocket({
         return;
       }
       
-      console.log("🔄 Cart item updated from socket:", updatedItem);
+      console.log("🔄 Item updated from socket:", updatedItem);
       
-      // Update the cart-items query
-      queryClient.setQueriesData<GetCartItemsResponse>(
-        { predicate: (query) => query.queryKey[0] === "cart-items" },
-        (oldData) => {
+      // Update the cart items query cache
+      queryClient.setQueryData(
+        ["cart-items", itemIds, userRole],
+        (oldData: any) => {
           if (!oldData?.data) return oldData;
           
           return {
             ...oldData,
-            data: oldData.data.map((item) =>
-              item._id === updatedItem.itemId
+            data: oldData.data.map((item: any) => 
+              item._id === updatedItem.itemId 
                 ? { ...item, quantity: updatedItem.quantity }
                 : item
-            ),
+            )
           };
         }
       );
+
+      // Also invalidate to ensure fresh data
+      queryClient.invalidateQueries({
+        queryKey: ["cart-items", itemIds, userRole]
+      });
     };
 
     const handleItemDeleted = (payload: { itemId: string }) => {
-      // Only process deletions for items in our cart
       if (!itemIds.includes(payload.itemId)) {
         return;
       }
       
-      console.log("🗑️ Cart item deleted from socket:", payload);
+      console.log("🗑️ Item deleted from socket:", payload);
       
-      queryClient.setQueriesData<GetCartItemsResponse>(
-        { predicate: (query) => query.queryKey[0] === "cart-items" },
-        (oldData) => {
-          if (!oldData?.data) return oldData;
-          return {
-            ...oldData,
-            data: oldData.data.filter((item) => item._id !== payload.itemId),
-          };
-        }
-      );
+      // Invalidate the query since an item was deleted
+      queryClient.invalidateQueries({
+        queryKey: ["cart-items", itemIds, userRole]
+      });
     };
 
-    const handleItemCreated = (payload: Category) => {
-      // For new items, we don't need to do anything in cart context
-      // unless the item is somehow added to cart externally
-      console.log("➕ New item created (not relevant for cart):", payload);
+    const handleItemCreated = (payload: any) => {
+      // Not typically relevant for cart items but can be useful
+      console.log("➕ New item created:", payload);
+      
+      // If the new item is relevant to our current cart, invalidate
+      if (itemIds.includes(payload.itemId)) {
+        queryClient.invalidateQueries({
+          queryKey: ["cart-items", itemIds, userRole]
+        });
+      }
     };
 
     socket.on("itemUpdated", handleItemUpdated);
