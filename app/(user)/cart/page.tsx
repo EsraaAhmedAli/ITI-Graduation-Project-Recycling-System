@@ -66,6 +66,8 @@ export default function CartPage() {
     return stockMap;
   }, [itemsData, cart, userRole]);
 
+
+   console.log("Esraa");
   // Check inventory status whenever stockLevels or cart changes
   useEffect(() => {
     if (userRole !== "buyer" || cart.length === 0) {
