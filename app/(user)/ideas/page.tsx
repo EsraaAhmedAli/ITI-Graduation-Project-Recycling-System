@@ -168,7 +168,7 @@ const callApi = async (query: string) => {
       <div 
   className="min-h-screen" 
   style={{ 
-    background: "linear-gradient(to right, var(--section-gradient-start), var(--section-gradient-end))",
+    background: "linear-gradient(to right, var(--color-green-50), var(--color-green-50))",
     color: "var(--foreground)" 
   }}
 >
@@ -262,15 +262,15 @@ const callApi = async (query: string) => {
           <div className="border-t border-gray-100 p-6">
             <div className="flex gap-3">
               <div className="flex-1 relative">
-                <textarea
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  placeholder={placeholders[currentPlaceholder]}
-                  className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none transition-all duration-200"
-                  rows={1}
-                  style={{ minHeight: '48px' }}
-                />
+          <textarea
+  value={inputValue}
+  onChange={(e) => setInputValue(e.target.value)}
+  onKeyDown={handleKeyPress}
+  placeholder={placeholders[currentPlaceholder]}
+  className="w-full px-4 py-3 pr-12 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none transition-all duration-200"
+  rows={1}
+  style={{ minHeight: '48px' }}
+/>
               </div>
               <button
                 onClick={handleSend}

@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { CartItem } from "@/models/cart";
+import Loader from "@/components/common/Loader";
 import {
   Recycle,
   Plus,
@@ -17,7 +18,6 @@ import {
   useGetItemsPaginated,
   LocalizedItem,
 } from "@/hooks/useGetItemsPaginated";
-import Loader from "@/components/common/Loader";
 
 export default function UserCategoryPage() {
   const { locale, t, convertNumber } = useLanguage();
@@ -127,6 +127,7 @@ export default function UserCategoryPage() {
               </div>
               <p className="text-slate-600 mb-3 text-sm">
                 {t("categoryStats.estimatedImpact")}:{" "}
+                {/* You can add impact data to backend too */}
                 {t(`environmentalImpact.${categoryName}`)}
               </p>
 
@@ -158,10 +159,17 @@ export default function UserCategoryPage() {
           {data.map((item) => (
             <div
               key={item._id}
-              className="group bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300 hover:-translate-y-1"
+              className="group rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300 hover:-translate-y-1"
+              style={{ background: "var(--color-card)" }}
             >
               {/* Image Container */}
-              <div className="relative bg-gradient-to-br from-slate-100 to-slate-50">
+              <div
+                style={{
+                  backgroundImage:
+                    "linear-gradient(to bottom right, var(--card-gradient-start), var(--card-gradient-end))",
+                }}
+                className="relative "
+              >
                 <div className="relative w-full h-40">
                   <Image
                     src={item.image}
