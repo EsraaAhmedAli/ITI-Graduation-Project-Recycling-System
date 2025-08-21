@@ -127,7 +127,7 @@ export default function EditProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-green-50 py-10 px-4 flex items-center justify-center">
+    <div className="min-h-screen py-10 px-4 flex items-center justify-center" style={{ background: "var(--color-green-60)" }}>
       <div className="max-w-md w-full bg-white p-6 rounded-2xl shadow-md space-y-6">
         <h2 className="text-xl font-semibold text-center text-green-800">
           Edit Profile
