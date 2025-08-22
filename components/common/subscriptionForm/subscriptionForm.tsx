@@ -28,7 +28,7 @@ export default function SubscriptionForm() {
 
   return (
     <div className="mb-8">
-      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 max-w-lg sm:max-w-2xl mx-auto">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 max-w-lg sm:max-w-2xl mx-auto" >
         <div className="relative flex-grow group">
           <input
             type="email"

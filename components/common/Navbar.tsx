@@ -44,15 +44,56 @@ export default function Navbar() {
   const toggleMenu = () => setIsOpen(!isOpen);
   const isBuyer = user?.role === "buyer";
   const { locale, setLocale } = useLanguage();
+  
+  // State for dark mode with system preference as default
   const [darkMode, setDarkMode] = useState(false);
+  const [isSystemDark, setIsSystemDark] = useState(false);
 
   const { t, convertNumber } = useLanguage();
 
+  // Check system preference on component mount
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
+    // Check if we're on the client side
+    if (typeof window !== 'undefined') {
+      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setIsSystemDark(systemPrefersDark);
+      
+      // Set initial dark mode based on system preference
+      setDarkMode(systemPrefersDark);
+      
+      // Listen for system preference changes
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handleChange = (e) => {
+        setIsSystemDark(e.matches);
+        // Only update if user hasn't manually overridden
+        const hasManualOverride = localStorage.getItem('darkMode') !== null;
+        if (!hasManualOverride) {
+          setDarkMode(e.matches);
+        }
+      };
+      
+      mediaQuery.addEventListener('change', handleChange);
+      
+      // Check for user preference in localStorage
+      const savedDarkMode = localStorage.getItem('darkMode');
+      if (savedDarkMode !== null) {
+        setDarkMode(savedDarkMode === 'true');
+      }
+      
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+  }, []);
+
+  // Apply dark mode class to document
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      if (darkMode) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+      // Save user preference
+      localStorage.setItem('darkMode', darkMode.toString());
     }
   }, [darkMode]);
 
@@ -164,7 +205,11 @@ export default function Navbar() {
           <div className="flex items-center gap-2 flex-shrink-0">
             {/* Dark Mode Toggle */}
             <button
-              onClick={() => setDarkMode(!darkMode)}
+              onClick={() => {
+                // Toggle dark mode and set manual override
+                setDarkMode(!darkMode);
+                localStorage.setItem('darkMode', (!darkMode).toString());
+              }}
               className={`nav-link ${darkMode ? "dark" : "light"} hover:bg-green-100 dark:hover:bg-black rounded-full transition-colors`}
               aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
             >
@@ -202,8 +247,7 @@ export default function Navbar() {
               {/* Cart Dropdown */}
               {isCartOpen && (
                 <div
-                  className={`nav-dropdown absolute right-0 mt-2 w-80 rounded-lg bg-white shadow-lg border py-2 z-50 ${darkMode ? "dark" : "light"
-                    }`}
+                  className={`nav-dropdown absolute right-0 mt-2 w-80 rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50`}
                 >
                   <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-gray-700">
                     <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
@@ -323,7 +367,7 @@ export default function Navbar() {
 
             {/* Language Switcher */}
             <div
-              className={`language-toggle hidden lg:flex items-center gap-1.5 px-2 py-1 rounded-lg border-gray-200 border hover:border-gray-300 dark:hover:border-gray-600 transition-colors`}
+              className={`language-toggle hidden lg:flex items-center gap-1.5 px-2 py-1 rounded-lg border-gray-200 dark:border-gray-700 border hover:border-gray-300 dark:hover:border-gray-600 transition-colors`}
             >
               <span
                 className={`text-xs font-medium ${locale === "en"
@@ -400,7 +444,7 @@ export default function Navbar() {
 
                 {/* Profile Dropdown */}
                 {isProfileOpen && (
-                  <div className="nav-dropdown bg-white absolute right-0 mt-2 w-56 rounded-lg shadow-lg border py-2 z-50">
+                  <div className="nav-dropdown bg-white dark:bg-gray-800 absolute right-0 mt-2 w-56 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
                     <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
                       <div className="flex items-center gap-3">
                         <div className="relative">
@@ -460,14 +504,14 @@ export default function Navbar() {
                       <Link
                         href="/profile/ewallet"
                         onClick={() => setIsProfileOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                        className="flex items-center gap-3 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors"
                       >
                         <Wallet className="w-4 h-4" />
                         <span className="text-xs font-medium">
                           {t("navbar.ewallet")}
                         </span>
                       </Link>
-                      <div className="border-t border-gray-100 my-1"></div>
+                      <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
 
                       <button
                         onClick={handleLogout}
@@ -515,7 +559,7 @@ export default function Navbar() {
 
         {/* Mobile Menu */}
         {isOpen && (
-          <div className="mobile-menu lg:hidden backdrop-blur-lg border-t">
+          <div className="mobile-menu lg:hidden backdrop-blur-lg border-t border-gray-200 dark:border-gray-700">
             <div className="px-4 py-3 space-y-2">
               {/* Language Toggle for Mobile */}
               <div className="flex items-center justify-between w-full px-3 py-2.5 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg mb-2">
