@@ -206,9 +206,9 @@ export default function ItemsModal({ show, onclose, selectedOrderItems, userRole
                       {t('itemsModal.totalPoints', { points: totalPoints.toLocaleString() })}
                     </p>
                   }
-           
+
                   {
-                    selectedOrder?.paymentMethod !== null && userRole.role !== 'customer' && <p className="text-sm font-semibold text-green-700">payment Method: {selectedOrder.paymentMethod}</p>
+                    selectedOrder?.paymentMethod !== null && userRole !== 'customer' && <p className="text-sm font-semibold text-green-700">payment Method: {selectedOrder.paymentMethod}</p>
                   }
                 </div>
               </div>

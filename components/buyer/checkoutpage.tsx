@@ -93,7 +93,6 @@ const CheckoutPage = ({ amount, checkoutData }: CheckoutPageProps) => {
       try {
         localStorage.removeItem("cart");
         localStorage.removeItem("cartItems");
-        console.log("✅ Cart cleared from localStorage");
       } catch (error) {
         console.error("❌ Failed to clear cart from localStorage:", error);
       }

@@ -61,7 +61,7 @@ const OrderCard = memo(function OrderCard({
       <div className="flex items-start gap-2 mb-4 p-3 bg-gray-50 rounded-lg">
         <MapPin size={16} className="text-gray-500 mt-0.5 flex-shrink-0" />
         <div className="text-sm text-gray-600">
-          <p className="font-medium text-gray-800 mb-1">Pickup Location</p>
+          <p className="font-medium text-gray-800 mb-1">{t('address.pickupAddress')}</p>
           <p className="text-xs leading-relaxed">
             {order.address.street}, Bldg {order.address.building}, Floor{" "}
             {order.address.floor}, {order.address.area}, {order.address.city}

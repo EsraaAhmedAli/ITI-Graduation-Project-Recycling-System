@@ -68,6 +68,7 @@
     "searching": "Searching..."
   },
   "navbar": {
+    "language" : "Language",
         "darkMode": "Dark Mode",
         "lightMode": "Light Mode",
 
@@ -429,6 +430,9 @@
       "down": "down",
       "steady": "steady"
     }
+  },
+  "order" :{
+    "createdSucc": "Order created successfully!"
   },
   "courier": {
     "assignedOrders": "Assigned Orders",
