@@ -1,14 +1,13 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import Loader from "@/components/common/Loader";
 import api from "@/lib/axios";
 import { toast } from "react-hot-toast";
 import Image from "next/image";
-import { X, Search, ShoppingCart, Star } from "lucide-react";
+import { X, Search } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import Button from "./Button";
-
+import { Loader } from '@/components/common'
 interface SearchResult {
   _id: string;
   name: {
@@ -226,8 +225,7 @@ export default function NavbarSearch() {
       <button
         onClick={handleOpen}
         className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-        title={t("search.tooltipSearch")}
-      >
+        title={t("search.tooltipSearch")}>
         <Search className="w-5 h-5 text-gray-500" />
       </button>
 
@@ -263,8 +261,7 @@ export default function NavbarSearch() {
               <button
                 onClick={handleClose}
                 className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                aria-label={t("search.closeLabel")}
-              >
+                aria-label={t("search.closeLabel")}>
                 <X className="w-6 h-6" />
               </button>
             </div>
@@ -289,8 +286,7 @@ export default function NavbarSearch() {
                   <div
                     className={`absolute inset-y-0 flex items-center ${
                       isRTL ? "right-0 pr-3" : "left-0 pl-3"
-                    }`}
-                  >
+                    }`}>
                     <Search className="w-5 h-5 text-gray-400" />
                   </div>
                 </div>
@@ -298,8 +294,7 @@ export default function NavbarSearch() {
                   onClick={handleSearch}
                   disabled={isSearching}
                   loading={isSearching}
-                  className="flex-shrink-0 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-w-[100px] justify-center"
-                >
+                  className="flex-shrink-0 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-w-[100px] justify-center">
                   {isSearching ? t("search.searching") : t("search.buttonText")}
                 </Button>
               </div>
@@ -316,8 +311,7 @@ export default function NavbarSearch() {
                         {t("search.browseByLetter")}
                       </h4>
                       <div
-                        className={`flex flex-wrap gap-3 justify-center mb-4`}
-                      >
+                        className={`flex flex-wrap gap-3 justify-center mb-4`}>
                         {alphabet.map((letter) => (
                           <button
                             key={letter}
@@ -338,8 +332,7 @@ export default function NavbarSearch() {
                               availableLetters.has(letter)
                                 ? `${t("search.clickToSeeItems")} "${letter}"`
                                 : `${t("search.noItemsStartWith")} "${letter}"`
-                            }
-                          >
+                            }>
                             {letter}
                           </button>
                         ))}
@@ -377,12 +370,11 @@ export default function NavbarSearch() {
                       <div className="flex items-center justify-between mb-6">
                         <h3 className="text-xl font-semibold text-gray-800">
                           {convertNumber(searchResults.length)}{" "}
-                          {t("search.resultsFor")} "{searchQuery}"
+                          {t("search.resultsFor")} {searchQuery}
                         </h3>
                         <button
                           onClick={handleClearSearch}
-                          className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                        >
+                          className="text-sm text-blue-600 hover:text-blue-700 font-medium">
                           {t("search.clearAndBrowse")}
                         </button>
                       </div>
@@ -394,8 +386,7 @@ export default function NavbarSearch() {
                               href={`/category/${item.categoryName?.en || ""}`}
                               key={item._id}
                               className="group flex items-center gap-3 bg-white rounded-lg border border-gray-200 hover:border-blue-200 hover:shadow-md transition-all duration-300 p-2 min-h-[100px] max-w-[150px]"
-                              onClick={handleClose}
-                            >
+                              onClick={handleClose}>
                               <div className="relative w-16 h-16 flex-shrink-0 overflow-hidden rounded-md">
                                 <Image
                                   src={item.image}

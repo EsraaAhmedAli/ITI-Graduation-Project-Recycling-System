@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { CartItem } from "@/models/cart";
-import Loader from "@/components/common/Loader";
+import { Loader } from '@/components/common'
 import {
   Recycle,
   Plus,
@@ -128,32 +128,7 @@ console.log(data,'dddd');
             </div>
           </div>
 
-          {categoryStats && (
-            <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-4 border border-slate-200/50 shadow-sm">
-              <div className="flex items-center gap-1.5 mb-2">
-                <Sparkles className="w-4 h-4 text-emerald-500" />
-                <span className="font-semibold text-slate-700 text-sm">
-                  {t("environmentalImpact.environmentalImpact")}
-                </span>
-              </div>
-              <p className="text-slate-600 mb-3 text-sm">
-                {t("categoryStats.estimatedImpact")}:{" "}
-                {/* You can add impact data to backend too */}
-                {t(`environmentalImpact.${categoryName}`)}
-              </p>
-
-              <div className="flex flex-wrap gap-3 text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-500">
-                    {t("categoryStats.totalItems")}:
-                  </span>
-                  <span className="font-semibold text-slate-700">
-                    {convertNumber(categoryStats.totalItems)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
+        
         </div>
 
         {/* Loading overlay for pagination */}

@@ -20,7 +20,7 @@ import {
   Mail,
   Check,
 } from "lucide-react";
-import Loader from "@/components/common/Loader";
+import { Loader } from '@/components/common'
 import { TablePagination } from "@/components/tablePagination/tablePagination";
 import { Modal, ModalBody, ModalFooter, ModalHeader, Toast } from "flowbite-react";
 import RefundModal from "@/components/shared/refundModal";
@@ -515,7 +515,7 @@ const{t}=useLanguage()
 
   // Loading state
   if (isLoading && payments.length === 0) {
-    return <Loader title={t('loaders.transactions')} />;
+    return <Loader />;
   }
 
   // Error state
@@ -631,7 +631,7 @@ const{t}=useLanguage()
           </div>
         </div>
       )}
-{isRefunding && <Loader title="refunding"/>
+{isRefunding && <Loader />
 }
       {/* Transactions Table */}
       <div className="bg-white rounded-lg shadow-sm border border-green-100">

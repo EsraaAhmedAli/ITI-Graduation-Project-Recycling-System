@@ -250,9 +250,9 @@ export default function Home() {
         </div>
       </section>
       {/* Lazy loaded CategoryList with fallback */}
-      <Suspense fallback={<CategoryListSkeleton />}>
+      {/* <Suspense fallback={<CategoryListSkeleton />}>
         <CategoryList maxToShow={20} basePath="/category" horizontal />
-      </Suspense>
+      </Suspense> */}
 
       <section className="relative overflow-hidden bg-gradient-to-br from-emerald-50/80 via-blue-50/40 to-purple-50/60 dark:from-emerald-950/20 dark:via-blue-950/10 dark:to-purple-950/15 py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 rounded-2xl mx-4 sm:mx-6 lg:mx-12 my-8 sm:my-12 border border-white/20 dark:border-white/5 backdrop-blur-sm">
         {/* Modern background decorative elements */}

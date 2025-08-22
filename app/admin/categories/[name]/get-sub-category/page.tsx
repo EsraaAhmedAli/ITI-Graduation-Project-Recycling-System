@@ -7,8 +7,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import api from "@/lib/axios";
 import { useLocalization } from "@/utils/localiztionUtil";
 import Button from "@/components/common/Button";
-import Loader from "@/components/common/loader";
 import { useGetItemsPaginated } from "@/hooks/useGetItemsPaginated";
+import { Loader } from '@/components/common'
 
 interface SubcategoryItem {
   _id: string;

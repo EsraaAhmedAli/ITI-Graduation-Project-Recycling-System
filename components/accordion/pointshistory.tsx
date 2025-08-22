@@ -7,7 +7,7 @@ import api from "@/lib/axios";
 import { Calendar, X } from "lucide-react";
 import PointsEntryItem from "./PointsEntryItem";
 import Pagination from "../common/Pagintaion";
-import Loader from "../common/Loader";
+import { Loader } from '@/components/common'
 
 const PointsHistoryModal = memo(
   ({

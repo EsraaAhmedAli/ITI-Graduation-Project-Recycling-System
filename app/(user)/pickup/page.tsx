@@ -9,7 +9,7 @@ import Button from "@/components/common/Button";
 import AddressStep from "./AddressStep";
 import { toast } from "react-toastify";
 import { UserAuthContext } from "@/context/AuthFormContext";
-import Loader from "@/components/common/Loader";
+import { Loader } from '@/components/common'
 import { useCart } from "@/context/CartContext";
 import { CartItem } from "@/models/cart";
 import Link from "next/link";
@@ -304,7 +304,7 @@ export default function PickupConfirmation() {
   ];
 
   if (loading) {
-    return <Loader title={t('loaders.info')} />;
+    return <Loader  />;
   }
 
   // Show message if user is not logged in instead of app UI

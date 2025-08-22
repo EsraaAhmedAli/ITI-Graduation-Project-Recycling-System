@@ -898,6 +898,7 @@
     "info": "your info",
     "reviews": "reviews",
     "orders": "orders",
+      "users": "users",
     "payments": "payments"
   },
   "marketPlace": {

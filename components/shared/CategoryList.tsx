@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import CategoryCard from "./CategoryCard";
-import Loader from "../common/Loader";
+import { Loader } from '@/components/common'
 
 import { useState, useMemo, useCallback } from "react";
 import { useCategories } from "@/hooks/useGetCategories";
@@ -62,7 +62,7 @@ export default function CategoryList({
   );
 
   // Early returns for loading and error states
-  if (isLoading) return <Loader title={t("loaders.Categories")} />;
+  if (isLoading) return <Loader  />;
   if (error)
     return (
       <p className="text-red-500 text-center">Error loading categories.</p>
