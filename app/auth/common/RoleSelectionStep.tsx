@@ -26,7 +26,7 @@ export default function RoleSelect({ prevStep }: { prevStep?: () => void }) {
 
   return (
     <div className="space-y-6">
-      <p className="text-gray-600 text-sm text-center px-4">
+      <p className=" text-sm text-center px-4" style={{ color: "var(--text-gray-600)" }}>
         {t("auth.login.typeOfAccount")}
       </p>
 
@@ -103,6 +103,7 @@ export default function RoleSelect({ prevStep }: { prevStep?: () => void }) {
           <button
             type="button"
             onClick={prevStep}
+            style={{ color: "var(--color-green-600)" }}
             className="text-sm text-primary hover:underline transition-colors duration-200"
           >
             {t("auth.login.back")}
