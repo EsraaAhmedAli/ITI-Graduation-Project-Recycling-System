@@ -28,6 +28,7 @@ import NavbarSearch from "./search";
 import Image from "next/image";
 import { NotificationBell } from "../notifications/notidication";
 import { useLanguage } from "@/context/LanguageContext";
+import ScreenBoundaryWrapper from "./ScreenWrapper";
 
 export default function Navbar() {
   const authContext = useContext(UserAuthContext);
@@ -113,23 +114,26 @@ export default function Navbar() {
 
   return (
     <nav className="navbar sticky top-0 z-50 backdrop-blur-lg shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-1 min-[375px]:px-2 sm:px-4 lg:px-8">
+        {/* Reduced px from px-4 to px-2 for mobile */}
         <div className="flex justify-between items-center h-16">
           {/* Left side: Logo + Search */}
-          <div className="flex items-center gap-6 min-w-0 flex-1">
+          <div className="flex items-center gap-1 min-[375px]:gap-2 sm:gap-6 min-w-0 flex-1">
             <Link href="/" className="flex items-center flex-shrink-0">
-              <div className="text-xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+              <div className="text-sm min-[375px]:text-base sm:text-xl lg:text-2xl font-black bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent truncate max-w-[200px] min-[375px]:max-w-none">
                 {t("navbar.title")}
               </div>
             </Link>
           </div>
 
           {/* Center: Navigation Links - Desktop */}
-          <div className="hidden lg:flex items-center space-x-2">
+          <div className="hidden min-[1500px]:flex items-center space-x-2">
             <Link
               prefetch={true}
               href={user?.role == "buyer" ? "/home" : "/"}
-              className={`nav-link ${darkMode ? "dark" : "light"} hover:bg-green-100 dark:hover:bg-black`}
+              className={`nav-link ${
+                darkMode ? "dark" : "light"
+              } hover:bg-green-100 dark:hover:bg-black`}
             >
               <HousePlus className="nav-icon" />
               <span>{t("navbar.home")}</span>
@@ -161,49 +165,54 @@ export default function Navbar() {
           </div>
 
           {/* Right side: Actions */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-0 min-[375px]:gap-1 sm:gap-2 flex-shrink-0">
             {/* Dark Mode Toggle */}
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className={`nav-link ${darkMode ? "dark" : "light"} hover:bg-green-100 dark:hover:bg-black rounded-full transition-colors`}
-              aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+              className={`nav-link ${
+                darkMode ? "dark" : "light"
+              } hover:bg-green-100 dark:hover:bg-black rounded-full transition-colors p-1 min-[375px]:p-2`}
+              aria-label={
+                darkMode ? "Switch to light mode" : "Switch to dark mode"
+              }
             >
               {darkMode ? (
-                <Sun className="nav-icon w-5 h-5" />
+                <Sun className="nav-icon w-6 h-6 " />
               ) : (
-                <Moon className="nav-icon w-5 h-5" />
+                <Moon className="nav-icon w-6 h-6" />
               )}
             </button>
-
 
             {/* Collection Cart */}
             <div className="relative" ref={cartRef}>
               <button
                 onClick={() => setIsCartOpen(!isCartOpen)}
-                className={`nav-link ${darkMode ? "dark" : "light"} hover:bg-green-100 dark:hover:bg-black`}
+                className={`nav-link ${
+                  darkMode ? "dark" : "light"
+                } hover:bg-green-100 dark:hover:bg-black`}
                 title={isBuyer ? t("navbar.myCart") : t("navbar.myCollection")}
               >
                 <div className="relative">
-                  <Recycle className="nav-icon w-5 h-5" />
+                  <Recycle className="nav-icon w-6 h-6 sm:w-5 sm:h-5" />
                   {totalItems > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-1 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center shadow-sm ring-1 ring-white">
-                      {totalItems > 99
-                        ? convertNumber(99) + "+"
-                        : convertNumber(totalItems)}
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-1 py-0.5 rounded-full min-w-[16px] h-[16px] flex items-center justify-center shadow-sm ring-1 ring-white">
+                      {totalItems > 99 ? "99+" : totalItems}
                     </span>
                   )}
                 </div>
-                <span className="hidden sm:inline">
+                <span className="hidden min-[1024px]:inline text-sm">
                   {isBuyer ? t("navbar.myCart") : t("navbar.myCollection")}
                 </span>
               </button>
-
-
               {/* Cart Dropdown */}
               {isCartOpen && (
                 <div
-                  className={`nav-dropdown absolute right-0 mt-2 w-80 rounded-lg bg-white shadow-lg border py-2 z-50 ${darkMode ? "dark" : "light"
-                    }`}
+                  className={`absolute top-full mt-2 rounded-lg bg-white shadow-lg border py-2 z-50 
+  ${darkMode ? "dark" : "light"}
+  left-1/2 -translate-x-1/2
+  w-[calc(100vw-2rem)] sm:w-80
+  max-w-80
+`}
                 >
                   <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-gray-700">
                     <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
@@ -323,13 +332,14 @@ export default function Navbar() {
 
             {/* Language Switcher */}
             <div
-              className={`language-toggle hidden lg:flex items-center gap-1.5 px-2 py-1 rounded-lg border-gray-200 border hover:border-gray-300 dark:hover:border-gray-600 transition-colors`}
+              className={`language-toggle hidden min-[768px]:flex items-center gap-1.5 px-2 py-1 rounded-lg border-gray-200 border hover:border-gray-300 dark:hover:border-gray-600 transition-colors`}
             >
               <span
-                className={`text-xs font-medium ${locale === "en"
-                  ? "text-blue-600 dark:text-blue-400"
-                  : "text-gray-400 dark:text-gray-500"
-                  }`}
+                className={`text-xs font-medium ${
+                  locale === "en"
+                    ? "text-blue-600 dark:text-blue-400"
+                    : "text-gray-400 dark:text-gray-500"
+                }`}
               >
                 EN
               </span>
@@ -341,8 +351,8 @@ export default function Navbar() {
                     locale === "ar"
                       ? "#3B82F6"
                       : darkMode
-                        ? "#4B5563"
-                        : "#D1D5DB",
+                      ? "#4B5563"
+                      : "#D1D5DB",
                 }}
                 title="Toggle Language"
               >
@@ -355,10 +365,11 @@ export default function Navbar() {
                 />
               </button>
               <span
-                className={`text-xs font-medium ${locale === "ar"
-                  ? "text-blue-600 dark:text-blue-400"
-                  : "text-gray-400 dark:text-gray-500"
-                  }`}
+                className={`text-xs font-medium ${
+                  locale === "ar"
+                    ? "text-blue-600 dark:text-blue-400"
+                    : "text-gray-400 dark:text-gray-500"
+                }`}
               >
                 AR
               </span>
@@ -366,7 +377,7 @@ export default function Navbar() {
 
             {/* Notification */}
             {user && (
-              <div className="px-1">
+              <div className="px-1 hidden min-[640px]:block">
                 <NotificationBell />
               </div>
             )}
@@ -383,19 +394,19 @@ export default function Navbar() {
                   <div className="relative">
                     {user.imgUrl ? (
                       <Image
-                        width={32}
-                        height={32}
+                        width={28}
+                        height={28}
                         src={user.imgUrl}
                         alt={user.name || "User"}
-                        className="w-8 h-8 rounded-full object-cover ring-2 ring-gray-200 dark:ring-gray-600"
+                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover ring-2 ring-gray-200 dark:ring-gray-600"
                       />
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white font-semibold ring-2 ring-gray-200 dark:ring-gray-600">
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white font-semibold ring-2 ring-gray-200 dark:ring-gray-600 text-xs sm:text-sm">
                         {getUserInitials(user)}
                       </div>
                     )}
                   </div>
-                  <ChevronDown className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                  <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 dark:text-gray-500 hidden min-[640px]:block" />
                 </button>
 
                 {/* Profile Dropdown */}
@@ -487,35 +498,40 @@ export default function Navbar() {
                 <Link
                   prefetch={true}
                   href="/auth"
-                  className={`nav-link ${darkMode ? "dark" : "light"}`}
+                  className={`nav-link ${
+                    darkMode ? "dark" : "light"
+                  } hidden min-[640px]:flex`}
                 >
                   <KeyRound className="nav-icon" />
-                  {t("navbar.login")}
+                  <span className="hidden min-[768px]:inline">
+                    {t("navbar.login")}
+                  </span>
                 </Link>
               </div>
             )}
 
             {/* Mobile menu button */}
-            <div className="lg:hidden ml-1">
+            <div className="min-[1400px]:hidden">
               <button
                 onClick={toggleMenu}
                 style={{ color: darkMode ? "#9CA3AF" : "#4B5563" }}
-                className={`nav-link ${darkMode ? "dark" : "light"} w-14 h-14 flex items-center justify-center`}
+                className={`nav-link ${
+                  darkMode ? "dark" : "light"
+                } px-3 py-2 flex items-center justify-center ml-1`}
                 aria-label="Toggle menu"
               >
                 {isOpen ? (
-                  <X className="w-9 h-9 " style={{ color: "var(--foreground)" }} />
+                  <X className="w-6 h-6" />
                 ) : (
-                  <Menu className="w-9 h-9" style={{ color: "var(--foreground)" }} />
+                  <Menu className="w-6 h-6" />
                 )}
               </button>
             </div>
           </div>
         </div>
-
         {/* Mobile Menu */}
         {isOpen && (
-          <div className="mobile-menu lg:hidden backdrop-blur-lg border-t">
+          <div className="mobile-menu backdrop-blur-lg border-t">
             <div className="px-4 py-3 space-y-2">
               {/* Language Toggle for Mobile */}
               <div className="flex items-center justify-between w-full px-3 py-2.5 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg mb-2">
@@ -527,10 +543,11 @@ export default function Navbar() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span
-                    className={`text-xs font-medium ${locale === "en"
-                      ? "text-blue-600 dark:text-blue-400"
-                      : "text-gray-400 dark:text-gray-500"
-                      }`}
+                    className={`text-xs font-medium ${
+                      locale === "en"
+                        ? "text-blue-600 dark:text-blue-400"
+                        : "text-gray-400 dark:text-gray-500"
+                    }`}
                   >
                     EN
                   </span>
@@ -545,8 +562,8 @@ export default function Navbar() {
                         locale === "ar"
                           ? "#3B82F6"
                           : darkMode
-                            ? "#4B5563"
-                            : "#D1D5DB",
+                          ? "#4B5563"
+                          : "#D1D5DB",
                     }}
                   >
                     <div
@@ -560,10 +577,11 @@ export default function Navbar() {
                     />
                   </button>
                   <span
-                    className={`text-xs font-medium ${locale === "ar"
-                      ? "text-blue-600 dark:text-blue-400"
-                      : "text-gray-400 dark:text-gray-500"
-                      }`}
+                    className={`text-xs font-medium ${
+                      locale === "ar"
+                        ? "text-blue-600 dark:text-blue-400"
+                        : "text-gray-400 dark:text-gray-500"
+                    }`}
                   >
                     AR
                   </span>
@@ -618,8 +636,9 @@ export default function Navbar() {
                   <Link
                     href="/auth"
                     onClick={() => setIsOpen(false)}
-                    className={`nav-link ${darkMode ? "dark" : "light"
-                      } w-full justify-center border border-gray-200 dark:border-gray-700`}
+                    className={`nav-link ${
+                      darkMode ? "dark" : "light"
+                    } w-full justify-center border border-gray-200 dark:border-gray-700`}
                   >
                     {t("navbar.login")}
                   </Link>
