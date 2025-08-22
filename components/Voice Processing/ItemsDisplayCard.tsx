@@ -1158,7 +1158,8 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
             <div className="flex space-x-4 mb-6">
               <button
                 onClick={handleBrowseMore}
-                className="flex-1 bg-gradient-to-r from-neutral to-neutral/90 hover:from-neutral/90 hover:to-neutral text-white font-medium py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2"
+            
+                className="flex-1 bg-green-700  hover:from-neutral/90 hover:to-neutral text-white font-medium py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2"
               >
                 <svg
                   className="w-5 h-5"
@@ -1182,7 +1183,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                   localItems.filter((item) => item.found).length === 0 ||
                   isAddingToCart
                 }
-                className="flex-1 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white font-medium py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 bg-green-700 hover:from-primary/90 hover:to-secondary/90 text-white font-medium py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isAddingToCart ? (
                   <>
