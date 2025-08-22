@@ -13,7 +13,7 @@ import dynamic from "next/dynamic";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { useItemSocket } from "@/hooks/useItemSocket";
 // To:
-import Loader from '@/components/common/Loader'
+import { Loader } from '@/components/common'
 // Lazy load FloatingRecorderButton for voice processing
 const FloatingRecorderButton = dynamic(
   () => import('@/components/Voice Processing/FloatingRecorderButton'),
