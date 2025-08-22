@@ -18,7 +18,7 @@ const AuthRedirectHandler = () => {
     if (lastPath.current !== pathname) {
       hasRedirected.current = false;
       lastPath.current = pathname;
-      
+
       // Clear any pending redirects
       if (redirectTimeout.current) {
         clearTimeout(redirectTimeout.current);
@@ -36,32 +36,39 @@ const AuthRedirectHandler = () => {
       user: user?.email,
       role: user?.role,
       isApproved: user?.isApproved,
-      hasToken: !!token
+      hasToken: !!token,
     });
 
     // Define route categories
-    const publicRoutes = ['/login', '/register', '/newAuth', '/auth', '/'];
-    const deliveryRoutes = ['/deliveryDashboard', '/deilveryDashboard']; // Include both spellings
-    const adminRoutes = ['/admin/dashboard'];
-    const waitingRoute = '/waitingforapproval';
+    const publicRoutes = ["/login", "/register", "/auth", "/auth", "/"];
+    const deliveryRoutes = ["/deliveryDashboard", "/deilveryDashboard"]; // Include both spellings
+    const adminRoutes = ["/admin/dashboard"];
+    const waitingRoute = "/waitingforapproval";
 
-    const isPublicRoute = publicRoutes.some(route => pathname === route || pathname.startsWith(route + '/'));
-    const isDeliveryRoute = deliveryRoutes.some(route => pathname === route || pathname.startsWith(route + '/'));
-    const isAdminRoute = adminRoutes.some(route => pathname === route || pathname.startsWith(route + '/admin'));
-    const isWaitingRoute = pathname === waitingRoute || pathname.startsWith(waitingRoute + '/');
+    const isPublicRoute = publicRoutes.some(
+      (route) => pathname === route || pathname.startsWith(route + "/")
+    );
+    const isDeliveryRoute = deliveryRoutes.some(
+      (route) => pathname === route || pathname.startsWith(route + "/")
+    );
+    const isAdminRoute = adminRoutes.some(
+      (route) => pathname === route || pathname.startsWith(route + "/admin")
+    );
+    const isWaitingRoute =
+      pathname === waitingRoute || pathname.startsWith(waitingRoute + "/");
 
     console.log("🔍 Route checks:", {
       isPublicRoute,
       isDeliveryRoute,
       isAdminRoute,
-      isWaitingRoute
+      isWaitingRoute,
     });
 
     // Helper function to safely redirect with timeout
     const safeRedirect = (path: string, reason: string) => {
       console.log(`🔄 ${reason} - Redirecting to: ${path}`);
       hasRedirected.current = true;
-      
+
       // Use a small timeout to prevent immediate re-renders
       redirectTimeout.current = setTimeout(() => {
         router.replace(path);
@@ -70,7 +77,7 @@ const AuthRedirectHandler = () => {
 
     // No user/token - redirect to login (except for public routes)
     if ((!user || !token) && !isPublicRoute && !isWaitingRoute) {
-      safeRedirect("/newAuth", "No authentication");
+      safeRedirect("/auth", "No authentication");
       return;
     }
 
@@ -90,33 +97,48 @@ const AuthRedirectHandler = () => {
 
         case "delivery":
           console.log("🚚 Delivery user, approved:", user.isApproved);
-          
+
           if (user.isApproved === true) {
             // Approved delivery users
             console.log("✅ Approved delivery user");
-            
+
             if (isWaitingRoute) {
               // If approved user is on waiting page, redirect to dashboard
-              safeRedirect("/deilveryDashboard", "Approved user on waiting page");
+              safeRedirect(
+                "/deilveryDashboard",
+                "Approved user on waiting page"
+              );
             } else if (isAdminRoute) {
               // If approved delivery user tries to access admin, redirect to dashboard
-              safeRedirect("/deilveryDashboard", "Approved delivery user on admin route");
+              safeRedirect(
+                "/deilveryDashboard",
+                "Approved delivery user on admin route"
+              );
             } else if (!isDeliveryRoute && !isPublicRoute) {
               // If not on delivery or public routes, redirect to dashboard
-              safeRedirect("/deilveryDashboard", "Approved delivery user on restricted route");
+              safeRedirect(
+                "/deilveryDashboard",
+                "Approved delivery user on restricted route"
+              );
             } else {
               console.log("✅ Approved delivery user on allowed route");
             }
           } else {
             // Non-approved delivery users (pending/declined)
             console.log("❌ Non-approved delivery user");
-            
+
             if (isDeliveryRoute || isAdminRoute) {
               // Non-approved users can't access delivery or admin routes
-              safeRedirect("/waitingforapproval", "Non-approved user on restricted route");
+              safeRedirect(
+                "/waitingforapproval",
+                "Non-approved user on restricted route"
+              );
             } else if (!isWaitingRoute && !isPublicRoute) {
               // Non-approved users should be on waiting page
-              safeRedirect("/waitingforapproval", "Non-approved user not on waiting page");
+              safeRedirect(
+                "/waitingforapproval",
+                "Non-approved user not on waiting page"
+              );
             } else {
               console.log("✅ Non-approved delivery user on allowed route");
             }
@@ -125,7 +147,7 @@ const AuthRedirectHandler = () => {
 
         case "customer":
           console.log("🛒 Customer user");
-          
+
           if (isAdminRoute || isDeliveryRoute || isWaitingRoute) {
             // Customers can't access restricted routes
             safeRedirect("/", "Customer on restricted route");
@@ -136,7 +158,7 @@ const AuthRedirectHandler = () => {
 
         default:
           console.log("👤 Other user role:", user.role);
-          
+
           // For other roles, only restrict admin/delivery routes
           if (isAdminRoute || isDeliveryRoute || isWaitingRoute) {
             safeRedirect("/", "Non-admin/delivery user on restricted route");

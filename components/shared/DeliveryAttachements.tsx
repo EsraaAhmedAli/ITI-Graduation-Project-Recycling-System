@@ -2,8 +2,11 @@ import { Modal, ModalBody, ModalHeader } from 'flowbite-react'
 import Image from 'next/image'
 import React, { useState } from 'react'
 import { FileText, Car, Shield, User, CreditCard, Hash, ChevronDown, ChevronUp, ImageIcon } from 'lucide-react'
+import { useLanguage } from '@/context/LanguageContext'
 
 export default function DeliveryAttachments({ show, onclose, attachments }) {
+  const { t } = useLanguage()
+  
   const [expandedSections, setExpandedSections] = useState({
     images: false,
     info: false
@@ -18,38 +21,38 @@ export default function DeliveryAttachments({ show, onclose, attachments }) {
 
   const imageItems = [
     {
-      title: "Delivery Photo",
+      title: t('deliveryAttachments.images.deliveryPhoto.title'),
       image: attachments?.deliveryImage,
       icon: <User className="w-4 h-4" />,
-      description: "Profile verification image"
+      description: t('deliveryAttachments.images.deliveryPhoto.description')
     },
     {
-      title: "Criminal Record",
+      title: t('deliveryAttachments.images.criminalRecord.title'),
       image: attachments?.criminalRecord,
       icon: <Shield className="w-4 h-4" />,
-      description: "Background check document"
+      description: t('deliveryAttachments.images.criminalRecord.description')
     },
     {
-      title: "Vehicle Image",
+      title: t('deliveryAttachments.images.vehicleImage.title'),
       image: attachments?.vehicleImage,
       icon: <Car className="w-4 h-4" />,
-      description: "Vehicle registration photo"
+      description: t('deliveryAttachments.images.vehicleImage.description')
     }
   ]
 
   const infoItems = [
     {
-      label: "License Number",
+      label: t('deliveryAttachments.info.licenseNumber'),
       value: attachments?.licenseNumber,
       icon: <CreditCard className="w-4 h-4" />
     },
     {
-      label: "National ID",
+      label: t('deliveryAttachments.info.nationalId'),
       value: attachments?.nationalId,
       icon: <Hash className="w-4 h-4" />
     },
     {
-      label: "Vehicle Type",
+      label: t('deliveryAttachments.info.vehicleType'),
       value: attachments?.vehicleType,
       icon: <Car className="w-4 h-4" />
     }
@@ -70,10 +73,10 @@ export default function DeliveryAttachments({ show, onclose, attachments }) {
           </div>
           <div>
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-              Delivery Attachments
+              {t('deliveryAttachments.title')}
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Verification documents and images
+              {t('deliveryAttachments.subtitle')}
             </p>
           </div>
         </div>
@@ -92,12 +95,12 @@ export default function DeliveryAttachments({ show, onclose, attachments }) {
                 <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                   <ImageIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 </div>
-                <div className="text-left">
+                <div className="text-start">
                   <h4 className="font-semibold text-gray-900 dark:text-white">
-                    Verification Images
+                    {t('deliveryAttachments.sections.verificationImages.title')}
                   </h4>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Profile, criminal record, and vehicle photos
+                    {t('deliveryAttachments.sections.verificationImages.description')}
                   </p>
                 </div>
               </div>
@@ -150,7 +153,9 @@ export default function DeliveryAttachments({ show, onclose, attachments }) {
                         <div className="w-full h-20 rounded-lg bg-gray-50 dark:bg-gray-700 border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
                           <div className="text-center">
                             <ImageIcon className="w-5 h-5 text-gray-400 mx-auto mb-1" />
-                            <p className="text-xs text-gray-500 dark:text-gray-400">No image</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {t('deliveryAttachments.noImage')}
+                            </p>
                           </div>
                         </div>
                       )}
@@ -171,12 +176,12 @@ export default function DeliveryAttachments({ show, onclose, attachments }) {
                 <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
                   <User className="w-4 h-4 text-green-600 dark:text-green-400" />
                 </div>
-                <div className="text-left">
+                <div className="text-start">
                   <h4 className="font-semibold text-gray-900 dark:text-white">
-                    Personal Information
+                    {t('deliveryAttachments.sections.personalInfo.title')}
                   </h4>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    License, ID, and vehicle details
+                    {t('deliveryAttachments.sections.personalInfo.description')}
                   </p>
                 </div>
               </div>
@@ -207,7 +212,7 @@ export default function DeliveryAttachments({ show, onclose, attachments }) {
                         </span>
                       </div>
                       <p className="text-gray-900 dark:text-white font-medium break-all">
-                        {item.value || 'Not provided'}
+                        {item.value || t('deliveryAttachments.notProvided')}
                       </p>
                     </div>
                   ))}

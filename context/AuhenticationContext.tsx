@@ -1,7 +1,7 @@
 // context/AuthenticationContext.tsx
 import { createContext, useContext, useState, ReactNode } from "react";
 
-export type Role = "customer" | "delivery" | "buyer" | "admin";
+export type Role = "customer" | "delivery" | "buyer" | "none";
 export type AuthMode =
   | "login"
   | "signup"
@@ -58,7 +58,7 @@ export const AuthenticationProvider = ({
   onClose,
 }: AuthenticationProviderProps) => {
   const [mode, setMode] = useState<AuthMode>("login");
-  const [selectedRole, setSelectedRole] = useState<Role>("customer");
+  const [selectedRole, setSelectedRole] = useState<Role>("none");
   const [step, setStep] = useState<number>(1);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] =

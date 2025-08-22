@@ -24,7 +24,7 @@ interface CheckoutData {
     area: string;
     street: string;
     building: string;
-    floor: string;
+    floor: number;
     apartment: string;
     landmark?: string;
     notes?: string;
@@ -169,7 +169,6 @@ const CheckoutPage = ({ amount, checkoutData }: CheckoutPageProps) => {
 
       console.log("Transformed cart for order creation:", transformedCart);
 
-      // Create order with transformed cart
       const result = await createOrder(
         localCheckoutData.selectedAddress,
         transformedCart,
@@ -555,17 +554,29 @@ const CheckoutPage = ({ amount, checkoutData }: CheckoutPageProps) => {
                     />
                   </div>
 
-                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                    <PaymentElement
-                      options={{
-                        layout: "tabs",
-                        wallets: {
-                          applePay: "auto",
-                          googlePay: "auto",
-                        },
-                      }}
-                    />
-                  </div>
+<div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+  <PaymentElement
+    options={{
+      layout: "tabs",
+      wallets: {
+        applePay: "auto",
+        googlePay: "auto",
+      },
+      defaultValues: {
+        billingDetails: {
+          email: localCheckoutData?.user.email || user?.email || "",
+          name: localCheckoutData?.user.name || user?.name || "",
+          // You can also prefill address if available
+          address: {
+            line1: localCheckoutData ? `${localCheckoutData.selectedAddress.street}, ${localCheckoutData.selectedAddress.building}` : "",
+            city: localCheckoutData?.selectedAddress.city || "",
+            // Add more address fields as needed
+          }
+        }
+      }
+    }}
+  />
+</div>
                 </div>
 
                 {errorMessage && (
@@ -587,6 +598,7 @@ const CheckoutPage = ({ amount, checkoutData }: CheckoutPageProps) => {
 
                 <Button
                   type="submit"
+                  
                   disabled={
                     !stripe ||
                     loading ||
@@ -594,7 +606,8 @@ const CheckoutPage = ({ amount, checkoutData }: CheckoutPageProps) => {
                     paymentSuccessful ||
                     !localCheckoutData
                   }
-                  className="w-full disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
+                  
+                  className="w-full disabled:opacity-50 bg-green-700 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
                 >
                   {loading ? (
                     <div className="flex items-center justify-center space-x-2">

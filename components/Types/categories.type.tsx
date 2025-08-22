@@ -1,5 +1,8 @@
+import { CartItem } from "@/models/cart";
+
 export interface Item {
-  name: string;
+  _id: string;
+  name: string | { en: string; ar: string };
   image: string;
   points: number;
   price: number;
@@ -14,7 +17,7 @@ export interface Category {
   quantity: number;
   image: string;
   description?: string;
-  itemt: Item[];
+  items: CartItem[];
   measurement_unit?: 1 | 2;
   price: number;
 }

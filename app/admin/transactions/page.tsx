@@ -17,11 +17,23 @@ import {
   Calendar,
   DollarSign,
   Globe,
+  Mail,
+  Check,
 } from "lucide-react";
 import Loader from "@/components/common/Loader";
 import { TablePagination } from "@/components/tablePagination/tablePagination";
-import { Modal, ModalBody, ModalFooter, ModalHeader } from "flowbite-react";
+import { Modal, ModalBody, ModalFooter, ModalHeader, Toast } from "flowbite-react";
 import RefundModal from "@/components/shared/refundModal";
+import { useLanguage } from "@/context/LanguageContext";
+
+// Toast notification types
+interface ToastNotification {
+  id: string;
+  type: 'success' | 'error' | 'info';
+  title: string;
+  message: string;
+  duration?: number;
+}
 
 interface PaymentFilters {
   page: number;
@@ -59,6 +71,10 @@ const Transactions: React.FC = () => {
     isOpen: false,
     payment: null,
   });
+  
+  // Toast state
+  const [toasts, setToasts] = useState<ToastNotification[]>([]);
+
   const {
     payments,
     pagination,
@@ -74,8 +90,29 @@ const Transactions: React.FC = () => {
 
   const prefetchPayments = usePrefetchPayments();
 
+  // Toast utilities
+  const addToast = (toast: Omit<ToastNotification, 'id'>): void => {
+    const id = `toast-${Date.now()}-${Math.random()}`;
+    const newToast: ToastNotification = {
+      ...toast,
+      id,
+      duration: toast.duration || 5000,
+    };
+    
+    setToasts(prev => [...prev, newToast]);
+    
+    // Auto remove toast
+    setTimeout(() => {
+      removeToast(id);
+    }, newToast.duration);
+  };
+
+  const removeToast = (id: string): void => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
+  };
+
   // Helper function to format amount (Stripe amounts are in cents)
-  const formatAmount = (amount: number, currency: string = "usd"): string => {
+  const formatAmount = (amount: number, currency: string = "egp"): string => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: currency.toUpperCase(),
@@ -93,7 +130,7 @@ const Transactions: React.FC = () => {
       minute: "2-digit",
     });
   };
-
+const{t}=useLanguage()
   // Helper function to get payment status
   const getPaymentStatus = (payment: PaymentData): string => {
     if (payment.refunded) return "refunded";
@@ -172,20 +209,82 @@ const Transactions: React.FC = () => {
       payment: payment,
     });
   };
-  const handleRefundConfirm = (
+
+  const handleRefundConfirm = async (
     paymentId: string,
     amount: number,
-    reason: string
-  ): void => {
-    refundPayment({
-      paymentId,
-      amount,
-      reason,
-    });
+    reason: string,
+    customerEmail?: string
+  ): Promise<void> => {
+    try {
+      console.log("=== REFUND CONFIRMATION DEBUG ===");
+      console.log("Payment ID:", paymentId);
+      console.log("Amount (in cents):", amount);
+      console.log("Reason:", reason);
+      console.log("Customer Email:", customerEmail);
+      console.log("================================");
 
-    // Close modal
-    setRefundModal({ isOpen: false, payment: null });
+      const result = await refundPayment({
+        paymentId,
+        amount,
+        reason,
+        customerEmail,
+      });
+
+      // Close modal
+      setRefundModal({ isOpen: false, payment: null });
+
+      // Show success toast
+      const refundType = refundModal.payment && amount < (refundModal.payment.amount - refundModal.payment.amount_refunded) 
+        ? 'partial' : 'full';
+        
+      addToast({
+        type: 'success',
+        title: `${refundType === 'partial' ? 'Partial' : 'Full'} Refund Processed`,
+        message: `${formatAmount(amount, refundModal.payment?.currency)} refunded successfully. Email notifications have been sent.`,
+        duration: 6000,
+      });
+
+      // Show additional toast for email notification status
+      if (customerEmail || refundModal.payment?.billing_details?.email) {
+        setTimeout(() => {
+          addToast({
+            type: 'info',
+            title: 'Email Notifications Sent',
+            message: `Refund confirmation emails sent to customer${customerEmail ? ` (${customerEmail})` : ''} and admin.`,
+            duration: 4000,
+          });
+        }, 1000);
+      } else {
+        setTimeout(() => {
+          addToast({
+            type: 'info',
+            title: 'Admin Notification Sent',
+            message: 'Refund notification sent to admin. Customer email not available.',
+            duration: 4000,
+          });
+        }, 1000);
+      }
+
+      // Refresh the payments list
+      refetch();
+
+    } catch (error: any) {
+      console.error("Refund confirmation error:", error);
+      
+      // Close modal
+      setRefundModal({ isOpen: false, payment: null });
+      
+      // Show error toast
+      addToast({
+        type: 'error',
+        title: 'Refund Failed',
+        message: error.message || 'Failed to process refund. Please try again.',
+        duration: 6000,
+      });
+    }
   };
+
   const handleRefundModalClose = (): void => {
     setRefundModal({ isOpen: false, payment: null });
   };
@@ -379,9 +478,44 @@ const Transactions: React.FC = () => {
     []
   );
 
+  // Toast component
+  const ToastNotification: React.FC<{ toast: ToastNotification }> = ({ toast }) => {
+    const icons = {
+      success: Check,
+      error: XCircle,
+      info: Mail,
+    };
+    
+    const colors = {
+      success: 'bg-green-50 border-green-200 text-green-800',
+      error: 'bg-red-50 border-red-200 text-red-800',
+      info: 'bg-blue-50 border-blue-200 text-blue-800',
+    };
+    
+    const Icon = icons[toast.type];
+    
+    return (
+      <div className={`flex items-start p-4 mb-3 rounded-lg border ${colors[toast.type]} shadow-lg max-w-md`}>
+        <div className="flex-shrink-0">
+          <Icon className="w-5 h-5 mt-0.5" />
+        </div>
+        <div className="ml-3 flex-1">
+          <h4 className="font-semibold text-sm">{toast.title}</h4>
+          <p className="text-xs mt-1 opacity-90">{toast.message}</p>
+        </div>
+        <button
+          onClick={() => removeToast(toast.id)}
+          className="flex-shrink-0 ml-2 opacity-70 hover:opacity-100 transition-opacity"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+    );
+  };
+
   // Loading state
   if (isLoading && payments.length === 0) {
-    return <Loader title="transactions" />;
+    return <Loader title={t('loaders.transactions')} />;
   }
 
   // Error state
@@ -408,6 +542,13 @@ const Transactions: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Toast Container */}
+      <div className="fixed top-4 right-4 z-50 space-y-2">
+        {toasts.map((toast) => (
+          <ToastNotification key={toast.id} toast={toast} />
+        ))}
+      </div>
+
       {/* Summary Cards */}
       {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white rounded-lg shadow-sm border border-green-100 p-6">
@@ -490,7 +631,8 @@ const Transactions: React.FC = () => {
           </div>
         </div>
       )}
-
+{isRefunding && <Loader title="refunding"/>
+}
       {/* Transactions Table */}
       <div className="bg-white rounded-lg shadow-sm border border-green-100">
         <DynamicTable<PaymentData>
@@ -684,6 +826,8 @@ const Transactions: React.FC = () => {
           </Modal>
         </div>
       )}
+      
+      {/* Enhanced Refund Modal */}
       <RefundModal
         isOpen={refundModal.isOpen}
         payment={refundModal.payment}
@@ -692,15 +836,7 @@ const Transactions: React.FC = () => {
         onConfirm={handleRefundConfirm}
       />
 
-      {/* Loading overlay for refunding */}
-      {isRefunding && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 flex items-center gap-3">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500"></div>
-            <span>Processing refund...</span>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 };

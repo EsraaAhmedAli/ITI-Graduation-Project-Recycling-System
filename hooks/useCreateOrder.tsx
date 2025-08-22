@@ -1,9 +1,8 @@
 // hooks/useCreateOrder.ts - Version that saves debug info to localStorage
 import { useState } from "react";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 import api from "@/lib/axios";
-import { CartItem } from "@/context/CartContext";
-
+import { CartItem } from "@/models/cart";
 // Save debug info that persists through redirects
 const saveDebugInfo = (info: any) => {
   try {
@@ -47,7 +46,7 @@ interface User {
   role?: string;
 }
 
-interface Address {
+export interface Address {
   _id: string;
   city: string;
   area: string;
@@ -90,9 +89,9 @@ interface UseCreateOrderReturn {
 }
 
 export const useCreateOrder = ({
-  clearCart,
-  setCurrentStep,
-  setCreatedOrderId,
+  clearCart = () => {}, // fallback no-op
+  setCurrentStep = () => {}, // fallback no-op
+  setCreatedOrderId = () => {}, // fallback no-op
 }: UseCreateOrderParams): UseCreateOrderReturn => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -110,7 +109,7 @@ export const useCreateOrder = ({
       hasAddress: !!selectedAddress,
       hasUser: !!user,
       deliveryFee,
-      paymentMethod
+      paymentMethod,
     });
 
     // Validation
@@ -131,7 +130,10 @@ export const useCreateOrder = ({
 
     try {
       // Calculate total amount
-      const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const subtotal = cart.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0
+      );
       const totalAmount = subtotal + deliveryFee;
 
       const orderData = {
@@ -145,12 +147,12 @@ export const useCreateOrder = ({
         paymentMethod,
         subtotal,
         totalAmount,
-        userId: user?._id
+        userId: user?._id,
       };
 
       saveDebugInfo({
         action: "ORDER_DATA",
-        orderData
+        orderData,
       });
 
       const response = await api.post<OrderResponse>("orders", orderData);

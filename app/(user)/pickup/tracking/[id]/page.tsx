@@ -14,13 +14,14 @@ import {
   Star,
   MessageCircle,
 } from "lucide-react";
-import { OrderWithDetails } from "@/components/Types/orders.type";
+// import { OrderWithDetails } from "@/components/Types/orders.type";
 import { SafetyDialog, SafetyReportData } from "../../SafetyDialog";
 import { useParams } from "next/navigation";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { useReviews } from "@/hooks/useReviews";
 import DeliveryReviewModal from "../../DeliveryReview";
 import PickupAddressCard from "@/components/pickupAdress";
+import { useLanguage } from "@/context/LanguageContext";
 
 const trackingSteps = [
   {
@@ -59,13 +60,13 @@ interface TrackingStepProps {
   isReviewsLoading?: boolean;
 }
 
-export default function TrackingStep({ 
-  orderId: propOrderId, 
-  onDelivered, 
+export default function TrackingStep({
+  orderId: propOrderId,
+  onDelivered,
   embedded = false,
   userReviews: propsUserReviews,
   refetchReviews: propsRefetchReviews,
-  isReviewsLoading: propsIsReviewsLoading 
+  isReviewsLoading: propsIsReviewsLoading,
 }: TrackingStepProps) {
   const [trackingStarted] = useState(true);
   const [lastDriverStatus, setLastDriverStatus] = useState<string | null>(null);
@@ -77,10 +78,10 @@ export default function TrackingStep({
   const [showSafetyDialog, setShowSafetyDialog] = useState(false);
   const [showDeliveryReview, setShowDeliveryReview] = useState(false);
   const [hasShownCompletionModal, setHasShownCompletionModal] = useState(false);
-  
-  const {user} = useUserAuth();
+
+  const { user } = useUserAuth();
   const queryClient = useQueryClient();
-  
+  const { locale } = useLanguage();
   // Get orderId from route parameters (for standalone page) or props (for embedded use)
   const params = useParams();
   const routeOrderId = params?.id as string;
@@ -88,33 +89,47 @@ export default function TrackingStep({
 
   // Use the same review system as ReviewManager - prioritize props from wrapper
   const hookReviews = useReviews();
-  const { 
-    userReviews, 
-    refetch: refetchReviews, 
-    isLoading: isReviewsLoading 
+  const {
+    userReviews,
+    refetch: refetchReviews,
+    isLoading: isReviewsLoading,
   } = {
     userReviews: propsUserReviews || hookReviews.userReviews,
     refetch: propsRefetchReviews || hookReviews.refetch,
-    isLoading: propsIsReviewsLoading || hookReviews.isLoading
+    isLoading: propsIsReviewsLoading || hookReviews.isLoading,
   };
 
   // Find existing review using the same logic as ReviewManager
-  const existingReview = orderId ? userReviews.find(review => review.orderId === orderId) : null;
+  const existingReview = orderId
+    ? userReviews.find((review) => review.orderId === orderId)
+    : null;
 
   // Force refetch reviews when component mounts in embedded mode
   useEffect(() => {
     if (embedded && orderId) {
-      console.log("TrackingStep mounted in embedded mode, forcing review refetch...");
+      console.log(
+        "TrackingStep mounted in embedded mode, forcing review refetch..."
+      );
       refetchReviews();
     }
   }, [embedded, orderId, refetchReviews]);
+  const getDisplayName = (name: any, locale: string): string => {
+    if (!name) return ""; // Handle undefined/null cases
+    if (typeof name === "string") return name; // Handle string names
+    if (typeof name === "object") {
+      // Handle bilingual object
+      if (locale === "ar" && name.ar) return name.ar;
+      return name.en || ""; // Default to English or empty string
+    }
+    return ""; // Fallback for any other case
+  };
 
   const getRefetchInterval = (status: string) => {
     switch (status) {
       case "confirmed":
-        return 5000; 
+        return 5000;
       case "assigntocourier":
-        return 100000; 
+        return 100000;
       case "enroute":
       case "arrived":
         return 2000; // 2 seconds - more frequent when active
@@ -204,7 +219,12 @@ export default function TrackingStep({
 
   // Handle completed order - show review modal only once if no existing review
   useEffect(() => {
-    if (order?.status === "completed" && !hasShownCompletionModal && !existingReview && !isReviewsLoading) {
+    if (
+      order?.status === "completed" &&
+      !hasShownCompletionModal &&
+      !existingReview &&
+      !isReviewsLoading
+    ) {
       const timer = setTimeout(() => {
         setShowDeliveryReview(true);
         setHasShownCompletionModal(true);
@@ -212,7 +232,12 @@ export default function TrackingStep({
 
       return () => clearTimeout(timer);
     }
-  }, [order?.status, existingReview, hasShownCompletionModal, isReviewsLoading]);
+  }, [
+    order?.status,
+    existingReview,
+    hasShownCompletionModal,
+    isReviewsLoading,
+  ]);
 
   const handleSafetyReport = (report: SafetyReportData) => {
     safetyReportMutation.mutate(report);
@@ -221,39 +246,38 @@ export default function TrackingStep({
   // Debug: Force a complete data refresh on review submission
   const handleDeliveryReviewSubmitted = async () => {
     console.log("🔄 Review submitted, starting refresh process...");
-    
+
     try {
       // First, invalidate all related queries
       queryClient.invalidateQueries({
-        queryKey: ["user-reviews"]
+        queryKey: ["user-reviews"],
       });
-      
+
       // Force refetch reviews with explicit await
       console.log("🔄 Forcing reviews refetch...");
       const result = await refetchReviews();
       console.log("✅ Reviews refetched result:", result);
-      
+
       // Also invalidate any order-specific review queries
       queryClient.invalidateQueries({
-        queryKey: ["/api/orders", orderId, "review"]
+        queryKey: ["/api/orders", orderId, "review"],
       });
-      
+
       // Add a delay and force a state update
       setTimeout(async () => {
         console.log("🔄 Second refetch attempt...");
         await refetchReviews();
         console.log("📊 Current reviews count:", userReviews.length);
         console.log("📊 Looking for review with orderId:", orderId);
-        const foundReview = userReviews.find(r => r.orderId === orderId);
+        const foundReview = userReviews.find((r) => r.orderId === orderId);
         console.log("📊 Found existing review:", foundReview);
       }, 500);
-      
     } catch (error) {
       console.error("❌ Failed to refetch reviews:", error);
     }
-    
+
     setShowDeliveryReview(false);
-    
+
     if (embedded) {
       if (onDelivered) {
         onDelivered();
@@ -267,7 +291,7 @@ export default function TrackingStep({
 
   const handleCloseReview = () => {
     setShowDeliveryReview(false);
-    
+
     if (embedded && onDelivered) {
       onDelivered();
     }
@@ -294,21 +318,25 @@ export default function TrackingStep({
   // Helper function to get courier name (same as ReviewManager)
   const getCourierDisplayName = (courier: any) => {
     if (!courier) return "Unknown Courier";
-    
-    return courier.name || 
-           courier.userName || 
-           courier.email?.split('@')[0] || 
-           courier.phoneNumber || 
-           "Unknown Courier";
+
+    return (
+      courier.name ||
+      courier.userName ||
+      courier.email?.split("@")[0] ||
+      courier.phoneNumber ||
+      "Unknown Courier"
+    );
   };
 
   // Prepare order info for the review modal (same structure as ReviewManager)
-  const orderInfo = order ? {
-    orderNumber: order.orderNumber || orderId?.slice(-8).toUpperCase(),
-    courierName: getCourierDisplayName(order.courier) || order.driverName,
-    orderDate: order.createdAt || order.orderDate,
-    itemCount: order.items?.length || 0
-  } : undefined;
+  const orderInfo = order
+    ? {
+        orderNumber: order.orderNumber || orderId?.slice(-8).toUpperCase(),
+        courierName: getCourierDisplayName(order.courier) || order.driverName,
+        orderDate: order.createdAt || order.orderDate,
+        itemCount: order.items?.length || 0,
+      }
+    : undefined;
 
   // Show error if no orderId
   if (!orderId) {
@@ -338,8 +366,6 @@ export default function TrackingStep({
 
   return (
     <div className={embedded ? "space-y-6" : "max-w-4xl mx-auto p-6 space-y-6"}>
-   
-
       {/* Progress Indicator */}
       <div className="bg-white border border-gray-200 rounded-xl p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-6">
@@ -358,7 +384,9 @@ export default function TrackingStep({
           </div>
           <div className="relative flex justify-between">
             {trackingSteps
-              .filter(step => !(user?.role === 'buyer' && step.id === 'collected'))
+              .filter(
+                (step) => !(user?.role === "buyer" && step.id === "collected")
+              )
               .map((step, index) => {
                 const Icon = step.icon;
                 const isActive = index <= currentStepIndex;
@@ -370,7 +398,8 @@ export default function TrackingStep({
                         isActive
                           ? "bg-green-500 text-white shadow-lg"
                           : "bg-gray-200 text-gray-400"
-                      }`}>
+                      }`}
+                    >
                       <Icon className="w-6 h-6" />
                     </div>
                     <div className="text-center max-w-24">
@@ -381,7 +410,8 @@ export default function TrackingStep({
                             : isActive
                             ? "text-gray-700"
                             : "text-gray-400"
-                        }`}>
+                        }`}
+                      >
                         {step.label}
                       </p>
                       <p
@@ -391,7 +421,8 @@ export default function TrackingStep({
                             : isActive
                             ? "text-gray-600"
                             : "text-gray-400"
-                        }`}>
+                        }`}
+                      >
                         {step.description}
                       </p>
                     </div>
@@ -403,16 +434,18 @@ export default function TrackingStep({
       </div>
 
       {/* Main Status Card */}
-      <div className={`border rounded-xl p-8 text-center relative ${
-        order.status === "completed" 
-          ? "bg-green-50 border-green-200" 
-          : "bg-blue-50 border-blue-200"
-      }`}>
-        <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${
-          order.status === "completed" 
-            ? "bg-green-500" 
-            : "bg-blue-500"
-        }`}>
+      <div
+        className={`border rounded-xl p-8 text-center relative ${
+          order.status === "completed"
+            ? "bg-green-50 border-green-200"
+            : "bg-blue-50 border-blue-200"
+        }`}
+      >
+        <div
+          className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${
+            order.status === "completed" ? "bg-green-500" : "bg-blue-500"
+          }`}
+        >
           {order.status === "completed" ? (
             <CheckCircle className="text-white text-3xl" />
           ) : (
@@ -425,16 +458,19 @@ export default function TrackingStep({
         <p className="text-gray-600 mb-4">
           Order #{orderId?.slice(-8) || orderId?.slice(-8)}
         </p>
-        <div className={`inline-flex items-center px-4 py-2 rounded-full text-lg font-semibold ${
-          order.status === "completed" 
-            ? "bg-green-100 text-green-800" 
-            : "bg-blue-100 text-blue-800"
-        }`}>
+        <div
+          className={`inline-flex items-center px-4 py-2 rounded-full text-lg font-semibold ${
+            order.status === "completed"
+              ? "bg-green-100 text-green-800"
+              : "bg-blue-100 text-blue-800"
+          }`}
+        >
           {trackingSteps[currentStepIndex]?.description || "In Progress"}
         </div>
         <div
           className="absolute transition-all duration-1000"
-          style={truckPosition}></div>
+          style={truckPosition}
+        ></div>
       </div>
 
       {/* Completion Actions - Show only when completed */}
@@ -445,10 +481,11 @@ export default function TrackingStep({
               🎉 Pickup Completed Successfully!
             </h3>
             <p className="text-green-700">
-              Your items have been collected and your rewards have been processed.
+              Your items have been collected and your rewards have been
+              processed.
             </p>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
               onClick={handleShowReviewModal}
@@ -457,7 +494,7 @@ export default function TrackingStep({
               <Star className="w-4 h-4" />
               {existingReview ? "Edit Review" : "Rate Experience"}
             </button>
-            
+
             {existingReview && (
               <div className="flex items-center justify-center gap-2 px-4 py-2 bg-green-100 text-green-800 rounded-lg">
                 <Star className="w-4 h-4 fill-current" />
@@ -469,11 +506,8 @@ export default function TrackingStep({
         </div>
       )}
 
-    
-
-
       {/* Pickup Address */}
-      <PickupAddressCard order={order}/>
+      <PickupAddressCard order={order} />
       {/* <div className="bg-white border border-gray-200 rounded-xl p-6">
         <div className="flex items-center justify-between gap-3 mb-4">
           <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
@@ -524,18 +558,19 @@ export default function TrackingStep({
                 key={index}
                 className={`flex items-center justify-between p-3 rounded-lg ${
                   order.status === "completed" ? "bg-green-50" : "bg-gray-50"
-                }`}>
+                }`}
+              >
                 <div className="flex items-center gap-3">
                   {item.image && (
                     <img
                       src={item.image}
-                      alt={item.name || item.itemName}
+                      alt={getDisplayName(item.name, locale)}
                       className="w-10 h-10 rounded-lg object-cover"
                     />
                   )}
                   <div>
                     <p className="font-medium text-gray-900">
-                      {item.name || item.itemName}
+                      {getDisplayName(item.name, locale)}
                     </p>
                     <p className="text-sm text-gray-500">
                       Quantity: {item.quantity}
@@ -546,9 +581,13 @@ export default function TrackingStep({
                   <p className="font-medium text-gray-900">
                     {item.price * item.quantity} EGP
                   </p>
-                  <p className={`text-sm ${
-                    order.status === "completed" ? "text-green-600" : "text-green-600"
-                  }`}>
+                  <p
+                    className={`text-sm ${
+                      order.status === "completed"
+                        ? "text-green-600"
+                        : "text-green-600"
+                    }`}
+                  >
                     {item.points * item.quantity} points
                   </p>
                 </div>
@@ -559,18 +598,22 @@ export default function TrackingStep({
       )}
 
       {/* Status Message */}
-      <div className={`border rounded-xl p-6 text-center ${
-        order.status === "completed" 
-          ? "bg-green-50 border-green-200" 
-          : "bg-blue-50 border-blue-200"
-      }`}>
-        <p className={`font-medium ${
-          order.status === "completed" ? "text-green-800" : "text-blue-800"
-        }`}>
+      <div
+        className={`border rounded-xl p-6 text-center ${
+          order.status === "completed"
+            ? "bg-green-50 border-green-200"
+            : "bg-blue-50 border-blue-200"
+        }`}
+      >
+        <p
+          className={`font-medium ${
+            order.status === "completed" ? "text-green-800" : "text-blue-800"
+          }`}
+        >
           {(() => {
             const currentStep = trackingSteps[currentStepIndex];
             if (!currentStep) return "Order is being processed";
-            
+
             switch (currentStep.id) {
               case "confirmed":
                 return "Your pickup request has been confirmed. We're finding a driver for you.";
@@ -604,7 +647,7 @@ export default function TrackingStep({
         onSubmitted={handleDeliveryReviewSubmitted}
       />
 
-      {/* Safety Dialog */}
+      {/* Safety Dialog
       <SafetyDialog
         open={showSafetyDialog}
         onClose={() => setShowSafetyDialog(false)}
@@ -615,7 +658,7 @@ export default function TrackingStep({
         }
         orderNumber={orderId}
         driverName={order.driverName}
-      />
+      /> */}
     </div>
   );
 }

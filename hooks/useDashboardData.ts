@@ -1,190 +1,142 @@
-// hooks/useDashboardData.ts
-import { useState, useEffect, useCallback } from 'react';
+// hooks/useDashboardData.ts - Ultra Conservative Version
+import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import api from '@/lib/axios';
 
 import { normalizeApiResponse, transformUserGrowthData, transformCitiesData } from '../utils/dataTransformers';
 import { DashboardData, LoadingState } from '@/components/Types/dashboard.types';
 
-const initialLoadingState: LoadingState = {
-  analytics: true,
-  users: true,
-  materials: true,
-  userStats: true,
-  cities: true,
-  categories: true,
-};
+// Combined fetch function that gets all data at once
+const fetchAllDashboardData = async (): Promise<DashboardData> => {
+  console.log('Fetching dashboard data...'); // Debug log
+  
+  const [analyticsRes, usersRes, materialsRes, statsRes, citiesRes, categoriesRes] = await Promise.allSettled([
+    api.get("/orders/analytics"),
+    api.get("/users/points/leaderboard"),
+    api.get("/top-materials-recycled"),
+    api.get("/stats"),
+    api.get('/orders/analytics/top-cities'),
+    api.get("categories/get-items"),
+  ]);
 
-const initialData: DashboardData = {
-  totalOrders: 0,
-  orderStatus: {},
-  ordersPerDay: [],
-  topUsers: [],
-  userGrowth: [],
-  topMaterials: [],
-  citiesData: null,
-  categories: [],
+  // Process analytics
+  let totalOrders = 0;
+  let orderStatus = {};
+  let ordersPerDay = [];
+  if (analyticsRes.status === 'fulfilled') {
+    const json = normalizeApiResponse(analyticsRes.value.data);
+    if (json.success) {
+      totalOrders = json.data.totalOrders;
+      orderStatus = json.data.statusCounts;
+      ordersPerDay = json.data.dailyOrders || [];
+    }
+  }
+
+  // Process users
+  let topUsers = [];
+  if (usersRes.status === 'fulfilled') {
+    const json = normalizeApiResponse(usersRes.value.data);
+    if (json.success) {
+      topUsers = json.data;
+    }
+  }
+
+  // Process materials
+  let topMaterials = [];
+  if (materialsRes.status === 'fulfilled') {
+    const json = normalizeApiResponse(materialsRes.value.data);
+    if (json.success) {
+      topMaterials = json.data || [];
+    }
+  }
+
+  // Process user stats
+  let userGrowth = [];
+  if (statsRes.status === 'fulfilled') {
+    const data = normalizeApiResponse(statsRes.value.data);
+    userGrowth = transformUserGrowthData(data);
+  }
+
+  // Process cities
+  let citiesData = null;
+  if (citiesRes.status === 'fulfilled') {
+    const data = normalizeApiResponse(citiesRes.value.data);
+    citiesData = transformCitiesData(data);
+  }
+
+  // Process categories
+  let categories = [];
+  if (categoriesRes.status === 'fulfilled') {
+    const json = normalizeApiResponse(categoriesRes.value.data);
+    if (json.success) {
+      categories = json.data;
+    }
+  }
+
+  return {
+    totalOrders,
+    orderStatus,
+    ordersPerDay,
+    topUsers,
+    userGrowth,
+    topMaterials,
+    citiesData,
+    categories,
+  };
 };
 
 export const useDashboardData = () => {
-  const [data, setData] = useState<DashboardData>(initialData);
-  const [loading, setLoading] = useState<LoadingState>(initialLoadingState);
-  const [error, setError] = useState<string | null>(null);
+  const query = useQuery({
+    queryKey: ['dashboard-data'],
+    queryFn: fetchAllDashboardData,
+    staleTime: 10 * 60 * 1000, // 10 minutes - very conservative
+    cacheTime: 30 * 60 * 1000, // 30 minutes
+    retry: 1,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false, // Never refetch on mount if we have cached data
+    refetchOnReconnect: false,
+    refetchInterval: false, // Disable automatic refetching
+  });
 
-  const updateLoading = useCallback((key: keyof LoadingState, value: boolean) => {
-    setLoading(prev => ({ ...prev, [key]: value }));
-  }, []);
+  const { data, isLoading, error, refetch, isFetching } = query;
 
-  const fetchAnalytics = useCallback(async () => {
-    try {
-      updateLoading('analytics', true);
-      const res = await api.get("/orders/analytics");
-      const json = normalizeApiResponse(res.data);
-      
-      if (json.success) {
-        setData(prev => ({
-          ...prev,
-          totalOrders: json.data.totalOrders,
-          orderStatus: json.data.statusCounts,
-          ordersPerDay: json.data.dailyOrders || [],
-        }));
-      }
-    } catch (error) {
-      console.error("Error fetching analytics:", error);
-      setError("Failed to fetch analytics data");
-    } finally {
-      updateLoading('analytics', false);
-    }
-  }, [updateLoading]);
+  // Default data structure
+  const defaultData: DashboardData = useMemo(() => ({
+    totalOrders: 0,
+    orderStatus: {},
+    ordersPerDay: [],
+    topUsers: [],
+    userGrowth: [],
+    topMaterials: [],
+    citiesData: null,
+    categories: [],
+  }), []);
 
-  const fetchTopUsers = useCallback(async () => {
-    try {
-      updateLoading('users', true);
-      const res = await api.get("/users/points/leaderboard");
-      const json = normalizeApiResponse(res.data);
-      
-      if (json.success) {
-        setData(prev => ({ ...prev, topUsers: json.data }));
-      }
-    } catch (error) {
-      console.error("Error fetching top users:", error);
-      setError("Failed to fetch users data");
-    } finally {
-      updateLoading('users', false);
-    }
-  }, [updateLoading]);
+  // Only show loading on initial load, not refetch
+  const loading: LoadingState = useMemo(() => {
+    const showLoading = isLoading && !data;
+    return {
+      analytics: showLoading,
+      users: showLoading,
+      materials: showLoading,
+      userStats: showLoading,
+      cities: showLoading,
+      categories: showLoading,
+    };
+  }, [isLoading, data]);
 
-const fetchTopMaterials = useCallback(async (category = 'All') => {
-  try {
-    updateLoading('materials', true);
-    const params = category !== 'All' ? { category } : {};
-    
-    // Add timestamp to prevent caching
-    const res = await api.get("/top-materials-recycled", { 
-      params: { ...params} 
-    });
-    
-    const json = normalizeApiResponse(res.data);
-    
-    if (json.success) {
-      setData(prev => ({ ...prev, topMaterials: json.data }));
-    }
-  } catch (error) {
-    console.error("Error fetching top materials:", error);
-    setError("Failed to fetch materials data");
-  } finally {
-    updateLoading('materials', false);
-  }
-}, [updateLoading]);
-
-  const fetchUserStats = useCallback(async () => {
-    try {
-      updateLoading('userStats', true);
-      const res = await api.get("/stats");
-      const data = normalizeApiResponse(res.data);
-      
-      const transformedData = transformUserGrowthData(data);
-      setData(prev => ({ ...prev, userGrowth: transformedData }));
-    } catch (error) {
-      console.error("Error fetching user growth:", error);
-      setError("Failed to fetch user statistics");
-    } finally {
-      updateLoading('userStats', false);
-    }
-  }, [updateLoading]);
-
-  const fetchTopCities = useCallback(async () => {
-    try {
-      updateLoading('cities', true);
-      const res = await api.get('/orders/analytics/top-cities');
-      const data = normalizeApiResponse(res.data);
-      
-      const chartData = transformCitiesData(data);
-      setData(prev => ({ ...prev, citiesData: chartData }));
-    } catch (error) {
-      console.error("Error fetching top cities:", error);
-      setError("Failed to fetch cities data");
-    } finally {
-      updateLoading('cities', false);
-    }
-  }, [updateLoading]);
-
-  const fetchCategories = useCallback(async () => {
-    try {
-      updateLoading('categories', true);
-      const res = await api.get("categories/get-items");
-      const json = normalizeApiResponse(res.data);
-      
-      if (json.success) {
-        setData(prev => ({ ...prev, categories: json.data }));
-      }
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      setError("Failed to fetch categories data");
-    } finally {
-      updateLoading('categories', false);
-    }
-  }, [updateLoading]);
-
-  // Optimized fetch all data with Promise.allSettled
-  const fetchAllData = useCallback(async () => {
-    setError(null);
-    
-    const results = await Promise.allSettled([
-      fetchAnalytics(),
-      fetchTopUsers(),
-      fetchTopMaterials(),
-      fetchUserStats(),
-      fetchTopCities(),
-      fetchCategories(),
-    ]);
-
-    // Check if any promises were rejected
-    const errors = results
-      .filter((result): result is PromiseRejectedResult => result.status === 'rejected')
-      .map(result => result.reason);
-
-    if (errors.length > 0) {
-      console.error('Some dashboard data failed to load:', errors);
-      // Don't set error state unless all requests fail
-      if (errors.length === results.length) {
-        setError('Failed to load dashboard data');
-      }
-    }
-  }, [fetchAnalytics, fetchTopUsers, fetchTopMaterials, fetchUserStats, fetchTopCities, fetchCategories]);
-
-  const refetch = useCallback(() => {
-    fetchAllData();
-  }, [fetchAllData]);
-
-  useEffect(() => {
-    fetchAllData();
-  }, [fetchAllData]);
+  const fetchTopMaterials = async (category = 'All') => {
+    // For category filtering, you might want to create a separate query
+    // For now, just refetch all data
+    return refetch();
+  };
 
   return {
-    data,
+    data: data || defaultData,
     loading,
-    error,
+    error: error?.message || null,
     refetch,
-    fetchTopMaterials, // For category filtering
+    fetchTopMaterials,
+    isFetching,
   };
 };

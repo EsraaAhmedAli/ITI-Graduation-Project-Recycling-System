@@ -1,34 +1,52 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import { useCart } from "@/context/CartContext";
 import { CartItem } from "@/models/cart";
 import { Recycle, Leaf, Package, Minus, Plus } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
-import Loader from "@/components/common/Loader";
-import { useCategories } from "@/hooks/useGetCategories";
 import toast from "react-hot-toast";
+import Loader from "@/components/common/loader";
+import dynamic from "next/dynamic";
+import { useUserAuth } from "@/context/AuthFormContext";
+import { useItemSocket } from "@/hooks/useItemSocket";
+
+// Lazy load FloatingRecorderButton for voice processing
+const FloatingRecorderButton = dynamic(
+  () => import('@/components/Voice Processing/FloatingRecorderButton'),
+  { ssr: false }
+);
 
 interface Item {
   _id: string;
-  name: string;
+  name: {
+    en: string;
+    ar: string;
+  };
   points: number;
   price: number;
   measurement_unit: 1 | 2;
   image: string;
-  categoryName: string;
+  categoryName: {
+    en: string;
+    ar: string;
+  };
   categoryId: string;
   description?: string;
   quantity: number;
+  displayName?: string;
+  categoryDisplayName?: string;
 }
 
 export default function ItemDetailsPage() {
   const { itemName } = useParams();
-  const decodedName =
-    typeof itemName === "string" ? decodeURIComponent(itemName) : "";
+  console.log(itemName);
+  
+ const decodedName =
+  typeof itemName === "string" ? decodeURIComponent(itemName) : "";
   const [selectedQuantity, setSelectedQuantity] = useState(1);
   const [inputValue, setInputValue] = useState("1"); // For the input field
   const [inputError, setInputError] = useState("");
@@ -36,25 +54,23 @@ export default function ItemDetailsPage() {
     loadingItemId,
     cart,
     addToCart,
-    increaseQty,
-    decreaseQty,
+ 
     updateCartState,
   } = useCart();
-  const { t } = useLanguage();
-  const { getCategoryIdByItemName } = useCategories();
+  const { t,locale,convertNumber } = useLanguage();
 
   useEffect(() => {
-    const decodedName = decodeURIComponent(itemName?.toString().toLowerCase());
-
-    const existing = cart.find(
-      (item) => item?.name?.toLowerCase() === decodedName
-    );
-    if (existing) {
-      setSelectedQuantity(existing.quantity);
-      setInputValue(existing.quantity.toString());
-    }
-  }, [cart, itemName]);
-
+  const decodedName = decodeURIComponent(itemName.toString().toLowerCase());
+  console.log(decodedName,'ddd');
+  
+  const existing = cart.find(
+    (item) => item?.name?.en.toLowerCase() === decodedName
+  );
+  if (existing) {
+    setSelectedQuantity(existing.quantity);
+    setInputValue(existing.quantity.toString());
+  }
+}, [cart, itemName]);
   console.log("🔍 Item Details Page loaded:", {
     itemName,
     decodedName,
@@ -65,27 +81,24 @@ export default function ItemDetailsPage() {
     console.log("🛒 Updated cart:", cart);
   }, [cart]);
 
-  // Fetch specific item by name using existing API (original prices only)
-  const fetchItemByName = async () => {
-    try {
-      const res = await api.get("/categories/get-items?limit=10000&role=buyer");
-      const allItems = res.data?.data || [];
 
-      const foundItem = allItems.find(
-        (item: any) => item.name.toLowerCase() === decodedName.toLowerCase()
-      );
+const fetchItemByName = async () => {
+  if (!decodedName) throw new Error("No item name provided");
 
-      if (!foundItem) {
-        throw new Error("Item not found");
-      }
-
-      return foundItem;
-    } catch (error) {
-      console.error("Error fetching item:", error);
-      throw error;
+  try {
+    const res = await api.get(`/items/by-name/${decodedName}?role=buyer&language=${locale}`);
+    
+    if (!res.data.success) {
+      throw new Error("Item not found");
     }
-  };
-
+    
+    return res.data.data;
+  } catch (error) {
+    console.error("Error fetching item:", error);
+    throw error;
+  }
+};
+const{user}=useUserAuth()
   const {
     data: item,
     isLoading,
@@ -95,6 +108,16 @@ export default function ItemDetailsPage() {
     queryFn: fetchItemByName,
     enabled: !!decodedName,
   });
+    useItemSocket({
+    itemId: item?._id,
+    itemName: decodedName,
+    userRole: user?.role,
+  });
+
+
+  const queryClient = useQueryClient();
+const cachedItem = queryClient.getQueryData(["item-details", decodedName]) as Item;
+const currentStock = cachedItem?.quantity ?? item?.quantity ?? 0;
 
   const syncCartWithChanges = (quantity: number) => {
     if (cart.find((ci) => ci._id === item._id)) {
@@ -103,6 +126,45 @@ export default function ItemDetailsPage() {
       );
     }
   };
+    const convertToCartItem = useCallback(
+    (item: Item, quantity?: number): CartItem => {
+      const englishItemName =
+        typeof item.name === "string" ? item.name : item.name?.en || "";
+      const arabicItemName =
+        typeof item.name === "string" ? "" : item.name?.ar || "";
+      const categoryId = item._id;
+      const categoryNameEn =
+        typeof item.categoryName === "string"
+          ? item.categoryName
+          : item.categoryName?.en || "";
+      const categoryNameAr =
+        typeof item.categoryName === "string"
+          ? ""
+          : item.categoryName?.ar || "";
+
+      return {
+        _id: item._id,
+        categoryId,
+        categoryName: {
+          en: categoryNameEn,
+          ar: categoryNameAr,
+        },
+        name: {
+          en: englishItemName,
+          ar: arabicItemName,
+        },
+        image: item.image,
+        points: item.points,
+        price: item.price,
+        measurement_unit: item.measurement_unit,
+        quantity: quantity ?? item.quantity,
+      };
+    },
+    []
+  );
+
+  // const categoryName_display =
+  //  item.categoryName[locale];
 
   const getMeasurementText = (unit: 1 | 2): string => {
     return unit === 1 ? t("common.unitKg") : t("common.unitPiece");
@@ -189,12 +251,8 @@ export default function ItemDetailsPage() {
     setInputValue(value);
 
     if (!item) return;
+const validation = validateQuantity(value, item.measurement_unit, currentStock);
 
-    const validation = validateQuantity(
-      value,
-      item.measurement_unit,
-      item.quantity
-    );
 
     if (validation.isValid) {
       setSelectedQuantity(validation.validValue);
@@ -228,7 +286,7 @@ export default function ItemDetailsPage() {
   };
 
   if (isLoading) {
-    return <Loader title="items" />;
+    return <Loader  />;
   }
 
   if (isError || !item) {
@@ -255,28 +313,12 @@ export default function ItemDetailsPage() {
     );
   }
 
-  function convertToCartItem(item: Item, quantity?: number): CartItem {
-    return {
-      _id: item._id,
-      categoryId: getCategoryIdByItemName(item.name),
-      categoryName: item.categoryName,
-      name: item.name,
-      image: item.image,
-      points: item.points,
-      price: item.price,
-      measurement_unit: item.measurement_unit,
-      quantity: quantity ?? item.quantity,
-    };
-  }
 
-  const remainingQuantity = item?.quantity - selectedQuantity;
-  const isLowStock = item?.quantity <= 5;
-  const isOutOfStock = item?.quantity <= 0;
+const remainingQuantity = currentStock - selectedQuantity;
+const isLowStock = currentStock <= 5;
+const isOutOfStock = currentStock <= 0;
   const isInCart = cart.some((cartItem) => cartItem._id === item._id);
-  const stockPercentage = Math.max(
-    0,
-    Math.min(100, (remainingQuantity / item.quantity) * 100)
-  );
+const stockPercentage = Math.max(0, Math.min(100, (remainingQuantity / currentStock) * 100));
 
   const handleAddToCart = () => {
     if (!isOutOfStock && remainingQuantity >= 0) {
@@ -322,7 +364,7 @@ export default function ItemDetailsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen" style={{ background: "var(--background)" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
           {/* Product Image */}
@@ -342,25 +384,21 @@ export default function ItemDetailsPage() {
           <div className="space-y-6">
             {/* Category and Title */}
             <div>
-              <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 mb-3">
-                {t(`categories.${item?.categoryName}`)}
+              <span className="inline-block px-3 py-1 rounded-full text-xs font-mediummb-3" style={{color:"var(--color-base-800)", background:"var(--text-gray-100)"}}>
+                {item?.categoryName[locale]}
               </span>
-              <h1 className="text-3xl font-bold text-gray-900">
-                {t(
-                  `categories.subcategories.${decodedName
-                    .toLowerCase()
-                    .replace(/\s+/g, "-")}`
-                )}
+              <h1 className="text-3xl font-bold text-gray-900"style={{color:"var(--color-base-800)"}} >
+                {item.name[locale]}
               </h1>
               {item?.description && (
-                <p className="text-gray-600 mt-2">{item?.description}</p>
+                <p className="text-gray-600 mt-2" style={{color:"var(--color-base-800)"}}>{item?.description}</p>
               )}
             </div>
 
             {/* Price and Points */}
             <div className="flex items-baseline space-x-4">
-              <span className="text-3xl font-bold text-gray-900">
-                {(item.price * selectedQuantity).toFixed(2)}{" "}
+              <span className="text-3xl font-bold text-gray-900" style={{color:"var(--color-base-800)"}}>
+                {convertNumber((item.price * selectedQuantity).toFixed(2))}{" "}
                 {t("itemsModal.currency")}
               </span>
             </div>
@@ -368,7 +406,7 @@ export default function ItemDetailsPage() {
             {/* Stock Status */}
             <div className="pt-4 border-t border-gray-200">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium" style={{color:"var(--text-gray-700)"}}>
                   {t("common.availableStock")}
                 </span>
                 <span
@@ -448,7 +486,7 @@ export default function ItemDetailsPage() {
             {item.quantity !== 0 && (
               <>
                 <div className="space-y-3">
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium" style={{color:"var(--text-gray-700)"}}>
                     {t("common.quantity")}
                   </label>
                   <div className="flex items-center space-x-3">
@@ -540,12 +578,12 @@ export default function ItemDetailsPage() {
               </>
             )}
 
-            <div className="bg-gray-50 rounded-xl p-5 space-y-3">
-              <h3 className="font-semibold text-gray-800 flex items-center">
+            <div className="bg-gray-50 rounded-xl p-5 space-y-3" style={{background:"var(--text-gray-100)"}}>
+              <h3 className="font-semibold flex items-center" style={{color:"var(--text-gray-800)"}}>
                 <Leaf className="w-5 h-5 mr-2 text-green-600" />
                 {t("environmentalBenefit.environmentalBenefits")}
               </h3>
-              <ul className="space-y-2 text-sm text-gray-600">
+              <ul className="space-y-2 text-sm" style={{color:"var(--text-gray-700)"}}>
                 <li className="flex items-start">
                   <span className="text-green-600 mr-2">•</span>
                   {t("environmentalBenefit.reducesCO2Emissions", {
@@ -570,8 +608,8 @@ export default function ItemDetailsPage() {
         {/* Additional Product Info */}
         <div className="mt-16 space-y-8">
           {/* Recycling Process */}
-          <div className="bg-gray-50 rounded-xl p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+          <div className="rounded-xl p-8" style={{background:"var(--text-gray-100)"}}>
+            <h2 className="text-2xl font-bold mb-6" style={{color:"var(--text-gray-900)"}}>
               {t("recycleProcess.title")}
             </h2>
             <div className="grid md:grid-cols-3 gap-6">
@@ -593,17 +631,20 @@ export default function ItemDetailsPage() {
                 },
               ].map((step, index) => (
                 <div key={index} className="space-y-3">
-                  <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-full shadow-sm flex items-center justify-center" style={{background:"var(--background)"}} >
                     {step.icon}
                   </div>
                   <h3 className="font-semibold text-lg">{step.title}</h3>
-                  <p className="text-gray-600">{step.description}</p>
+                  <p  style={{color:"var(--text-gray-700)"}}>{step.description}</p>
                 </div>
               ))}
             </div>
           </div>
         </div>
       </div>
+      
+      {/* Voice Processing Component */}
+      <FloatingRecorderButton />
     </div>
   );
 }

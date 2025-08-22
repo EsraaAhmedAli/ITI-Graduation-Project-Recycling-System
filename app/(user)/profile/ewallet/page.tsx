@@ -21,9 +21,10 @@ import Link from "next/link";
 import api from "@/lib/axios";
 import { useUserAuth } from "@/context/AuthFormContext";
 import toast from "react-hot-toast";
+import { useLanguage } from "@/context/LanguageContext";
 
 const EWallet = () => {
-  const [balance, setBalance] = useState(0);
+  const [balance, setBalance] = useState(20);
   const [isProcessing, setIsProcessing] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
@@ -34,15 +35,28 @@ const EWallet = () => {
   const [selectedGateway, setSelectedGateway] = useState("");
   const { user } = useUserAuth();
   const [transactions, setTransactions] = useState([]);
+  const { t, convertNumber, locale } = useLanguage();
 
-  const paymentGateways = [
-    { id: "paypal", name: "PayPal", icon: Users, fee: "2.9%" },
-    { id: "stripe", name: "Stripe", icon: CreditCard, fee: "2.9%" },
-    { id: "bank", name: "Bank Transfer", icon: Building2, fee: "Free" },
-    { id: "venmo", name: "Venmo", icon: Smartphone, fee: "1.75%" },
-    { id: "cashapp", name: "Cash App", icon: DollarSign, fee: "1.5%" },
-    { id: "wise", name: "Wise", icon: ArrowUpRight, fee: "0.5%" },
-  ];
+  const paymentGateways = {
+    en: [
+      { id: "paypal", name: "PayPal", icon: Users },
+      { id: "stripe", name: "Stripe", icon: CreditCard },
+      { id: "bank", name: "Bank Transfer", icon: Building2 },
+      { id: "venmo", name: "Venmo", icon: Smartphone },
+      { id: "cashapp", name: "Cash App", icon: DollarSign },
+      { id: "wise", name: "Wise", icon: ArrowUpRight },
+    ],
+    ar: [
+      { id: "paypal", name: "باي بال", icon: Users },
+      { id: "stripe", name: "سترايب", icon: CreditCard },
+      { id: "bank", name: "تحويل بنكي", icon: Building2 },
+      { id: "venmo", name: "فينمو", icon: Smartphone },
+      { id: "cashapp", name: "كاش آب", icon: DollarSign },
+      { id: "wise", name: "وايز", icon: ArrowUpRight },
+    ],
+  };
+
+  const coin = locale === "ar" ? "جنيه" : "EGP";
 
   const chunkArray = (arr, size) => {
     // Sort newest → oldest (date + time respected)
@@ -72,11 +86,9 @@ const EWallet = () => {
       setBalance(newBalance);
 
       // Fetch transactions
-      const transactionsRes = await api.get(
-        `/users/${user._id}/transactions`
-      );
-      console.log(transactionsRes, 'resss');
-      
+      const transactionsRes = await api.get(`/users/${user._id}/transactions`);
+      console.log(transactionsRes, "resss");
+
       const raw =
         transactionsRes.data?.transactions || transactionsRes.data || [];
 
@@ -114,7 +126,7 @@ const EWallet = () => {
     try {
       const transaction = {
         gateway: selectedGateway,
-        amount: parseFloat(withdrawAmount),
+        amount: parseFloat(convertNumber(withdrawAmount, "en")),
         type: "withdrawal",
       };
 
@@ -149,12 +161,13 @@ const EWallet = () => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleString("en-US", {
+    return new Date(dateString).toLocaleString(locale, {
       month: "short",
       day: "numeric",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
+      numberingSystem: locale === "ar" ? "arab" : "latn",
     });
   };
 
@@ -174,9 +187,11 @@ const EWallet = () => {
       <div className="mb-8">
         <div className="flex items-center mb-4">
           <Recycle className="w-8 h-8 text-green-600 mr-3" />
-          <h1 className="text-3xl font-bold text-gray-900">EcoWallet</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            {t("ewallet.title")}
+          </h1>
         </div>
-        <p className="text-gray-600">Earn rewards for your recycling efforts</p>
+        <p className="text-gray-600">{t("ewallet.subtitle")}</p>
       </div>
 
       {/* Balance Card */}
@@ -185,11 +200,13 @@ const EWallet = () => {
           <div>
             <p className="text-green-100 mb-1 flex items-center">
               <Leaf className="w-4 h-4 mr-2" />
-              Eco Rewards Balance
+              {t("ewallet.balance.title")}
             </p>
-            <h2 className="text-4xl font-bold">{balance.toFixed(2)} EGP</h2>
+            <h2 className="text-4xl font-bold">
+              {convertNumber(balance.toFixed(2))} {coin}
+            </h2>
             <p className="text-green-200 text-sm mt-2">
-              Earned through sustainable recycling
+              {t("ewallet.balance.subtitle")}
             </p>
           </div>
           <Wallet className="w-12 h-12 text-green-200" />
@@ -200,64 +217,27 @@ const EWallet = () => {
             className="bg-primary bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg flex items-center space-x-2 transition-all"
           >
             <ArrowUpRight className="w-4 h-4" />
-            <span>Cash Out</span>
+            <span>{t("ewallet.balance.cashOut")}</span>
           </button>
           <button className="bg-primary bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg flex items-center space-x-2 transition-all">
             <Recycle className="w-4 h-4" />
-            <Link href="/category">Recycle More</Link>
+            <Link href="/category">{t("ewallet.balance.recycleMore")}</Link>
           </button>
-        </div>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div className="bg-white rounded-lg p-4 shadow-sm border border-green-100">
-          <div className="flex items-center">
-            <div className="bg-green-100 p-2 rounded-lg mr-3">
-              <Recycle className="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">This Month</p>
-              <p className="font-semibold text-gray-900">127.85 EGP</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm border border-green-100">
-          <div className="flex items-center">
-            <div className="bg-emerald-100 p-2 rounded-lg mr-3">
-              <Leaf className="w-5 h-5 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Items Recycled</p>
-              <p className="font-semibold text-gray-900">342</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm border border-green-100">
-          <div className="flex items-center">
-            <div className="bg-teal-100 p-2 rounded-lg mr-3">
-              <CheckCircle className="w-5 h-5 text-teal-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">CO₂ Saved</p>
-              <p className="font-semibold text-gray-900">45.2 kg</p>
-            </div>
-          </div>
         </div>
       </div>
 
       {/* Recent Transactions Preview */}
       <div className="bg-white rounded-xl shadow-sm border border-green-100 mb-6">
         <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-          <h3 className="text-xl font-semibold text-gray-900 flex items-center">
+          <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
             <Calendar className="w-5 h-5 mr-2 text-green-600" />
-            Recent Activity
+            {t("ewallet.transactions.title")}
           </h3>
           <button
             onClick={() => setShowTransactionsModal(true)}
             className="text-green-600 hover:text-green-700 font-medium text-sm"
           >
-            View All
+            {t("ewallet.transactions.viewAll")}
           </button>
         </div>
 
@@ -269,7 +249,9 @@ const EWallet = () => {
               <div key={idx} className="p-4 hover:bg-gray-50 transition-colors">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-700 capitalize">
-                    {transaction.type}
+                    {t(
+                      `ewallet.transactions.types.${transaction.type.toLowerCase()}`
+                    )}
                   </span>
                   <span
                     className={`font-semibold text-sm ${
@@ -281,7 +263,8 @@ const EWallet = () => {
                     {transaction.type.toString().toLowerCase() == "cashback"
                       ? "+"
                       : "-"}
-                    {Math.abs(transaction.amount).toFixed(2)} EGP
+                    {convertNumber(Math.abs(transaction.amount).toFixed(2))}{" "}
+                    {coin}
                   </span>
                   <span className="text-xs text-gray-500">
                     {formatDate(transaction.date)}
@@ -297,71 +280,79 @@ const EWallet = () => {
         <div className="fixed inset-0 bg-gray-200/40 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
             <h3 className="text-xl font-semibold mb-4 text-gray-900">
-              Cash Out Rewards
+              {t("ewallet.withdraw.title")}
             </h3>
             <p className="text-gray-600 mb-4">
-              Available balance:{" "}
+              {t("ewallet.withdraw.availableBalance")}:{" "}
               <span className="font-semibold text-green-600">
-                {balance.toFixed(2)} EGP
+                {convertNumber(balance.toFixed(2))}{" "}
+                {t("ewallet.withdraw.currency")}
               </span>
             </p>
 
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Withdrawal Amount
+                {t("ewallet.withdraw.withdrawalAmount")}
               </label>
               <div className="relative">
                 <input
-                  type="number"
-                  value={withdrawAmount}
+                  type="text"
+                  value={
+                    withdrawAmount === "" ? "" : convertNumber(withdrawAmount)
+                  } // show localized digits
                   onChange={(e) => {
-                    let value = e.target.value;
+                    const rawValue = e.target.value;
 
-                    // Prevent non-numbers
-                    if (isNaN(value)) return;
+                    // allow empty string → user is typing/deleting
+                    if (rawValue.trim() === "") {
+                      setWithdrawAmount("");
+                      return;
+                    }
 
-                    let numValue = parseFloat(value);
+                    // always convert to English digits for internal logic
+                    const englishValue = convertNumber(rawValue, "en");
 
-                    // Prevent negative
+                    if (!/^\d*\.?\d*$/.test(englishValue)) {
+                      // prevent invalid chars
+                      return;
+                    }
+
+                    let numValue = parseFloat(englishValue); // keep let because we reassign
+
+                    if (isNaN(numValue)) {
+                      setWithdrawAmount("");
+                      return;
+                    }
+
+                    // enforce range
                     if (numValue < 0) numValue = 0;
-
-                    // Prevent exceeding balance
                     if (numValue > balance) numValue = balance;
 
-                    setWithdrawAmount(numValue.toString());
+                    setWithdrawAmount(numValue.toString()); // keep state in English
                   }}
+                  placeholder={convertNumber("0.00")}
                   onBlur={() => {
-                    // If empty, reset to ""
                     if (withdrawAmount === "") return;
 
-                    let numValue = parseFloat(withdrawAmount);
-
-                    // Clamp value between 0 and balance
+                    let numValue = parseFloat(withdrawAmount); // let is correct here too
                     if (numValue < 0) numValue = 0;
                     if (numValue > balance) numValue = balance;
 
                     setWithdrawAmount(numValue.toString());
                   }}
                   className="w-full pl-8 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="0.00"
-                  max={balance}
-                  min="0"
-                  step="0.01"
                 />
-                <span className="absolute right-3 top-3 text-gray-500">
-                  EGP
-                </span>
               </div>
 
               {/* Validation messages */}
               {withdrawAmount && parseFloat(withdrawAmount) < 10 && (
                 <p className="text-xs text-red-500 mt-1">
-                  Minimum withdrawal is 10.00 EGP
+                  {t("ewallet.withdraw.validation.min")}
                 </p>
               )}
               {withdrawAmount && parseFloat(withdrawAmount) > balance && (
                 <p className="text-xs text-red-500 mt-1">
-                  You cannot withdraw more than your balance
+                  {t("ewallet.withdraw.validation.max")}
                 </p>
               )}
             </div>
@@ -371,7 +362,7 @@ const EWallet = () => {
                 onClick={() => setShowWithdrawModal(false)}
                 className="flex-1 px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
               >
-                Cancel
+                {t("ewallet.withdraw.buttons.cancel")}
               </button>
               <button
                 onClick={handleWithdraw}
@@ -382,7 +373,7 @@ const EWallet = () => {
                 }
                 className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
-                Continue
+                {t("ewallet.withdraw.buttons.continue")}
               </button>
             </div>
           </div>
@@ -392,23 +383,22 @@ const EWallet = () => {
       {/* Payment Gateway Selection Modal */}
       {showPaymentGateway && (
         <div className="fixed inset-0 bg-gray-200/40 backdrop-blur-sm flex items-center justify-center z-50">
-          {/* Overlay with blur & grey tint */}
-
           <div className="bg-white rounded-xl p-6 w-full max-w-lg mx-4">
             {paymentStep === 1 && (
               <>
                 <h3 className="text-xl font-semibold mb-4">
-                  Choose Payment Method
+                  {t("ewallet.payment.step1.title")}
                 </h3>
                 <p className="text-gray-600 mb-6">
-                  Withdrawing{" "}
+                  {t("ewallet.payment.step1.withdrawing")}{" "}
                   <span className="font-semibold text-green-600">
-                    {withdrawAmount} EGP
+                    {convertNumber(withdrawAmount)}{" "}
+                    {t("ewallet.withdraw.currency")}
                   </span>
                 </p>
 
                 <div className="grid grid-cols-2 gap-3 mb-6">
-                  {paymentGateways.map((gateway) => {
+                  {paymentGateways[locale].map((gateway) => {
                     const IconComponent = gateway.icon;
                     return (
                       <label
@@ -430,9 +420,6 @@ const EWallet = () => {
                         <span className="font-medium text-sm">
                           {gateway.name}
                         </span>
-                        <span className="text-xs text-gray-500">
-                          Fee: {gateway.fee}
-                        </span>
                       </label>
                     );
                   })}
@@ -443,14 +430,14 @@ const EWallet = () => {
                     onClick={() => setShowPaymentGateway(false)}
                     className="flex-1 px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
                   >
-                    Cancel
+                    {t("ewallet.payment.step1.buttons.cancel")}
                   </button>
                   <button
                     onClick={processPayment}
                     disabled={!selectedGateway}
                     className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                   >
-                    Process Payment
+                    {t("ewallet.payment.step1.buttons.process")}
                   </button>
                 </div>
               </>
@@ -460,11 +447,15 @@ const EWallet = () => {
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-green-600 mx-auto mb-4"></div>
                 <h3 className="text-xl font-semibold mb-2">
-                  Processing Payment...
+                  {t("ewallet.payment.step2.title")}
                 </h3>
                 <p className="text-gray-600">
-                  Transferring your eco-rewards via{" "}
-                  {paymentGateways.find((g) => g.id === selectedGateway)?.name}
+                  {t("ewallet.payment.step2.subtitle")}{" "}
+                  {
+                    paymentGateways[locale].find(
+                      (g) => g.id === selectedGateway
+                    )?.name
+                  }
                 </p>
               </div>
             )}
@@ -473,11 +464,13 @@ const EWallet = () => {
               <div className="text-center py-8">
                 <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
                 <h3 className="text-xl font-semibold mb-2 text-green-600">
-                  Payment Successful!
+                  {t("ewallet.payment.step3.title")}
                 </h3>
                 <p className="text-gray-600">
-                  Your {withdrawAmount} EGP withdrawal has been processed
-                  successfully
+                  {t("ewallet.payment.step3.subtitle", {
+                    amount: convertNumber(withdrawAmount),
+                    currency: t("ewallet.withdraw.currency"),
+                  })}
                 </p>
               </div>
             )}
@@ -489,9 +482,10 @@ const EWallet = () => {
       {showTransactionsModal && (
         <div className="fixed inset-0 bg-gray-200/40 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-xl w-full max-w-2xl mx-4 max-h-[80vh] overflow-hidden">
+            {/* Header */}
             <div className="p-6 border-b border-gray-200 flex items-center justify-between">
               <h3 className="text-xl font-semibold text-gray-900">
-                Transaction History
+                {t("ewallet.transactions.history")}
               </h3>
               <button
                 onClick={() => setShowTransactionsModal(false)}
@@ -501,6 +495,7 @@ const EWallet = () => {
               </button>
             </div>
 
+            {/* Transactions List */}
             <div className="relative">
               <div className="p-6 overflow-y-auto max-h-96">
                 <div className="divide-y divide-gray-200">
@@ -516,7 +511,11 @@ const EWallet = () => {
                                 : "text-orange-600"
                             }`}
                           >
-                            {transaction.type}
+                            {t(
+                              `ewallet.transactions.types.${transaction.type
+                                .toString()
+                                .toLowerCase()}`
+                            )}
                           </span>
 
                           {/* Amount */}
@@ -528,7 +527,8 @@ const EWallet = () => {
                             }`}
                           >
                             {transaction.type === "cashback" ? "+" : "-"}
-                            {Math.abs(transaction.amount).toFixed(2)} EGP
+                            {Math.abs(transaction.amount).toFixed(2)}{" "}
+                            {t("ewallet.transactions.currency")}
                           </span>
 
                           {/* Date */}
@@ -550,7 +550,7 @@ const EWallet = () => {
                   className="flex items-center space-x-2 px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronLeft className="w-4 h-4" />
-                  <span>Previous</span>
+                  <span>{t("ewallet.transactions.previous")}</span>
                 </button>
 
                 <div className="flex items-center space-x-2">
@@ -572,7 +572,7 @@ const EWallet = () => {
                   disabled={currentTransactionPage === transactions.length - 1}
                   className="flex items-center space-x-2 px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  <span>Next</span>
+                  <span>{t("ewallet.transactions.next")}</span>
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>

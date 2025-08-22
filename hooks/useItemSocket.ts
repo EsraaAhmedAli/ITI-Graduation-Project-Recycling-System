@@ -1,11 +1,6 @@
-import { Item } from "./../components/Types/categories.type";
 import { useEffect } from "react";
 import { getSocket } from "@/lib/socket";
-import { queryClient } from "@/lib/queryClient";
-import { GetItemsResponse } from "./useGetItems";
-import { Category } from "@/components/Types/categories.type";
 import { useQueryClient } from "@tanstack/react-query";
-import { CartItem } from "@/models/cart";
 
 interface ItemUpdatePayload {
   itemId: string;
@@ -13,104 +8,76 @@ interface ItemUpdatePayload {
   quantity: number;
 }
 
+interface ItemSocketParams {
+  itemIds: string[]; // Array of item IDs to listen for
+  userRole: string;
+}
+
 export function useItemSocket({
-  currentPage,
-  itemsPerPage,
+  itemIds,
   userRole,
-  selectedCategory,
-  searchTerm,
-}: {
-  currentPage: number;
-  itemsPerPage: number;
-  userRole?: string;
-  selectedCategory: string;
-  searchTerm: string;
-}) {
+}: ItemSocketParams) {
   const queryClient = useQueryClient();
   const socket = getSocket();
+  
   useEffect(() => {
-    console.log("🔌 Setting up item socket listeners...");
-    if (!socket) return;
-    // console.log("🔌 Socket initialized:", socket.);
+    console.log("🔌 Setting up item socket listener for items:", itemIds);
+    if (!socket || !itemIds?.length) return;
 
-    // const handleItemUpdated = (updatedItem: ItemUpdatePayload) => {
-    //   console.log("🔄 Item updated from socket:", updatedItem);
-
-    //   queryClient.setQueryData(
-    //     [
-    //       "categories items",
-    //       currentPage,
-    //       itemsPerPage,
-    //       userRole,
-    //       selectedCategory,
-    //       searchTerm,
-    //     ],
-    //     (oldData: any) => {
-    //       if (!oldData) return oldData;
-    //       console.log("old data:", oldData);
-    //       const updatedItems = oldData.data.map((item: CartItem) =>
-    //         item._id === updatedItem.itemId
-    //           ? { ...item, quantity: updatedItem.quantity }
-    //           : item
-    //       );
-    //       return { ...oldData, data: updatedItems };
-    //     }
-    //   );
-    // };
     const handleItemUpdated = (updatedItem: ItemUpdatePayload) => {
+      // Only process updates for items in our cart
+      if (!itemIds.includes(updatedItem.itemId)) {
+        return;
+      }
+      
       console.log("🔄 Item updated from socket:", updatedItem);
-
-      queryClient.setQueriesData<GetItemsResponse>(
-        { predicate: (query) => query.queryKey[0] === "categories items" },
-        (oldData) => {
+      
+      // Update the cart items query cache
+      queryClient.setQueryData(
+        ["cart-items", itemIds, userRole],
+        (oldData: any) => {
           if (!oldData?.data) return oldData;
-          console.log("old data:", oldData);
+          
           return {
             ...oldData,
-            data: oldData.data.map((item) =>
-              item._id === updatedItem.itemId
+            data: oldData.data.map((item: any) => 
+              item._id === updatedItem.itemId 
                 ? { ...item, quantity: updatedItem.quantity }
                 : item
-            ),
+            )
           };
         }
       );
+
+      // Also invalidate to ensure fresh data
+      queryClient.invalidateQueries({
+        queryKey: ["cart-items", itemIds, userRole]
+      });
     };
 
     const handleItemDeleted = (payload: { itemId: string }) => {
-      queryClient.setQueriesData<GetItemsResponse>(
-        { predicate: (query) => query.queryKey[0] === "categories items" },
-        (oldData) => {
-          if (!oldData?.data) return oldData;
-
-          return {
-            ...oldData,
-            data: oldData.data.filter((item) => item._id !== payload.itemId),
-            pagination: {
-              ...oldData.pagination,
-              total: oldData.pagination.totalItems - 1,
-            },
-          };
-        }
-      );
+      if (!itemIds.includes(payload.itemId)) {
+        return;
+      }
+      
+      console.log("🗑️ Item deleted from socket:", payload);
+      
+      // Invalidate the query since an item was deleted
+      queryClient.invalidateQueries({
+        queryKey: ["cart-items", itemIds, userRole]
+      });
     };
 
-    const handleItemCreated = (payload: Category) => {
-      queryClient.setQueriesData<GetItemsResponse>(
-        { predicate: (query) => query.queryKey[0] === "categories items" },
-        (oldData) => {
-          if (!oldData?.data) return oldData;
-
-          return {
-            ...oldData,
-            data: [payload, ...oldData.data],
-            pagination: {
-              ...oldData.pagination,
-              total: oldData.pagination.totalItems + 1,
-            },
-          };
-        }
-      );
+    const handleItemCreated = (payload: any) => {
+      // Not typically relevant for cart items but can be useful
+      console.log("➕ New item created:", payload);
+      
+      // If the new item is relevant to our current cart, invalidate
+      if (itemIds.includes(payload.itemId)) {
+        queryClient.invalidateQueries({
+          queryKey: ["cart-items", itemIds, userRole]
+        });
+      }
     };
 
     socket.on("itemUpdated", handleItemUpdated);
@@ -122,13 +89,5 @@ export function useItemSocket({
       socket.off("itemDeleted", handleItemDeleted);
       socket.off("itemCreated", handleItemCreated);
     };
-  }, [
-    queryClient,
-    currentPage,
-    itemsPerPage,
-    userRole,
-    selectedCategory,
-    searchTerm,
-    socket,
-  ]);
+  }, [queryClient, itemIds, userRole, socket]);
 }

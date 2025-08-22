@@ -1,7 +1,10 @@
 "use client";
 
-import FloatingRecorderButton from "@/components/Voice Processing/FloatingRecorderButton";
-import CategoryList from "@/components/shared/CategoryList";
+const FloatingRecorderButton = dynamic(
+  () => import('@/components/Voice Processing/FloatingRecorderButton'),
+  { ssr: false }
+);import CategoryList from "@/components/shared/CategoryList";
+import dynamic from "next/dynamic";
 
 
 export default function UserCategoriesPage() {

@@ -5,22 +5,66 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
+import { useCategories } from "@/hooks/useGetCategories";
+import { useMemo } from "react"; // Import useMemo
 
 export default function DynamicBreadcrumbs() {
   const pathname = usePathname();
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const segments = pathname.split("/").filter(Boolean);
+
+  // ✅ Check if we actually need categories data
+  const needsCategories = useMemo(() => {
+    return segments.some(
+      (segment) =>
+        segment.toLowerCase() === "categories" ||
+        segment.toLowerCase() === "category"
+    );
+  }, [segments]);
+
+  // ✅ Only fetch categories when needed
+  const categoriesQuery = useCategories({
+    enabled: needsCategories, // This prevents the API call on most pages
+  });
+
+  const categories = categoriesQuery.data?.data;
 
   // Narrow order ID detection to *only* hex or numeric patterns
   const isOrderId = (segment: string) => {
     return /^[a-f\d]{24}$/i.test(segment) || /^\d+$/.test(segment);
   };
 
-  const getTranslatedSegment = (segment: string) => {
+  const getTranslatedSegment = (segment: string, segmentIndex: number) => {
     const decodedSegment = decodeURIComponent(segment).toLowerCase();
 
     if (isOrderId(segment)) {
       return `Order #${segment.slice(-8).toUpperCase()}`;
+    }
+
+    // Check if this is a category page (previous segment is "categories" OR "category")
+    const previousSegment =
+      segmentIndex > 0 ? segments[segmentIndex - 1]?.toLowerCase() : null;
+
+    if (previousSegment === "categories" || previousSegment === "category") {
+      // Find the category by English name and return localized name
+      const category = categories?.find(
+        (cat) => cat.name.en.toLowerCase() === decodedSegment
+      );
+
+      console.log("✅ Found category:", category);
+
+      if (category) {
+        const localizedName =
+          category.name[locale as "en" | "ar"] || category.name.en;
+        console.log("🌐 Returning localized name:", localizedName);
+        return localizedName;
+      }
+
+      console.log("❌ Category not found, returning formatted segment");
+      // If category not found in backend data, return formatted segment
+      return decodeURIComponent(segment)
+        .replace(/-/g, " ")
+        .replace(/\b\w/g, (l) => l.toUpperCase());
     }
 
     const pathTranslations: Record<string, string> = {
@@ -55,18 +99,7 @@ export default function DynamicBreadcrumbs() {
       return pathTranslations[decodedSegment];
     }
 
-    const categoryKey = `categories.${decodedSegment}`;
-    const categoryTranslation = t(categoryKey, { defaultValue: "" });
-    if (categoryTranslation && categoryTranslation !== categoryKey) {
-      return categoryTranslation;
-    }
-
-    const subCategoryKey = `categories.subcategories.${decodedSegment}`;
-    const subCategoryTranslation = t(subCategoryKey, { defaultValue: "" });
-    if (subCategoryTranslation && subCategoryTranslation !== subCategoryKey) {
-      return subCategoryTranslation;
-    }
-
+    // Skip translation file lookups for categories since we handle them above
     for (const [key, translation] of Object.entries(pathTranslations)) {
       if (decodedSegment.includes(key)) {
         return translation;
@@ -78,55 +111,54 @@ export default function DynamicBreadcrumbs() {
       .replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
- const crumbs = segments
-  .filter((segment) => segment.toLowerCase() !== "tracking")
-  .flatMap((segment, index, filteredSegments) => {
-    let href = "/";
-    let name = getTranslatedSegment(segment);
+  const crumbs = segments
+    .filter((segment) => segment.toLowerCase() !== "tracking")
+    .flatMap((segment, index, filteredSegments) => {
+      let href = "/";
+      let name = getTranslatedSegment(segment, index);
 
-    // Special handling for "pickup"
-    if (segment.toLowerCase() === "pickup") {
-      // First: disabled pickup breadcrumb
-      const pickupCrumb = {
-        name: t("breadcrumbs.pickup") || "Pickup",
-        href: "#",
-        isLast: false,
-        isClickable: false,
-        isOrderId: false,
-      };
+      // Special handling for "pickup"
+      if (segment.toLowerCase() === "pickup") {
+        // First: disabled pickup breadcrumb
+        const pickupCrumb = {
+          name: t("breadcrumbs.pickup") || "Pickup",
+          href: "#",
+          isLast: false,
+          isClickable: false,
+          isOrderId: false,
+        };
 
-      // Second: profile breadcrumb after pickup
-      const profileCrumb = {
-        name: t("breadcrumbs.profile") || "Profile",
-        href: "/profile",
-        isLast: index === filteredSegments.length - 1,
-        isClickable: true,
-        isOrderId: false,
-      };
+        // Second: profile breadcrumb after pickup
+        const profileCrumb = {
+          name: t("breadcrumbs.profile") || "Profile",
+          href: "/profile",
+          isLast: index === filteredSegments.length - 1,
+          isClickable: true,
+          isOrderId: false,
+        };
 
-      return [pickupCrumb, profileCrumb];
-    }
+        return [pickupCrumb, profileCrumb];
+      }
 
-    if (isOrderId(segment)) {
-      href = "#";
-    } else {
-      href = "/" + segments.slice(0, index + 1).join("/");
-    }
+      if (isOrderId(segment)) {
+        href = "#";
+      } else {
+        href = "/" + segments.slice(0, index + 1).join("/");
+      }
 
-    const isClickable = !isOrderId(segment);
-    const isLast = index === filteredSegments.length - 1;
+      const isClickable = !isOrderId(segment);
+      const isLast = index === filteredSegments.length - 1;
 
-    return [
-      {
-        name,
-        href,
-        isLast,
-        isClickable,
-        isOrderId: isOrderId(segment),
-      },
-    ];
-  });
-
+      return [
+        {
+          name,
+          href,
+          isLast,
+          isClickable,
+          isOrderId: isOrderId(segment),
+        },
+      ];
+    });
 
   return (
     <Breadcrumb aria-label="Breadcrumb" className="mb-4">
@@ -137,29 +169,27 @@ export default function DynamicBreadcrumbs() {
         </div>
       </BreadcrumbItem>
 
-    {crumbs.map((crumb, index) => (
-  <BreadcrumbItem key={crumb.href + index}>
-    {crumb.isClickable && (crumb.name === t("breadcrumbs.profile") || !crumb.isLast) ? (
-      <Link
-        href={crumb.href}
-        className="text-secondary hover:text-primary hover:underline transition-colors"
-      >
-        {crumb.name}
-      </Link>
-    ) : (
-      <span
-        className={`transition-colors ${
-          crumb.isLast 
-            ? "text-primary font-medium" 
-            : "text-muted"
-        } ${crumb.isOrderId ? "font-mono text-sm" : ""}`}
-      >
-        {crumb.name}
-      </span>
-    )}
-  </BreadcrumbItem>
-))}
-
+      {crumbs.map((crumb, index) => (
+        <BreadcrumbItem key={crumb.href + index}>
+          {crumb.isClickable &&
+          (crumb.name === t("breadcrumbs.profile") || !crumb.isLast) ? (
+            <Link
+              href={crumb.href}
+              className="text-secondary hover:text-primary hover:underline transition-colors"
+            >
+              {crumb.name}
+            </Link>
+          ) : (
+            <span
+              className={`transition-colors ${
+                crumb.isLast ? "text-primary font-medium" : "text-muted"
+              } ${crumb.isOrderId ? "font-mono text-sm" : ""}`}
+            >
+              {crumb.name}
+            </span>
+          )}
+        </BreadcrumbItem>
+      ))}
     </Breadcrumb>
   );
 }

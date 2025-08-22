@@ -34,9 +34,7 @@ export const FloatingInput = React.forwardRef<
         />
 
         {icon && (
-          <div className="absolute top-4 right-2 z-10 cursor-pointer">
-            {icon}
-          </div>
+          <div className="absolute top-4 end-2 z-10 cursor-pointer">{icon}</div>
         )}
 
         <label

@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 import api from "@/lib/axios";
 import Image from "next/image";
+import { useLanguage } from "@/context/LanguageContext";
+import toast from "react-hot-toast";
 
 export default function EditItemPage() {
   const { name: rawName, itemId } = useParams();
@@ -14,28 +16,37 @@ export default function EditItemPage() {
 
   const [formData, setFormData] = useState({
     name: "",
+    itemNameAr: "",
     points: "",
     price: "",
     quantity: "",
-    measurement_unit: "1", // 1 => KG, 2 => Pieces
+    measurement_unit: "1",
     image: null as File | null,
     currentImage: "",
   });
 
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const {  tAr, isLoaded } = useLanguage();
+
+  console.log(name, 'nnn', formData.name, 'ttt');
 
   useEffect(() => {
+    // Wait for language context to be loaded before fetching data
+    if (!isLoaded) return;
+
     const fetchItem = async () => {
       try {
-        const res = await api.get(
-          `categories/get-items/${name}`
-        );
-        const data = res.data
+        const res = await api.get(`categories/get-items/${name}`);
+        const data = res.data;
         const item = data.data.find((i: any) => i._id === itemId);
+        
         if (item) {
+
+          
           setFormData({
-            name: item.name,
+            name: item.name.en,
+            itemNameAr: item.name.ar ,
             points: item.points,
             price: item.price,
             quantity: item.quantity,
@@ -57,8 +68,10 @@ export default function EditItemPage() {
       }
     };
 
-    if (name && itemId) fetchItem();
-  }, [name, itemId]);
+    if (name && itemId) {
+      fetchItem();
+    }
+  }, [name, itemId, tAr, isLoaded]); // Include isLoaded in dependencies
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -67,61 +80,72 @@ export default function EditItemPage() {
 
     if (name === "image" && files && files[0]) {
       const newImage = files[0];
-      const previewURL = URL.createObjectURL(newImage); // Create preview URL
+      const previewURL = URL.createObjectURL(newImage);
 
       setFormData((prev) => ({
         ...prev,
         image: newImage,
-        currentImage: previewURL, // Set preview as currentImage
+        currentImage: previewURL,
       }));
     } else {
       setFormData({ ...formData, [name]: value });
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setUploading(true);
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setUploading(true);
 
+  try {
+    const data = new FormData();
+    data.append("name", formData.name);
+    data.append("nameAr", formData.itemNameAr);
+    data.append("points", formData.points);
+    data.append("price", Math.floor(+formData.points / 19).toString());
+    data.append("quantity", formData.quantity);
+    data.append("measurement_unit", formData.measurement_unit);
+    
+    if (formData.image) data.append("image", formData.image);
+
+    await api.put(`/categories/item/${name}/${itemId}`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    // Success toast
+    toast.success("Item updated successfully!");
+    
+    // Use the navigation pattern that works
     try {
-      const data = new FormData();
-      data.append("name", formData.name);
-      data.append("points", formData.points);
-      data.append("price",Math.floor( formData.points/19));
-      data.append("quantity", formData.quantity);
-
-      data.append("measurement_unit", formData.measurement_unit);
-      if (formData.image) data.append("image", formData.image);
-
-      const res = await api.put(`/categories/item/${name}/${itemId}`, data, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      await Swal.fire({
-        icon: "success",
-        title: "Success!",
-        text: "Item updated successfully",
-        showConfirmButton: false,
-        timer: 1500,
-      });
-
-      router.push(`/admin/categories/${name}/get-sub-category`);
-    } catch (err) {
-      console.error(err.response.data.message);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: err.response.data.message,
-        confirmButtonColor: "#10b981",
-      });
-    } finally {
-      setUploading(false);
+      router.replace(`/admin/categories/${name}/get-sub-category`);
+      
+      // Fallback to hard redirect if router doesn't work
+      setTimeout(() => {
+        if (window.location.pathname !== `/admin/categories/${name}/get-sub-category`) {
+          window.location.href = `/admin/categories/${name}/get-sub-category`;
+        }
+      }, 200);
+      
+    } catch (navError) {
+      console.error('Navigation error:', navError);
+      window.location.href = `/admin/categories/${name}/get-sub-category`;
     }
-  };
 
-  if (loading) {
+  } catch (err: any) {
+    console.error(err.response?.data?.message);
+    
+    // Error toast with detailed message
+    const errorMessage = err.response?.data?.message || "Failed to update item";
+    toast.error(errorMessage);
+    
+  } finally {
+    setUploading(false);
+  }
+};
+
+  // Show loading while language context or data is loading
+  if (loading || !isLoaded) {
     return (
       <>
         <div className="flex justify-center items-center h-64">
@@ -140,10 +164,11 @@ export default function EditItemPage() {
             <p className="mt-1 opacity-90">Update the details of your item</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          <form onSubmit={handleSubmit} className="p-6 space-y-6" style={{background: "var(--background)"}}>
+            {/* English Item Name */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">
-                Item Name *
+                Item Name (English) *
               </label>
               <input
                 type="text"
@@ -151,9 +176,28 @@ export default function EditItemPage() {
                 value={formData.name}
                 onChange={handleChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
-                placeholder="Enter item name"
+                placeholder="Enter item name in English"
                 required
               />
+            </div>
+
+            {/* Arabic Item Name */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Item Name (Arabic)
+              </label>
+              <input
+                type="text"
+                name="itemNameAr"
+                value={formData.itemNameAr}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition text-right"
+                placeholder="أدخل اسم العنصر بالعربية"
+                dir="rtl"
+              />
+              <p className="text-xs text-gray-500">
+                Arabic name is optional but recommended for better user experience
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -177,10 +221,10 @@ export default function EditItemPage() {
                   Price *
                 </label>
                 <input
-                disabled
+                  disabled
                   type="number"
                   name="price"
-                  value={Math.floor(formData.points/19)}
+                  value={Math.floor(+formData.points / 19)}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border bg-gray-200 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
                   placeholder="Enter price"
@@ -198,7 +242,7 @@ export default function EditItemPage() {
                   value={formData.quantity}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
-                  placeholder="Enter price"
+                  placeholder="Enter quantity"
                   required
                 />
               </div>
@@ -234,7 +278,7 @@ export default function EditItemPage() {
                     width={100}
                     height={100}
                     alt="Current item"
-                    className=" object-cover rounded-lg border border-gray-200"
+                    className="object-cover rounded-lg border border-gray-200"
                   />
                 </div>
               )}

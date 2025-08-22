@@ -1,0 +1,71 @@
+"use client";
+
+import React, { useState } from "react";
+import { GoogleLogin } from "@react-oauth/google";
+import { useAuthenticationContext } from "@/context/AuhenticationContext";
+import { useRouter } from "next/navigation";
+import api from "@/lib/axios";
+import { useUserAuth } from "@/context/AuthFormContext";
+import { useFormContext } from "react-hook-form";
+import { useLanguage } from "@/context/LanguageContext";
+
+const SocialButtons = () => {
+  const { setMode, setGoogleUser } = useAuthenticationContext();
+  const [loading, setLoading] = useState<boolean>(false);
+  const router = useRouter();
+  const { setUser, setToken } = useUserAuth();
+  const { setValue } = useFormContext();
+  const { locale } = useLanguage();
+  console.log(locale);
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    setLoading(true);
+    try {
+      const idToken = credentialResponse.credential;
+
+      const res = await api.post(`/auth/provider/google`, {
+        idToken,
+      });
+
+      const { exists, user, accessToken } = res.data;
+      // console.log("GOOOOOOOOOOOOOOOOOOOOOOOGLE");
+      // console.log(user);
+      // console.log(idToken);
+
+      if (exists) {
+        // ✅ Existing user
+        setUser(user);
+        setToken(accessToken);
+        router.push("/");
+      } else {
+        // 🔧 First time login → go to complete-signup
+        setValue("name", user.name);
+        setValue("email", user.email);
+        setValue("idToken", idToken);
+        const { email, name, image, provider } = user;
+        setGoogleUser({ email, name, image, provider });
+        setMode("role-select");
+      }
+    } catch (error) {
+      console.error("Google login error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <GoogleLogin
+        onSuccess={handleGoogleSuccess}
+        onError={() => console.error("Google login failed")}
+        locale="ar"
+        theme="outline"
+        size="large"
+        shape="rectangular"
+        text="signin_with"
+      />
+    </div>
+  );
+};
+
+export default SocialButtons;

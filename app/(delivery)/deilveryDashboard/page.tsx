@@ -1,16 +1,33 @@
-'use client'
-import CourierOrderDetailsModal from '@/components/common/showUserModal'
-import DynamicTable from '@/components/shared/dashboardTable'
-import api from '@/lib/axios'
-import Image from 'next/image'
-import React, { useEffect, useState, useRef } from 'react'
-import { Camera, CheckCircle, Upload, X, Package, Clock, User, MapPin, Truck, LogOut, Edit3, Save, RotateCw, Settings } from 'lucide-react'
-import { Modal, ModalBody, ModalHeader } from 'flowbite-react'
-import Button from '@/components/common/Button'
-import { useUserAuth } from '@/context/AuthFormContext'
-import toast from 'react-hot-toast'
-import { useQuery } from '@tanstack/react-query'
-import { useRouter } from 'next/navigation'
+"use client";
+import CourierOrderDetailsModal from "@/components/common/showUserModal";
+import DynamicTable from "@/components/shared/dashboardTable";
+import api from "@/lib/axios";
+import Image from "next/image";
+import React, { useEffect, useState, useRef } from "react";
+import {
+  Camera,
+  CheckCircle,
+  Upload,
+  X,
+  Package,
+  Clock,
+  User,
+  MapPin,
+  Truck,
+  LogOut,
+  Edit3,
+  Save,
+  RotateCw,
+  Settings,
+} from "lucide-react";
+import { Modal, ModalBody, ModalHeader } from "flowbite-react";
+import Button from "@/components/common/Button";
+import { useUserAuth } from "@/context/AuthFormContext";
+import toast from "react-hot-toast";
+import { useQuery } from "@tanstack/react-query";
+import CourierProfile from "./DeliveryProfile";
+import EditProfilePage from "@/app/(user)/editprofile/page";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function Page() {
   // const [orders, setOrders] = useState([])
@@ -29,27 +46,47 @@ export default function Page() {
   // New states for quantity management
   const [quantities, setQuantities] = useState<any>({});
   const [showQuantityForm, setShowQuantityForm] = useState(false);
-  const [quantityNotes, setQuantityNotes] = useState('');
- const{logout}= useUserAuth()
-  const { data: orders = [], isLoading, isError, refetch,isFetching } = useQuery({
+  const [quantityNotes, setQuantityNotes] = useState("");
+  const [openProfile, setOpenProfile] = useState(false);
+  const [editProfile, setEditProfile] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+  const { logout, user } = useUserAuth();
+  const { t, locale,setLocale } = useLanguage();
+  const dropdownRef = useRef(null);
+
+  const {
+    data: orders = [],
+    isLoading,
+    isError,
+    refetch,
+    isFetching,
+  } = useQuery({
     queryKey: ["my-orders"],
     queryFn: async () => {
       const res = await api.get("my-orders");
       return res.data.orders;
     },
-    refetchOnMount:true,
-    refetchOnWindowFocus:true,
-    staleTime:2000
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    staleTime: 2000,
   });
 
-const router = useRouter()
-const handleNavigateToEditProfile = ()=>{
-  router.push('/editprofile')
-}
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target))
+        setShowPopup(false);
+    };
 
-  // useEffect(() => {
-  //   getAssignedOrdersToDelivery()
-  // }, [])
+    // Only add listener if dropdown is open
+    if (showPopup) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showPopup]); // Depend on openProfile state
 
   // Handler for opening the modal with order details
   const handleViewOrderDetails = (order: any) => {
@@ -71,13 +108,18 @@ const handleNavigateToEditProfile = ()=>{
         console.log("Item data:", item); // Debug log to see the actual data structure
 
         // Use measurement_unit field to determine the correct unit (ignore the unit field as it's incorrect)
-        const correctUnit = item.measurement_unit === 1 ? "kg" : "piece";
+        const correctUnit =
+          item.measurement_unit === 1 ? "kg" : t("common.piece");
         const isUnitMismatch = item.unit !== correctUnit;
 
         initialQuantities[item._id] = {
           originalQuantity: item.quantity,
           actualQuantity: item.quantity,
-          name: item.itemName || item.name || item.productName || "Item",
+          name:
+            item.name[locale] ||
+            item.name ||
+            item.productName ||
+            t("common.item"),
           unit: correctUnit, // Use the correct unit based on measurement_unit
           measurement_unit: item.measurement_unit,
           hasUnitMismatch: isUnitMismatch, // Track if there was a mismatch
@@ -94,28 +136,12 @@ const handleNavigateToEditProfile = ()=>{
     }
   };
 
-  // Calculate total points for display
-  const calculateTotalPoints = () => {
-    return Object.values(quantities).reduce((total: number, item: any) => {
-      const actualQty =
-        item.actualQuantity === "" ? 0 : Number(item.actualQuantity);
-      return total + item.pointsPerUnit * actualQty;
-    }, 0);
-  };
-
   const getInitials = (name: string) => {
     return name
       .split(" ")
       .map((n) => n[0])
       .join("")
       .toLowerCase();
-  };
-
-  // Calculate original total points
-  const calculateOriginalTotalPoints = () => {
-    return Object.values(quantities).reduce((total: number, item: any) => {
-      return total + item.originalPoints;
-    }, 0);
   };
 
   // Handle quantity change
@@ -173,7 +199,7 @@ const handleNavigateToEditProfile = ()=>{
         reader.onload = (e) => setPhotoPreview(e.target?.result as string);
         reader.readAsDataURL(file);
       } else {
-        alert("Please select an image file");
+        alert(t("courier.pleaseSelectImage"));
       }
     }
   };
@@ -181,7 +207,7 @@ const handleNavigateToEditProfile = ()=>{
   // Complete order with proof
   const completeOrderWithProof = async () => {
     if (!proofPhoto) {
-      alert("Please upload a delivery proof photo");
+      alert(t("courier.uploadProofPhoto"));
       return;
     }
 
@@ -194,7 +220,7 @@ const handleNavigateToEditProfile = ()=>{
       });
 
       if (hasChanges && !quantityNotes.trim()) {
-        alert("Please add notes about the quantity changes");
+        alert(t("courier.addQuantityNotes"));
         return;
       }
 
@@ -207,7 +233,7 @@ const handleNavigateToEditProfile = ()=>{
       );
 
       if (hasEmptyQuantities) {
-        alert("Please enter actual quantities for all items");
+        alert(t("courier.enterActualQuantities"));
         return;
       }
     }
@@ -235,20 +261,19 @@ const handleNavigateToEditProfile = ()=>{
       );
 
       if (response.status === 200) {
-        toast("Order completed successfully!");
+        toast(t("courier.orderCompletedSuccessfully"));
         setShowCompleteModal(false);
         resetModal();
-        refetch()
+        refetch();
         // getAssignedOrdersToDelivery(); // Refresh orders
       }
     } catch (error: any) {
       console.error("Error completing order:", error);
-      alert(error.response?.data?.message || "Error completing order");
+      alert(error.response?.data?.message || t("courier.errorCompletingOrder"));
     } finally {
       setCompleting(false);
     }
   };
-
   // Reset modal state
   const resetModal = () => {
     setSelectedOrder(null);
@@ -285,15 +310,20 @@ const handleNavigateToEditProfile = ()=>{
     const defaultStyle =
       "bg-gradient-to-r from-gray-100 to-gray-50 text-gray-800 border border-gray-200";
 
+    const statusText =
+      status === "assigntocourier"
+        ? t("courier.readyForDelivery")
+        : t(`courier.status.${status}`, {
+            defaultValue: status.charAt(0).toUpperCase() + status.slice(1),
+          });
+
     return (
       <span
         className={`px-3 py-1.5 rounded-full text-xs font-semibold ${
           statusStyles[status] || defaultStyle
         }`}
       >
-        {status === "assigntocourier"
-          ? "Ready for Delivery"
-          : status.charAt(0).toUpperCase() + status.slice(1)}
+        {statusText}
       </span>
     );
   };
@@ -301,7 +331,7 @@ const handleNavigateToEditProfile = ()=>{
   const columns = [
     {
       key: "userName",
-      label: "customer",
+      label: t("courier.customer"),
       render: (row: any) => (
         <div className="flex items-center gap-3 py-2">
           <div className="relative">
@@ -330,7 +360,7 @@ const handleNavigateToEditProfile = ()=>{
             </span>
             <span className="text-xs text-gray-500 flex items-center gap-1">
               <User className="w-3 h-3" />
-              {row?.user?.role}
+              {t(`courier.role.${row?.user?.role}`, row?.user?.role)}
             </span>
           </div>
         </div>
@@ -339,22 +369,28 @@ const handleNavigateToEditProfile = ()=>{
     },
     {
       key: "createdAt",
-      label: "Order Date",
+      label: t("courier.orderDate"),
       render: (row: any) => (
         <div className="flex flex-col">
           <span className="font-medium text-gray-900">
-            {new Date(row.createdAt).toLocaleDateString("en-GB", {
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
-            })}
+            {new Date(row.createdAt).toLocaleDateString(
+              locale === "ar" ? "ar-EG" : "en-GB",
+              {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              }
+            )}
           </span>
           <span className="text-xs text-gray-500 flex items-center gap-1">
             <Clock className="w-3 h-3" />
-            {new Date(row.createdAt).toLocaleTimeString("en-GB", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
+            {new Date(row.createdAt).toLocaleTimeString(
+              locale === "ar" ? "ar-EG" : "en-GB",
+              {
+                hour: "2-digit",
+                minute: "2-digit",
+              }
+            )}
           </span>
         </div>
       ),
@@ -363,26 +399,26 @@ const handleNavigateToEditProfile = ()=>{
     },
     {
       key: "orderDetails",
-      label: "Order Details",
+      label: t("courier.orderDetails"),
       render: (row: any) => (
         <button
           onClick={() => handleViewOrderDetails(row)}
           className="group flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-all duration-200 border border-blue-200 hover:border-blue-300 hover:shadow-sm"
         >
           <Package className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
-          View Details
+          {t("courier.viewDetails")}
         </button>
       ),
     },
     {
       key: "status",
-      label: "Status",
+      label: t("courier.status.label"),
       render: (row: any) => getStatusBadge(row.status),
       priority: 4,
     },
     {
       key: "actions",
-      label: "Actions",
+      label: t("courier.actions"),
       render: (row: any) => (
         <div className="flex gap-2">
           {row.status === "assigntocourier" && (
@@ -391,19 +427,27 @@ const handleNavigateToEditProfile = ()=>{
               className="group flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg text-sm font-semibold transition-all duration-200 hover:shadow-lg hover:scale-105 active:scale-95"
             >
               <CheckCircle className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
-              {row.user.role == "customer" ? "Collect" : "Deliver"}
+              {row.user.role == "customer"
+                ? t("courier.collect")
+                : t("courier.deliver")}
             </button>
           )}
           {row.status === "completed" && row.deliveryProof && (
             <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-100 to-green-50 text-green-800 rounded-lg border border-green-200">
               <CheckCircle className="w-4 h-4" />
-              <span className="text-sm font-semibold">Delivered</span>
+              <span className="text-sm font-semibold">
+                {t("courier.delivered")}
+              </span>
             </div>
           )}
         </div>
       ),
     },
   ];
+  useEffect(() => {
+    console.log("EDIT PROFILE CHANGES");
+    console.log(editProfile);
+  }, [editProfile]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
@@ -416,41 +460,197 @@ const handleNavigateToEditProfile = ()=>{
                 <Truck className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  Delivery Dashboard
-                </h1>
+                <button
+                  onClick={() => {
+                    setOpenProfile(false);
+                    setEditProfile(false);
+                    setShowPopup(false);
+                  }}
+                >
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    Delivery Dashboard
+                  </h1>
+                </button>
                 <p className="text-gray-600">
-                  Manage your assigned delivery orders
+                  {t("courier.manageAssignedOrders")}
                 </p>
               </div>
             </div>
+
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-lg border border-blue-200">
                 <Package className="w-5 h-5 text-blue-600" />
                 <span className="text-sm font-semibold text-blue-800">
-                  {orders.length} Orders
+                  {orders.length} {t("courier.orders")}
                 </span>
               </div>
+
+              {/* User Avatar Dropdown Trigger */}
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent event bubbling
+
+                    setShowPopup(!showPopup);
+                  }}
+                  className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 transition-colors focus:outline-none f"
+                >
+                  <div className="relative">
+                    <Image
+                      src={user?.attachments?.deliveryImage || ""}
+                      alt="User Avatar"
+                      width={40}
+                      height={40}
+                      className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                    />
+
+                    {/* Online status indicator */}
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                  </div>
+                </button>
+
+                {/* Dropdown Menu */}
+                {showPopup && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                    <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <Image
+                            width={40}
+                            height={40}
+                            src={user?.attachments?.deliveryImage}
+                            alt="User Profile"
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900 dark:text-white text-sm truncate">
+                            {user?.name || "User"}
+                          </p>
+                          <p className="text-gray-500 dark:text-gray-400 text-xs truncate">
+                            {user?.email || "user@example.com"}
+                          </p>
+                          {user?.role && (
+                            <span className="inline-block px-2 py-1 text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200 rounded-full mt-1 capitalize">
+                              {user?.role}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="py-1">
+                      <button
+                        onClick={() => {
+                          console.log("Profile clicked, closing dropdown");
+                          setOpenProfile(true);
+                          setShowPopup(false);
+                          setEditProfile(false);
+                        }}
+                        className="flex items-center gap-3 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors w-full text-left"
+                      >
+                        <User className="w-4 h-4" />
+                        <span className="text-sm font-medium">
+                          {t("navbar.profile")}
+                        </span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          console.log("Settings clicked, opening edit profile");
+                          setEditProfile(true);
+                          setShowPopup(false);
+                          setOpenProfile(false);
+                        }}
+                        className="flex items-center gap-3 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors w-full text-left"
+                      >
+                        <Settings className="w-4 h-4" />
+                        <span className="text-sm font-medium">
+                          {t("navbar.settings")}
+                        </span>
+                      </button>
+
+                      <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+
+                      <button
+                        onClick={() => {
+                          console.log("Logout clicked");
+                          logout();
+                        }}
+                        className="flex items-center gap-3 px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-300 transition-colors w-full text-left"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span className="text-sm font-medium">
+                          {t("navbar.signOut")}
+                        </span>
+                      </button>
+
+
+
+
+
+
+
+
+            <div
+              className={`language-toggle hidden lg:flex items-center gap-1.5 px-2 py-1 rounded-lg border-gray-200 border hover:border-gray-300 dark:hover:border-gray-600 transition-colors`}
+            >
+              <span
+                className={`text-xs font-medium ${
+                  locale === "en"
+                    ? "text-blue-600 dark:text-blue-400"
+                    : "text-gray-400 dark:text-gray-500"
+                }`}
+              >
+                EN
+              </span>
+              <button
+                onClick={() => setLocale(locale === "en" ? "ar" : "en")}
+                className="relative w-8 h-4 bg-gray-200 dark:bg-gray-600 rounded-full transition-colors duration-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                style={{
+                  backgroundColor:
+                    locale === "ar"
+                                            ? "#4B5563"
+                      : "#D1D5DB",
+                }}
+                title="Toggle Language"
+              >
+                <div
+                  className="absolute top-0.5 left-0.5 w-3 h-3 bg-white dark:bg-gray-200 rounded-full shadow-sm transform transition-transform duration-200"
+                  style={{
+                    transform:
+                      locale === "ar" ? "translateX(16px)" : "translateX(0)",
+                  }}
+                />
+              </button>
+              <span
+                className={`text-xs font-medium ${
+                  locale === "ar"
+                    ? "text-blue-600 dark:text-blue-400"
+                    : "text-gray-400 dark:text-gray-500"
+                }`}
+              >
+                AR
+              </span>
             </div>
-            <div className="flex items-center gap-4">
-                  <button onClick={handleNavigateToEditProfile}>
-              <Settings/>
-              </button>
-              <button onClick={logout}>
-                <LogOut />
-              </button>
-          
+
+
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-<button
-  onClick={() => refetch()}
-  disabled={isFetching}
-  className={`
+      {!editProfile && !openProfile && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <button
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className={`
     my-2
     flex items-center gap-2 px-4 py-2 rounded-lg
     bg-gradient-to-r from-blue-600 to-blue-700
@@ -459,34 +659,36 @@ const handleNavigateToEditProfile = ()=>{
     active:scale-95 transition-all duration-200
     disabled:opacity-70 disabled:cursor-not-allowed
   `}
->
-  <RotateCw
-    className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`}
-  />
-  {isFetching ? "Refreshing..." : "Refresh"}
-</button>        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-          {orders.length === 0 ? (
-            <div className="py-20 flex flex-col items-center justify-center text-gray-500">
-              <Truck className="mb-4 w-12 h-12 text-gray-400" />
-              <h2 className="text-xl font-semibold mb-2">
-                No orders assigned yet
-              </h2>
-              <p className="text-sm max-w-xs text-center">
-                Once orders are assigned to you, they will appear here.
-              </p>
-            </div>
-          ) : (
-            <DynamicTable
-              data={orders}
-              title="Assigned Orders"
-              columns={columns}
-              showActions={false}
-              showAddButton={false}
-              showFilter={false}
+          >
+            <RotateCw
+              className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`}
             />
-          )}
+            {isFetching ? "Refreshing..." : "Refresh"}
+          </button>{" "}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+            {orders.length === 0 ? (
+              <div className="py-20 flex flex-col items-center justify-center text-gray-500">
+                <Truck className="mb-4 w-12 h-12 text-gray-400" />
+                <h2 className="text-xl font-semibold mb-2">
+                  No orders assigned yet
+                </h2>
+                <p className="text-sm max-w-xs text-center">
+                  Once orders are assigned to you, they will appear here.
+                </p>
+              </div>
+            ) : (
+              <DynamicTable
+                data={orders}
+                title="Assigned Orders"
+                columns={columns}
+                showActions={false}
+                showAddButton={false}
+                showFilter={false}
+              />
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <CourierOrderDetailsModal
         show={isDetailsModalOpen}
@@ -497,29 +699,34 @@ const handleNavigateToEditProfile = ()=>{
         }}
       />
 
-      {/* Complete Order with Photo Proof Modal */}
+      {!editProfile && openProfile && (
+        <CourierProfile setEdit={setEditProfile} />
+      )}
+      {editProfile && <EditProfilePage />}
+
       {/* Complete Order with Photo Proof Modal */}
       {showCompleteModal && (
         <Modal show={showCompleteModal} onClose={closeCompleteModal} size="lg">
-          <ModalHeader>Complete Delivery</ModalHeader>
+          <ModalHeader>{t("courier.completeDelivery")}</ModalHeader>
           <ModalBody>
             <div className="space-y-6">
               <div>
                 <h3 className="font-medium text-gray-900 mb-2">
-                  Order #{selectedOrder?._id?.slice(-8)}
+                  {t("courier.orderNumber", {
+                    id: selectedOrder?._id?.slice(-8),
+                  })}
                 </h3>
                 <p className="text-sm text-gray-600">
-                  Customer: {selectedOrder?.user?.userName}
+                  {t("courier.customer")}: {selectedOrder?.user?.userName}
                 </p>
               </div>
-
               {/* Quantity Review Form for Customer Orders */}
               {userRole === "customer" && showQuantityForm && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                   <div className="flex items-center gap-2 mb-3">
                     <Edit3 className="w-4 h-4 text-yellow-600" />
                     <h4 className="font-medium text-yellow-800">
-                      Verify Quantities
+                      {t("courier.verifyQuantities")}
                     </h4>
                   </div>
 
@@ -543,7 +750,7 @@ const handleNavigateToEditProfile = ()=>{
                           <div className="grid grid-cols-2 gap-2">
                             <div>
                               <label className="block text-xs text-gray-600 mb-1">
-                                Original
+                                {t("courier.original")}
                               </label>
                               <input
                                 type="number"
@@ -554,7 +761,7 @@ const handleNavigateToEditProfile = ()=>{
                             </div>
                             <div>
                               <label className="block text-xs text-gray-600 mb-1">
-                                Actual *
+                                {t("courier.actual")} *
                               </label>
                               <input
                                 type="number"
@@ -577,7 +784,7 @@ const handleNavigateToEditProfile = ()=>{
                             item.actualQuantity !== "" && (
                               <div className="mt-2 p-1 bg-red-50 border border-red-200 rounded">
                                 <span className="text-xs text-red-800 font-medium">
-                                  Diff:{" "}
+                                  {t("courier.difference")}:{" "}
                                   {item.measurement_unit === 2
                                     ? `${Math.round(
                                         Number(item.actualQuantity) -
@@ -605,12 +812,12 @@ const handleNavigateToEditProfile = ()=>{
                   }) && (
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">
-                        Reason for Changes *
+                        {t("courier.reasonForChanges")} *
                       </label>
                       <textarea
                         value={quantityNotes}
                         onChange={(e) => setQuantityNotes(e.target.value)}
-                        placeholder="Explain quantity differences..."
+                        placeholder={t("courier.explainQuantityDifferences")}
                         className="w-full px-2 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-xs"
                         rows={2}
                         required
@@ -624,13 +831,13 @@ const handleNavigateToEditProfile = ()=>{
               {userRole === "customer" && (
                 <div className="flex items-center gap-3">
                   <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
-                    Est. Weight (kg) *:
+                    {t("courier.estimatedWeight")} *:
                   </label>
                   <input
                     type="number"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder="e.g. 2.5"
+                    placeholder={t("courier.weightPlaceholder")}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                     step="0.1"
                     min="0"
@@ -643,12 +850,12 @@ const handleNavigateToEditProfile = ()=>{
               {userRole !== "customer" && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Estimated weight:
+                    {t("courier.estimatedWeight")}:
                   </label>
                   <textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Order weight"
+                    placeholder={t("courier.orderWeight")}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     rows={3}
                   />
@@ -658,14 +865,16 @@ const handleNavigateToEditProfile = ()=>{
               {/* Photo Upload Section */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Delivery Proof Photo *
+                  {t("courier.deliveryProofPhoto")} *
                 </label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
                   {photoPreview ? (
                     <div className="relative">
-                      <img
+                      <Image
+                        width={30}
+                        height={30}
                         src={photoPreview}
-                        alt="Delivery proof"
+                        alt={t("courier.deliveryProof")}
                         className="w-full h-48 object-cover rounded-lg"
                       />
                       <button
@@ -676,7 +885,7 @@ const handleNavigateToEditProfile = ()=>{
                             fileInputRef.current.value = "";
                         }}
                         className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                        aria-label="Remove photo"
+                        aria-label={t("courier.removePhoto")}
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -685,16 +894,19 @@ const handleNavigateToEditProfile = ()=>{
                     <div className="text-center">
                       <Camera className="w-12 h-12 text-gray-400 mx-auto mb-2" />
                       <p className="text-sm text-gray-600 mb-2">
-                        Take a photo of the{" "}
-                        {userRole === "customer" ? "collected" : "delivered"}{" "}
-                        order
+                        {t("courier.takePhotoOfOrder", {
+                          action:
+                            userRole === "customer"
+                              ? t("courier.collected")
+                              : t("courier.delivered"),
+                        })}
                       </p>
                       <button
                         onClick={() => fileInputRef.current?.click()}
                         className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 flex items-center gap-2 mx-auto"
                       >
                         <Upload className="w-4 h-4" />
-                        Upload Photo
+                        {t("courier.uploadPhoto")}
                       </button>
                     </div>
                   )}
@@ -716,10 +928,9 @@ const handleNavigateToEditProfile = ()=>{
                   disabled={completing}
                   className="flex-1 bg-gray-400"
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
                 <Button
-                  color="success"
                   onClick={completeOrderWithProof}
                   disabled={
                     !photoPreview ||
@@ -731,14 +942,14 @@ const handleNavigateToEditProfile = ()=>{
                   {completing ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Completing...
+                      {t("courier.completing")}...
                     </>
                   ) : (
                     <>
                       <CheckCircle className="w-4 h-4" />
                       {userRole == "customer"
-                        ? "Mark as collected"
-                        : "Mark as delivered"}
+                        ? t("courier.markAsCollected")
+                        : t("courier.markAsDelivered")}
                     </>
                   )}
                 </Button>

@@ -1,6 +1,3 @@
-
-
-
 "use client";
 
 import Link from "next/link";
@@ -19,12 +16,9 @@ import {
   User,
   ChevronDown,
   Globe,
-
   Sun,
   Moon,
-
   Wallet,
-
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { FaRobot } from "react-icons/fa";
@@ -52,7 +46,7 @@ export default function Navbar() {
   const { locale, setLocale } = useLanguage();
   const [darkMode, setDarkMode] = useState(false);
 
-  const { t } = useLanguage();
+  const { t, convertNumber } = useLanguage();
 
   useEffect(() => {
     if (darkMode) {
@@ -62,7 +56,6 @@ export default function Navbar() {
     }
   }, [darkMode]);
 
-  // Close dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
       if (
@@ -119,7 +112,7 @@ export default function Navbar() {
   );
 
   return (
-    <nav className="sticky top-0 z-50 bg-yellow/95 dark:bg-yellow-500 backdrop-blur-lg  border-gray-200 dark:border-yellow-700 shadow-sm">
+    <nav className="navbar sticky top-0 z-50 backdrop-blur-lg shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Left side: Logo + Search */}
@@ -129,9 +122,6 @@ export default function Navbar() {
                 {t("navbar.title")}
               </div>
             </Link>
-            <div className="hidden md:block flex-1 max-w-md">
-              <NavbarSearch />
-            </div>
           </div>
 
           {/* Center: Navigation Links - Desktop */}
@@ -139,21 +129,21 @@ export default function Navbar() {
             <Link
               prefetch={true}
               href={user?.role == "buyer" ? "/home" : "/"}
-              className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800 font-medium gap-2 px-3 py-2 rounded-md transition-all duration-200 text-sm"
+              className={`nav-link ${darkMode ? "dark" : "light"} hover:bg-green-100 dark:hover:bg-black`}
             >
-              <HousePlus className="w-4 h-4" />
+              <HousePlus className="nav-icon" />
               <span>{t("navbar.home")}</span>
             </Link>
 
             <Link
               prefetch={true}
               href={isBuyer ? "/marketplace" : "/category"}
-              className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800 font-medium gap-2 px-3 py-2 rounded-md transition-all duration-200 text-sm"
+              className={`nav-link ${darkMode ? "dark" : "light"}`}
             >
               {isBuyer ? (
-                <Store className="w-4 h-4" />
+                <Store className="nav-icon" />
               ) : (
-                <GalleryVerticalEnd className="w-4 h-4" />
+                <GalleryVerticalEnd className="nav-icon" />
               )}
               <span>
                 {isBuyer ? t("navbar.marketplace") : t("navbar.categories")}
@@ -163,9 +153,9 @@ export default function Navbar() {
             <Link
               prefetch={true}
               href="/ideas"
-              className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800 font-medium gap-2 px-3 py-2 rounded-md transition-all duration-200 text-sm"
+              className={`nav-link ${darkMode ? "dark" : "light"}`}
             >
-              <FaRobot className="w-4 h-4" />
+              <FaRobot className="nav-icon" />
               <span>{t("navbar.ecoAssist")}</span>
             </Link>
           </div>
@@ -175,48 +165,56 @@ export default function Navbar() {
             {/* Dark Mode Toggle */}
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className={`nav-link ${darkMode ? "dark" : "light"} hover:bg-green-100 dark:hover:bg-black rounded-full transition-colors`}
               aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
             >
               {darkMode ? (
-                <Sun className="w-5 h-5 text-yellow-400" />
+                <Sun className="nav-icon w-5 h-5" />
               ) : (
-                <Moon className="w-5 h-5 text-gray-600" />
+                <Moon className="nav-icon w-5 h-5" />
               )}
             </button>
+
 
             {/* Collection Cart */}
             <div className="relative" ref={cartRef}>
               <button
                 onClick={() => setIsCartOpen(!isCartOpen)}
-                className="relative flex items-center gap-1 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-black-800 font-medium px-2.5 py-1.5 rounded-lg transition-all duration-200 border border-transparent hover:border-gray-200 dark:hover:border-gray-700"
+                className={`nav-link ${darkMode ? "dark" : "light"} hover:bg-green-100 dark:hover:bg-black`}
                 title={isBuyer ? t("navbar.myCart") : t("navbar.myCollection")}
               >
                 <div className="relative">
-                  <Recycle className="w-5 h-5" />
+                  <Recycle className="nav-icon w-5 h-5" />
                   {totalItems > 0 && (
                     <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-1 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center shadow-sm ring-1 ring-white">
-                      {totalItems > 99 ? "99+" : totalItems}
+                      {totalItems > 99
+                        ? convertNumber(99) + "+"
+                        : convertNumber(totalItems)}
                     </span>
                   )}
                 </div>
-                <span className="hidden sm:inline font-medium text-sm">
+                <span className="hidden sm:inline">
                   {isBuyer ? t("navbar.myCart") : t("navbar.myCollection")}
                 </span>
               </button>
 
+
               {/* Cart Dropdown */}
               {isCartOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                <div
+                  className={`nav-dropdown absolute right-0 mt-2 w-80 rounded-lg bg-white shadow-lg border py-2 z-50 ${darkMode ? "dark" : "light"
+                    }`}
+                >
                   <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-gray-700">
                     <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
                       {isBuyer ? t("navbar.myCart") : t("navbar.myCollection")}
                     </h3>
                     <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {t("navbar.totalItems")} {totalItems} {t("navbar.items")}
+                      {t("navbar.totalItems")} {convertNumber(totalItems)}{" "}
+                      {t("navbar.items")}
                     </span>
                   </div>
-                  <div className="max-h-72 overflow-y-auto">
+                  <div className="flex-1 overflow-y-auto">
                     {cart && cart.length > 0 ? (
                       cart.slice(0, 4).map((item, index) => (
                         <div
@@ -227,7 +225,7 @@ export default function Navbar() {
                             {item.image ? (
                               <Link
                                 href={`/category/${encodeURIComponent(
-                                  item.categoryName
+                                  item.categoryName[locale]
                                 )}`}
                                 onClick={() => setIsCartOpen(false)}
                               >
@@ -235,7 +233,7 @@ export default function Navbar() {
                                   height={24}
                                   width={24}
                                   src={item.image}
-                                  alt={item.name || "Item"}
+                                  alt={item.name[locale] || "Item"}
                                   className="w-full h-full object-contain"
                                 />
                               </Link>
@@ -247,22 +245,21 @@ export default function Navbar() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-gray-900 dark:text-white text-xs truncate">
-                              {t(
-                                `categories.subcategories.${item?.name
-                                  ?.toLowerCase()
-                                  .replace(/\s+/g, "-")}`
-                              )}
+                              {item.name[locale]}
                             </p>
                             <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">
-                              {t(`categories.${item?.categoryName}`)}
+                              {item.categoryName[locale]}
                             </p>
                             <div className="flex items-center gap-2 mt-0.5">
                               <p className="text-gray-400 dark:text-gray-500 text-xs">
-                                Qty: {item.quantity}{" "}
-                                {item.measurement_unit === 1 ? "kg" : "pcs"}
+                                {t("cart.qty")}: {convertNumber(item.quantity)}{" "}
+                                {item.measurement_unit === 1
+                                  ? t("cart.item.kg")
+                                  : t("cart.item.pcs")}
                               </p>
                               <p className="text-green-600 dark:text-green-400 text-xs font-medium">
-                                {item.points} pts
+                                {convertNumber(item.points)}{" "}
+                                {t("cart.item.pts")}
                               </p>
                             </div>
                           </div>
@@ -272,12 +269,11 @@ export default function Navbar() {
                               handleRemoveFromCart(item);
                             }}
                             className="flex-shrink-0 w-5 h-5 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
-                        )
-                      )
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))
                     ) : (
                       <div className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
                         <Recycle className="w-10 h-10 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
@@ -296,7 +292,7 @@ export default function Navbar() {
                     )}
                     {cart && cart.length > 4 && (
                       <div className="px-4 py-2 text-center text-xs text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-700">
-                        +{cart.length - 4} more items
+                        +{convertNumber(cart.length - 4)} {t("cart.item.more")}
                       </div>
                     )}
                   </div>
@@ -308,7 +304,7 @@ export default function Navbar() {
                             {t("navbar.totalItems")}
                           </span>
                           <span className="font-semibold text-gray-900 dark:text-white">
-                            {totalItems}
+                            {convertNumber(totalItems)}
                           </span>
                         </div>
                         <Link
@@ -326,13 +322,14 @@ export default function Navbar() {
             </div>
 
             {/* Language Switcher */}
-            <div className="hidden lg:flex items-center gap-1.5 px-2 py-1 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
+            <div
+              className={`language-toggle hidden lg:flex items-center gap-1.5 px-2 py-1 rounded-lg border-gray-200 border hover:border-gray-300 dark:hover:border-gray-600 transition-colors`}
+            >
               <span
-                className={`text-xs font-medium ${
-                  locale === "en"
-                    ? "text-blue-600 dark:text-blue-400"
-                    : "text-gray-400 dark:text-gray-500"
-                }`}
+                className={`text-xs font-medium ${locale === "en"
+                  ? "text-blue-600 dark:text-blue-400"
+                  : "text-gray-400 dark:text-gray-500"
+                  }`}
               >
                 EN
               </span>
@@ -341,7 +338,11 @@ export default function Navbar() {
                 className="relative w-8 h-4 bg-gray-200 dark:bg-gray-600 rounded-full transition-colors duration-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 style={{
                   backgroundColor:
-                    locale === "ar" ? "#3B82F6" : darkMode ? "#4B5563" : "#D1D5DB",
+                    locale === "ar"
+                      ? "#3B82F6"
+                      : darkMode
+                        ? "#4B5563"
+                        : "#D1D5DB",
                 }}
                 title="Toggle Language"
               >
@@ -354,11 +355,10 @@ export default function Navbar() {
                 />
               </button>
               <span
-                className={`text-xs font-medium ${
-                  locale === "ar"
-                    ? "text-blue-600 dark:text-blue-400"
-                    : "text-gray-400 dark:text-gray-500"
-                }`}
+                className={`text-xs font-medium ${locale === "ar"
+                  ? "text-blue-600 dark:text-blue-400"
+                  : "text-gray-400 dark:text-gray-500"
+                  }`}
               >
                 AR
               </span>
@@ -378,7 +378,7 @@ export default function Navbar() {
               <div className="relative" ref={profileRef}>
                 <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="flex items-center gap-1 p-1 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200"
+                  className={`nav-link ${darkMode ? "dark" : "light"} p-1`}
                 >
                   <div className="relative">
                     {user.imgUrl ? (
@@ -400,7 +400,7 @@ export default function Navbar() {
 
                 {/* Profile Dropdown */}
                 {isProfileOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                  <div className="nav-dropdown bg-white absolute right-0 mt-2 w-56 rounded-lg shadow-lg border py-2 z-50">
                     <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
                       <div className="flex items-center gap-3">
                         <div className="relative">
@@ -467,8 +467,7 @@ export default function Navbar() {
                           {t("navbar.ewallet")}
                         </span>
                       </Link>
-                      <div className="border-t border-gray-100 my-1"></div>{" "}
-                      {/* Reduced margin */}
+                      <div className="border-t border-gray-100 my-1"></div>
 
                       <button
                         onClick={handleLogout}
@@ -487,10 +486,10 @@ export default function Navbar() {
               <div className="flex items-center gap-2">
                 <Link
                   prefetch={true}
-                  href="/newAuth"
-                  className="flex items-center px-3 py-1.5 rounded-lg text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800 font-medium transition-all duration-200 text-sm"
+                  href="/auth"
+                  className={`nav-link ${darkMode ? "dark" : "light"}`}
                 >
-                  <KeyRound className="w-4 h-4 mr-1" />
+                  <KeyRound className="nav-icon" />
                   {t("navbar.login")}
                 </Link>
               </div>
@@ -500,29 +499,23 @@ export default function Navbar() {
             <div className="lg:hidden ml-1">
               <button
                 onClick={toggleMenu}
-                className="flex items-center justify-center w-9 h-9 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-all duration-200"
+                style={{ color: darkMode ? "#9CA3AF" : "#4B5563" }}
+                className={`nav-link ${darkMode ? "dark" : "light"} w-14 h-14 flex items-center justify-center`}
                 aria-label="Toggle menu"
               >
                 {isOpen ? (
-                  <X className="w-5 h-5" />
+                  <X className="w-9 h-9 " style={{ color: "var(--foreground)" }} />
                 ) : (
-                  <Menu className="w-5 h-5" />
+                  <Menu className="w-9 h-9" style={{ color: "var(--foreground)" }} />
                 )}
               </button>
             </div>
           </div>
         </div>
 
-        {/* Mobile Search Bar */}
-        {!isOpen && (
-          <div className="md:hidden px-4 pb-3">
-            <NavbarSearch />
-          </div>
-        )}
-
         {/* Mobile Menu */}
         {isOpen && (
-          <div className="lg:hidden bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-200 dark:border-gray-700">
+          <div className="mobile-menu lg:hidden backdrop-blur-lg border-t">
             <div className="px-4 py-3 space-y-2">
               {/* Language Toggle for Mobile */}
               <div className="flex items-center justify-between w-full px-3 py-2.5 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg mb-2">
@@ -534,11 +527,10 @@ export default function Navbar() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span
-                    className={`text-xs font-medium ${
-                      locale === "en"
-                        ? "text-blue-600 dark:text-blue-400"
-                        : "text-gray-400 dark:text-gray-500"
-                    }`}
+                    className={`text-xs font-medium ${locale === "en"
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-gray-400 dark:text-gray-500"
+                      }`}
                   >
                     EN
                   </span>
@@ -553,24 +545,25 @@ export default function Navbar() {
                         locale === "ar"
                           ? "#3B82F6"
                           : darkMode
-                          ? "#4B5563"
-                          : "#D1D5DB",
+                            ? "#4B5563"
+                            : "#D1D5DB",
                     }}
                   >
                     <div
                       className="absolute top-0.5 left-0.5 w-3 h-3 bg-white dark:bg-gray-200 rounded-full shadow-sm transform transition-transform duration-200"
                       style={{
                         transform:
-                          locale === "ar" ? "translateX(16px)" : "translateX(0)",
+                          locale === "ar"
+                            ? "translateX(16px)"
+                            : "translateX(0)",
                       }}
                     />
                   </button>
                   <span
-                    className={`text-xs font-medium ${
-                      locale === "ar"
-                        ? "text-blue-600 dark:text-blue-400"
-                        : "text-gray-400 dark:text-gray-500"
-                    }`}
+                    className={`text-xs font-medium ${locale === "ar"
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-gray-400 dark:text-gray-500"
+                      }`}
                   >
                     AR
                   </span>
@@ -581,20 +574,20 @@ export default function Navbar() {
               <Link
                 href="/"
                 onClick={() => setIsOpen(false)}
-                className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800 font-medium gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-sm"
+                className={`nav-link ${darkMode ? "dark" : "light"}`}
               >
-                <HousePlus className="w-4 h-4" />
+                <HousePlus className="nav-icon" />
                 <span>{t("navbar.home")}</span>
               </Link>
               <Link
                 href={isBuyer ? "/marketplace" : "/category"}
                 onClick={() => setIsOpen(false)}
-                className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800 font-medium gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-sm"
+                className={`nav-link ${darkMode ? "dark" : "light"}`}
               >
                 {isBuyer ? (
-                  <Store className="w-4 h-4" />
+                  <Store className="nav-icon" />
                 ) : (
-                  <GalleryVerticalEnd className="w-4 h-4" />
+                  <GalleryVerticalEnd className="nav-icon" />
                 )}
                 <span>
                   {isBuyer ? t("navbar.marketplace") : t("navbar.categories")}
@@ -603,18 +596,18 @@ export default function Navbar() {
               <Link
                 href="/ideas"
                 onClick={() => setIsOpen(false)}
-                className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800 font-medium gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-sm"
+                className={`nav-link ${darkMode ? "dark" : "light"}`}
               >
-                <FaRobot className="w-4 h-4" />
+                <FaRobot className="nav-icon" />
                 <span>{t("navbar.ecoAssist")}</span>
               </Link>
               {user && (
                 <Link
                   href="/profile"
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800 font-medium gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-sm"
+                  className={`nav-link ${darkMode ? "dark" : "light"}`}
                 >
-                  <UserRoundPen className="w-4 h-4" />
+                  <UserRoundPen className="nav-icon" />
                   <span>{t("navbar.profile")}</span>
                 </Link>
               )}
@@ -623,9 +616,10 @@ export default function Navbar() {
               {!user ? (
                 <div className="pt-2 space-y-2">
                   <Link
-                    href="/newAuth"
+                    href="/auth"
                     onClick={() => setIsOpen(false)}
-                    className="flex items-center justify-center w-full px-4 py-2.5 rounded-lg text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800 font-medium transition-all duration-200 border border-gray-200 dark:border-gray-700 text-sm"
+                    className={`nav-link ${darkMode ? "dark" : "light"
+                      } w-full justify-center border border-gray-200 dark:border-gray-700`}
                   >
                     {t("navbar.login")}
                   </Link>

@@ -1,5 +1,4 @@
 import axios from "axios";
-import { refreshAccessToken } from "./auth";
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
@@ -15,6 +14,15 @@ export const setAccessToken = (token: string | null) => {
 
 export const getAccessToken = () => accessToken;
 
+export async function refreshAccessToken(): Promise<{ accessToken: string }> {
+  const response = await api.post("/auth/refresh"); // backend returns new access token
+  const { accessToken } = response.data;
+
+  if (!accessToken) {
+    throw new Error("No access token returned");
+  }
+  return { accessToken };
+}
 // === Session ID (from localStorage or cookie) ===
 const getSessionId = () => {
   if (typeof window === "undefined") return null;

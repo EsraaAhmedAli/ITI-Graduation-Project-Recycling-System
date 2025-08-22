@@ -1,106 +1,92 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useState, useMemo } from "react";
-import { CartItem, useCart } from "@/context/CartContext";
+import { useCart } from "@/context/CartContext";
+import { CartItem } from "@/models/cart";
 import Loader from "@/components/common/Loader";
-import { Recycle, Plus, Sparkles } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import api from "@/lib/axios";
+import {
+  Recycle,
+  Plus,
+  Sparkles,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import Image from "next/image";
 import { useLanguage } from "@/context/LanguageContext";
-import { useCategories } from "@/hooks/useGetCategories";
+import {
+  useGetItemsPaginated,
+  LocalizedItem,
+} from "@/hooks/useGetItemsPaginated";
+import dynamic from "next/dynamic";
 
-// interface Item {
-//   _id: string;
-//   name: string;
-//   image: string;
-//   points: number;
-//   price: number;
-//   categoryName: string;
-//   measurement_unit: 1 | 2;
-// }
+// Lazy load FloatingRecorderButton for voice processing
+const FloatingRecorderButton = dynamic(
+  () => import('@/components/Voice Processing/FloatingRecorderButton'),
+  { ssr: false }
+);
 
 export default function UserCategoryPage() {
-  const { t } = useLanguage();
-
+  const { locale, t, convertNumber } = useLanguage();
   const params = useParams();
   const categoryName = decodeURIComponent(params.name as string);
   const { addToCart, loadingItemId } = useCart();
-  const { getCategoryIdByItemName } = useCategories();
 
-  const { data, isLoading, error } = useQuery<CartItem[]>({
-    queryKey: ["subcategory", categoryName],
-    queryFn: async () => {
-      const res = await api.get(
-        `/categories/get-items/${encodeURIComponent(categoryName)}`
-      );
-      const normalizedItems = res.data.data.map((item: any) => ({
-        ...item,
-        itemName: item.name,
-        categoryName: item.categoryName || categoryName,
-        measurement_unit: Number(item.measurement_unit) as 1 | 2,
-      }));
-      return normalizedItems;
-    },
-    staleTime: 60 * 1000,
-    refetchOnMount: false,
+  const {
+    data,
+    pagination,
+    isLoading,
+    isFetching,
+    error,
+    currentPage,
+    handlePageChange,
+    generatePageNumbers,
+    categoryStats,
+  } = useGetItemsPaginated({
+    categoryName,
+    itemsPerPage: 12,
+    keepPreviousData: true,
   });
+console.log(data,'dddd');
+// const catId= data.map((cat=>cat.categoryId))
+// const test = getCategoryIdByItemName(item?.name.en)
+// console.log(test,'test');
 
-  const getPointsRange = (points: number[]) => {
-    const min = Math.min(...points);
-    const max = Math.max(...points);
-    return min === max ? `${min} pts` : `${min}-${max} pts`;
-  };
 
-  const categoryStats = useMemo(() => {
-    if (!data || data.length === 0) return null;
-    const points = data.map((item) => item.points);
-    const impactKey = `environmentalImpact.${categoryName.toLowerCase()}`;
-    return {
-      totalItems: data.length,
-      estimatedImpact: t(impactKey),
-      pointsRange: getPointsRange(points),
-    };
-  }, [data, categoryName, t]);
 
-  // const handleAddToCollection = async (item: CartItem) => {
-  //   try {
-  //     // const cartItem = {
-  //     //   categoryId: item._id,
-  //     //   categoryName: item.categoryName,
-  //     //   itemName: item.name,
-  //     //   image: item.image,
-  //     //   points: item.points,
-  //     //   price: item.price,
-  //     //   measurement_unit: item.measurement_unit,
-  //     //   quantity: item.measurement_unit === 1 ? 0.25 : 1,
-  //     // };
-  //     const tmp = item._id;
-  //     item.categoryId = tmp;
-  //     item._id = getCategoryIdByItemName(item.itemName);
-  //     console.log("ADDDDDDDDDDDDDDDDDDDDD");
-  //     console.log(item);
-  //     console.log("------------------------------------");
-  //     await addToCart(item);
-  //   } catch (error) {
-  //     console.error("Add to cart failed:", error);
-  //   }
-  // };
-  const handleAddToCollection = async (item: CartItem) => {
+  const handleAddToCollection = async (item: LocalizedItem,catId) => {
     try {
-      const categoryId = getCategoryIdByItemName(item.name);
+      const englishItemName =
+        typeof item.name === "string" ? item.name : item.name?.en || "";
+      const arabicItemName =
+        typeof item.name === "string" ? "" : item.name?.ar || "";
+
+      const categoryId = catId;
+
+      const categoryNameEn =
+        typeof item.categoryName === "string"
+          ? item.categoryName
+          : item.categoryName?.en || "";
+      const categoryNameAr =
+        typeof item.categoryName === "string"
+          ? ""
+          : item.categoryName?.ar || "";
 
       const cartItem: CartItem = {
         _id: item._id,
         categoryId: categoryId,
-        categoryName: item.categoryName,
-        name: item.name,
+        categoryName: {
+          en: categoryNameEn,
+          ar: categoryNameAr,
+        },
+        name: {
+          en: englishItemName,
+          ar: arabicItemName,
+        },
         image: item.image,
         points: item.points,
         price: item.price,
         measurement_unit: item.measurement_unit,
-        quantity: item.measurement_unit === 1 ? 0.25 : 1, // set correct initial quantity
+        quantity: item.measurement_unit === 1 ? 0.25 : 1,
       };
 
       await addToCart(cartItem);
@@ -112,15 +98,17 @@ export default function UserCategoryPage() {
   const getMeasurementText = (unit: number) => {
     return unit === 1 ? t("itemsModal.perKg") : t("itemsModal.perItem");
   };
+
   if (isLoading) return <Loader />;
+
   if (error) {
-    console.error("❌ Query Error:", error);
+    console.error("Query Error:", error);
     return <p className="text-red-500 text-center">Failed to load items.</p>;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black-100 via-black-100 to-black-100 ">
-      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-6 ">
+    <div className="min-h-screen bg-gradient-to-br from-black-100 via-black-100 to-black-100">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-6">
         {/* Header Section */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-2">
@@ -131,11 +119,7 @@ export default function UserCategoryPage() {
               <h1 className="text-2xl md:text-3xl font-bold text-white-900 tracking-tight">
                 {t("collectionsOfCategory", {
                   collections: t("common.collectionsPlural"),
-                  category: t(
-                    `categories.${categoryName
-                      .toLowerCase()
-                      .replace(/\s+/g, "-")}`
-                  ),
+                  category: categoryStats?.categoryDisplayName || categoryName,
                 })}
               </h1>
               <p className="text-slate-500 mt-1 text-sm md:text-base">
@@ -154,7 +138,8 @@ export default function UserCategoryPage() {
               </div>
               <p className="text-slate-600 mb-3 text-sm">
                 {t("categoryStats.estimatedImpact")}:{" "}
-                {categoryStats.estimatedImpact}
+                {/* You can add impact data to backend too */}
+                {t(`environmentalImpact.${categoryName}`)}
               </p>
 
               <div className="flex flex-wrap gap-3 text-xs">
@@ -163,7 +148,7 @@ export default function UserCategoryPage() {
                     {t("categoryStats.totalItems")}:
                   </span>
                   <span className="font-semibold text-slate-700">
-                    {categoryStats.totalItems}
+                    {convertNumber(categoryStats.totalItems)}
                   </span>
                 </div>
               </div>
@@ -171,24 +156,40 @@ export default function UserCategoryPage() {
           )}
         </div>
 
+        {/* Loading overlay for pagination */}
+        {isFetching && (
+          <div className="relative">
+            <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-10 flex items-center justify-center rounded-2xl">
+              <div className="w-8 h-8 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
+            </div>
+          </div>
+        )}
+
         {/* Items Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {data!.map((item) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
+          {data.map((item) => (
             <div
               key={item._id}
-              className="group bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300 hover:-translate-y-1">
+              className="group rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300 hover:-translate-y-1"
+              style={{ background: "var(--color-card)" }}
+            >
               {/* Image Container */}
-              <div className="relative bg-gradient-to-br from-slate-100 to-slate-50">
+              <div
+                style={{
+                  backgroundImage:
+                    "linear-gradient(to bottom right, var(--card-gradient-start), var(--card-gradient-end))",
+                }}
+                className="relative "
+              >
                 <div className="relative w-full h-40">
                   <Image
                     src={item.image}
-                    alt={item.name}
+                    alt={item.name.en}
                     fill
                     className="object-contain group-hover:scale-105 transition-transform duration-300"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                   />
                 </div>
-                {/* Points Badge */}
                 <div className="absolute top-3 right-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
                   +{item.points}
                 </div>
@@ -197,21 +198,16 @@ export default function UserCategoryPage() {
               {/* Content */}
               <div className="p-4">
                 <h3 className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide leading-tight">
-                  {t(
-                    `categories.subcategories.${item.name
-                      .toLowerCase()
-                      .replace(/\s+/g, "-")}`
-                  )}
+                  {item.name[locale]}
                 </h3>
 
-                {/* Price and Unit Info */}
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs text-slate-500 font-medium bg-slate-100 px-2 py-0.5 rounded-lg">
                     {getMeasurementText(item.measurement_unit)}
                   </span>
                   <div className="text-end">
                     <span className="text-base font-bold text-slate-900">
-                      {item.price}
+                      {convertNumber(item.price)}
                     </span>
                     <span className="text-xs text-slate-500 ml-1">
                       {t("itemsModal.currency")}
@@ -219,11 +215,11 @@ export default function UserCategoryPage() {
                   </div>
                 </div>
 
-                {/* Add to Collection Button */}
                 <button
-                  onClick={() => handleAddToCollection(item)}
+                  onClick={() => handleAddToCollection(item,item.categoryId)}
                   disabled={loadingItemId === item._id}
-                  className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white py-2 px-3 rounded-xl font-semibold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm hover:shadow-md group/button">
+                  className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white py-2 px-3 rounded-xl font-semibold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm hover:shadow-md group/button"
+                >
                   {loadingItemId === item._id ? (
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
@@ -240,23 +236,98 @@ export default function UserCategoryPage() {
           ))}
         </div>
 
+        {/* Pagination Controls */}
+        {pagination && pagination.totalPages > 1 && (
+          <div className="flex flex-col items-center gap-4">
+            {/* Pagination Info */}
+            <div className="text-sm text-slate-600 text-center">
+              {t("common.showing", {
+                start:
+                  (pagination.currentPage - 1) * pagination.itemsPerPage + 1,
+                end: Math.min(
+                  pagination.currentPage * pagination.itemsPerPage,
+                  pagination.totalItems
+                ),
+                total: pagination.totalItems,
+              }) ||
+                `Showing ${
+                  (pagination.currentPage - 1) * pagination.itemsPerPage + 1
+                }-${Math.min(
+                  pagination.currentPage * pagination.itemsPerPage,
+                  pagination.totalItems
+                )} of ${pagination.totalItems} items`}
+            </div>
+
+            {/* Pagination Buttons */}
+            <div className="flex items-center gap-2">
+              {/* Previous Button */}
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                {t("common.previous") || "Previous"}
+              </button>
+
+              {/* Page Numbers */}
+              <div className="flex gap-1">
+                {generatePageNumbers().map((pageNum, index) => (
+                  <button
+                    key={index}
+                    onClick={() =>
+                      typeof pageNum === "number"
+                        ? handlePageChange(pageNum)
+                        : undefined
+                    }
+                    disabled={pageNum === "..."}
+                    className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      pageNum === currentPage
+                        ? "bg-emerald-500 text-white"
+                        : pageNum === "..."
+                        ? "text-slate-400 cursor-default"
+                        : "text-slate-600 bg-white border border-slate-200 hover:bg-slate-50"
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                ))}
+              </div>
+
+              {/* Next Button */}
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={!pagination?.hasNextPage}
+                className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {t("common.next") || "Next"}
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Empty State */}
-        {data!.length === 0 && (
+        {data.length === 0 && !isLoading && (
           <div className="text-center py-12">
             <div className="w-20 h-20 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
               <Recycle className="w-10 h-10 text-slate-400" />
             </div>
             <h3 className="text-xl font-semibold text-slate-600 mb-2">
-              No items available
+              {t("common.noItemsAvailable") || "No items available"}
             </h3>
             <p className="text-slate-500 max-w-md mx-auto">
-              We're working on adding more recyclable{" "}
-              {categoryName.toLowerCase()} items. Check back soon for new
-              additions!
+              {t("common.workingOnAddingItems") ||
+                `We're working on adding more recyclable ${
+                  categoryStats?.categoryDisplayName || categoryName
+                } items. Check back soon for new additions!`}
             </p>
           </div>
         )}
       </div>
+      
+      {/* Voice Processing Component */}
+      <FloatingRecorderButton />
     </div>
   );
 }

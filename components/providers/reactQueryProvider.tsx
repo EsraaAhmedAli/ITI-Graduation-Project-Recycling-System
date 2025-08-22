@@ -9,6 +9,7 @@ export default function ReactQueryProvider({ children }: { children: ReactNode }
       queries: {
         staleTime: 60 * 1000,
         refetchOnWindowFocus: false,
+
       },
     },
   }));

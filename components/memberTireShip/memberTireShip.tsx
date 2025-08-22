@@ -11,19 +11,23 @@ export function getUserTier(reycles: number) {
   );
 }
 
-export default function TierStatBox({ totalRecycles }: { totalRecycles: number }) {
+export default function TierStatBox({
+  totalRecycles,
+}: {
+  totalRecycles: number;
+}) {
   const tier = getUserTier(totalRecycles);
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isNavigating, setIsNavigating] = useState(false);
-  
+
   if (!tier) return null;
 
   const handleNavigation = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsNavigating(true);
-    
+
     startTransition(() => {
       router.push("/profile/rewarding");
       // Reset after a delay since we can't easily detect when navigation completes
@@ -34,42 +38,34 @@ export default function TierStatBox({ totalRecycles }: { totalRecycles: number }
   return (
     <div
       className={`
-    p-4 rounded-xl shadow-sm flex flex-row flex-nowrap items-center justify-center border
-    ${tier.color} gap-4
-    w-full max-w-full
+    p-4 rounded-xl shadow-sm flex items-center justify-between border
+    ${tier.color} text-center
     transition-[max-width] duration-500 ease-in-out overflow-hidden
+    ${locale === "ar" ? "flex-row-reverse" : "flex-row"}
   `}
       style={{ borderColor: tier.color }}
     >
-      {/* Left: Tier Name */}
-      <div className="flex-grow min-w-0">
-        <p className="text-xl font-bold text-left truncate">
+      {/* Left / Center: Tier Name + Badge */}
+      <div className="flex items-center gap-3 justify-center flex-1">
+        <p className="text-xl font-bold truncate">
           {t(`profile.tires.${tier.name.replace(" ", "").toLowerCase()}`)}
         </p>
+        <tier.badge className="text-primary" />
       </div>
 
-      {/* Right: Badge + Icon Link */}
-      <div className="flex items-center gap-3 flex-shrink-0">
-        <div
-          className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-xl font-bold shadow-md border-2 border-current animate-spin-slow hover:[animation-play-state:paused]"
-          style={{ color: tier.color }}
-        >
-          {tier.badge}
-        </div>
-
-        <button
-          onClick={handleNavigation}
-          disabled={isNavigating || isPending}
-          className="p-2 rounded-full hover:bg-white/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          title="View Rewards Program"
-        >
-          {(isNavigating || isPending) ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : (
-            <Info className="w-5 h-5" />
-          )}
-        </button>
-      </div>
+      {/* Right / End: Info Button */}
+      <button
+        onClick={handleNavigation}
+        disabled={isNavigating || isPending}
+        className="p-2 rounded-full hover:bg-white/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        title="View Rewards Program"
+      >
+        {isNavigating || isPending ? (
+          <Loader2 className="w-5 h-5 animate-spin" />
+        ) : (
+          <Info className="w-5 h-5" />
+        )}
+      </button>
     </div>
   );
 }

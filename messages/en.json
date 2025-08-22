@@ -46,6 +46,27 @@
       "error_message": "Something went wrong."
     }
   },
+  "search": {
+    "title": "Search Items",
+    "placeholder": "What are you looking for?",
+    "buttonText": "Search",
+    "closeLabel": "Close search",
+    "tooltipSearch": "Search",
+    "browseByLetter": "Browse by First Letter",
+    "legendAvailable": "Available",
+    "legendNotAvailable": "Not available",
+    "resultsFor": "results for",
+    "noItemsFound": "No items found",
+    "tryDifferentTerm": "Try a different search term",
+    "clearAndBrowse": "Clear search and browse letters",
+    "readyToSearch": "Ready to search!",
+    "readyToSearchDesc": "Type in the search box above, or click on any available letter to browse items alphabetically",
+    "clickToSeeItems": "Click to see items starting with",
+    "noItemsStartWith": "No items start with",
+    "noResultsFound": "No results found",
+    "searchError": "Search error occurred",
+    "searching": "Searching..."
+  },
   "navbar": {
     "home": "Home",
     "marketplace": "Marketplace",
@@ -70,7 +91,6 @@
     "searchplaceholder": "Search items...",
     "myCart": "Cart"
   },
-
   "footer": {
     "title": "XChange",
     "FAQ": "FAQ",
@@ -109,7 +129,6 @@
     "rewarding": "Points Program",
     "pickup": "Pickup"
   },
-
   "ecoAssist": {
     "welcome": {
       "title": "How can I help you recycle today?",
@@ -158,14 +177,411 @@
       "passwordError": "8–20 characters, 1 uppercase, 1 number, 1 symbol",
       "signIn": "Sign in",
       "signingIn": "Signing in...",
+      "signUp": "Sign Up",
+      "already": "Already have an account? Sign in",
+      "sendReset": "Send Reset Code",
+      "reset": "Reset Password",
+      "resetSuccess": "Password reset successfully",
+      "back": "Back to previous",
+      "continueWith": "Or Continue With",
+      "sendingReset": "Sending...",
+      "forgotResetMsg": "Enter your email to receive a reset code.",
+      "signingUp": "Createing Account...",
+      "createAccount": "Create Account",
       "forgotPassword": "Forgot your password?",
       "securityNote": "Don’t worry, your information is 100% secure.",
       "loginFailed": "Login failed. Please check your credentials.",
       "loginSuccess": "welcome back !",
       "dontHaveAccount": "Don't have an account? Sign up",
       "ChooseYourRole": "Choose Your Role",
-      "typeOfAccount": "Select the type of account you'd like to create."
+      "typeOfAccount": "Select the type of account you'd like to create.",
+      "wait": "please wait"
+    },
+    "otp": {
+      "instruction": "Enter the 6-digit code. You can paste the full code directly.",
+      "resend_question": "Didn’t receive the code?",
+      "resend_button": "Resend OTP",
+      "confirm": "Confirm",
+      "resend_success": "Resend OTP Successfully",
+      "resend_failed": "OTP Resend failed",
+      "submission_failed": "OTP submission failed",
+      "submission_success": "OTP sent! Check your email.",
+      "verified": "Processing OTP Successfully",
+      "unVerified": "Invalid Otp"
+    },
+    "register": {
+      "fullName": "Full Name",
+      "phoneNumber": "Phone Number",
+      "confirmPassword": "Confirm Password",
+      "next": "Next",
+      "previous": "Previous",
+      "success": "Registered Successfully",
+      "fail": "Registered Failed"
+    },
+    "roles": {
+      "customer": {
+        "title": "Customer Registration",
+        "description": "Join our recycling community"
+      },
+      "delivery": {
+        "title": "Delivery Partner Registration",
+        "description": "Become a verified delivery partner",
+        "steps": {
+          "info": "Vehicle & License Information",
+          "identity": "Identity Verification"
+        },
+        "fields": {
+          "licenseNumber": {
+            "label": "Driver's License Number",
+            "placeholder": "License number",
+            "required": "License number is required"
+          },
+          "vehicleType": {
+            "label": "Vehicle Type",
+            "placeholder": "Select vehicle type",
+            "required": "Vehicle type is required",
+            "options": {
+              "motorcycle": "Motorcycle",
+              "car": "Car",
+              "van": "Van",
+              "small-truck": "Small Truck",
+              "large-truck": "Large Truck"
+            }
+          },
+          "deliveryImage": {
+            "label": "Photo of Delivery Person",
+            "required": "Photo is required"
+          },
+          "vehicleImage": {
+            "label": "Photo of Vehicle",
+            "required": "Vehicle image is required"
+          },
+          "criminalRecord": {
+            "label": "Criminal Record Certificate (forwarded to our org)",
+            "required": "Certificate is required"
+          },
+          "identityFront": {
+            "label": "Identity Document (Front)",
+            "required": "Identity front is required"
+          },
+          "identityBack": {
+            "label": "Identity Document (Back)",
+            "required": "Identity back is required"
+          },
+          "nationalId": {
+            "label": "National ID / Passport Number",
+            "placeholder": "National ID or Passport number",
+            "required": "National ID or Passport number is required"
+          },
+          "emergencyContact": {
+            "label": "Emergency Contact",
+            "placeholder": "Emergency contact phone number",
+            "required": "Emergency contact is required"
+          },
+          "identityVerificationNote": {
+            "text": "Your identity will be verified within 24–48 hours. You'll receive an email once approved."
+          }
+        },
+        "messages": {
+          "registrationSuccess": "Delivery Registered. Awaiting Admin Approval",
+          "registrationError": "Something went wrong"
+        }
+      },
+      "buyer": {
+        "title": "Business Buyer Registration",
+        "description": "Register your business to purchase recycled materials",
+        "businessInfo": {
+          "heading": "Business Information",
+          "fields": {
+            "businessName": {
+              "label": "Business Name",
+              "placeholder": "Your business name",
+              "required": "Business name is required"
+            },
+            "businessType": {
+              "label": "Business Type",
+              "placeholder": "Select business type",
+              "required": "Business type is required",
+              "options": {
+                "recyclingPlant": "Recycling Plant",
+                "manufacturing": "Manufacturing",
+                "wasteManagement": "Waste Management",
+                "export": "Export Business",
+                "other": "Other"
+              }
+            },
+            "businessAddress": {
+              "label": "Business Address",
+              "placeholder": "Complete business address",
+              "required": "Business address is required"
+            }
+          },
+          "navigation": {
+            "next": "Next",
+            "back": "Back",
+            "submit": "Submit"
+          }
+        },
+        "lfInfo": {
+          "heading": "Legal & Financial Information",
+          "fields": {
+            "businessLicense": {
+              "label": "Business License Number",
+              "placeholder": "Business license number",
+              "required": "Business license number is required"
+            },
+            "taxId": {
+              "label": "Tax ID / EIN",
+              "placeholder": "Tax identification number",
+              "required": "Tax ID is required"
+            },
+            "estimatedMonthlyVolume": {
+              "label": "Estimated Monthly Volume (tons)",
+              "placeholder": "Select volume range",
+              "required": "Estimated volume is required",
+              "options": {
+                "1-10": "1–10 tons",
+                "10-50": "10–50 tons",
+                "50-100": "50–100 tons",
+                "100+": "100+ tons"
+              }
+            }
+          },
+          "notice": {
+            "businessVerification": "Our team will review your application and verify your business credentials within 2–3 business days."
+          }
+        }
+      }
+    },
+    "errors": {
+      "required": {
+        "fullName": "Full name is required",
+        "email": "Email is required",
+        "phoneNumber": "Phone number is required",
+        "password": "Password is required",
+        "confirmPassword": "Confirm password is required"
+      },
+      "invalid": {
+        "email": "Invalid email format",
+        "phoneNumber": "Enter a valid Egyptian mobile or landline number"
+      },
+      "password": {
+        "pattern": "8–20 chars, 1 uppercase, 1 number, 1 special character",
+        "mismatch": "Passwords do not match"
+      },
+      "general": {
+        "fill": "Please fill all required fields.",
+        "google": "Google user data is missing."
+      }
     }
+  },
+  "charts": {
+    "weeklyOrdersDistribution": "Weekly Orders Distribution",
+    "loadingWeeklyData": "Loading weekly data...",
+    "orders": "Orders",
+    "numberOfOrders": "Number of Orders",
+    "dayOfWeek": "Day of Week",
+    "thisWeek": "This Week",
+    "lastWeek": "Last Week",
+    "last4Weeks": "Last 4 Weeks",
+    "last4WeeksAvg": "Last 4 Weeks Avg",
+    "currentDay": "Current day",
+    "index": "Index",
+    "notFoundInCurrentWeek": "Not found in current week",
+    "period": "Period",
+    "dailyAvg": "Daily Avg",
+    "peakDay": "Peak Day",
+    "vsPrevious": "vs Previous",
+    "vsLastPeriod": "vs last period",
+    "numbers": {
+      "percent": "%"
+    },
+    "totalOrders": "total orders",
+    "activeUsers": "Active users",
+    "materialTrack": "Materials tracked",
+    "dashboardTitle": "Dashboard Insights",
+    "topUsers": "Top Users",
+    "userGrowth": "User Growth",
+    "month": "Month",
+    "users": "Users",
+    "orderStatus": "Order Status",
+    "overview": "Overview",
+    "noOrderData": "No order data",
+    "mostCommon": "Most Common",
+    "total": "Total",
+    "notAvailable": "N/A",
+    "months": "Months",
+    "topRecycledMaterials": "Top Recycled Materials",
+    "loadingMaterials": "Loading materials...",
+    "noMaterialsData": "No materials data",
+    "materialsHint": "Make sure you have completed orders with items",
+    "material": "Material",
+    "quantity": "Quantity",
+    "unknown": "Unknown",
+    "loadingCitiesData": "Loading cities data...",
+    "noCitiesData": "No cities data available",
+    "checkBackLater": "Check back later for updates",
+    "trends": {
+      "up": "up",
+      "down": "down",
+      "steady": "steady"
+    }
+  },
+  "courier": {
+    "assignedOrders": "Assigned Orders",
+    "deliveryDashboard": "Delivery Dashboard",
+    "manageAssignedOrders": "Manage your assigned delivery orders",
+    "customer": "Customer",
+    "orderDate": "Order Date",
+    "orderDetails": "Order Details",
+    "viewDetails": "View Details",
+    "orders": "Orders",
+    "settings": "Settings",
+    "logout": "Logout",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing...",
+    "noOrdersAssigned": "No orders assigned yet",
+    "ordersWillAppearHere": "Once orders are assigned to you, they will appear here.",
+    "actions": "Actions",
+    "collect": "Collect",
+    "deliver": "Deliver",
+    "delivered": "Delivered",
+    "readyForDelivery": "Ready for Delivery",
+    "completeDelivery": "Complete Delivery",
+    "orderNumber": "Order #{{id}}",
+    "verifyQuantities": "Verify Quantities",
+    "original": "Original",
+    "actual": "Actual",
+    "difference": "Diff",
+    "reasonForChanges": "Reason for Changes",
+    "explainQuantityDifferences": "Explain quantity differences...",
+    "estimatedWeight": "Est. Weight (kg)",
+    "weightPlaceholder": "e.g. 2.5",
+    "orderWeight": "Order weight",
+    "deliveryProofPhoto": "Delivery Proof Photo",
+    "deliveryProof": "Delivery proof",
+    "removePhoto": "Remove photo",
+    "collected": "collected",
+    "takePhotoOfOrder": "Take a photo of the {{action}} order",
+    "uploadPhoto": "Upload Photo",
+    "completing": "Completing",
+    "markAsCollected": "Mark as collected",
+    "markAsDelivered": "Mark as delivered",
+    "pleaseSelectImage": "Please select an image file",
+    "uploadProofPhoto": "Please upload a delivery proof photo",
+    "addQuantityNotes": "Please add notes about the quantity changes",
+    "enterActualQuantities": "Please enter actual quantities for all items",
+    "orderCompletedSuccessfully": "Order completed successfully!",
+    "errorCompletingOrder": "Error completing order",
+    "status": {
+      "label": "Status",
+      "pending": "Pending",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "assigntocourier": "Assigned to Courier"
+    },
+    "role": {
+      "buyer": "Buyer",
+      "customer": "Customer",
+      "merchant": "Merchant",
+      "admin": "Admin"
+    }
+  },
+  "address": {
+    "pickupAddress": "Pickup Address",
+    "selectCity": "Select City",
+    "selectCityPlaceholder": "Select your city",
+    "selectArea": "Select your area",
+    "street": "Street Address",
+    "streetPlaceholder": "e.g. El-Central street",
+    "landmark": "Nearest Landmark (optional)",
+    "landmarkPlaceholder": "e.g. El-Asdekaa Market",
+    "building": "Building Number/Name",
+    "floor": "Floor Number",
+    "apartment": "Apartment Number",
+    "notes": "Additional Note",
+    "notesPlaceholder": "e.g. Don't ring the bell",
+    "cancel": "Cancel",
+    "next": "Next",
+    "errors": {
+      "city": "City is required",
+      "area": "Area is required",
+      "street": "Street is required",
+      "building": "Building is required",
+      "floor": "Floor is required",
+      "apartment": "Apartment is required",
+      "number": "Must Be Number"
+    }
+  },
+  "egyptCities": {
+    "selectCityPlaceholder": "Select your city",
+    "cairo": "Cairo",
+    "giza": "Giza",
+    "alexandria": "Alexandria",
+    "mansoura": "Mansoura",
+    "aswan": "Aswan",
+    "asyut": "Asyut",
+    "benisuef": "Beni Suef",
+    "damietta": "Damietta",
+    "faiyum": "Faiyum",
+    "ismailia": "Ismailia",
+    "kafrelsheikh": "Kafr El Sheikh",
+    "luxor": "Luxor",
+    "matruh": "Matruh",
+    "minya": "Minya",
+    "monufia": "Monufia",
+    "newvalley": "New Valley",
+    "northsinai": "North Sinai",
+    "portsaid": "Port Said",
+    "qalyubia": "Qalyubia",
+    "qena": "Qena",
+    "redsea": "Red Sea",
+    "sharqia": "Sharqia",
+    "sohag": "Sohag",
+    "southsinai": "South Sinai",
+    "suez": "Suez",
+    "beheira": "Beheira",
+    "dakahlia": "Dakahlia",
+    "gharbia": "Gharbia"
+  },
+  "cities": {
+    "topCitiesByOrders": "Top Cities by Orders",
+    "numberOfOrders": "Number of Orders",
+    "cities": "Cities",
+    "orders": "Orders",
+    "totalOrders": "Total Orders",
+    "avgPerCity": "Avg per City",
+    "topCity": "Top City",
+    "cairo": "Cairo",
+    "giza": "Giza",
+    "alexandria": "Alexandria",
+    "mansoura": "Mansoura",
+    "aswan": "Aswan"
+  },
+  "materials": {
+    "category": "Category",
+    "pieces": "pieces",
+    "sortByQuantity": "By Quantity",
+    "sortByName": "By Name",
+    "totalMaterials": "Total Materials",
+    "totalQuantity": "Total Quantity",
+    "topMaterial": "Top",
+    "material": "Material"
+  },
+  "orderStatus": {
+    "pending": "Pending",
+    "processing": "Processing",
+    "collected": "Collected",
+    "assigntocourier": "Assigned to Courier",
+    "shipped": "Shipped",
+    "delivered": "Delivered",
+    "cancelled": "Cancelled",
+    "returned": "Returned",
+    "completed": "Completed",
+    "confirmed": "Confirmed",
+    "preparing": "Preparing",
+    "ready": "Ready",
+    "failed": "Failed"
   },
   "profile": {
     "returnEarn": "Return & Earn",
@@ -174,7 +590,20 @@
       "recycles": "Total Recycles",
       "points": "Points Collected"
     },
+    "delivery": {
+      "customer_reviews": "Customer Reviews",
+      "total_reviews": "Total reviews",
+      "no_comment": "No comment provided",
+      "verified_courier": "Verified Courier",
+      "deliveries": "Deliveries",
+      "edit_profile": "Edit Profile"
+    },
+    "noActivity": "No Activity Yet.",
+    "noOrders": "No Orders In This Tab Yet.",
+    "noReveiws": "No Reveiws Yet.",
+    "noReveiwsSub": "Complete an order and rate it to see your reviews here",
     "tires": {
+      "ecobeginner": "Eco Beginner",
       "ecostarter": "Eco Starter",
       "greenhelper": "Green Helper",
       "silverrecycler": "Silver Recycler",
@@ -212,8 +641,7 @@
       "track": "Track Order",
       "rate": "Rate your order",
       "editRate": "Edit Review",
-      "recipt" : "View Recipt",
-
+      "recipt": "View Recipt",
       "cancelConfirm": "Are you sure you want to cancel this order?",
       "confirmYes": "Yes",
       "confirmNo": "No",
@@ -222,6 +650,155 @@
       "safe": "Your order is safe"
     },
     "location": "Cairo, July 2025"
+  },
+  "cart": {
+    "confirmItems": "Confirm items you want to recycle",
+    "liveInventory": "Live Inventory",
+    "check": "Checking inventory...",
+    "qty": "Qty",
+    "emptyCart": {
+      "title": "Your recycling bin is empty",
+      "description": "Start making a positive impact on the environment. Browse available recyclable items and add them to your bin!",
+      "button": "Browse Recyclable Items"
+    },
+    "cartSummary": {
+      "totalItems": "Total Items",
+      "earnedPoints": "Earned Points",
+      "earnedMoney": "Earned Money",
+      "payedMoney": "Payed Money"
+    },
+    "item": {
+      "category": "Category",
+      "byKilo": "By Kilo",
+      "byPiece": "By Piece",
+      "stock": "Stock",
+      "requested": "Requested",
+      "price": "Price",
+      "outOfStock": "Out of Stock",
+      "lowStock": "Low Stock",
+      "outOfStockWarning": "⚠️ This item is currently out of stock.",
+      "removeItem": "Remove Item?",
+      "removeConfirm": "Remove {itemName} from your recycling collection?",
+      "minIncrement": "Min: 0.25 kg, increments of 0.25 kg",
+      "wholeNumbers": "Whole numbers only",
+      "kg": "kg",
+      "items": "items",
+      "pcs": "Pcs",
+      "pts": "Pts",
+      "more": "more items"
+    },
+    "checkout": {
+      "outOfStockTitle": "Some items are out of stock",
+      "outOfStockMessage": "Please remove out of stock items or adjust quantities before proceeding to checkout.",
+      "removeOutOfStock": "Remove Out of Stock Items",
+      "clearAll": "Clear All?",
+      "clearConfirm": "Are you sure you want to remove all items from your recycling collection?",
+      "clearCollection": "Clear Collection",
+      "schedulePickup": "Schedule Pickup",
+      "minAmount": "You should reach at least 100 EGP",
+      "removeOutOfStockToContinue": "Remove out of stock items to continue"
+    }
+  },
+  "ewallet": {
+    "title": "EcoWallet",
+    "subtitle": "Earn rewards for your recycling efforts",
+    "balance": {
+      "title": "Eco Rewards Balance",
+      "subtitle": "Earned through sustainable recycling",
+      "cashOut": "Cash Out",
+      "recycleMore": "Recycle More"
+    },
+    "transactions": {
+      "title": "Recent Activity",
+      "history": "Transaction History",
+      "viewAll": "View All",
+      "types": {
+        "cashback": "Cashback",
+        "withdrawal": "Withdrawal",
+        "deposit": "Deposit",
+        "recycle": "Recycle",
+        "redeem": "Redeem",
+        "purchase": "Purchase"
+      },
+      "next": "Next",
+      "previous": "Previous",
+      "currency": "EGP"
+    },
+    "withdraw": {
+      "title": "Cash Out Rewards",
+      "availableBalance": "Available balance",
+      "withdrawalAmount": "Withdrawal Amount",
+      "currency": "EGP",
+      "validation": {
+        "min": "Minimum withdrawal is 10.00 EGP",
+        "max": "You cannot withdraw more than your balance"
+      },
+      "buttons": {
+        "cancel": "Cancel",
+        "continue": "Continue"
+      }
+    },
+    "payment": {
+      "step1": {
+        "title": "Choose Payment Method",
+        "withdrawing": "Withdrawing",
+        "fee": "Fee",
+        "buttons": {
+          "cancel": "Cancel",
+          "process": "Process Payment"
+        }
+      },
+      "step2": {
+        "title": "Processing Payment...",
+        "subtitle": "Transferring your eco-rewards via"
+      },
+      "step3": {
+        "title": "Payment Successful!",
+        "subtitle": "Your {amount} {currency} withdrawal has been processed successfully"
+      }
+    }
+  },
+  "program": {
+    "headerTitle": "Recycling Rewards Program",
+    "headerSubtitle": "Earn points, unlock badges, and help save the planet!",
+    "welcomeBack": "Welcome back, {{name}}!",
+    "currentLevel": "Current Level",
+    "recyclingOrders": "Recycling Orders",
+    "points": "Points",
+    "recycles": "Reycles",
+    "onlyMoreRecycles": "🚀 Only {{count}} more recycles to unlock {{level}}!",
+    "rewardLevelsTitle": "Reward Levels & Benefits",
+    "currentLevelBanner": "CURRENT LEVEL",
+    "benefits": "Benefits",
+    "howToEarnTitle": "How to Earn Points",
+    "earnRecyclingOrders": "Recycling Orders",
+    "earnRecyclingOrdersDesc": "Earn points for every recycling pickup based on your level",
+    "earnMonthlyBonuses": "Monthly Bonuses",
+    "earnMonthlyBonusesDesc": "Get bonus points every month based on your activity",
+    "earnReferrals": "Referrals",
+    "earnReferralsDesc": "Earn bonus points when you refer friends to our service",
+    "earnSpecialEvents": "Special Events",
+    "earnSpecialEventsDesc": "Participate in eco-challenges and special promotions",
+    "pointRedemptionTitle": "Point Redemption Options",
+    "cashRedemption": "Cash Redemption",
+    "cashRedemptionDesc": "Convert your points to cash with level-based bonuses:",
+    "cashRedemptionList": {
+      "baseRate": "Base rate: 100 points = $1",
+      "silver": "Silver+: 5% bonus",
+      "gold": "Gold+: 10% bonus",
+      "platinum": "Platinum+: 15% bonus",
+      "diamond": "Diamond: 20% bonus"
+    },
+    "vouchersRewards": "Vouchers & Rewards",
+    "vouchersRewardsDesc": "Redeem points for eco-friendly products and services:",
+    "vouchersRewardsList": {
+      "ecoProduct": "Eco-product vouchers",
+      "restaurant": "Restaurant gift cards",
+      "sustainable": "Sustainable brands discounts",
+      "local": "Local business coupons",
+      "charity": "Environmental charity donations"
+    },
+    "noActivity": "No activity yet"
   },
   "itemsModal": {
     "headerTitle": "Order Items",
@@ -244,36 +821,31 @@
     "noItemsDesc": "This order doesn't contain any items.",
     "addToCollection": "Add to Collection"
   },
-  "categories": {
-    "paper": "Paper",
-    "e-wasted": "E-Waste",
-    "metals": "Metals",
-    "spare-parts": "Spare Parts",
-    "plastic": "Plastic",
-    "home-appliances": "home appliances",
-
-    "subcategories": {
-      "shredded-paper": "Shredded Paper",
-      "books": "Books",
-      "news-paper": "Newspaper",
-      "router": "router",
-      "cooking-pan": "cooking pan",
-      "hammer": "hammer",
-      "car-battery": "cart battery",
-      "acrylic": "acryclic",
-      "solid-plastic": "solid plastic",
-      "water-colman": "Coleman Water",
-      "plastic-barrel": "plastic barrel",
-      "fan": "fan",
-      "mobile": "Mobile",
-      "laptop": "laptop",
-      "receiver": "receiver",
-      "powerbank": "powerbank",
-      "tea-pot": "tea pot"
-    }
-  },
-
   "common": {
+    "only": "Only",
+    "left": "left",
+    "previous": "previous",
+    "measurementUnit": "Measurement Unit",
+    "itemsIn": "items in category",
+    "addNewItem": "Add New Item",
+    "points": "Points",
+    "oops": "Oops...",
+    "success": "Success!",
+    "error": "Error",
+    "ok": "OK",
+    "remove": "Remove",
+    "somethingWentWrong": "Something went wrong!",
+    "back": "Back",
+    "currency": "EGP",
+    "next": "Next",
+    "loading": "Loading",
+    "sold": "sold",
+    "viewAll": "view all",
+    "piece": "piece",
+    "FeaturedItems": "Featured Items",
+    "item": "Item",
+    "cancel": "Cancel",
+    "kg": "kg",
     "adding": "adding",
     "invalidQuantity": "Please enter a valid quantity",
     "exceedsMaxQuantity": "Maximum available quantity is {{max}}",
@@ -286,6 +858,8 @@
     "pointsAbbreviation": "pts",
     "allCategories": "All Categories",
     "showing": "Showing",
+    "showings": "Showing {{start}} to {{end}} of {{total}} results",
+    "showing_of": "Showing {{count}} of {{total}}",
     "of": "of",
     "items": "items",
     "page": "Page",
@@ -294,6 +868,7 @@
     "removeFromRecyclingCart": "Remove From Recycling Cart",
     "processing": "processing",
     "availableStock": "Available Stock",
+    "inStock": "in stock",
     "afterPurchase": "After purchase: {{quantity}} {{unit}}",
     "percentageRemaining": "{{percentage}}% remaining",
     "quantity": "Quantity",
@@ -303,6 +878,28 @@
     "startAdding": "start adding",
     "removeFromCart": "Remove from cart"
   },
+  "recyclingBanner": {
+    "title": "Recycle Today for a Better Tomorrow",
+    "titleHighlight": "Better",
+    "description": "Join our community making a difference. Every recycled item counts.",
+    "stats": {
+      "dailyRecyclers": "Daily Recyclers",
+      "itemsRecycled": "Items Recycled",
+      "co2Reduced": "CO₂ Reduced",
+      "ecoFriendly": "Eco-Friendly"
+    }
+  },
+  "loaders": {
+    "Categories": "Categories",
+    "recipet": "Receipt",
+    "transactions": "Transactions",
+    "deliveryData": "Delivery Data",
+    "items": "items",
+    "info": "your info",
+    "reviews": "reviews",
+    "orders": "orders",
+    "payments": "payments"
+  },
   "marketPlace": {
     "sustainableMarketplace": "Sustainable Marketplace",
     "marketPlaceDesc": "Discover recyclable items and earn rewards"
@@ -310,6 +907,7 @@
   "collectionsOfCategory": "{{category}} {{collections}}",
   "staticCategories": {
     "categories": "Categories",
+    "addNewCategory": "Add new category",
     "recyclingCategories": "Recycling Categories",
     "recyclingCategoriesSubtitle": "Having leftovers and want to earn money? Tell us what you have",
     "seeMore": "See more",
@@ -327,6 +925,9 @@
     "organic": "Creates compost and reduces methane emissions",
     "default": "Contributes to a cleaner environment",
     "environmentalImpact": "Environmental Impact"
+  },
+  "toast": {
+    "cart": "{{itemName}} added to cart successfully!"
   },
   "categoryStats": {
     "totalItems": "Total Items",
@@ -413,11 +1014,323 @@
     "buyerCost": {
       "question": "Is there a cost for buyers?",
       "answer": "Buyers pay for the items plus a small service fee that covers quality inspection, cleaning, and delivery. Our prices are typically 40-70% less than buying new, making quality second-hand materials affordable while supporting sustainability."
+    },
+    "recentPointsActivity": "Recent Points Activity",
+    "pointsAwarded": "Points awarded",
+    "pointsDeducted": "Points deducted",
+    "pts": "pts",
+    "viewFullHistory": "View full history"
+  },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "categories": "Categories",
+    "users": "Users",
+    "orders": "Orders",
+    "transactions": "Transactions",
+    "approve": "Approve",
+    "dark_mode": "Dark Mode",
+    "logout": "Logout"
+  },
+  "editCategory": {
+    "title": "Edit Category",
+    "subtitle": "Update the details of your category",
+    "nameEnglish": "Name (English)",
+    "nameArabic": "Name (Arabic)",
+    "nameEnglishPlaceholder": "Enter category name in English",
+    "nameArabicPlaceholder": "أدخل اسم الفئة بالعربية",
+    "descriptionEnglish": "Description (English)",
+    "descriptionArabic": "Description (Arabic)",
+    "descriptionEnglishPlaceholder": "Enter category description in English",
+    "descriptionArabicPlaceholder": "أدخل وصف الفئة بالعربية",
+    "categoryImage": "Category Image",
+    "currentImage": "Current Image",
+    "currentCategoryAlt": "Current category",
+    "uploadFile": "Upload a file",
+    "orDragAndDrop": "or drag and drop",
+    "fileTypes": "PNG, JPG, GIF up to 5MB",
+    "uploadingImage": "Uploading image",
+    "saveChanges": "Save Changes",
+    "failedToFetchCategory": "Failed to fetch category",
+    "imageUploadFailed": "Image upload failed",
+    "updateSuccessTitle": "Updated!",
+    "updateSuccessText": "Category has been updated successfully",
+    "updateFailed": "Update failed"
+  },
+  "addCategory": {
+    "title": "Add New Category",
+    "subtitle": "Fill in the details below to create a new category",
+    "categoryNameEnglish": "Category Name (English)",
+    "categoryNameArabic": "Category Name (Arabic)",
+    "categoryNameEnglishPlaceholder": "Enter category name in English",
+    "categoryNameArabicPlaceholder": "أدخل اسم الفئة بالعربية",
+    "descriptionEnglish": "Description (English)",
+    "descriptionArabic": "Description (Arabic)",
+    "descriptionEnglishPlaceholder": "Enter category description in English",
+    "descriptionArabicPlaceholder": "أدخل وصف الفئة بالعربية",
+    "categoryImage": "Category Image",
+    "uploadFile": "Upload a file",
+    "orDragAndDrop": "or drag and drop",
+    "fileTypes": "PNG, JPG, GIF up to 5MB",
+    "selected": "Selected",
+    "preview": "Preview",
+    "addCategory": "Add Category",
+    "selectImageError": "Please select an image for the category!",
+    "categoryCreatedSuccess": "Category created successfully"
+  },
+  "categories": {
+    "image": "Image",
+    "categoryName": "Category Name",
+    "subCategoryName": "Subcategory Name",
+    "description": "Description",
+    "categories": "Categories",
+    "addNewCategory": "Add New Category",
+    "startAddingCategory": "Start adding new category",
+    "noCategoriesFound": "No categories found.",
+    "errorLoadingCategories": "Error loading categories",
+    "deleteConfirmTitle": "Are you sure?",
+    "deleteConfirmText": "You are about to delete \"{{name}}\". This action cannot be undone!",
+    "confirmDelete": "Yes, delete it!",
+    "deleteSuccessTitle": "Deleted!",
+    "deleteSuccessText": "\"{{name}}\" has been deleted.",
+    "deleteErrorTitle": "Error",
+    "deleteErrorText": "Something went wrong while deleting.",
+    "cooking-oil": {
+      "name": "cooking-oil",
+      "description": "used cooking oil"
+    },
+    "paper": {
+      "name": "paper",
+      "description": "various paper items"
+    },
+    "metals": {
+      "name": "metals",
+      "description": "various metals"
+    },
+    "e-waste": {
+      "name": "e-waste",
+      "description": "electronic waste items"
+    },
+    "home appliances": {
+      "name": "Home Appliances",
+      "description": "Home Appliances items"
     }
-    ,  "recentPointsActivity": "Recent Points Activity",
-  "pointsAwarded": "Points awarded",
-  "pointsDeducted": "Points deducted",
+  },
+  "items": {
+    "paaper": {
+      "news paper": "news paper"
+    },
+    "plastic": {
+      "chair": "chair",
+      "coleman-water": "coleman-water",
+      "plastic-barrel": "plastic-barrel",
+      "acrylic": "Acrylic",
+      "solid-plastic": "solid-plastic",
+      "water colman": "Water colman"
+    },
+    "paper": {
+      "news paper": "news paper",
+      "books": "books",
+      "card-board": "card-board",
+      "magazines": "magazines",
+      "paper": "paper",
+      "shredded-paper": "shredded-paper"
+    },
+    "cooking-oil": {
+      "used-cooking-oil": "used-cooking-oil"
+    },
+    "e-waste": {
+      "mobile": "Mobile",
+      "laptop": "laptop",
+      "router": "Router",
+      "computer-cpu": "computer-cpu",
+      "reciever": "reciever",
+      "tablet": "tablet",
+      "printer": "printer",
+      "laptop battery": "Laptop battery",
+      "old computer monitor": "Old computer monitor",
+      "scanner": "Scanner",
+      "subwoofer": "Subwoofer",
+      "memory ram": "Memory ram",
+      "power supply": "Power supply",
+      "screen card": "Screen card",
+      "printing machine": "Printing machine",
+      "mobile motherboard": "Mobile motherboard",
+      "laptop motherboard": "Laptop motherboard",
+      "playstation 1": "PlayStation 1",
+      "dvd player": "DVD player",
+      "video device": "Video device",
+      "microphone": "Microphone",
+      "pc fan": "PC fan",
+      "processor": "Processor",
+      "cd rom drive": "CD rom drive",
+      "airpods": "Airpods",
+      "shaver": "Shaver",
+      "sound card": "Sound Card",
+      "network card": "Network Card",
+      "web camera": "Web Camera",
+      "hard disk": "Hard disk",
+      "hoverboard": "Hoverboard",
+      "radio sound": "Radio sound",
+      "ipod": "Ipod",
+      "projector": "Projector",
+      "mifi": "Mifi",
+      "powerbank": "PowerBank",
+      "usb modem": "Usb Modem",
+      "wii": "Wii",
+      "playstation 2": "Playstation 2",
+      "xbox": "XBox",
+      "playstation portable": "PlayStation Portable",
+      "mb3": "MB3",
+      "ups": "UPS",
+      "big printer": "Big Printer",
+      "radio cassette": "Radio cassette",
+      "digital camera": "Digital Camera",
+      "dvr": "DVR",
+      "camera switch": "Camera Switch",
+      "fax": "Fax",
+      "paper shredder": "Paper shredder"
+    },
+    "metals": {
+      "copper": "Copper",
+      "basin mixer": "Basin mixer",
+      "aluminium": "Aluminium",
+      "cooking pan": "Cooking pan",
+      "fire extinguisher": "Fire extinguisher",
+      "iron.": "Iron.",
+      "chandeliers": "Chandeliers",
+      "clothes dryer": "Clothes dryer",
+      "alumetal door": "Alumetal door",
+      "washing machine base": "Washing Machine Base",
+      "water motor": "Water motor",
+      "trans": "Trans",
+      "balloon motor": "Balloon Motor",
+      "pan": "Pan",
+      "granite pot": "Granite Pot",
+      "stainless sink": "Stainless Sink",
+      "cans": "Cans",
+      "ladder": "Ladder",
+      "stainless": "Stainless",
+      "tinplate": "Tinplate",
+      "office chair": "Office chair",
+      "fridge motor": "Fridge Motor",
+      "washing motor": "Washing motor",
+      "ceramic pot": "Ceramic Pot",
+      "tefal pot": "Tefal pot",
+      "stainless kettle": "Stainless Kettle",
+      "water knob": "Water knob",
+      "ethernet cable": "Ethernet cable"
+    },
+    "home appliances": {
+      "fan": "Fan",
+      "iron": "Iron",
+      "gas heater 10 liter": "Gas Heater 10 Liter",
+      "indoor ac unit": "Indoor AC unit",
+      "blender": "Blender",
+      "microwave": "Microwave",
+      "fridge": "Fridge",
+      "washing machine": "Washing Machine",
+      "dishwasher": "Dishwasher",
+      "vacuum": "Vacuum",
+      "kettle": "Kettle",
+      "chopper": "Chopper",
+      "heater device": "Heater Device",
+      "cooker": "Cooker",
+      "electric fryer": "Electric fryer",
+      "ventilation fan": "Ventilation fan",
+      "kitchen machine": "Kitchen machine",
+      "mixer": "Mixer",
+      "toaster": "Toaster",
+      "hair dryer": "Hair dryer",
+      "babyliss": "Babyliss",
+      "insect killer": "Insect Killer",
+      "electric fly insect killer": "Electric fly insect killer",
+      "small led rechargeable": "Small Led Rechargeable"
+    }
+  },
+  "redeemEcoPoints": "Redeem Eco Points",
+  "loading": "Loading...",
+  "points": "Points",
+  "vouchers": "Vouchers",
+  "cashOut": "Cash Out",
   "pts": "pts",
-  "viewFullHistory": "View full history"
+  "redeemed": "Redeemed",
+  "needMorePoints": "You need {{points}} more points",
+  "voucherSuccessfullyRedeemed": "Voucher successfully redeemed",
+  "amountToRedeem": "Amount to Redeem (EGP)",
+  "enterAmount": "Enter amount",
+  "currency": "EGP",
+  "requiredPoints": "Required points",
+  "remainingPoints": "Remaining points",
+  "notEnoughPointsForAmount": "You don't have enough points for this amount",
+  "exchangeRate": "Exchange Rate: 19 Points = 1 EGP",
+  "maxAvailable": "Max available: {{amount}} EGP",
+  "yourVoucherQR": "Your Voucher QR Code",
+  "downloadQR": "Download QR Code",
+  "alreadyRedeemed": "Already Redeemed",
+  "redeemVoucher": "Redeem Voucher",
+  "transferToAccount": "Transfer to Account",
+  "invalidAmount": "Invalid amount",
+  "notEnoughPoints": "You don't have enough points",
+  "success": "Success",
+  "cashbackRedeemed": "Cashback redeemed successfully!",
+  "error": "Error",
+  "couldNotDeductPoints": "Could not deduct points",
+  "selectVoucher": "Select a voucher",
+  "voucher": "Voucher",
+  "value": "Value",
+  "pointsHistory": "Points History",
+  "noPointsHistory": "No points history found",
+  "noActivity": "No recent activity",
+  "recentPointsActivity": "Recent Points Activity",
+  "viewFullHistory": "View Full History",
+  "redeem": "Redeem",
+  "cashback": "Cashback",
+  "earn": "Earn",
+  "bonus": "Bonus",
+  "deduct": "Deduct",
+  "addresses": {
+    "noAddressesTitle": "No addresses yet",
+    "noAddressesDescription": "Add your first delivery address to get started",
+    "selected": "Selected",
+    "editAddress": "Edit Address",
+    "deleteAddress": "Delete Address",
+    "choose": "Choose Your Address",
+    "select": "Select or add a delivery address",
+    "addNew": "Add New Address"
+  },
+  "addressForm": {
+    "pickupAddress": "Pickup Address",
+    "selectCity": "Select your city",
+    "selectCityPlaceholder": "-- Select City --",
+    "selectArea": "Select your area",
+    "selectAreaPlaceholder": "-- Select Area --",
+    "streetAddress": "Street Address",
+    "streetPlaceholder": "e.g. El-Central street",
+    "nearestLandmark": "Nearest Landmark (optional)",
+    "landmarkPlaceholder": "e.g. El-Asdekaa Market",
+    "buildingNumber": "Building Number/Name",
+    "floorNumber": "Floor Number",
+    "apartmentNumber": "Apartment Number",
+    "additionalNote": "Additional Note",
+    "notesPlaceholder": "e.g. Don't ring the bell"
+  },
+  "validation": {
+    "areaRequired": "Area is required",
+    "streetRequired": "Street is required",
+    "buildingRequired": "Building is required",
+    "floorRequired": "Floor is required",
+    "apartmentRequired": "Apartment is required"
+  },
+  "review": {
+    "reviewYourOrder": "Review Your Order",
+    "cartEmpty": "Your cart is empty.",
+    "quantity": "Quantity",
+    "pricePerUnit": "Price per unit",
+    "points": "Points",
+    "orderPrice": "Order Price",
+    "deliveryFees": "Delivery Fees",
+    "total": "Total",
+    "processing": "Processing...",
+    "confirmOrder": "Confirm Order"
   }
 }

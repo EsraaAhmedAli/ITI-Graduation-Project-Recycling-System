@@ -25,8 +25,11 @@ export interface User {
   createdAt?: string;
   updatedAt?: string;
   lastActiveAt?: string;
-  deliveryStatus: string;
-  declineReason: string;
+
+  // Delivery-related
+  deliveryStatus?: "approved" | "pending" | "declined";
+  declineReason?: string;
+  declinedAt?: string;
 }
 export interface UserRewards {
   currentPoints: number;

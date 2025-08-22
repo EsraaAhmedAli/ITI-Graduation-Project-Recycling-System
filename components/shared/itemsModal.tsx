@@ -3,10 +3,9 @@ import { Modal, ModalBody, ModalHeader } from 'flowbite-react';
 import Image from 'next/image';
 import { priceWithMarkup } from '@/utils/priceUtils';
 
-export default function ItemsModal({ show, onclose, selectedOrderItems, userRole , orderStatus,selectedOrder }) {
+export default function ItemsModal({ show, onclose, selectedOrderItems, userRole, orderStatus, selectedOrder }) {
   const { t, locale } = useLanguage();
-  console.log(selectedOrder,'sss');
-  
+  console.log(selectedOrder, 'sss');
 
   const count = selectedOrderItems?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0;
   const formatted = count.toLocaleString();
@@ -26,6 +25,15 @@ export default function ItemsModal({ show, onclose, selectedOrderItems, userRole
     total % 1 === 0
       ? total.toLocaleString()
       : total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  // Helper function to get localized text
+  const getLocalizedText = (textObj, fallback = 'N/A') => {
+    if (typeof textObj === 'string') return textObj;
+    if (typeof textObj === 'object' && textObj !== null) {
+      return textObj[locale] || textObj.en || textObj.ar || fallback;
+    }
+    return fallback;
+  };
 
   return (
     <Modal show={show} onClose={onclose} size="xl" dismissible>
@@ -63,10 +71,14 @@ export default function ItemsModal({ show, onclose, selectedOrderItems, userRole
                       <div className="flex items-center gap-3 mb-3">
                         <div className="flex items-center gap-2">
                           <h4 className="text-lg font-semibold text-gray-800">
-                            {item.itemName || 'Unnamed Item'}
+                            {getLocalizedText(item?.name, 'Unknown Item')}
                           </h4>
-                          <Image width={50} height={50} src={item.image} alt={item.itemName} />
-                    
+                          <Image width={50} height={50} src={item.image} alt={getLocalizedText(item?.name)} />
+                          
+                          {/* Display category name */}
+                          <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                            {getLocalizedText(item?.categoryName, 'Unknown Category')}
+                          </span>
                         </div>
                       </div>
 
@@ -84,7 +96,7 @@ export default function ItemsModal({ show, onclose, selectedOrderItems, userRole
                                 </svg>
                                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('itemsModal.OriginalQuantity')}</p>
                               </div>
-                              <p className="text-gray-800 font-semibold text-lg">{item.originalQuantity || 0}</p>
+                              <p className="text-gray-800 font-semibold text-lg">{item.originalQuantity || 0} {item.measurement_unit == 1 ? 'KG' : 'piece'}</p>
                             </div>
                             
                             {/* Delivered Quantity */}
@@ -102,7 +114,7 @@ export default function ItemsModal({ show, onclose, selectedOrderItems, userRole
                                     ? 'text-orange-600' 
                                     : 'text-gray-800'
                               }`}>
-                                {item.quantity || 0}
+                                {item.quantity || 0} {item.measurement_unit == 1 ? 'KG' : 'piece'}
                               </p>
                             </div>
                           </>
@@ -115,7 +127,7 @@ export default function ItemsModal({ show, onclose, selectedOrderItems, userRole
                               </svg>
                               <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('itemsModal.quantity')}</p>
                             </div>
-                            <p className="text-gray-800 font-semibold text-lg">{item.quantity || 0}</p>
+                            <p className="text-gray-800 font-semibold text-lg">{item.quantity || 0} {item.measurement_unit == 1 ? 'KG' : 'piece'}</p>
                           </div>
                         )}
 
@@ -130,7 +142,6 @@ export default function ItemsModal({ show, onclose, selectedOrderItems, userRole
                             </p>
                           </div>
                           <p className="text-gray-800 font-semibold text-lg">
-                          
                             {locale === 'ar' ? `${price} ${currencyLabel}` : `${currencyLabel}${price}`}
                           </p>
                         </div>
@@ -188,16 +199,16 @@ export default function ItemsModal({ show, onclose, selectedOrderItems, userRole
                 <div className="text-right">
                   <p className="text-2xl font-bold text-green-600">
                     {t('itemsModal.totalPrice', { total: formattedTotal })}
-                  {selectedOrder?.deliveryFee != 0 && <span className=''> + {selectedOrder.deliveryFee} Fee</span>}
+                    {selectedOrder?.deliveryFee != 0 && <span className=''> + {selectedOrder.deliveryFee} Fee</span>}
                   </p>
-                {
-                  userRole == 'customer' &&   <p className="text-sm font-semibold text-green-700">
-                    {t('itemsModal.totalPoints', { points: totalPoints.toLocaleString() })}
-                  </p>
-                }
                   {
-                    selectedOrder?.paymentMethod !== null &&                   <p  className="text-sm font-semibold text-green-700">payment Method: {selectedOrder.paymentMethod}</p>
-
+                    userRole == 'customer' && <p className="text-sm font-semibold text-green-700">
+                      {t('itemsModal.totalPoints', { points: totalPoints.toLocaleString() })}
+                    </p>
+                  }
+           
+                  {
+                    selectedOrder?.paymentMethod !== null && userRole.role !== 'customer' && <p className="text-sm font-semibold text-green-700">payment Method: {selectedOrder.paymentMethod}</p>
                   }
                 </div>
               </div>

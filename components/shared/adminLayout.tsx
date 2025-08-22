@@ -4,7 +4,7 @@ import AdminSidebar from "@/components/sidebar/Sbar";
 
 export default function AdminRootLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-white">
       <AdminSidebar />
       <main className="flex-1 overflow-auto">
         {children}

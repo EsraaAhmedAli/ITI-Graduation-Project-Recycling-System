@@ -1,12 +1,4 @@
-import {
-  Star,
-  Award,
-  Recycle,
-  Crown,
-  Trophy,
-  Target,
-  LeafyGreen,
-} from "lucide-react";
+import { Globe, Sprout, Recycle, Shield, Star, Gem, Crown } from "lucide-react";
 export const rewardLevels = [
   {
     id: 1,
@@ -14,9 +6,12 @@ export const rewardLevels = [
     minRecycles: 0,
     maxRecycles: 4,
     color: "bg-gray-50 text-gray-900 border-gray-200",
-    icon: LeafyGreen,
-    benefits: ["Welcome bonus: 50 points", "1 points per recycling order"],
-    badge: "🌍",
+    icon: Globe,
+    benefits: {
+      en: ["Welcome bonus: 50 points", "1 points per recycling order"],
+      ar: ["مكافأة ترحيبية: ٥٠ نقطة", "١ نقطة لكل طلب إعادة تدوير"],
+    },
+    badge: Globe,
   },
   {
     id: 2,
@@ -24,9 +19,11 @@ export const rewardLevels = [
     minRecycles: 5,
     maxRecycles: 14,
     color: "bg-gray-100 text-gray-800 border-gray-300",
-    icon: Recycle,
-    benefits: ["Reaching bonus: 150 points", "5 points per recycling order"],
-    badge: "🌱",
+    benefits: {
+      en: ["Reaching bonus: 150 points", "5 points per recycling order"],
+      ar: ["مكافأة الوصول: ١٥٠ نقطة", "٥ نقاط لكل طلب إعادة تدوير"],
+    },
+    badge: Sprout,
   },
   {
     id: 3,
@@ -34,9 +31,12 @@ export const rewardLevels = [
     minRecycles: 15,
     maxRecycles: 29,
     color: "bg-green-100 text-green-800 border-green-300",
-    icon: Target,
-    benefits: ["Reaching bonus: 300 points", "10 points per recycling order"],
-    badge: "♻️",
+    icon: Recycle,
+    benefits: {
+      en: ["Reaching bonus: 300 points", "10 points per recycling order"],
+      ar: ["مكافأة الوصول: ٣٠٠ نقطة", "١٠ نقاط لكل طلب إعادة تدوير"],
+    },
+    badge: Recycle,
   },
   {
     id: 4,
@@ -44,20 +44,25 @@ export const rewardLevels = [
     minRecycles: 30,
     maxRecycles: 49,
     color: "bg-gray-200 text-gray-700 border-gray-400",
-    icon: Award,
-    benefits: ["Reaching bonus: 500 points", "15 points per recycling order"],
-    badge: "🥈",
+    icon: Shield,
+    benefits: {
+      en: ["Reaching bonus: 500 points", "15 points per recycling order"],
+      ar: ["مكافأة الوصول: ٥٠٠ نقطة", "١٥ نقطة لكل طلب إعادة تدوير"],
+    },
+    badge: Shield,
   },
   {
     id: 5,
     name: "Gold Guardian",
     minRecycles: 50,
     maxRecycles: 74,
-
     color: "bg-yellow-100 text-yellow-800 border-yellow-300",
     icon: Star,
-    benefits: ["Reaching bonus: 700 points", "20 points per recycling order"],
-    badge: "🥇",
+    benefits: {
+      en: ["Reaching bonus: 700 points", "20 points per recycling order"],
+      ar: ["مكافأة الوصول: ٧٠٠ نقطة", "٢٠ نقطة لكل طلب إعادة تدوير"],
+    },
+    badge: Star,
   },
   {
     id: 6,
@@ -65,9 +70,12 @@ export const rewardLevels = [
     minRecycles: 75,
     maxRecycles: 99,
     color: "bg-blue-100 text-blue-800 border-blue-300",
-    icon: Trophy,
-    benefits: ["Reaching bonus: 850 points", "25 points per recycling order"],
-    badge: "💎",
+    icon: Gem,
+    benefits: {
+      en: ["Reaching bonus: 850 points", "25 points per recycling order"],
+      ar: ["مكافأة الوصول: ٨٥٠ نقطة", "٢٥ نقطة لكل طلب إعادة تدوير"],
+    },
+    badge: Gem,
   },
   {
     id: 7,
@@ -76,7 +84,10 @@ export const rewardLevels = [
     maxRecycles: 999999,
     color: "bg-purple-100 text-purple-800 border-purple-300",
     icon: Crown,
-    benefits: ["Reaching bonus: 1000 points", "30 points per recycling order"],
-    badge: "👑",
+    benefits: {
+      en: ["Reaching bonus: 1000 points", "30 points per recycling order"],
+      ar: ["مكافأة الوصول: ١٠٠٠ نقطة", "٣٠ نقطة لكل طلب إعادة تدوير"],
+    },
+    badge: Crown,
   },
 ];

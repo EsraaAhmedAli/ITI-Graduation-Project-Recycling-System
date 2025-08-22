@@ -13,7 +13,7 @@ import { LanguageProvider } from "@/context/LanguageContext";
 import GuestSessionProvider from "@/lib/GuestSessionProvider";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { OfflineProvider } from "@/context/OfflineContext"; // Add this import
-import UserPointsWrapper from "@/components/shared/pointsWrapper";
+// import UserPointsWrapper from "@/components/shared/pointsWrapper";
 import { ThemeProvider } from "@/components/theme-provider";
 
 const geistSans = Geist({
@@ -44,29 +44,47 @@ export default function RootLayout({
         <LanguageProvider>
           <UserAuthProvider>
             <ReactQueryProvider>
-              <UserPointsWrapper>
-                <CartProvider>
-                  <OfflineProvider>
-                    {" "}
-                    {/* Add OfflineProvider here */}
-                    <Toaster />
-                    <NotificationProvider>
-                      <ToastContainer />
-                      <GuestSessionProvider>
-                        <GoogleOAuthProvider
-                          clientId={
-                            process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID!
-                          }
-                        >
-                          <ThemeProvider defaultTheme="system">
+              <CartProvider>
+                <OfflineProvider>
+                  {" "}
+                  {/* Add OfflineProvider here */}
+                  <Toaster
+                    position="top-center"
+                    toastOptions={{
+                      duration: 5000,
+                      style: {
+                        direction: "ltr",
+                        textAlign: "left",
+                      },
+                    }}
+                  />
+                  <NotificationProvider>
+                    <ToastContainer
+                      position="top-center" // top-center works well for RTL
+                      autoClose={5000}
+                      hideProgressBar={false}
+                      newestOnTop={false}
+                      closeOnClick
+                      rtl={false} // set false to avoid misbehavior
+                      pauseOnFocusLoss
+                      draggable
+                      pauseOnHover
+                      className="!text-left !flex !items-center" // force text left inside toast
+                    />
+                    <GuestSessionProvider>
+                      <GoogleOAuthProvider
+                        clientId={
+                          process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? ""
+                        }
+                      >
+                        <ThemeProvider defaultTheme="system">
                           <LayoutWrapper>{children}</LayoutWrapper>
-                          </ThemeProvider>
-                        </GoogleOAuthProvider>
-                      </GuestSessionProvider>
-                    </NotificationProvider>
-                  </OfflineProvider>
-                </CartProvider>
-              </UserPointsWrapper>
+                        </ThemeProvider>
+                      </GoogleOAuthProvider>
+                    </GuestSessionProvider>
+                  </NotificationProvider>
+                </OfflineProvider>
+              </CartProvider>
             </ReactQueryProvider>
           </UserAuthProvider>
         </LanguageProvider>
