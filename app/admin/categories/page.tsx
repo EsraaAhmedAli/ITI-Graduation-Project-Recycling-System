@@ -231,6 +231,7 @@ export default function Page() {
               )}/add-sub-category`
             );
           }}
+          showFilter={false}
           onImageClick={(item: CategoryItem) => {
             const categoryName = getCategoryEnglishName(item);
             router.push(
