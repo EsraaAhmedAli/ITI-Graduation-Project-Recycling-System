@@ -3,35 +3,33 @@
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
 
-// Remove the loading skeleton - let CategoryList handle its own loading
+// Clean dynamic imports - let components handle their own loading
 const CategoryList = dynamic(() => import("@/components/shared/CategoryList"), {
-  ssr: true // Keep SSR for better SEO
+  ssr: true // Keep SSR for SEO
 });
 
 const FloatingRecorderButton = dynamic(
   () => import('@/components/Voice Processing/FloatingRecorderButton')
-    .catch(() => ({ default: () => null })), // Graceful fallback
+    .catch(() => ({ default: () => null })),
   { 
-    ssr: false, // This component doesn't need SSR
-    loading: () => null // No loading state needed for floating button
+    ssr: false,
+    loading: () => null
   }
 );
 
 export default function UserCategoriesPage() {
   return (
     <main className="min-h-screen bg-background">
-      {/* Main content with error boundary */}
-      <Suspense 
-        fallback={
-          <div className="flex items-center justify-center min-h-screen">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
-          </div>
-        }
-      >
-        <CategoryList basePath="user" horizontal={false} />
+      {/* Main content - let CategoryList handle its own loading state */}
+      <Suspense fallback={null}>
+        <CategoryList 
+          basePath="user" 
+          horizontal={false}
+          maxToShow={10} // Limit initial render for performance
+        />
       </Suspense>
 
-      {/* Voice recorder - non-critical, can load later */}
+      {/* Voice recorder - load after main content */}
       <Suspense fallback={null}>
         <FloatingRecorderButton />
       </Suspense>

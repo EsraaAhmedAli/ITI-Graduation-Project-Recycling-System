@@ -12,7 +12,7 @@ export default function Footer() {
   const { t } = useLanguage();
 
   return (
-    <footer className="bg-yellow/95 dark:bg-yellow-500 backdrop-blur-lg border-gray-200 dark:border-yellow-700 shadow-sm">
+    <footer className="bg-yellow/95 backdrop-blur-lg border-gray-200 shadow-sm" style={{borderTop: "1px solid var(--border)", background: "var(--background)"}}>
       <div className="max-w-6xl mx-auto px-6 py-12">
         {/* Main Content */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">

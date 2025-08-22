@@ -1,16 +1,67 @@
 "use client";
 
-import { useState, useMemo, useCallback, memo } from "react";
+import { useState, useMemo, useCallback, memo, Suspense } from "react";
 import dynamic from "next/dynamic";
-import { Loader } from '@/components/common'
 import { useCategories } from "@/hooks/useGetCategories";
 import { Category } from "../Types/categories.type";
 import { useLanguage } from "@/context/LanguageContext";
 
-// Lazy load CategoryCard to reduce initial bundle size
+// Lazy load CategoryCard with skeleton fallback
 const CategoryCard = dynamic(() => import("./CategoryCard"), {
-  ssr: false // Disable SSR for better performance if not needed for SEO
+  ssr: false,
+  loading: () => <CategorySkeleton />
 });
+
+// Category Skeleton Component matching the ItemCard skeleton pattern
+const CategorySkeleton = memo(() => (
+  <div className="animate-pulse">
+    <div className="w-64 h-60 mb-8 rounded-3xl overflow-hidden shadow-lg bg-slate-200">
+      {/* Image skeleton */}
+      <div className="flex flex-col items-center justify-center p-4 h-full">
+        <div className="relative mb-6">
+          <div className="w-28 h-28 rounded-full bg-slate-300 p-1 shadow-md">
+            <div className="w-full h-full rounded-full bg-slate-200 border-4 border-white" />
+          </div>
+          {/* Icon overlay skeleton */}
+          <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-10 h-10 bg-slate-300 rounded-full border-2 border-gray-100" />
+        </div>
+        
+        {/* Title skeleton */}
+        <div className="flex flex-col items-center mb-4">
+          <div className="w-32 h-5 bg-slate-300 rounded mb-1" />
+          <div className="w-12 h-1 bg-slate-300 rounded-full" />
+        </div>
+      </div>
+    </div>
+  </div>
+));
+CategorySkeleton.displayName = 'CategorySkeleton';
+
+// Grid of category skeletons
+const CategorySkeletonGrid = memo(({ 
+  count = 10, 
+  horizontal = false 
+}: { 
+  count?: number, 
+  horizontal?: boolean 
+}) => (
+  <div className={
+    horizontal 
+      ? "overflow-x-auto scrollbar-thin scrollbar-thumb-green-300 scrollbar-track-gray-100" 
+      : ""
+  }>
+    <div className={
+      horizontal
+        ? "flex gap-6 pl-4 min-w-max pb-4"
+        : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 pl-10"
+    }>
+      {Array(count).fill(0).map((_, i) => (
+        <CategorySkeleton key={`category-skeleton-${i}`} />
+      ))}
+    </div>
+  </div>
+));
+CategorySkeletonGrid.displayName = 'CategorySkeletonGrid';
 
 interface CategoryListProps {
   basePath: string;
@@ -19,127 +70,126 @@ interface CategoryListProps {
 }
 
 const CategoryList = memo(function CategoryList({
-  maxToShow,
+  maxToShow = 10,
   horizontal = false,
 }: CategoryListProps) {
   const [showAll, setShowAll] = useState(false);
   const { t } = useLanguage();
   const { data, isLoading, error } = useCategories();
 
-  // Memoize all derived state to prevent unnecessary recalculations
-  const derivedState = useMemo(() => {
-    const categories = data?.data || [];
-    const totalCategories = categories.length;
+  // Memoize categories with better dependency tracking
+  const { categoriesToShow, shouldShowSeeMoreButton, totalCategories } = useMemo(() => {
+    if (!data?.data) return { categoriesToShow: [], shouldShowSeeMoreButton: false, totalCategories: 0 };
     
-    let categoriesToShow: Category[];
-    if (showAll || !maxToShow) {
-      categoriesToShow = categories;
-    } else {
-      categoriesToShow = categories.slice(0, maxToShow);
-    }
-
-    const shouldShowSeeMoreButton = !showAll && maxToShow && totalCategories > maxToShow;
+    const categories = data.data;
+    const total = categories.length;
+    
+    const toShow = showAll || !maxToShow 
+      ? categories 
+      : categories.slice(0, maxToShow);
 
     return {
-      categoriesToShow,
-      shouldShowSeeMoreButton,
-      totalCategories
+      categoriesToShow: toShow,
+      shouldShowSeeMoreButton: !showAll && maxToShow && total > maxToShow,
+      totalCategories: total
     };
   }, [data?.data, showAll, maxToShow]);
 
-  // Stable callback references
   const handleSeeMoreClick = useCallback(() => {
     setShowAll(true);
   }, []);
 
-  // Optimized category rendering with stable keys
   const renderCategory = useCallback(
     (category: Category, index: number) => (
       <div
-        key={`${category._id}-${index}`} // More stable key
+        key={category._id}
         className={horizontal ? "min-w-[200px] flex-shrink-0" : ""}
       >
         <CategoryCard 
-          name={category?.name} 
-          image={category?.image}
-          displayName={category?.displayName}
+          name={category.name} 
+          image={category.image}
+          displayName={category.displayName}
         />
       </div>
     ),
     [horizontal]
   );
 
-  // Early returns with memoized components
+  // Loading state with skeleton
   if (isLoading) {
-    return <Loader title={t("loaders.Categories")} />;
+    return (
+      <div className="space-y-8">
+        <section className="mb-16 px-2 sm:px-4">
+          {/* Header skeleton */}
+          <div className="pl-18 mb-8 mt-16">
+            <div className="animate-pulse">
+              <div className="w-80 h-8 bg-slate-200 rounded mb-2" />
+              <div className="w-96 h-5 bg-slate-200 rounded" />
+            </div>
+          </div>
+
+          {/* Categories skeleton grid */}
+          <CategorySkeletonGrid 
+            count={maxToShow || 10} 
+            horizontal={horizontal} 
+          />
+
+          {/* See more button skeleton */}
+          {maxToShow && (
+            <div className="flex justify-center mt-8">
+              <div className="w-32 h-10 bg-slate-200 rounded-full animate-pulse" />
+            </div>
+          )}
+        </section>
+
+        {/* Footer message skeleton */}
+        <div className="text-center mt-8">
+          <div className="w-64 h-4 bg-slate-200 rounded animate-pulse mx-auto" />
+        </div>
+      </div>
+    );
   }
 
   if (error) {
-    return (
-      <div className="text-red-500 text-center p-4" role="alert">
-        <p>Error loading categories.</p>
-        <button 
-          onClick={() => window.location.reload()} 
-          className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-        >
-          Retry
-        </button>
-      </div>
-    );
+    return <ErrorState onRetry={() => window.location.reload()} />;
   }
 
-  if (!derivedState.categoriesToShow.length) {
-    return (
-      <div className="text-gray-500 text-center p-8">
-        <p>{t("messages.noCategories", "No categories available")}</p>
-      </div>
-    );
+  if (!categoriesToShow.length) {
+    return <EmptyState t={t} />;
   }
 
   return (
     <div className="space-y-8">
       <section className="mb-16 px-2 sm:px-4">
-        {/* Header section - memoized */}
         <HeaderSection t={t} />
 
-        {/* Categories grid/list with virtualization consideration */}
         {horizontal ? (
           <HorizontalCategoryList 
-            categories={derivedState.categoriesToShow}
+            categories={categoriesToShow}
             renderCategory={renderCategory}
           />
         ) : (
           <GridCategoryList 
-            categories={derivedState.categoriesToShow}
+            categories={categoriesToShow}
             renderCategory={renderCategory}
           />
         )}
 
-        {/* See More Button */}
-        {derivedState.shouldShowSeeMoreButton && (
-          <div className="flex justify-center mt-8">
-            <button
-              onClick={handleSeeMoreClick}
-              className="px-6 py-2 rounded-full bg-green-500 hover:bg-green-600 text-white font-semibold transition-colors duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
-              aria-label={`Show all ${derivedState.totalCategories} categories`}
-            >
-              {t("staticCategories.seeMore")}
-            </button>
-          </div>
+        {shouldShowSeeMoreButton && (
+          <SeeMoreButton 
+            onClick={handleSeeMoreClick}
+            totalCategories={totalCategories}
+            t={t}
+          />
         )}
       </section>
 
-      {/* Footer message */}
-      <div className="text-center mt-8">
-        <span className="text-green-700 text-sm">
-          {t("staticCategories.clickImageForDetails")}
-        </span>
-      </div>
+      <FooterMessage t={t} />
     </div>
   );
 });
 
-// Memoized sub-components for better performance
+// Optimized sub-components
 const HeaderSection = memo(({ t }: { t: (key: string) => string }) => (
   <div className="pl-18 mb-8 mt-16">
     <h2 className="text-3xl md:text-3xl font-bold text-start text-accent-content mb-2">
@@ -150,6 +200,7 @@ const HeaderSection = memo(({ t }: { t: (key: string) => string }) => (
     </span>
   </div>
 ));
+HeaderSection.displayName = 'HeaderSection';
 
 const HorizontalCategoryList = memo(({ 
   categories, 
@@ -160,10 +211,11 @@ const HorizontalCategoryList = memo(({
 }) => (
   <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-green-300 scrollbar-track-gray-100">
     <div className="flex gap-6 pl-4 min-w-max pb-4">
-      {categories.map((category, index) => renderCategory(category, index))}
+      {categories.map(renderCategory)}
     </div>
   </div>
 ));
+HorizontalCategoryList.displayName = 'HorizontalCategoryList';
 
 const GridCategoryList = memo(({ 
   categories, 
@@ -178,11 +230,62 @@ const GridCategoryList = memo(({
     aria-label="Category grid"
   >
     {categories.map((category, index) => (
-      <div key={`${category._id}-${index}`} role="gridcell">
+      <div key={category._id} role="gridcell">
         {renderCategory(category, index)}
       </div>
     ))}
   </div>
 ));
+GridCategoryList.displayName = 'GridCategoryList';
+
+const SeeMoreButton = memo(({ 
+  onClick, 
+  totalCategories, 
+  t 
+}: { 
+  onClick: () => void, 
+  totalCategories: number, 
+  t: (key: string) => string 
+}) => (
+  <div className="flex justify-center mt-8">
+    <button
+      onClick={onClick}
+      className="px-6 py-2 rounded-full bg-green-500 hover:bg-green-600 text-white font-semibold transition-colors duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
+      aria-label={`Show all ${totalCategories} categories`}
+    >
+      {t("staticCategories.seeMore")}
+    </button>
+  </div>
+));
+SeeMoreButton.displayName = 'SeeMoreButton';
+
+const ErrorState = memo(({ onRetry }: { onRetry: () => void }) => (
+  <div className="text-red-500 text-center p-4" role="alert">
+    <p>Error loading categories.</p>
+    <button 
+      onClick={onRetry}
+      className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+    >
+      Retry
+    </button>
+  </div>
+));
+ErrorState.displayName = 'ErrorState';
+
+const EmptyState = memo(({ t }: { t: (key: string) => string }) => (
+  <div className="text-gray-500 text-center p-8">
+    <p>{t("messages.noCategories", "No categories available")}</p>
+  </div>
+));
+EmptyState.displayName = 'EmptyState';
+
+const FooterMessage = memo(({ t }: { t: (key: string) => string }) => (
+  <div className="text-center mt-8">
+    <span className="text-green-700 text-sm">
+      {t("staticCategories.clickImageForDetails")}
+    </span>
+  </div>
+));
+FooterMessage.displayName = 'FooterMessage';
 
 export default CategoryList;
