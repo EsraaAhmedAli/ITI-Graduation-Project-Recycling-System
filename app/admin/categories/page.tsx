@@ -9,8 +9,8 @@ import Image from "next/image";
 import { useCategories } from "@/hooks/useGetCategories";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalization } from "@/utils/localiztionUtil";
-import Loader from "@/components/common/loader";
 import { Category } from "@/components/Types/categories.type";
+import Loader from "@/components/common/Loader";
 
 // Type definitions for better type safety
 // Updated to match the actual Category type from the API
@@ -167,7 +167,7 @@ export default function Page() {
   return (
     <>
       {isLoading ? (
-        <Loader title={t("loaders.categories") || t("loaders.Categories")} />
+        <Loader  />
       ) : error ? (
         <p className="text-center text-red-500 py-10">
           {t("categories.errorLoadingCategories") || "Error loading categories"}

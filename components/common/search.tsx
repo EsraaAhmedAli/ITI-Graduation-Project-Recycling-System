@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import Loader from "@/components/common/Loader";
 import api from "@/lib/axios";
 import { toast } from "react-hot-toast";
 import Image from "next/image";
@@ -8,7 +7,7 @@ import { X, Search, ShoppingCart, Star } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import Button from "./Button";
-
+import Loader from '../../components/common/loader'
 interface SearchResult {
   _id: string;
   name: {

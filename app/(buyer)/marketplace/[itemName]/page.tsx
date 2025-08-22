@@ -9,10 +9,10 @@ import { CartItem } from "@/models/cart";
 import { Recycle, Leaf, Package, Minus, Plus } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import toast from "react-hot-toast";
-import Loader from "@/components/common/loader";
 import dynamic from "next/dynamic";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { useItemSocket } from "@/hooks/useItemSocket";
+import Loader from "@/components/common/Loader";
 
 // Lazy load FloatingRecorderButton for voice processing
 const FloatingRecorderButton = dynamic(

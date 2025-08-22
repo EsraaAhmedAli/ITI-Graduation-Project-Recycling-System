@@ -17,9 +17,9 @@ import api from "../../../lib/axios";
 import { Modal, ModalBody, ModalHeader } from "flowbite-react";
 
 import { useLanguage } from "@/context/LanguageContext";
-import Loader from "@/components/common/loader";
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useValueDebounce } from "@/hooks/useValueDebounce";
+import Loader from "@/components/common/Loader";
 type UserRole = "customer" | "buyer";
 const STATUS = {
   PENDING: "pending",

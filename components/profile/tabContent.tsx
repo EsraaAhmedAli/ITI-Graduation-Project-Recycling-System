@@ -1,10 +1,10 @@
 // components/profile/TabContent.tsx
 import React, { memo, Suspense } from "react";
-import Loader from "@/components/common/Loader";
 
 import dynamic from "next/dynamic";
 import OrderCardSkeleton from "./orderCardSkeleton";
 import OrderCard from "./orderCard";
+import Loader from "../common/loader";
 
 // Dynamic imports
 const PaymentsHistory = dynamic(() => import("./paymentHistory"), {
