@@ -9,7 +9,6 @@
       "drop": "Drop Your Waste!",
       "learn": "Learn More"
     },
-
     "features": {
       "voice": "Record Your Items",
       "schedule": "Choose a Date and Time",
@@ -482,7 +481,7 @@
       "assigntocourier": "Assigned to Courier"
     },
     "role": {
-      "buyer":"Buyer",
+      "buyer": "Buyer",
       "customer": "Customer",
       "merchant": "Merchant",
       "admin": "Admin"
@@ -1125,7 +1124,8 @@
       "coleman-water": "coleman-water",
       "plastic-barrel": "plastic-barrel",
       "acrylic": "Acrylic",
-      "solid-plastic": "solid-plastic"
+      "solid-plastic": "solid-plastic",
+      "water colman": "Water colman"
     },
     "paper": {
       "news paper": "news paper",
@@ -1298,7 +1298,6 @@
     "select": "Select or add a delivery address",
     "addNew": "Add New Address"
   },
-
   "addressForm": {
     "pickupAddress": "Pickup Address",
     "selectCity": "Select your city",

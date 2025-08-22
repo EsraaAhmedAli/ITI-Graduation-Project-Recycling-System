@@ -17,7 +17,6 @@
       "pickupScheduling": "تحديد موعد",
       "earnorshare": "اكسب أو شارك"
     },
-
     "steps": {
       "howItWorks": "كيف تعمل منصتنا",
       "step1": {
@@ -680,7 +679,7 @@
   },
   "common": {
     "previous": "السابق",
-    "removeFromRecyclingCart" : "إزالة من سلة إعادة التدوير",
+    "removeFromRecyclingCart": "إزالة من سلة إعادة التدوير",
     "only": "فقط",
     "left": "متبقي",
     "itemsIn": "الاشياء في فئة",
@@ -1087,7 +1086,7 @@
       "assigntocourier": "مخصص للمندوب"
     },
     "role": {
-      "buyer" : "مشتري",
+      "buyer": "مشتري",
       "customer": "عميل",
       "merchant": "تاجر",
       "admin": "مدير"
@@ -1123,7 +1122,8 @@
       "coleman-water": "كولمان مياه",
       "plastic-barrel": "برميل من البلاستيك",
       "acrylic": "اكريلك",
-      "solid-plastic": "بلاستيك صلب"
+      "solid-plastic": "بلاستيك صلب",
+      "water colman": "كولمان مياه"
     },
     "paper": {
       "news paper": "جرايد",
