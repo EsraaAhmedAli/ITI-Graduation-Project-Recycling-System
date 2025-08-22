@@ -10,20 +10,21 @@ interface ApiResponse<T> {
   data: T;
 }
 
-export function useCategories() {
+export function useCategories(options: { enabled?: boolean } = {}) {
+  const { enabled = true, ...queryOptions } = options;
   const hasShownErrorRef = useRef(false);
-  
+
   // Safe context access with error handling
   let languageContext;
-  let locale = 'en';
+  let locale = "en";
   let isContextLoaded = false;
-  
+
   try {
     languageContext = useLanguage();
-    locale = languageContext?.locale || 'en';
+    locale = languageContext?.locale || "en";
     isContextLoaded = languageContext?.isLoaded || false;
   } catch (error) {
-    console.warn('Language context not available, using defaults:', error);
+    console.warn("Language context not available, using defaults:", error);
   }
 
   const query = useQuery<ApiResponse<Category[]>>({
@@ -32,25 +33,25 @@ export function useCategories() {
       try {
         console.log(`Fetching categories for locale: ${locale}`);
         const res = await api.get(`/categories?language=${locale}`);
-        console.log('Categories fetched successfully');
+        console.log("Categories fetched successfully");
         return res.data;
       } catch (error) {
-        console.error('Categories API error:', error);
+        console.error("Categories API error:", error);
         throw error;
       }
     },
+    enabled,
     // FIXED: Increase stale time to reduce refetches
     staleTime: 10 * 60 * 1000, // 10 minutes instead of 2
     cacheTime: 15 * 60 * 1000, // 15 minutes cache
-    
+
     // FIXED: Reduce aggressive refetch behaviors
-    refetchOnMount: 'stale', // Only refetch if data is stale
+    refetchOnMount: "stale", // Only refetch if data is stale
     refetchOnWindowFocus: false, // Don't refetch on window focus
-    refetchOnReconnect: 'stale', // Only refetch on reconnect if stale
-    
+    refetchOnReconnect: "stale", // Only refetch on reconnect if stale
+
     // Only enable query when language context is loaded and we're in browser
-    enabled: isContextLoaded && typeof window !== 'undefined',
-    
+
     retry: (failureCount, error) => {
       if (failureCount < 2) {
         console.log(`Retrying categories fetch (attempt ${failureCount + 1})`);
@@ -63,11 +64,11 @@ export function useCategories() {
   // Handle errors only once to prevent multiple toasts
   useEffect(() => {
     if (query.isError && query.failureCount > 1 && !hasShownErrorRef.current) {
-      console.error('Categories query failed:', query.error);
-      toast.error('Failed to load categories');
+      console.error("Categories query failed:", query.error);
+      toast.error("Failed to load categories");
       hasShownErrorRef.current = true;
     }
-    
+
     // Reset error flag when query succeeds
     if (query.isSuccess) {
       hasShownErrorRef.current = false;
@@ -77,10 +78,10 @@ export function useCategories() {
   // Rest of your helper functions remain the same...
   const getItemDisplayName = (item: any): string => {
     if (!item) {
-      console.warn('getItemDisplayName called with null/undefined item');
+      console.warn("getItemDisplayName called with null/undefined item");
       return "";
     }
-    
+
     try {
       if (item.displayName) {
         return item.displayName;
@@ -96,14 +97,14 @@ export function useCategories() {
 
       return "";
     } catch (error) {
-      console.error('Error in getItemDisplayName:', error);
+      console.error("Error in getItemDisplayName:", error);
       return "";
     }
   };
 
   const getCategoryIdByItemName = (itemName: string): string => {
     if (!itemName) return "";
-    
+
     try {
       const categories = query.data?.data;
       if (!Array.isArray(categories)) {
@@ -114,10 +115,10 @@ export function useCategories() {
         if (!category?.items || !Array.isArray(category.items)) {
           continue;
         }
-        
+
         const foundItem = category.items.find((item) => {
           if (!item) return false;
-          
+
           try {
             if (
               item.name &&
@@ -145,7 +146,7 @@ export function useCategories() {
 
             return false;
           } catch (error) {
-            console.error('Error checking item:', error);
+            console.error("Error checking item:", error);
             return false;
           }
         });
@@ -157,14 +158,14 @@ export function useCategories() {
 
       return "";
     } catch (error) {
-      console.error('Error in getCategoryIdByItemName:', error);
+      console.error("Error in getCategoryIdByItemName:", error);
       return "";
     }
   };
 
   const geItemQuantityInStock = (itemId: string, categoryId: string) => {
     if (!itemId || !categoryId) return -1;
-    
+
     try {
       const categories = query.data?.data;
       if (!Array.isArray(categories)) {
@@ -187,21 +188,21 @@ export function useCategories() {
 
       return targetItem.quantity || 0;
     } catch (error) {
-      console.error('Error getting item quantity:', error);
+      console.error("Error getting item quantity:", error);
       return -1;
     }
   };
 
   const getItemById = (itemId: string) => {
     if (!itemId) return null;
-    
+
     try {
       const categories = query.data?.data;
       if (!Array.isArray(categories)) return null;
 
       for (const category of categories) {
         if (!category?.items || !Array.isArray(category.items)) continue;
-        
+
         const foundItem = category.items.find((item) => item?._id === itemId);
         if (foundItem) {
           return {
@@ -213,7 +214,7 @@ export function useCategories() {
       }
       return null;
     } catch (error) {
-      console.error('Error in getItemById:', error);
+      console.error("Error in getItemById:", error);
       return null;
     }
   };
@@ -227,7 +228,7 @@ export function useCategories() {
       for (const category of categories) {
         if (category?.items && Array.isArray(category.items)) {
           const itemsWithCategory = category.items
-            .filter(item => !!item)
+            .filter((item) => !!item)
             .map((item) => {
               try {
                 return {
@@ -236,7 +237,7 @@ export function useCategories() {
                   displayName: getItemDisplayName(item),
                 };
               } catch (error) {
-                console.error('Error processing item:', error);
+                console.error("Error processing item:", error);
                 return null;
               }
             })
@@ -246,7 +247,7 @@ export function useCategories() {
       }
       return allItems;
     } catch (error) {
-      console.error('Error in getAllItems:', error);
+      console.error("Error in getAllItems:", error);
       return [];
     }
   };

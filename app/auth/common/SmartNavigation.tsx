@@ -1,7 +1,7 @@
 "use client";
 import { useAuthenticationContext } from "@/context/AuhenticationContext";
 import React from "react";
-import { RoleConfig } from "./RoleConfig";
+import { useRoleConfig } from "./RoleConfig";
 import { useLanguage } from "@/context/LanguageContext";
 import { useFormContext } from "react-hook-form";
 type SmartNavigationProps = {
@@ -19,7 +19,7 @@ export default function SmartNavigation({
 }: SmartNavigationProps) {
   const { step, setStep, loading, selectedRole, GoogleUser } =
     useAuthenticationContext();
-  const roleConfig = RoleConfig();
+  const roleConfig = useRoleConfig();
   const { t, locale } = useLanguage();
   const {
     clearErrors,

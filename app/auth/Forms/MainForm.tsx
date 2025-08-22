@@ -4,7 +4,7 @@ import { X } from "lucide-react";
 import React, { Suspense, lazy, useMemo } from "react";
 import { FieldValues, useFormContext } from "react-hook-form";
 import { useLanguage } from "@/context/LanguageContext";
-import { RoleConfig } from "../common/RoleConfig";
+import { useRoleConfig } from "../common/RoleConfig";
 
 // Lazy load heavy components
 const RoleStepper = lazy(() => import("@/app/auth/common/RoleStepper"));
@@ -47,7 +47,7 @@ export default function MainForm() {
   const { t } = useLanguage();
 
   // Memoize roleConfig to prevent unnecessary recalculations
-  const roleConfig = useMemo(() => RoleConfig(), []);
+  const roleConfig = useRoleConfig();
 
   const { handleSubmit, clearErrors, reset } = useFormContext();
 

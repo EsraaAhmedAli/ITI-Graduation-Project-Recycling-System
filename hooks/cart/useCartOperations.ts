@@ -94,7 +94,7 @@ export const useCartOperations = ({
             ...updatedCart[existingItemIndex],
             quantity: newQuantity,
           };
-          await updateCartState(updatedCart);
+          await updateCartState(updatedCart, false);
         } else {
           // Add new item
           if (userRole === "buyer") {

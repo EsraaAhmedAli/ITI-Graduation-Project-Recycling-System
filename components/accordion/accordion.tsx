@@ -4,7 +4,6 @@ import { ChevronDown, Calendar, Eye } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import PointsEntryItem from "./PointsEntryItem";
 import PointsHistoryModal from "./pointshistory";
-import DynamicIcon from "./DynamicIcon";
 import type { UserPoints } from "@/components/Types/points.type";
 
 interface PointsActivityProps {

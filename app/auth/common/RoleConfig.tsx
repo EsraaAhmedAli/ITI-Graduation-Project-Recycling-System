@@ -1,7 +1,7 @@
 import { useLanguage } from "@/context/LanguageContext";
 import { User, Truck, ShoppingCart } from "lucide-react";
 
-export const RoleConfig = () => {
+export const useRoleConfig = () => {
   const { t } = useLanguage();
 
   return {
@@ -28,3 +28,6 @@ export const RoleConfig = () => {
     },
   };
 };
+
+// Usage in your component:
+// const roleConfig = useRoleConfig();

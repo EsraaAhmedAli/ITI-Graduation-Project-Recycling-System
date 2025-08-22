@@ -1,5 +1,8 @@
 "use client";
-import { extractMaterialsFromTranscription, ExtractedMaterial } from "@/hooks/extractMaterials";
+import {
+  extractMaterialsFromTranscription,
+  ExtractedMaterial,
+} from "@/hooks/extractMaterials";
 import { useTranscription } from "@/hooks/UseTranscription";
 import React, { useRef, useState, useEffect } from "react";
 import ItemsDisplayCard from "./ItemsDisplayCard";
@@ -16,9 +19,16 @@ const FloatingRecorderButton = () => {
   const audioChunks = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const { transcribe, isLoading, isError, lastTranscription, resetTranscription } =
-    useTranscription();
-  const [structuredData, setStructuredData] = useState<ExtractedMaterial[] | null>(null);
+  const {
+    transcribe,
+    isLoading,
+    isError,
+    lastTranscription,
+    resetTranscription,
+  } = useTranscription();
+  const [structuredData, setStructuredData] = useState<
+    ExtractedMaterial[] | null
+  >(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,7 +44,13 @@ const FloatingRecorderButton = () => {
   }, []);
 
   useEffect(() => {
-    if (structuredData && !loading && !isLoading && structuredData.length > 0 && processingStarted) {
+    if (
+      structuredData &&
+      !loading &&
+      !isLoading &&
+      structuredData.length > 0 &&
+      processingStarted
+    ) {
       console.log("✅ AI Processing Complete!");
       console.log("Structured Data:", structuredData);
       setShowItemsCard(true);
@@ -163,7 +179,9 @@ const FloatingRecorderButton = () => {
           setLoading(true);
           setError(null);
           try {
-            const extracted = await extractMaterialsFromTranscription(transcriptionResult);
+            const extracted = await extractMaterialsFromTranscription(
+              transcriptionResult
+            );
             setStructuredData(extracted);
           } catch (err: any) {
             setError(err.message || "AI extraction failed");
@@ -222,15 +240,21 @@ const FloatingRecorderButton = () => {
       )}
 
       {showCard && (
-        <div className="absolute bottom-20 right-0  rounded-2xl shadow-2xl border border-gray-200 p-6 w-80 mb-4 transform transition-all duration-300 ease-in-out" style={{ background: "var(--color-green-60)" }}>
+        <div
+          className="absolute bottom-20 right-0  rounded-2xl shadow-2xl border border-gray-200 p-6 w-80 mb-4 transform transition-all duration-300 ease-in-out"
+          style={{ background: "var(--color-green-60)" }}
+        >
           <div className="flex flex-col space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold" style={{ color: "var(--text-gray-800)" }}>
+              <h3
+                className="text-lg font-semibold"
+                style={{ color: "var(--text-gray-800)" }}
+              >
                 {isRecording
                   ? "Recording..."
                   : audioBlob
-                    ? "Recording Complete"
-                    : "Voice Recording"}
+                  ? "Recording Complete"
+                  : "Voice Recording"}
               </h3>
               <button
                 onClick={cancelRecording}
@@ -333,10 +357,11 @@ const FloatingRecorderButton = () => {
               {[...Array(20)].map((_, i) => (
                 <div
                   key={i}
-                  className={`w-1 bg-gradient-to-t from-primary to-secondary rounded-full transition-all duration-150 ${isRecording
-                    ? `animate-pulse h-${Math.floor(Math.random() * 8) + 2}`
-                    : "h-2"
-                    }`}
+                  className={`w-1 bg-gradient-to-t from-primary to-secondary rounded-full transition-all duration-150 ${
+                    isRecording
+                      ? `animate-pulse h-${Math.floor(Math.random() * 8) + 2}`
+                      : "h-2"
+                  }`}
                   style={{
                     animationDelay: `${i * 0.1}s`,
                     height: isRecording
@@ -358,11 +383,10 @@ const FloatingRecorderButton = () => {
               </div>
             )}
 
-            <div className="flex space-x-3" >
+            <div className="flex space-x-3">
               {!isRecording && !audioBlob && (
                 <button
                   onClick={startRecording}
-
                   className="
     flex-1 
     bg-green-600 hover:bg-green-700 
@@ -372,7 +396,6 @@ const FloatingRecorderButton = () => {
     transition-colors duration-200 
     flex items-center justify-center space-x-2
   "
-
                 >
                   <svg
                     className="w-5 h-5"
@@ -398,7 +421,6 @@ const FloatingRecorderButton = () => {
                 >
                   <svg
                     className="w-5 h-5"
-
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -425,10 +447,11 @@ const FloatingRecorderButton = () => {
                   <button
                     onClick={cancelRecording}
                     disabled={isLoading || loading}
-                    className={`flex-1 font-medium py-3 px-4 rounded-xl transition-colors duration-200 ${isLoading || loading
-                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                      : "bg-gray-500 hover:bg-gray-600 text-white"
-                      }`}
+                    className={`flex-1 font-medium py-3 px-4 rounded-xl transition-colors duration-200 ${
+                      isLoading || loading
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-gray-500 hover:bg-gray-600 text-white"
+                    }`}
                   >
                     Cancel
                   </button>
@@ -436,10 +459,11 @@ const FloatingRecorderButton = () => {
                   {!lastTranscription && (
                     <button
                       onClick={handleDoneClick}
-                      className={`flex-1 font-medium py-3 px-4 rounded-xl transition-colors duration-200 flex items-center justify-center space-x-2 ${isLoading || loading
+                      className={`flex-1 font-medium py-3 px-4 rounded-xl transition-colors duration-200 flex items-center justify-center space-x-2 ${
+                        isLoading || loading
                           ? "bg-green-300 text-gray-500 cursor-not-allowed"
                           : "bg-green-600 hover:bg-green-700 text-white"
-                        }`}
+                      }`}
                     >
                       {isLoading || loading ? (
                         <>
@@ -467,7 +491,6 @@ const FloatingRecorderButton = () => {
                         </>
                       )}
                     </button>
-
                   )}
 
                   {lastTranscription && (isLoading || loading) && (
@@ -492,25 +515,25 @@ const FloatingRecorderButton = () => {
         onClick={handleButtonClick}
         className={`
   group relative w-14 h-14 rounded-full shadow-lg transition-all duration-300 transform hover:scale-110
-  ${isRecording
-            ? "bg-red-500 hover:bg-red-600 animate-pulse"
-            : showItemsCard
-              ? "bg-green-600 hover:bg-green-700"
-              : showCard
-                ? "bg-gray-500 hover:bg-gray-600"
-                : "bg-green-600 hover:bg-green-700 dark:bg-green-400 dark:hover:bg-green-500"
-          }
+  ${
+    isRecording
+      ? "bg-red-500 hover:bg-red-600 animate-pulse"
+      : showItemsCard
+      ? "bg-green-600 hover:bg-green-700"
+      : showCard
+      ? "bg-gray-500 hover:bg-gray-600"
+      : "bg-green-600 hover:bg-green-700 dark:bg-green-400 dark:hover:bg-green-500"
+  }
   text-white font-bold flex items-center justify-center
 `}
-
         title={
           isRecording
             ? "Stop Recording"
             : showItemsCard
-              ? "Close Items"
-              : showCard
-                ? "Close"
-                : "Start Recording"
+            ? "Close Items"
+            : showCard
+            ? "Close"
+            : "Start Recording"
         }
       >
         {!showCard && (

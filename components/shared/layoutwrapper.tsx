@@ -5,19 +5,27 @@ import { useRouter, usePathname } from "next/navigation";
 import Navbar from "@/components/common/Navbar";
 import Footer from "../common/Footer";
 import { ToastContainer } from "react-toastify";
-import { useUserAuth } from "@/context/AuthFormContext"; // ✅ Use the hook instead
+import { useUserAuth } from "@/context/AuthFormContext";
+import UserPointsWrapper from "@/components/shared/pointsWrapper"; // ✅ Import the wrapper
 
 export default function LayoutWrapper({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-
-  // ✅ Use the hook instead of useContext directly
   const { user, isLoading } = useUserAuth();
 
   // === Computed Roles ===
   const isAdmin = user?.role === "admin";
   const isDelivery = user?.role === "delivery";
   const isBuyer = user?.role === "buyer";
+  const isCustomer = user?.role === "customer"; // ✅ Add customer role check
+
+  // Check if current path needs points data
+  const needsPoints = useMemo(() => {
+    // Define paths where points ARE needed
+    const pointsPaths = ["/profile", "/rewarding"];
+
+    return pointsPaths.some((path) => pathname.startsWith(path));
+  }, [pathname]);
 
   // Check if current path is restricted for buyers
   const isBuyerRestrictedRoute = useMemo(() => {
@@ -49,7 +57,7 @@ export default function LayoutWrapper({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (isLoading || !user) return;
-    
+
     const entryRoutes = ["/", "/login", "/register", "/auth"];
 
     // Handle buyer routing
@@ -124,11 +132,19 @@ export default function LayoutWrapper({ children }: { children: ReactNode }) {
 
   const shouldHideLayout = isAdmin || isDelivery;
 
+  // ✅ Wrap children with points wrapper only when needed
+  const wrappedChildren =
+    needsPoints && isCustomer ? (
+      <UserPointsWrapper>{children}</UserPointsWrapper>
+    ) : (
+      children
+    );
+
   return (
     <div className="flex flex-col min-h-screen">
       {!shouldHideLayout && <Navbar />}
 
-      <main className="flex-1">{children}</main>
+      <main className="flex-1">{wrappedChildren}</main>
 
       {!shouldHideLayout && <Footer />}
       <ToastContainer />

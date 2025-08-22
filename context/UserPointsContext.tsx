@@ -66,7 +66,7 @@ export function UserPointsProvider({
   token,
 }: UserPointsProviderProps) {
   const queryClient = useQueryClient();
-  
+
   // Check if user is a customer
   const isCustomer = role === "customer";
 
@@ -115,7 +115,7 @@ export function UserPointsProvider({
   const refreshUserPoints = useCallback(async () => {
     // Only refresh if user is a customer
     if (!isCustomer) return;
-    
+
     await Promise.allSettled([
       refetchPoints(),
       queryClient.invalidateQueries({ queryKey: ["completed-orders", userId] }),
@@ -147,13 +147,15 @@ export function UserPointsProvider({
   }, [queryClient, userId, isCustomer]);
 
   const value = {
-    userPoints: isCustomer ? (userPoints || null) : null,
+    userPoints: isCustomer ? userPoints || null : null,
     pointsLoading: isCustomer ? pointsLoading : false,
     totalCompletedOrders: isCustomer ? totalCompletedOrders : 0,
     refreshUserPoints,
     updateUserPoints,
     clearUserPoints,
-    totalPointsHistoryLength: isCustomer ? userPoints?.pagination.totalItems : undefined,
+    totalPointsHistoryLength: isCustomer
+      ? userPoints?.pagination.totalItems
+      : undefined,
   };
 
   return (

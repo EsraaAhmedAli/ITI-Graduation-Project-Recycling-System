@@ -6,13 +6,28 @@ import { usePathname } from "next/navigation";
 import { Home } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCategories } from "@/hooks/useGetCategories";
+import { useMemo } from "react"; // Import useMemo
 
 export default function DynamicBreadcrumbs() {
   const pathname = usePathname();
   const { t, locale } = useLanguage();
-  const categoriesQuery = useCategories(); // Get categories query
-  const categories = categoriesQuery.data?.data; // Extract categories data
   const segments = pathname.split("/").filter(Boolean);
+
+  // ✅ Check if we actually need categories data
+  const needsCategories = useMemo(() => {
+    return segments.some(
+      (segment) =>
+        segment.toLowerCase() === "categories" ||
+        segment.toLowerCase() === "category"
+    );
+  }, [segments]);
+
+  // ✅ Only fetch categories when needed
+  const categoriesQuery = useCategories({
+    enabled: needsCategories, // This prevents the API call on most pages
+  });
+
+  const categories = categoriesQuery.data?.data;
 
   // Narrow order ID detection to *only* hex or numeric patterns
   const isOrderId = (segment: string) => {
@@ -21,33 +36,31 @@ export default function DynamicBreadcrumbs() {
 
   const getTranslatedSegment = (segment: string, segmentIndex: number) => {
     const decodedSegment = decodeURIComponent(segment).toLowerCase();
-    
-    
 
     if (isOrderId(segment)) {
       return `Order #${segment.slice(-8).toUpperCase()}`;
     }
 
     // Check if this is a category page (previous segment is "categories" OR "category")
-    const previousSegment = segmentIndex > 0 ? segments[segmentIndex - 1]?.toLowerCase() : null;
-    
-    if (previousSegment === "categories" || previousSegment === "category") {
+    const previousSegment =
+      segmentIndex > 0 ? segments[segmentIndex - 1]?.toLowerCase() : null;
 
-      
+    if (previousSegment === "categories" || previousSegment === "category") {
       // Find the category by English name and return localized name
-      const category = categories?.find(cat => 
-        cat.name.en.toLowerCase() === decodedSegment
+      const category = categories?.find(
+        (cat) => cat.name.en.toLowerCase() === decodedSegment
       );
-      
-      console.log('✅ Found category:', category);
-      
+
+      console.log("✅ Found category:", category);
+
       if (category) {
-        const localizedName = category.name[locale as 'en' | 'ar'] || category.name.en;
-        console.log('🌐 Returning localized name:', localizedName);
+        const localizedName =
+          category.name[locale as "en" | "ar"] || category.name.en;
+        console.log("🌐 Returning localized name:", localizedName);
         return localizedName;
       }
-      
-      console.log('❌ Category not found, returning formatted segment');
+
+      console.log("❌ Category not found, returning formatted segment");
       // If category not found in backend data, return formatted segment
       return decodeURIComponent(segment)
         .replace(/-/g, " ")
@@ -158,7 +171,8 @@ export default function DynamicBreadcrumbs() {
 
       {crumbs.map((crumb, index) => (
         <BreadcrumbItem key={crumb.href + index}>
-          {crumb.isClickable && (crumb.name === t("breadcrumbs.profile") || !crumb.isLast) ? (
+          {crumb.isClickable &&
+          (crumb.name === t("breadcrumbs.profile") || !crumb.isLast) ? (
             <Link
               href={crumb.href}
               className="text-secondary hover:text-primary hover:underline transition-colors"
@@ -168,9 +182,7 @@ export default function DynamicBreadcrumbs() {
           ) : (
             <span
               className={`transition-colors ${
-                crumb.isLast 
-                  ? "text-primary font-medium" 
-                  : "text-muted"
+                crumb.isLast ? "text-primary font-medium" : "text-muted"
               } ${crumb.isOrderId ? "font-mono text-sm" : ""}`}
             >
               {crumb.name}

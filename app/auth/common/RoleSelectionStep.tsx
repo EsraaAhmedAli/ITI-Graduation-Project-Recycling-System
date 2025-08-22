@@ -3,7 +3,7 @@ import React from "react";
 import { useAuthenticationContext } from "@/context/AuhenticationContext";
 import { Role } from "../Forms/MainForm";
 import { useLanguage } from "@/context/LanguageContext";
-import { RoleConfig } from "./RoleConfig";
+import { useRoleConfig } from "./RoleConfig";
 import { useFormContext } from "react-hook-form";
 
 export default function RoleSelect({ prevStep }: { prevStep?: () => void }) {
@@ -17,7 +17,7 @@ export default function RoleSelect({ prevStep }: { prevStep?: () => void }) {
     setStep,
   } = useAuthenticationContext();
   const { reset } = useFormContext();
-  const roleConfig = RoleConfig();
+  const roleConfig = useRoleConfig();
   const handleSelectRole = (role: Role) => {
     setSelectedRole(role);
     setStep(1);

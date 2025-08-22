@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 import withFlowbiteReact from "flowbite-react/plugin/nextjs";
 
 const nextConfig: NextConfig = {
+  compress: true, // ONLY ADD THIS LINE
+
   images: {
     remotePatterns: [
       {
@@ -30,8 +32,8 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  webpack: (config, { dev ,isServer}) => {
-       if (!isServer) {
+  webpack: (config, { dev, isServer }) => {
+    if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
