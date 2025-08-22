@@ -8,10 +8,35 @@ import Image from "next/image";
 import { useLanguage } from "@/context/LanguageContext";
 import toast from "react-hot-toast";
 
+// Utility function to normalize category names
+const normalizeCategoryName = (name: string): string => {
+  if (!name) return '';
+  
+  // Decode URL encoding if present
+  let decoded = name;
+  try {
+    if (name.includes('%')) {
+      decoded = decodeURIComponent(name);
+    }
+  } catch (error) {
+    console.warn('Failed to decode name:', error);
+  }
+  
+  // Normalize the name: trim whitespace and ensure proper case
+  return decoded.trim();
+};
+
+// Utility function to create URL-safe category name
+const createUrlSafeName = (name: string): string => {
+  return encodeURIComponent(name.trim());
+};
+
 export default function EditItemPage() {
   const { name: rawName, itemId } = useParams();
-  const name = decodeURIComponent(rawName || "").toLowerCase();
-
+  
+  // Normalize the category name from URL
+  const normalizedName = normalizeCategoryName(rawName as string);
+  
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -27,40 +52,86 @@ export default function EditItemPage() {
 
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const {  tAr, isLoaded } = useLanguage();
+  const [actualCategoryName, setActualCategoryName] = useState('');
+  const { tAr, isLoaded } = useLanguage();
 
-  console.log(name, 'nnn', formData.name, 'ttt');
+  console.log('Raw name:', rawName);
+  console.log('Normalized name:', normalizedName);
+  console.log('Actual category name:', actualCategoryName);
 
   useEffect(() => {
     // Wait for language context to be loaded before fetching data
-    if (!isLoaded) return;
+    if (!isLoaded || !normalizedName) return;
 
     const fetchItem = async () => {
       try {
-        const res = await api.get(`categories/get-items/${name}`);
-        const data = res.data;
-        const item = data.data.find((i: any) => i._id === itemId);
+        console.log('Fetching items for normalized name:', normalizedName);
+        
+        // Try different variations of the name to handle case sensitivity
+        const namesToTry = [
+          normalizedName,
+          normalizedName.toLowerCase(),
+          normalizedName.charAt(0).toUpperCase() + normalizedName.slice(1).toLowerCase(),
+          normalizedName.toUpperCase()
+        ];
+
+        let categoryData = null;
+        let workingName = normalizedName;
+
+        // Try each variation until we find a match
+        for (const nameVariation of namesToTry) {
+          try {
+            console.log('Trying API call with name:', nameVariation);
+            const res = await api.get(`categories/get-items/${createUrlSafeName(nameVariation)}`);
+            categoryData = res.data;
+            workingName = nameVariation;
+            console.log('Success with name:', nameVariation, 'Data:', categoryData);
+            break;
+          } catch (err) {
+            console.log('Failed with name variation:', nameVariation);
+            continue;
+          }
+        }
+
+        if (!categoryData) {
+          throw new Error('Category not found with any name variation');
+        }
+
+        // Store the actual category name that worked
+        setActualCategoryName(workingName);
+        
+        // Find the specific item by ID
+        const item = categoryData.data?.find((i: any) => i._id === itemId);
         
         if (item) {
-
-          
           setFormData({
-            name: item.name.en,
-            itemNameAr: item.name.ar ,
-            points: item.points,
-            price: item.price,
-            quantity: item.quantity,
-            measurement_unit: item.measurement_unit.toString(),
+            name: item.name?.en || item.name || "",
+            itemNameAr: item.name?.ar || "",
+            points: item.points?.toString() || "",
+            price: item.price?.toString() || "",
+            quantity: item.quantity?.toString() || "",
+            measurement_unit: item.measurement_unit?.toString() || "1",
             image: null,
             currentImage: item.image || "",
           });
+        } else {
+          throw new Error('Item not found in category');
         }
       } catch (err) {
-        console.error(err);
+        console.error('Fetch item error:', err);
+        
+        // More specific error handling
+        let errorMessage = "Failed to fetch item data";
+        if (err.response?.status === 404) {
+          errorMessage = "Item or category not found. Please check the URL.";
+        } else if (err.message?.includes('not found')) {
+          errorMessage = err.message;
+        }
+        
         Swal.fire({
           icon: "error",
           title: "Error",
-          text: "Failed to fetch item data",
+          text: errorMessage,
           confirmButtonColor: "#10b981",
         });
       } finally {
@@ -68,10 +139,10 @@ export default function EditItemPage() {
       }
     };
 
-    if (name && itemId) {
+    if (normalizedName && itemId) {
       fetchItem();
     }
-  }, [name, itemId, tAr, isLoaded]); // Include isLoaded in dependencies
+  }, [normalizedName, itemId, tAr, isLoaded]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -92,291 +163,315 @@ export default function EditItemPage() {
     }
   };
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setUploading(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setUploading(true);
 
-  try {
-    const data = new FormData();
-    data.append("name", formData.name);
-    data.append("nameAr", formData.itemNameAr);
-    data.append("points", formData.points);
-    data.append("price", Math.floor(+formData.points / 19).toString());
-    data.append("quantity", formData.quantity);
-    data.append("measurement_unit", formData.measurement_unit);
-    
-    if (formData.image) data.append("image", formData.image);
-
-    await api.put(`/categories/item/${name}/${itemId}`, data, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-
-    // Success toast
-    toast.success("Item updated successfully!");
-    
-    // Use the navigation pattern that works
     try {
-      router.replace(`/admin/categories/${name}/get-sub-category`);
+      // Use the actual category name that was successfully fetched
+      const categoryNameForUpdate = actualCategoryName || normalizedName;
       
-      // Fallback to hard redirect if router doesn't work
-      setTimeout(() => {
-        if (window.location.pathname !== `/admin/categories/${name}/get-sub-category`) {
-          window.location.href = `/admin/categories/${name}/get-sub-category`;
-        }
-      }, 200);
+      const data = new FormData();
+      data.append("name", formData.name);
+      data.append("nameAr", formData.itemNameAr);
+      data.append("points", formData.points);
+      data.append("price", Math.floor(+formData.points / 19).toString());
+      data.append("quantity", formData.quantity);
+      data.append("measurement_unit", formData.measurement_unit);
       
-    } catch (navError) {
-      console.error('Navigation error:', navError);
-      window.location.href = `/admin/categories/${name}/get-sub-category`;
-    }
+      if (formData.image) data.append("image", formData.image);
 
-  } catch (err: any) {
-    console.error(err.response?.data?.message);
-    
-    // Error toast with detailed message
-    const errorMessage = err.response?.data?.message || "Failed to update item";
-    toast.error(errorMessage);
-    
-  } finally {
-    setUploading(false);
-  }
-};
+      console.log('Updating item with category name:', categoryNameForUpdate);
+
+      await api.put(`/categories/item/${createUrlSafeName(categoryNameForUpdate)}/${itemId}`, data, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      // Success toast
+      toast.success("Item updated successfully!");
+      
+      // Use the navigation pattern with the working category name
+      try {
+        const redirectPath = `/admin/categories/${createUrlSafeName(categoryNameForUpdate)}/get-sub-category`;
+        console.log('Redirecting to:', redirectPath);
+        
+        router.replace(redirectPath);
+        
+        // Fallback to hard redirect if router doesn't work
+        setTimeout(() => {
+          if (window.location.pathname !== redirectPath) {
+            window.location.href = redirectPath;
+          }
+        }, 200);
+        
+      } catch (navError) {
+        console.error('Navigation error:', navError);
+        window.location.href = `/admin/categories/${createUrlSafeName(categoryNameForUpdate)}/get-sub-category`;
+      }
+
+    } catch (err: any) {
+      console.error('Update error:', err);
+      
+      // Error toast with detailed message
+      let errorMessage = "Failed to update item";
+      if (err.response?.status === 404) {
+        errorMessage = "Item or category not found";
+      } else if (err.response?.status === 400) {
+        errorMessage = "Invalid data provided";
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      }
+      
+      toast.error(errorMessage);
+      
+    } finally {
+      setUploading(false);
+    }
+  };
 
   // Show loading while language context or data is loading
   if (loading || !isLoaded) {
     return (
-      <>
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
-        </div>
-      </>
-    );
-  }
-
-  return (
-    <>
       <div className="max-w-2xl mx-auto p-6">
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           <div className="p-6 bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
             <h1 className="text-2xl font-bold">Edit Item</h1>
-            <p className="mt-1 opacity-90">Update the details of your item</p>
+            <p className="mt-1 opacity-90">Loading item details...</p>
           </div>
-
-          <form onSubmit={handleSubmit} className="p-6 space-y-6" style={{background: "var(--background)"}}>
-            {/* English Item Name */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Item Name (English) *
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
-                placeholder="Enter item name in English"
-                required
-              />
-            </div>
-
-            {/* Arabic Item Name */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Item Name (Arabic)
-              </label>
-              <input
-                type="text"
-                name="itemNameAr"
-                value={formData.itemNameAr}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition text-right"
-                placeholder="أدخل اسم العنصر بالعربية"
-                dir="rtl"
-              />
-              <p className="text-xs text-gray-500">
-                Arabic name is optional but recommended for better user experience
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Points *
-                </label>
-                <input
-                  type="number"
-                  name="points"
-                  value={formData.points}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
-                  placeholder="Enter points"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Price *
-                </label>
-                <input
-                  disabled
-                  type="number"
-                  name="price"
-                  value={Math.floor(+formData.points / 19)}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border bg-gray-200 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
-                  placeholder="Enter price"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Quantity *
-                </label>
-                <input
-                  type="number"
-                  name="quantity"
-                  value={formData.quantity}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
-                  placeholder="Enter quantity"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Measurement Unit *
-              </label>
-              <select
-                name="measurement_unit"
-                value={formData.measurement_unit}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
-                required
-              >
-                <option value="1">KG</option>
-                <option value="1">gm</option>
-                <option value="2">Pieces</option>
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Item Image
-              </label>
-
-              {formData.currentImage && (
-                <div className="mb-4">
-                  <p className="text-sm text-gray-500 mb-2">Current Image:</p>
-                  <Image
-                    src={formData.currentImage}
-                    width={100}
-                    height={100}
-                    alt="Current item"
-                    className="object-cover rounded-lg border border-gray-200"
-                  />
-                </div>
-              )}
-
-              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-emerald-400 transition-colors">
-                <div className="space-y-1 text-center">
-                  <svg
-                    className="mx-auto h-12 w-12 text-gray-400"
-                    stroke="currentColor"
-                    fill="none"
-                    viewBox="0 0 48 48"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  <div className="flex text-sm text-gray-600 justify-center">
-                    <label
-                      htmlFor="file-upload"
-                      className="relative cursor-pointer bg-white rounded-md font-medium text-emerald-600 hover:text-emerald-500 focus-within:outline-none"
-                    >
-                      <span>Upload a file</span>
-                      <input
-                        id="file-upload"
-                        name="image"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleChange}
-                        className="sr-only"
-                      />
-                    </label>
-                    <p className="pl-1">or drag and drop</p>
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    PNG, JPG, GIF up to 5MB
-                  </p>
-                </div>
-              </div>
-              {formData.image && (
-                <p className="text-sm text-gray-500 mt-1">
-                  <span className="font-medium">Selected:</span>{" "}
-                  {formData.image.name}
-                </p>
-              )}
-            </div>
-
-            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-              <button
-                type="button"
-                onClick={() =>
-                  router.push(`/admin/categories/${name}/get-sub-category`)
-                }
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
-                disabled={uploading}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={uploading}
-                className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition disabled:opacity-70 disabled:cursor-not-allowed"
-              >
-                {uploading ? (
-                  <span className="flex items-center justify-center">
-                    <svg
-                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Updating...
-                  </span>
-                ) : (
-                  "Update Item"
-                )}
-              </button>
-            </div>
-          </form>
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
+          </div>
         </div>
       </div>
-    </>
+    );
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto p-6">
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="p-6 bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
+          <h1 className="text-2xl font-bold">Edit Item</h1>
+          <p className="mt-1 opacity-90">
+            Update the details of your item
+            {actualCategoryName && ` in ${actualCategoryName}`}
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-6" style={{background: "var(--background)"}}>
+          {/* English Item Name */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Item Name (English) *
+            </label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
+              placeholder="Enter item name in English"
+              required
+            />
+          </div>
+
+          {/* Arabic Item Name */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Item Name (Arabic)
+            </label>
+            <input
+              type="text"
+              name="itemNameAr"
+              value={formData.itemNameAr}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition text-right"
+              placeholder="أدخل اسم العنصر بالعربية"
+              dir="rtl"
+            />
+            <p className="text-xs text-gray-500">
+              Arabic name is optional but recommended for better user experience
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Points *
+              </label>
+              <input
+                type="number"
+                name="points"
+                value={formData.points}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
+                placeholder="Enter points"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Price *
+              </label>
+              <input
+                disabled
+                type="number"
+                name="price"
+                value={Math.floor(+formData.points / 19)}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border bg-gray-200 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
+                placeholder="Enter price"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Quantity *
+              </label>
+              <input
+                type="number"
+                name="quantity"
+                value={formData.quantity}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
+                placeholder="Enter quantity"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Measurement Unit *
+            </label>
+            <select
+              name="measurement_unit"
+              value={formData.measurement_unit}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
+              required
+            >
+              <option value="1">KG</option>
+              <option value="1">gm</option>
+              <option value="2">Pieces</option>
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Item Image
+            </label>
+
+            {formData.currentImage && (
+              <div className="mb-4">
+                <p className="text-sm text-gray-500 mb-2">Current Image:</p>
+                <Image
+                  src={formData.currentImage}
+                  width={100}
+                  height={100}
+                  alt="Current item"
+                  className="object-cover rounded-lg border border-gray-200"
+                />
+              </div>
+            )}
+
+            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-emerald-400 transition-colors">
+              <div className="space-y-1 text-center">
+                <svg
+                  className="mx-auto h-12 w-12 text-gray-400"
+                  stroke="currentColor"
+                  fill="none"
+                  viewBox="0 0 48 48"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <div className="flex text-sm text-gray-600 justify-center">
+                  <label
+                    htmlFor="file-upload"
+                    className="relative cursor-pointer bg-white rounded-md font-medium text-emerald-600 hover:text-emerald-500 focus-within:outline-none"
+                  >
+                    <span>Upload a file</span>
+                    <input
+                      id="file-upload"
+                      name="image"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleChange}
+                      className="sr-only"
+                    />
+                  </label>
+                  <p className="pl-1">or drag and drop</p>
+                </div>
+                <p className="text-xs text-gray-500">
+                  PNG, JPG, GIF up to 5MB
+                </p>
+              </div>
+            </div>
+            {formData.image && (
+              <p className="text-sm text-gray-500 mt-1">
+                <span className="font-medium">Selected:</span>{" "}
+                {formData.image.name}
+              </p>
+            )}
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={() => {
+                const categoryNameForNav = actualCategoryName || normalizedName;
+                router.push(`/admin/categories/${createUrlSafeName(categoryNameForNav)}/get-sub-category`);
+              }}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
+              disabled={uploading}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={uploading}
+              className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {uploading ? (
+                <span className="flex items-center justify-center">
+                  <svg
+                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Updating...
+                </span>
+              ) : (
+                "Update Item"
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }

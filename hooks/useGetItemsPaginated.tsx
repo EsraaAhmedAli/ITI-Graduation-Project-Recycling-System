@@ -85,7 +85,7 @@
         itemsPerPage = 12,
         enabled = true,
         keepPreviousData = true,
-        staleTime = 60 * 1000,
+        staleTime = 2000,
         role,
             searchTerm = '' ,// Default to empty string
 
@@ -167,6 +167,7 @@ useEffect(() => {
         staleTime,
         keepPreviousData,
         refetchOnMount: true,
+        refetchOnWindowFocus:true
     });
 
     const data = apiResponse?.data || [];

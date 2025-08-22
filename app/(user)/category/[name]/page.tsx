@@ -409,7 +409,7 @@ export default function UserCategoryPage() {
     categoryStats,
   } = useGetItemsPaginated({
     categoryName,
-    itemsPerPage: 12,
+    itemsPerPage: 8,
     keepPreviousData: true,
   });
 
