@@ -4,7 +4,7 @@ import React, { memo, Suspense } from "react";
 import dynamic from "next/dynamic";
 import OrderCardSkeleton from "./orderCardSkeleton";
 import OrderCard from "./orderCard";
-import Loader from "../common/Loader";
+import { Loader } from '@/components/common'
 
 // Dynamic imports
 const PaymentsHistory = dynamic(() => import("./paymentHistory"), {

@@ -4,7 +4,7 @@ import { useUserAuth } from "@/context/AuthFormContext";
 import { useLanguage } from "@/context/LanguageContext";
 import api from "@/lib/axios";
 import PaymentCard from "./paymentCard";
-import Loader from "../common/Loader";
+import { Loader } from '@/components/common'
 
 const PaymentsHistory = memo(function PaymentsHistory() {
   const { t } = useLanguage();

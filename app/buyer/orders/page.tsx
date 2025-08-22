@@ -7,11 +7,11 @@ import { Loader } from '@/components/common'
 import api from "@/lib/axios";
 import { ProtectedRoute } from "@/lib/userProtectedRoute";
 import { CheckCircle, Clock1, Truck, XCircle } from "lucide-react";
-import { useUserPoints } from "@/hooks/useGetUserPoints";
 import ItemsModal from "@/components/shared/itemsModal";
 import PointsActivity from "@/components/accordion/accordion";
 import MembershipTier from "@/components/memberTireShip/memberTireShip";
 import { useLanguage } from "@/context/LanguageContext";
+import { useUserPoints } from "@/context/UserPointsContext";
 
 export default function ProfilePage() {
   return (
@@ -23,6 +23,8 @@ export default function ProfilePage() {
 
 function ProfileContent() {
   const { user, token } = useUserAuth();
+
+
   const { userPoints, pointsLoading, getUserPoints } = useUserPoints({
     userId: user?._id,
     name: user?.name,

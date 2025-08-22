@@ -9,7 +9,7 @@ import Image from "next/image";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLanguage } from "@/context/LanguageContext";
 import { useValueDebounce } from "@/hooks/useValueDebounce";
-import Loader from "@/components/common/Loader";
+import { Loader } from '@/components/common'
 
 const AdminUsersPage = () => {
   const queryClient = useQueryClient();

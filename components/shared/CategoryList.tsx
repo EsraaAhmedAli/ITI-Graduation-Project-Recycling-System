@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import CategoryCard from "./CategoryCard";
-import Loader from "../common/Loader";
+import { Loader } from '@/components/common'
 
 import { useState, useMemo, useCallback } from "react";
 import { useCategories } from "@/hooks/useGetCategories";

@@ -8,7 +8,7 @@ import api from "@/lib/axios";
 import { useLocalization } from "@/utils/localiztionUtil";
 import Button from "@/components/common/Button";
 import { useGetItemsPaginated } from "@/hooks/useGetItemsPaginated";
-import Loader from "@/components/common/Loader";
+import { Loader } from '@/components/common'
 
 interface SubcategoryItem {
   _id: string;
