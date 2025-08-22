@@ -6,7 +6,7 @@ import Navbar from "@/components/common/Navbar";
 import Footer from "../common/Footer";
 import { ToastContainer } from "react-toastify";
 import { useUserAuth } from "@/context/AuthFormContext";
-import UserPointsWrapper from "@/components/shared/pointsWrapper"; // ✅ Import the wrapper
+import UserPointsWrapper from "@/components/shared/pointsWrapper";
 
 export default function LayoutWrapper({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -17,7 +17,7 @@ export default function LayoutWrapper({ children }: { children: ReactNode }) {
   const isAdmin = user?.role === "admin";
   const isDelivery = user?.role === "delivery";
   const isBuyer = user?.role === "buyer";
-  const isCustomer = user?.role === "customer"; // ✅ Add customer role check
+  const isCustomer = user?.role === "customer";
 
   // Check if current path needs points data
   const needsPoints = useMemo(() => {
@@ -38,7 +38,6 @@ export default function LayoutWrapper({ children }: { children: ReactNode }) {
     return buyerRestrictedRoutes.some((route) => pathname.startsWith(route));
   }, [isBuyer, pathname]);
 
-  // ✅ Use fallback to isApproved if deliveryStatus is not yet set
   const isPendingOrDeclined = useMemo(() => {
     return (
       user?.role === "delivery" &&
@@ -132,13 +131,13 @@ export default function LayoutWrapper({ children }: { children: ReactNode }) {
 
   const shouldHideLayout = isAdmin || isDelivery;
 
-  // ✅ Wrap children with points wrapper only when needed
-  const wrappedChildren =
-    needsPoints && isCustomer ? (
-      <UserPointsWrapper>{children}</UserPointsWrapper>
-    ) : (
-      children
-    );
+  // ✅ Always wrap with UserPointsWrapper when points might be needed
+  // The UserPointsProvider will handle role checking internally
+  const wrappedChildren = needsPoints ? (
+    <UserPointsWrapper>{children}</UserPointsWrapper>
+  ) : (
+    children
+  );
 
   return (
     <div className="flex flex-col min-h-screen">

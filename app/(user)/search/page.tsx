@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import Loader from "@/components/common/Loader";
+import { Loader } from '@/components/common'
 import api from "@/lib/axios";
 
 interface Item {

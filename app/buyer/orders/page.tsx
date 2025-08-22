@@ -3,15 +3,15 @@
 import { useEffect, useState } from "react";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { Order, OrdersResponse } from "@/components/Types/orders.type";
-import Loader from "@/components/common/Loader";
+import { Loader } from '@/components/common'
 import api from "@/lib/axios";
 import { ProtectedRoute } from "@/lib/userProtectedRoute";
 import { CheckCircle, Clock1, Truck, XCircle } from "lucide-react";
-import { useUserPoints } from "@/hooks/useGetUserPoints";
 import ItemsModal from "@/components/shared/itemsModal";
 import PointsActivity from "@/components/accordion/accordion";
 import MembershipTier from "@/components/memberTireShip/memberTireShip";
 import { useLanguage } from "@/context/LanguageContext";
+import { useUserPoints } from "@/context/UserPointsContext";
 
 export default function ProfilePage() {
   return (
@@ -23,6 +23,8 @@ export default function ProfilePage() {
 
 function ProfileContent() {
   const { user, token } = useUserAuth();
+
+
   const { userPoints, pointsLoading, getUserPoints } = useUserPoints({
     userId: user?._id,
     name: user?.name,
@@ -123,7 +125,7 @@ function ProfileContent() {
         {activeTab === "payments" ? (
           <PaymentsHistory />
         ) : loading ? (
-          <Loader title=" orders..." />
+          <Loader />
         ) : filteredOrders.length === 0 ? (
           <p className="text-center text-gray-500">
             No orders in this tab yet.
@@ -267,7 +269,7 @@ function PaymentsHistory() {
     }
   }, [user]);
 
-  if (loading) return <Loader title="Loading payments..." />;
+  if (loading) return <Loader  />;
 
   if (!payments.length)
     return <p className="text-center text-gray-500">No payments found.</p>;

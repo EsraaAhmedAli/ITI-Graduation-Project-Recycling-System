@@ -9,11 +9,11 @@ import { CartItem } from "@/models/cart";
 import { Recycle, Leaf, Package, Minus, Plus } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import toast from "react-hot-toast";
-import Loader from "@/components/common/loader";
 import dynamic from "next/dynamic";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { useItemSocket } from "@/hooks/useItemSocket";
-
+// To:
+import { Loader } from '@/components/common'
 // Lazy load FloatingRecorderButton for voice processing
 const FloatingRecorderButton = dynamic(
   () => import('@/components/Voice Processing/FloatingRecorderButton'),
@@ -578,30 +578,7 @@ const stockPercentage = Math.max(0, Math.min(100, (remainingQuantity / currentSt
               </>
             )}
 
-            <div className="bg-gray-50 rounded-xl p-5 space-y-3" style={{background:"var(--text-gray-100)"}}>
-              <h3 className="font-semibold flex items-center" style={{color:"var(--text-gray-800)"}}>
-                <Leaf className="w-5 h-5 mr-2 text-green-600" />
-                {t("environmentalBenefit.environmentalBenefits")}
-              </h3>
-              <ul className="space-y-2 text-sm" style={{color:"var(--text-gray-700)"}}>
-                <li className="flex items-start">
-                  <span className="text-green-600 mr-2">•</span>
-                  {t("environmentalBenefit.reducesCO2Emissions", {
-                    amount: (selectedQuantity * 2.5).toFixed(1),
-                  })}
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-600 mr-2">•</span>
-                  {t("environmentalBenefit.savesWater", {
-                    amount: selectedQuantity * 15,
-                  })}
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-600 mr-2">•</span>
-                  {t("environmentalBenefit.conservesNaturalResources")}
-                </li>
-              </ul>
-            </div>
+     
           </div>
         </div>
 
