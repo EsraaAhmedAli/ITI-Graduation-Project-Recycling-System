@@ -1,7 +1,7 @@
 "use client";
 import { use, useCallback, useEffect, useState } from "react";
 import { Star, Truck, Award, Shield, Pencil } from "lucide-react";
-import Loader from "@/components/common/Loader";
+import Loader from '../../../components/common/Loader'
 import { useUserAuth } from "@/context/AuthFormContext";
 import api from "@/lib/axios";
 import Image from "next/image";

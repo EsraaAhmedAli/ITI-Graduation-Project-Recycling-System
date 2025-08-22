@@ -12,8 +12,7 @@ import toast from "react-hot-toast";
 import dynamic from "next/dynamic";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { useItemSocket } from "@/hooks/useItemSocket";
-import Loader from "@/components/common/Loader";
-
+import Loader from '../../../../components/common/Loader'
 // Lazy load FloatingRecorderButton for voice processing
 const FloatingRecorderButton = dynamic(
   () => import('@/components/Voice Processing/FloatingRecorderButton'),
