@@ -325,7 +325,7 @@ export default function PickupConfirmation() {
   }
 
   return (
-    <div className="lg:w-3xl w-full mx-auto md:p-8 p-5 rounded-2xl shadow-lg border border-green-100" style={{background:"var(--color-card)"}}>
+    <div className="lg:w-3xl w-full mx-auto md:p-8 p-5 rounded-2xl shadow-lg border border-green-100" style={{ background: "var(--color-card)" }}>
       <div className="flex my-3 flex-col md:flex-row items-start md:items-center gap-4 md:gap-0">
         <Step
           label={t("pickup.steps.address")}
@@ -338,14 +338,12 @@ export default function PickupConfirmation() {
         {user?.role === "buyer" && (
           <>
             <div
-              className={`hidden md:flex flex-grow h-0.5 mx-2 ${
-                currentStep >= Steps.PAYMENT ? "bg-green-700" : "bg-gray-300"
-              }`}
+              className={`hidden md:flex flex-grow h-0.5 mx-2 ${currentStep >= Steps.PAYMENT ? "bg-green-700" : "bg-gray-300"
+                }`}
             />
             <div
-              className={`flex md:hidden w-0.5 h-6 ${
-                currentStep >= Steps.PAYMENT ? "bg-green-700" : "bg-gray-300"
-              }`}
+              className={`flex md:hidden w-0.5 h-6 ${currentStep >= Steps.PAYMENT ? "bg-green-700" : "bg-gray-300"
+                }`}
             />
             <Step
               label="Payment"
@@ -357,14 +355,12 @@ export default function PickupConfirmation() {
         )}
 
         <div
-          className={`hidden md:flex flex-grow h-0.5 mx-2 ${
-            currentStep >= Steps.REVIEW ? "bg-green-700" : "bg-gray-300"
-          }`}
+          className={`hidden md:flex flex-grow h-0.5 mx-2 ${currentStep >= Steps.REVIEW ? "bg-green-700" : "bg-gray-300"
+            }`}
         />
         <div
-          className={`flex md:hidden w-0.5 h-6 ${
-            currentStep >= Steps.REVIEW ? "bg-green-700" : "bg-gray-300"
-          }`}
+          className={`flex md:hidden w-0.5 h-6 ${currentStep >= Steps.REVIEW ? "bg-green-700" : "bg-gray-300"
+            }`}
         />
         <Step
           label={t("pickup.steps.review")}
@@ -408,7 +404,7 @@ export default function PickupConfirmation() {
               </div>
 
               {/* Address Grid */}
-      <div className="grid gap-6">
+              <div className="grid gap-6">
                 {addresses.length === 0 ? (
                   <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded-3xl border border-gray-200">
                     <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -423,20 +419,18 @@ export default function PickupConfirmation() {
                   addresses.map((addr) => (
                     <div
                       key={addr._id.toString()}
-                      className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 cursor-pointer hover:shadow-lg hover:-translate-y-1 ${
-                        selectedAddress?._id === addr._id
+                      className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 cursor-pointer hover:shadow-lg hover:-translate-y-1 ${selectedAddress?._id === addr._id
                           ? "border-emerald-300 bg-gradient-to-r from-emerald-50 via-white to-emerald-50 shadow-emerald-100 shadow-lg"
                           : "border-gray-200 bg-white hover:border-blue-200 hover:shadow-blue-100"
-                      }`}
+                        }`}
                       onClick={() => handleSelectAddress(addr)}
                     >
                       {/* Selection Indicator */}
                       <div
-                        className={`absolute top-0 left-0 right-0 h-1 transition-all duration-300 ${
-                          selectedAddress?._id === addr._id
+                        className={`absolute top-0 left-0 right-0 h-1 transition-all duration-300 ${selectedAddress?._id === addr._id
                             ? "bg-gradient-to-r from-emerald-400 to-green-500"
                             : "bg-transparent"
-                        }`}
+                          }`}
                       />
 
                       <div className="p-5">
@@ -445,11 +439,10 @@ export default function PickupConfirmation() {
                           <div className="flex items-center gap-4 flex-1">
                             {/* Icon */}
                             <div
-                              className={`relative p-3 rounded-xl transition-all duration-300 ${
-                                selectedAddress?._id === addr._id
+                              className={`relative p-3 rounded-xl transition-all duration-300 ${selectedAddress?._id === addr._id
                                   ? "bg-emerald-100 text-emerald-600 scale-110"
                                   : "bg-gray-100 text-gray-600 group-hover:bg-blue-100 group-hover:text-blue-600"
-                              }`}
+                                }`}
                             >
                               <Home className="w-5 h-5" />
                               {selectedAddress?._id === addr._id && (
@@ -529,11 +522,10 @@ export default function PickupConfirmation() {
 
                             {/* Radio Button */}
                             <div
-                              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
-                                selectedAddress?._id === addr._id
+                              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${selectedAddress?._id === addr._id
                                   ? "border-emerald-500 bg-emerald-500"
                                   : "border-gray-300 group-hover:border-blue-400"
-                              }`}
+                                }`}
                             >
                               {selectedAddress?._id === addr._id && (
                                 <div className="w-2 h-2 bg-white rounded-full" />
@@ -570,21 +562,23 @@ export default function PickupConfirmation() {
                   <div className="p-1 rounded-lg bg-gray-100 group-hover:bg-blue-100 transition-colors duration-300">
                     <Plus className="w-5 h-5" />
                   </div>
-                {t('addresses.addNew')}
+                  {t('addresses.addNew')}
                 </button>
 
-                <Button
-                  onClick={handleNextStep}
-                  disabled={!selectedAddress}
-                  className={`w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 rounded-2xl font-semibold transition-all duration-300 transform ${
-                    selectedAddress
-                      ? " text-white  "
-                      : "bg-gray-200 text-gray-500 cursor-not-allowed"
-                  }`}
-                >
-                  {t('ewallet.withdraw.buttons.continue')}
-                  <ChevronRight className="w-5 h-5" />
-                </Button>
+             <Button
+  onClick={handleNextStep}
+  disabled={!selectedAddress}
+  className={`w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 rounded-2xl font-semibold transition-all duration-300 transform
+    ${
+      selectedAddress
+        ? "bg-green-600 hover:bg-green-700 text-white dark:bg-green-500 dark:hover:bg-green-400"
+        : "bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:text-gray-400"
+    }`}
+>
+  {t("ewallet.withdraw.buttons.continue")}
+  <ChevronRight className="w-5 h-5" />
+</Button>
+
               </div>
 
               {/* Updated Progress Indicator - Only 3 steps */}
@@ -593,9 +587,8 @@ export default function PickupConfirmation() {
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                   <div className="w-8 h-1 bg-green-500 rounded-full"></div>
                   <div
-                    className={`w-2 h-2 rounded-full ${
-                      user?.role === "buyer" ? "bg-gray-300" : "bg-green-500"
-                    }`}
+                    className={`w-2 h-2 rounded-full ${user?.role === "buyer" ? "bg-gray-300" : "bg-green-500"
+                      }`}
                   ></div>
                   {user?.role === "buyer" && (
                     <>
@@ -636,22 +629,20 @@ export default function PickupConfirmation() {
               return (
                 <div
                   key={method.id}
-                  className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 ${
-                    isSelected
+                  className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 ${isSelected
                       ? "border-green-500 bg-green-50 shadow-md"
                       : "border-gray-200 hover:border-blue-300"
-                  }`}
+                    }`}
                   onClick={() => setSelectedPaymentMethod(method.id)}
                 >
                   <div className="flex items-center gap-4">
                     <div
-                      className={`p-3 rounded-lg ${
-                        method.id === "cash"
+                      className={`p-3 rounded-lg ${method.id === "cash"
                           ? "bg-green-100 text-green-600"
                           : method.id === "credit_card"
-                          ? "bg-blue-100 text-blue-600"
-                          : "bg-purple-100 text-purple-600"
-                      }`}
+                            ? "bg-blue-100 text-blue-600"
+                            : "bg-purple-100 text-purple-600"
+                        }`}
                     >
                       <IconComponent className="w-6 h-6" />
                     </div>
@@ -673,11 +664,10 @@ export default function PickupConfirmation() {
 
             {user?.attachments?.balance && user.attachments.balance > 0 && (
               <div
-                className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 ${
-                  selectedPaymentMethod === "wallet"
+                className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 ${selectedPaymentMethod === "wallet"
                     ? "border-green-500 bg-green-50 shadow-md"
                     : "border-gray-200 hover:border-blue-300"
-                }`}
+                  }`}
                 onClick={() => setSelectedPaymentMethod("wallet")}
               >
                 <div className="flex items-center gap-4">
@@ -743,15 +733,17 @@ export default function PickupConfirmation() {
             <Button
               onClick={handlePaymentNext}
               disabled={!selectedPaymentMethod}
-              className={`px-6 py-3 flex items-center gap-2 ${
-                selectedPaymentMethod
-                  ? "bg-green-600 hover:bg-green-700 text-white"
-                  : "bg-gray-200 text-gray-500 cursor-not-allowed"
-              }`}
+              style={{background:"var(--color-green-600)"}}
+              className={`px-6 py-3 flex items-center gap-2 rounded-lg font-medium transition-colors
+    ${selectedPaymentMethod
+                  ? "bg-green-600 hover:bg-green-700 text-white dark:bg-green-500 dark:hover:bg-green-400"
+                  : "bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:text-gray-400"
+                }`}
             >
               Continue
               <ChevronRight className="w-5 h-5" />
             </Button>
+
           </div>
         </div>
       )}

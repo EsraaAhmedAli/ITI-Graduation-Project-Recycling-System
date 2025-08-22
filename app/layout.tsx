@@ -27,7 +27,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Xchange",
+  title: "KaraKeeb",
   description: "Recycle website for exchange anything old with cash",
 };
 

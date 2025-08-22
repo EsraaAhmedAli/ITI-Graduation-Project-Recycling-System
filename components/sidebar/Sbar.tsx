@@ -126,20 +126,25 @@ export default function AdminSidebar() {
         "dark:bg-gray-900 dark:border-gray-800",
         collapsed ? "w-20" : "w-64"
       )}
-      style={{ background: "var(--color-base-100)" }}
+      style={{ background: "var(--background)" }}
     >
       {/* Logo */}
       <div
         className="flex items-center gap-2 p-4 border-b border-gray-200 dark:border-gray-800 cursor-pointer flex-shrink-0"
-        style={{ background: "var(--color-base-100)" }}
+        style={{ color: "var(--color-green-600)" }}
         onClick={toggleSidebar}
       >
-        <span className="text-2xl font-extrabold bg-gradient-to-r from-accent-content to-success bg-clip-text text-transparent truncate">
-          {collapsed ? "X" : "Xchange"}
+        <span className="text-2xl font-extrabold brand-gradient-text bg-clip-text text-transparent">
+          {collapsed ? "K" : "KaraKeeb"}
         </span>
+
         <span className="text-green-600 dark:text-green-400 text-sm ml-auto flex-shrink-0">
           {collapsed ? "»" : "«"}
         </span>
+
+
+
+
       </div>
 
       {/* Language Toggle - Only show when expanded */}
@@ -147,11 +152,10 @@ export default function AdminSidebar() {
         <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-800 overflow-hidden">
           <div className="flex items-center justify-center gap-1 px-1 py-1 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors mx-auto max-w-[120px]">
             <span
-              className={`text-xs font-medium ${
-                locale === "en"
-                  ? "text-blue-600 dark:text-blue-400"
-                  : "text-gray-400 dark:text-gray-500"
-              }`}
+              className={`text-xs font-medium ${locale === "en"
+                ? "text-blue-600 dark:text-blue-400"
+                : "text-gray-400 dark:text-gray-500"
+                }`}
             >
               EN
             </span>
@@ -173,11 +177,10 @@ export default function AdminSidebar() {
               />
             </button>
             <span
-              className={`text-xs font-medium ${
-                locale === "ar"
-                  ? "text-blue-600 dark:text-blue-400"
-                  : "text-gray-400 dark:text-gray-500"
-              }`}
+              className={`text-xs font-medium ${locale === "ar"
+                ? "text-blue-600 dark:text-blue-400"
+                : "text-gray-400 dark:text-gray-500"
+                }`}
             >
               AR
             </span>

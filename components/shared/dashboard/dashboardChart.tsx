@@ -126,12 +126,12 @@ export default function DashboardChartsComponent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 sm:bg-transparent" style={{ background: "var(--color-base-100)" }}>
+    <div className="min-h-screen bg-gray-50 sm:bg-transparent" style={{ background: "var(--background)" }}>
       <div className="px-3 py-4 sm:px-4 sm:py-6 md:p-6 space-y-4 sm:space-y-6 md:space-y-7 max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-center sm:text-left">
-            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-green-900">
+            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold " style={{ color: "var(--color-green-900)" }}>
               {t('charts.dashboardTitle')}
             </h1>
             <p className="text-xs sm:text-sm md:text-base text-green-700 mt-1">

@@ -8,7 +8,13 @@
   --background: #ffffff;
   --foreground: #171717;
   --border-color: #e5e7eb;
-  
+  --brand-gradient: linear-gradient(
+    135deg,
+    #255c42 0%,
+    #58826c 50%,
+    #46524f 100%
+  );
+
   /* Base Colors */
   --color-base-100: #e8f5e9;
   --color-base-200: #ffffff;
@@ -16,7 +22,7 @@
   --color-base-800: #1f2937;
   --color-base-900: #0f172a;
   --color-base-content: #1f2937;
-  
+
   /* Gray Scale */
   --text-gray-100: #f3f4f6;
   --text-gray-400: #9ca3af;
@@ -24,13 +30,14 @@
   --text-gray-700: #374151;
   --text-gray-800: #1f2937;
   --text-gray-900: #111827;
-  
+  --color-green-900: #14532d;
+
   /* Greens */
   --color-green-50: #ecfdf5;
   --color-green-100: #d1fae5;
   --color-green-600: #059669;
-  --color-green-60:#ecfdf5;
-  
+  --color-green-60: #ecfdf5;
+
   /* Cards */
   --color-card: #ffffff;
   --color-card-home: #f9fafb;
@@ -38,8 +45,7 @@
   --card-border: #e5e7eb;
   --card-text: #111827;
   --card-subtext: #4b5563;
-   
-  
+
   /* Gradients */
   --section-gradient-start: #255c42;
   --section-gradient-middle: #58826c;
@@ -53,7 +59,7 @@
   --icon-text-blue: #2563eb;
   --icon-bg-purple: #ede9fe;
   --icon-text-purple: #7c3aed;
-  
+
   /* Theme Colors */
   --color-primary: #0e9f6e;
   --color-secondary: #8bc34a;
@@ -62,11 +68,11 @@
   --color-info: #2196f3;
   --color-success: #4caf50;
   --color-warning: #ff9800;
-     --color-card:#ffffff;
+  --color-card: #ffffff;
   --color-error: #f44336;
-  --color-image:#ffffff;
-   --color-card-home:#F9FAFB;
-    --nav-hover-bg: var(--color-green-50);
+  --color-image: #ffffff;
+  --color-card-home: #f9fafb;
+  --nav-hover-bg: var(--color-green-50);
   /* Radius */
   --radius-selector: 0.5rem;
   --radius-field: 0.25rem;
@@ -77,42 +83,49 @@
   --background: #000000;
   --foreground: #ededed;
   --border-color: #1a1a1a;
-    --color-image:#535353;
-      --color-base-800:#e0e0e0;
-       --nav-hover-bg: var(--color-green-100);
-  
+  --color-image: #535353;
+  --color-base-800: #e0e0e0;
+  --nav-hover-bg: var(--color-green-100);
+  --brand-gradient: linear-gradient(
+    135deg,
+    #22e68a 0%,
+    #32a168 50%,
+    #087150 100%
+  );
+
   --color-base-100: #202833;
   --color-base-200: #222;
   --color-base-300: #1a1a1a;
   --color-base-content: #e0e0e0;
-   --section-gradient: #d1fae5;
-   --color-green-60:#000000;
-  
+  --section-gradient: #d1fae5;
+  --color-green-60: #000000;
+
+  --color-green-900: #059669;
+
   --text-gray-100: #535353;
   --text-gray-400: #f7f3f3;
   --text-gray-600: #9ca3af;
   --text-gray-700: #d5d5d5;
   --text-gray-800: #f3f3f3;
   --text-gray-900: #fbfbfb;
-  
+
   --color-card: #535353;
   --color-card-home: #535353;
   --card-bg: #535353;
-    --color-card-home:#535353;
-  
+  --color-card-home: #535353;
+
   --section-gradient-start: #064e3b;
   --section-gradient-middle: #022c22;
   --section-gradient-end: #042f2e;
 
-    --color-green-100: #022c22;
-    --color-green-50:#535353;
-    --color-green-50:#535353;
+  --color-green-100: #022c22;
+  --color-green-50: #535353;
+  --color-green-50: #535353;
   --icon-bg-blue: #1e40af;
   --icon-text-blue: #93c5fd;
   --icon-bg-purple: #5b21b6;
   --icon-text-purple: #c4b5fd;
-  --color-card:#535353;
-
+  --color-card: #535353;
 }
 
 /* Base Styles */
@@ -180,7 +193,7 @@ input::-webkit-inner-spin-button {
   border-color: var(--color-primary);
   background-color: var(--color-green-50);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-              0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .dark .payment-method-card {
@@ -251,12 +264,9 @@ input::-webkit-inner-spin-button {
   background-color: var(--nav-hover-bg);
 }
 
-
 .dark .nav-link {
   color: var(--text-gray-300);
 }
-
-
 
 /* Cart */
 .cart-button {
@@ -308,22 +318,34 @@ input::-webkit-inner-spin-button {
 
 @layer utilities {
   .custom-light-gradient {
-    --section-gradient-start: #ecfdf5;
-    --section-gradient-middle: #d1fae5;
-    --section-gradient-end: #ccfbf1;
-    background: linear-gradient(135deg, 
-      var(--section-gradient-start) 0%, 
-      var(--section-gradient-middle) 50%, 
-      var(--section-gradient-end) 100%);
+    background: linear-gradient(
+      135deg,
+      var(--section-gradient-start) 0%,
+      var(--section-gradient-middle) 50%,
+      var(--section-gradient-end) 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
-  
+
   .custom-dark-gradient {
-    --section-gradient-start: #064e3b;  /* زيتي غامق */
-    --section-gradient-middle: #022c22; /* زيتي متوسط */
-    --section-gradient-end: #042f2e;    /* زيتي فاتح */
-    background: linear-gradient(135deg, 
-      var(--section-gradient-start) 0%, 
-      var(--section-gradient-middle) 50%, 
-      var(--section-gradient-end) 100%);
+    background: linear-gradient(
+      135deg,
+      var(--section-gradient-start) 0%,
+      var(--section-gradient-middle) 50%,
+      var(--section-gradient-end) 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+@layer utilities {
+  .brand-gradient-text {
+    background-image: var(--brand-gradient);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
   }
 }
