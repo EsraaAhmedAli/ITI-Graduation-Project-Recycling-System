@@ -1,4 +1,4 @@
-// Enhanced version of your delivery applications page with translations and improved readability
+// Enhanced version of your delivery applications page with optimized column sizing
 "use client";
 import React, { useState } from "react";
 import api from "@/lib/axios";
@@ -244,64 +244,40 @@ export default function Page() {
     staleTime: 2000,
   });
 
+  // OPTIMIZED COLUMN CONFIGURATION TO PREVENT HORIZONTAL SCROLL
   const columns = [
     {
       key: "name",
       label: t('delivery.columns.userName'),
       sortable: true,
       priority: 1,
-      width: "15%",
-      minWidth: "140px", // Increased from 150px
+      minWidth: "120px",
+      maxWidth: "140px", // Prevent expanding too much
     },
     {
       key: "email",
       label: t('delivery.columns.email'),
       sortable: true,
       priority: 2,
-         width: "20%", // Use percentage
-    minWidth: "180px"
+      minWidth: "150px",
+      maxWidth: "200px",
+      hideOnMobile: true, // Hide on mobile to save space
     },
     {
       key: "phoneNumber",
       label: t('delivery.columns.phoneNumber'),
       sortable: true,
       priority: 3,
-     width: "12%", // Use percentage
-    minWidth: "130px", // Reduced slightly
-    },
-    {
-      key: "rating",
-      label: t('delivery.columns.reviewsRating'),
-      minWidth: "120px", // Increased from 120px
-      render: (item: any) => {
-        const rating = item.rating || 0;
-        const totalReviews = item.totalReviews || 0;
-        const currentStatus = item.currentStatus || "pending";
-
-        // Only show ratings for approved couriers or those who have reviews
-        if (currentStatus !== "approved" && totalReviews === 0) {
-          return <span className="text-gray-400 text-sm">{t('delivery.notAvailable')}</span>;
-        }
-
-        return (
-          <div className="flex items-center gap-2">
-            <button
-              className="text-green-500 hover:text-green-700 underline text-sm whitespace-nowrap"
-              onClick={() => {
-                setSelectedCourier({ id: item.userId, name: item.name });
-                setShowReviewsModal(true);
-              }}
-            >
-              {t('delivery.viewRatings')}
-            </button>
-          </div>
-        );
-      },
+      minWidth: "110px",
+      maxWidth: "130px",
+      hideOnMobile: true, // Hide on mobile
     },
     {
       key: "currentStatus",
       label: t('delivery.columns.status'),
-      minWidth: "120px", // Increased from 100px
+      priority: 2, // Higher priority for mobile
+      minWidth: "90px",
+      maxWidth: "110px",
       render: (item: any) => {
         const status = item.currentStatus || "pending";
 
@@ -323,75 +299,109 @@ export default function Page() {
       },
     },
     {
+      key: "rating",
+      label: t('delivery.columns.reviewsRating'),
+      minWidth: "100px",
+      maxWidth: "120px",
+      hideOnMobile: true, // Hide on mobile
+      render: (item: any) => {
+        const rating = item.rating || 0;
+        const totalReviews = item.totalReviews || 0;
+        const currentStatus = item.currentStatus || "pending";
+
+        // Only show ratings for approved couriers or those who have reviews
+        if (currentStatus !== "approved" && totalReviews === 0) {
+          return <span className="text-gray-400 text-xs">{t('delivery.notAvailable')}</span>;
+        }
+
+        return (
+          <button
+            className="text-green-500 hover:text-green-700 underline text-xs whitespace-nowrap"
+            onClick={() => {
+              setSelectedCourier({ id: item.userId, name: item.name });
+              setShowReviewsModal(true);
+            }}
+          >
+            {t('delivery.viewRatings')}
+          </button>
+        );
+      },
+    },
+    {
       key: "statusAction",
       label: t('delivery.columns.action'),
-      minWidth: "200px", // Significantly increased from 150px to prevent cropping
+      minWidth: "120px", // Reduced from 200px
+      maxWidth: "140px", // Limit maximum width
+      priority: 1, // High priority for mobile
       render: (item: any) => {
         const isProcessing = actionLoading === item.userId;
         const currentStatus = item.currentStatus || "pending";
 
         return (
-          <select
-            defaultValue=""
-            disabled={isProcessing}
-            onChange={(e) => {
-              const value = e.target.value;
-              if (value === "approve") handleApprove(item);
-              else if (value === "decline") handleDeclineClick(item);
-              else if (value === "revoke") handleRevokeClick(item);
-              e.target.value = "";
-            }}
-            className={`border border-gray-300 rounded-md px-1.5 py-1 text-xs text-gray-700 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 w-full ${
-  isProcessing ? "opacity-50 cursor-not-allowed" : ""
-}`}
-          >
-            <option value="" disabled>
-              {isProcessing ? t('delivery.processing') : t('delivery.selectAction')}
-            </option>
-
-            {currentStatus !== "approved" && (
-              <option value="approve">
-                {currentStatus === "declined" || currentStatus === "revoked"
-                  ? t('delivery.actions.reapprove')
-                  : t('delivery.actions.approve')}
+          <div className="w-full">
+            <select
+              defaultValue=""
+              disabled={isProcessing}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === "approve") handleApprove(item);
+                else if (value === "decline") handleDeclineClick(item);
+                else if (value === "revoke") handleRevokeClick(item);
+                e.target.value = "";
+              }}
+              className={`border border-gray-300 rounded-md px-1 py-1 text-xs text-gray-700 bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-green-500 w-full max-w-[130px] ${
+                isProcessing ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+            >
+              <option value="" disabled>
+                {isProcessing ? t('delivery.processing') : t('delivery.selectAction')}
               </option>
-            )}
 
-            {currentStatus !== "declined" && currentStatus !== "revoked" && (
-              <option value="decline">{t('delivery.actions.decline')}</option>
-            )}
+              {currentStatus !== "approved" && (
+                <option value="approve">
+                  {currentStatus === "declined" || currentStatus === "revoked"
+                    ? t('delivery.actions.reapprove')
+                    : t('delivery.actions.approve')}
+                </option>
+              )}
 
-            {currentStatus === "approved" && (
-              <option value="revoke">{t('delivery.actions.revokeAccess')}</option>
-            )}
-          </select>
+              {currentStatus !== "declined" && currentStatus !== "revoked" && (
+                <option value="decline">{t('delivery.actions.decline')}</option>
+              )}
+
+              {currentStatus === "approved" && (
+                <option value="revoke">{t('delivery.actions.revokeAccess')}</option>
+              )}
+            </select>
+          </div>
         );
       },
     },
     {
       key: "canReapply",
       label: t('delivery.columns.reapplyStatus'),
-    width: "8%", // Use percentage
-    minWidth: "90px", // Reduced from 140px
+      minWidth: "80px",
+      maxWidth: "100px",
+      hideOnMobile: true, // Hide on mobile
       render: (item: any) => {
         const currentStatus = item.currentStatus || "pending";
         const canReapply = item.canReapply;
 
         if (canReapply) {
           return (
-            <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 whitespace-nowrap">
+            <span className="px-1 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 whitespace-nowrap">
               {t('delivery.reapplyStatus.canReapply')}
             </span>
           );
         } else if (currentStatus === "approved") {
           return (
-            <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 whitespace-nowrap">
+            <span className="px-1 py-1 rounded text-xs font-medium bg-green-100 text-green-800 whitespace-nowrap">
               {t('delivery.reapplyStatus.active')}
             </span>
           );
         } else {
           return (
-            <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 whitespace-nowrap">
+            <span className="px-1 py-1 rounded text-xs font-medium bg-gray-100 text-gray-800 whitespace-nowrap">
               {t('delivery.reapplyStatus.na')}
             </span>
           );
@@ -401,10 +411,12 @@ export default function Page() {
     {
       key: "attachments",
       label: t('delivery.columns.attachments'),
-      minWidth: "140px", // Increased from 120px
+      minWidth: "100px",
+      maxWidth: "120px",
+      hideOnMobile: true, // Hide on mobile
       render: (item: any) => (
         <button
-          className="text-green-500 hover:text-green-700 underline text-sm whitespace-nowrap"
+          className="text-green-500 hover:text-green-700 underline text-xs whitespace-nowrap"
           onClick={() => setActiveAttachments(item.attachments)}
         >
           {t('delivery.viewDocuments')}
@@ -414,7 +426,7 @@ export default function Page() {
   ];
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">
           {t('delivery.title')}
@@ -425,11 +437,11 @@ export default function Page() {
       </div>
 
       {loading ? (
-        <Loader  />
+        <Loader />
       ) : (
         <>
           {/* Enhanced Summary stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <div className="text-sm font-medium text-yellow-800">{t('delivery.status.pending')}</div>
               <div className="text-2xl font-bold text-yellow-900">
@@ -472,14 +484,18 @@ export default function Page() {
             </div>
           </div>
 
-          <DynamicTable
-            title={t('delivery.tableTitle')}
-            data={deliveryData}
-            columns={columns}
-            showAddButton={false}
-            showFilter={true}
-            showActions={false}
-          />
+          {/* Use a responsive wrapper for the table */}
+          <div className="w-full overflow-hidden">
+            <DynamicTable
+              title={t('delivery.tableTitle')}
+              data={deliveryData}
+              columns={columns}
+              showAddButton={false}
+              showFilter={false}
+              showActions={false}
+              itemsPerPage={10} // Reasonable default
+            />
+          </div>
 
           {activeAttachments && (
             <DeliveryAttachments

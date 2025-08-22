@@ -349,3 +349,34 @@ input::-webkit-inner-spin-button {
     -webkit-text-fill-color: transparent;
   }
 }
+@keyframes scroll-horizontal {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc(-100% - 1rem));
+  }
+}
+
+.animate-scroll-horizontal {
+  display: flex;
+  animation: scroll-horizontal 40s linear infinite;
+  width: max-content;
+  gap: 1rem;
+}
+
+.animate-scroll-horizontal:hover {
+  animation-play-state: paused;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .animate-scroll-horizontal {
+    animation: none;
+    overflow-x: auto;
+  }
+  
+  .transform, .transition-transform, .transition-all {
+    transition: none;
+  }
+}

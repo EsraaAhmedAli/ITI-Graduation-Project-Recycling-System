@@ -87,12 +87,12 @@
     "login": "Login",
     "startRecycling": "Start Recycling",
     "logout": "Logout",
-    "title": "KaraKeeb",
+    "title": "XChange",
     "searchplaceholder": "Search items...",
     "myCart": "Cart"
   },
   "footer": {
-    "title": "KaraKeeb",
+    "title": "XChange",
     "FAQ": "FAQ",
     "slogan": "Recycle smarter, live cleaner.",
     "quickLinks": "Quick Links",
@@ -244,8 +244,8 @@
               "motorcycle": "Motorcycle",
               "car": "Car",
               "van": "Van",
-              "small-truck": "Small Truck",
-              "large-truck": "Large Truck"
+              "smallTruck": "Small Truck",
+              "largeTruck": "Large Truck"
             }
           },
           "deliveryImage": {
@@ -898,7 +898,6 @@
     "info": "your info",
     "reviews": "reviews",
     "orders": "orders",
-      "users": "users",
     "payments": "payments"
   },
   "marketPlace": {
@@ -1031,6 +1030,94 @@
     "approve": "Approve",
     "dark_mode": "Dark Mode",
     "logout": "Logout"
+  },
+
+   "delivery": {
+    "title": "Delivery Applications",
+    "description": "Manage delivery driver applications, approvals, reviews, and access",
+    "tableTitle": "Delivery Applications",
+    "columns": {
+      "userName": "Username",
+      "email": "Email",
+      "phoneNumber": "Phone Number",
+      "reviewsRating": "Reviews & Rating",
+      "status": "Status",
+      "action": "Action",
+      "reapplyStatus": "Reapply Status",
+      "appliedDate": "Applied Date",
+      "attachments": "Attachments"
+    },
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "declined": "Declined",
+      "revoked": "Revoked"
+    },
+    "actions": {
+      "approve": "Approve",
+      "decline": "Decline",
+      "revoke": "Revoke",
+      "reapprove": "Reapprove",
+      "revokeAccess": "Revoke Access"
+    },
+    "reapplyStatus": {
+      "canReapply": "Can Reapply",
+      "active": "Active",
+      "na": "N/A"
+    },
+    "modal": {
+      "revokeAccess": "Revoke Access",
+      "declineApplication": "Decline Application",
+      "revokeConfirm": "Revoke",
+      "declineConfirm": "Decline",
+      "deliveryAccess": " Delivery Access for",
+      "application": " Application",
+      "activeOrdersNote": "Note: Active orders will be retained",
+      "reason": "Reason",
+      "required": "(Required)",
+      "optional": "(Optional)"
+    },
+    "toasts": {
+      "approveSuccess": "{{name}} approved successfully!",
+      "approveError": "Failed to approve user",
+      "revokeSuccess": "{{name}} revoked successfully!",
+      "declineSuccess": "{{name}} declined successfully!",
+      "revokeError": "Failed to revoke user",
+      "declineError": "Failed to decline user",
+      "activeOrdersWarning": "User has {{count}} active orders that will be retained"
+    },
+    "defaultReason": {
+      "revoke": "Access revoked by administrator"
+    },
+    "notAvailable": "Not Available",
+    "viewRatings": "View Ratings",
+    "viewDocuments": "View Documents",
+    "processing": "Processing...",
+    "selectAction": "Select Action"
+  },
+    "reviews": {
+    "title": "Reviews for {{courierName}}",
+    "noReviews": "No reviews",
+    "reviewSingular": "review",
+    "reviewPlural": "reviews",
+    "loadError": "Failed to load reviews",
+    "noReviewsYet": "No reviews yet",
+    "noReviewsDescription": "This courier hasn't received any reviews.",
+    "starSingular": "star",
+    "starPlural": "stars",
+    "orderDate": "Order",
+    "pagination": "Page {{currentPage}} of {{totalPages}}",
+    "previous": "Previous",
+    "next": "Next"
+  },
+    "days": {
+    "mon": "monday",
+    "tue": "tuesday",
+    "wed": "wednesday",
+    "thu": "thursday",
+    "fri": "friday",
+    "sat": "saturday",
+    "sun": "sunday"
   },
   "editCategory": {
     "title": "Edit Category",

@@ -9,7 +9,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import dynamic from "next/dynamic";
 
 // Lazy load components that are below the fold
-const CategoryList = lazy(() => import("@/components/shared/CategoryList"));
+// const CategoryList = lazy(() => import("@/components/shared/CategoryList"));
 const SubscriptionForm = lazy(
   () => import("@/components/common/subscriptionForm/subscriptionForm")
 );

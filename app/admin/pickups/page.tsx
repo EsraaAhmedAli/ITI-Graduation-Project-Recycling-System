@@ -749,7 +749,7 @@ if (isLoading) {
           return (
             <Button
               onClick={() => handleOpenCompletedDetails(order)}
-              className="px-5 py-2 text-xs font-semibold rounded-md bg-green-100 text-green-800 hover:bg-green-200 transition-colors">
+              className="px-5 py-2 text-xs font-semibold rounded-md bg-green-600 text-green-800 hover:bg-green-400 transition-colors">
               Completed
             </Button>
           );
