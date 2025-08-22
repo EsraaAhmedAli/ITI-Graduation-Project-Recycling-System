@@ -3,26 +3,26 @@ import Image from 'next/image'
 
 // Static generation metadata
 export const metadata: Metadata = {
-  title: 'About Us - EcoExchange | Sustainable Recycling & Material Exchange',
-  description: 'Learn about EcoExchange - your trusted partner in sustainable living. We help people exchange old items instead of throwing them away, connecting sellers with buyers for high-quality recycled materials delivered to your door.',
+  title: 'About Us -Karakeeb | Sustainable Recycling & Material Exchange',
+  description: 'Learn aboutKarakeeb - your trusted partner in sustainable living. We help people exchange old items instead of throwing them away, connecting sellers with buyers for high-quality recycled materials delivered to your door.',
   keywords: 'recycling, sustainable living, material exchange, eco-friendly, waste reduction, second-hand materials, environmental protection',
   openGraph: {
-    title: 'About Us - EcoExchange | Sustainable Recycling & Material Exchange',
-    description: 'Discover how EcoExchange is revolutionizing waste management by connecting people who want to exchange old items with buyers seeking quality recycled materials.',
+    title: 'About Us -Karakeeb | Sustainable Recycling & Material Exchange',
+    description: 'Discover how Karakeeb is revolutionizing waste management by connecting people who want to exchange old items with buyers seeking quality recycled materials.',
     type: 'website',
     images: [
       {
         url: '/images/about-us-og.jpg',
         width: 1200,
         height: 630,
-        alt: 'EcoExchange - Sustainable Material Exchange Platform',
+        alt: 'Karakeeb - Sustainable Material Exchange Platform',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'About Us - EcoExchange | Sustainable Recycling & Material Exchange',
-    description: 'Join the sustainable revolution with EcoExchange - where old items find new life.',
+    title: 'About Us -Karakeeb | Sustainable Recycling & Material Exchange',
+    description: 'Join the sustainable revolution withKarakeeb - where old items find new life.',
   },
 }
 
@@ -35,7 +35,7 @@ export default function AboutUs() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-              About <span style={{ color: 'var(--color-primary)' }}>EcoExchange</span>
+              About <span style={{ color: 'var(--color-primary)' }}>Karakeeb</span>
             </h1>
             <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
               Transforming waste into opportunity by connecting people who want to give their items a second life 

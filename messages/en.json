@@ -68,6 +68,9 @@
     "searching": "Searching..."
   },
   "navbar": {
+        "darkMode": "Dark Mode",
+        "lightMode": "Light Mode",
+
     "home": "Home",
     "marketplace": "Marketplace",
     "categories": "Categories",
@@ -87,12 +90,12 @@
     "login": "Login",
     "startRecycling": "Start Recycling",
     "logout": "Logout",
-    "title": "XChange",
+    "title": "Karakeeb",
     "searchplaceholder": "Search items...",
     "myCart": "Cart"
   },
   "footer": {
-    "title": "XChange",
+    "title": "Karakeeb",
     "FAQ": "FAQ",
     "slogan": "Recycle smarter, live cleaner.",
     "quickLinks": "Quick Links",

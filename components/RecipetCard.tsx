@@ -31,7 +31,7 @@ const ReceiptCard = ({
     html2pdf()
       .set({
         margin: 15,
-        filename: `xChange_Receipt_${orderId.slice(-8)}.pdf`,
+        filename: `Karakeeb_Receipt_${orderId.slice(-8)}.pdf`,
         html2canvas: { 
           scale: 2,
           useCORS: true,
@@ -128,9 +128,9 @@ const ReceiptCard = ({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p><strong>Registered Address:</strong></p>
-                <p>xChange Environmental Services</p>
+                <p>Karakeeb Services</p>
                 <p>Cairo, Egypt</p>
-                <p><strong>Company Name:</strong> xChange Egypt</p>
+                <p><strong>Company Name:</strong> Karakeeb Egypt</p>
               </div>
               <div className="text-right">
                 <p><strong>VAT Reg. No:</strong></p>

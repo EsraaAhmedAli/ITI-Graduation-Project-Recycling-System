@@ -68,6 +68,9 @@
     "searching": "جار البحث..."
   },
   "navbar": {
+    "darkMode": "الوضع الليلي",
+    "lightMode": "الوضع النهاري",
+
     "home": "الرئيسية",
     "marketplace": "السوق",
     "categories": "الأقسام",
