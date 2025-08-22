@@ -4,7 +4,7 @@ import { useUserAuth } from "@/context/AuthFormContext";
 import { useLanguage } from "@/context/LanguageContext";
 import api from "@/lib/axios";
 import PaymentCard from "./paymentCard";
-import Loader from "../common/loader";
+import Loader from "../common/Loader";
 
 const PaymentsHistory = memo(function PaymentsHistory() {
   const { t } = useLanguage();
@@ -28,7 +28,7 @@ const PaymentsHistory = memo(function PaymentsHistory() {
     }
   }, [user?._id]);
 
-  if (loading) return <Loader title={t('loaders.payments')} />;
+  if (loading) return <Loader title={t("loaders.payments")} />;
 
   if (!payments.length)
     return <p className="text-center text-gray-500">No payments found.</p>;

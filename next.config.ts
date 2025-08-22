@@ -3,6 +3,7 @@ import withFlowbiteReact from "flowbite-react/plugin/nextjs";
 
 const nextConfig: NextConfig = {
   compress: true, // ONLY ADD THIS LINE
+    optimizeCss: false, // 🚨 Fix lightningcss issue
 
   images: {
     remotePatterns: [

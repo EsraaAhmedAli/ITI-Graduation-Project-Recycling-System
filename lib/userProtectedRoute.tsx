@@ -1,7 +1,7 @@
 // lib/ProtectedRoute.tsx or components/common/ProtectedRoute.tsx
 "use client";
 
-import Loader from "@/components/common/loader";
+import Loader from "@/components/common/Loader";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -38,7 +38,7 @@ export const ProtectedRoute = ({
   }, [user, token, isLoading, router, allowedRoles]);
 
   if (isLoading) {
-    return <Loader/>;
+    return <Loader />;
   }
 
   if (!user || !token) {

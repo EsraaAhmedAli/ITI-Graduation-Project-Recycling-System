@@ -4,17 +4,17 @@ import React, { memo, Suspense } from "react";
 import dynamic from "next/dynamic";
 import OrderCardSkeleton from "./orderCardSkeleton";
 import OrderCard from "./orderCard";
-import Loader from "../common/loader";
+import Loader from "../common/Loader";
 
 // Dynamic imports
 const PaymentsHistory = dynamic(() => import("./paymentHistory"), {
   loading: () => <Loader title="Loading payments..." />,
-  ssr: false
+  ssr: false,
 });
 
 const ReviewsTab = dynamic(() => import("@/components/profile/ReviewTabs"), {
   loading: () => <Loader title="Loading reviews..." />,
-  ssr: false
+  ssr: false,
 });
 
 interface TabContentProps {
@@ -50,12 +50,12 @@ const TabContent = memo(function TabContent({
   shouldShowSeeMore,
   isFetchingNextPage,
   loadMoreOrders,
-  t
+  t,
 }: TabContentProps) {
   // Handle payments tab
   if (activeTab === "payments") {
     return (
-      <Suspense fallback={<Loader title={t('loaders.payments')} />}>
+      <Suspense fallback={<Loader title={t("loaders.payments")} />}>
         <PaymentsHistory />
       </Suspense>
     );
@@ -64,9 +64,9 @@ const TabContent = memo(function TabContent({
   // Handle reviews tab
   if (activeTab === "reviews") {
     return isReviewsLoading ? (
-      <Loader title={t('loaders.reviews')} />
+      <Loader title={t("loaders.reviews")} />
     ) : (
-      <Suspense fallback={<Loader title={t('loaders.reviews')} />}>
+      <Suspense fallback={<Loader title={t("loaders.reviews")} />}>
         <ReviewsTab
           userReviews={userReviews}
           onEditReview={openReviewModal}
@@ -90,9 +90,7 @@ const TabContent = memo(function TabContent({
   // Handle empty orders
   if (filteredOrders.length === 0) {
     return (
-      <p className="text-center text-gray-500 py-8">
-        {t("profile.noOrders")}
-      </p>
+      <p className="text-center text-gray-500 py-8">{t("profile.noOrders")}</p>
     );
   }
 
@@ -123,8 +121,7 @@ const TabContent = memo(function TabContent({
           <button
             onClick={loadMoreOrders}
             disabled={isFetchingNextPage}
-            className="bg-green-600 text-white px-6 py-2 rounded-full hover:bg-green-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+            className="bg-green-600 text-white px-6 py-2 rounded-full hover:bg-green-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
             {isFetchingNextPage ? "Loading more..." : "See More"}
           </button>
         </div>
