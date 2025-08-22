@@ -129,7 +129,7 @@ export default function Navbar() {
             <Link
               prefetch={true}
               href={user?.role == "buyer" ? "/home" : "/"}
-              className={`nav-link ${darkMode ? "dark" : "light"}`}
+              className={`nav-link ${darkMode ? "dark" : "light"} hover:bg-green-100 dark:hover:bg-black`}
             >
               <HousePlus className="nav-icon" />
               <span>{t("navbar.home")}</span>
@@ -165,27 +165,26 @@ export default function Navbar() {
             {/* Dark Mode Toggle */}
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className={`theme-toggle p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors`}
-              aria-label={
-                darkMode ? "Switch to light mode" : "Switch to dark mode"
-              }
+              className={`nav-link ${darkMode ? "dark" : "light"} hover:bg-green-100 dark:hover:bg-black rounded-full transition-colors`}
+              aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
             >
               {darkMode ? (
-                <Sun className="w-5 h-5" />
+                <Sun className="nav-icon w-5 h-5" />
               ) : (
-                <Moon className="w-5 h-5" />
+                <Moon className="nav-icon w-5 h-5" />
               )}
             </button>
+
 
             {/* Collection Cart */}
             <div className="relative" ref={cartRef}>
               <button
                 onClick={() => setIsCartOpen(!isCartOpen)}
-                className={`cart-button ${darkMode ? "dark" : "light"}`}
+                className={`nav-link ${darkMode ? "dark" : "light"} hover:bg-green-100 dark:hover:bg-black`}
                 title={isBuyer ? t("navbar.myCart") : t("navbar.myCollection")}
               >
                 <div className="relative">
-                  <Recycle className="w-5 h-5" />
+                  <Recycle className="nav-icon w-5 h-5" />
                   {totalItems > 0 && (
                     <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-1 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center shadow-sm ring-1 ring-white">
                       {totalItems > 99
@@ -199,12 +198,12 @@ export default function Navbar() {
                 </span>
               </button>
 
+
               {/* Cart Dropdown */}
               {isCartOpen && (
                 <div
-                  className={`nav-dropdown absolute right-0 mt-2 w-80 rounded-lg bg-white shadow-lg border py-2 z-50 ${
-                    darkMode ? "dark" : "light"
-                  }`}
+                  className={`nav-dropdown absolute right-0 mt-2 w-80 rounded-lg bg-white shadow-lg border py-2 z-50 ${darkMode ? "dark" : "light"
+                    }`}
                 >
                   <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-gray-700">
                     <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
@@ -327,11 +326,10 @@ export default function Navbar() {
               className={`language-toggle hidden lg:flex items-center gap-1.5 px-2 py-1 rounded-lg border-gray-200 border hover:border-gray-300 dark:hover:border-gray-600 transition-colors`}
             >
               <span
-                className={`text-xs font-medium ${
-                  locale === "en"
-                    ? "text-blue-600 dark:text-blue-400"
-                    : "text-gray-400 dark:text-gray-500"
-                }`}
+                className={`text-xs font-medium ${locale === "en"
+                  ? "text-blue-600 dark:text-blue-400"
+                  : "text-gray-400 dark:text-gray-500"
+                  }`}
               >
                 EN
               </span>
@@ -343,8 +341,8 @@ export default function Navbar() {
                     locale === "ar"
                       ? "#3B82F6"
                       : darkMode
-                      ? "#4B5563"
-                      : "#D1D5DB",
+                        ? "#4B5563"
+                        : "#D1D5DB",
                 }}
                 title="Toggle Language"
               >
@@ -357,11 +355,10 @@ export default function Navbar() {
                 />
               </button>
               <span
-                className={`text-xs font-medium ${
-                  locale === "ar"
-                    ? "text-blue-600 dark:text-blue-400"
-                    : "text-gray-400 dark:text-gray-500"
-                }`}
+                className={`text-xs font-medium ${locale === "ar"
+                  ? "text-blue-600 dark:text-blue-400"
+                  : "text-gray-400 dark:text-gray-500"
+                  }`}
               >
                 AR
               </span>
@@ -502,13 +499,14 @@ export default function Navbar() {
             <div className="lg:hidden ml-1">
               <button
                 onClick={toggleMenu}
-                className={`nav-link ${darkMode ? "dark" : "light"} w-9 h-9`}
+                style={{ color: darkMode ? "#9CA3AF" : "#4B5563" }}
+                className={`nav-link ${darkMode ? "dark" : "light"} w-14 h-14 flex items-center justify-center`}
                 aria-label="Toggle menu"
               >
                 {isOpen ? (
-                  <X className="w-5 h-5" />
+                  <X className="w-9 h-9 " style={{ color: "var(--foreground)" }} />
                 ) : (
-                  <Menu className="w-5 h-5" />
+                  <Menu className="w-9 h-9" style={{ color: "var(--foreground)" }} />
                 )}
               </button>
             </div>
@@ -529,11 +527,10 @@ export default function Navbar() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span
-                    className={`text-xs font-medium ${
-                      locale === "en"
-                        ? "text-blue-600 dark:text-blue-400"
-                        : "text-gray-400 dark:text-gray-500"
-                    }`}
+                    className={`text-xs font-medium ${locale === "en"
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-gray-400 dark:text-gray-500"
+                      }`}
                   >
                     EN
                   </span>
@@ -548,8 +545,8 @@ export default function Navbar() {
                         locale === "ar"
                           ? "#3B82F6"
                           : darkMode
-                          ? "#4B5563"
-                          : "#D1D5DB",
+                            ? "#4B5563"
+                            : "#D1D5DB",
                     }}
                   >
                     <div
@@ -563,11 +560,10 @@ export default function Navbar() {
                     />
                   </button>
                   <span
-                    className={`text-xs font-medium ${
-                      locale === "ar"
-                        ? "text-blue-600 dark:text-blue-400"
-                        : "text-gray-400 dark:text-gray-500"
-                    }`}
+                    className={`text-xs font-medium ${locale === "ar"
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-gray-400 dark:text-gray-500"
+                      }`}
                   >
                     AR
                   </span>
@@ -622,9 +618,8 @@ export default function Navbar() {
                   <Link
                     href="/auth"
                     onClick={() => setIsOpen(false)}
-                    className={`nav-link ${
-                      darkMode ? "dark" : "light"
-                    } w-full justify-center border border-gray-200 dark:border-gray-700`}
+                    className={`nav-link ${darkMode ? "dark" : "light"
+                      } w-full justify-center border border-gray-200 dark:border-gray-700`}
                   >
                     {t("navbar.login")}
                   </Link>
