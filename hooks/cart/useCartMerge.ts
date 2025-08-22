@@ -139,41 +139,7 @@ export const useCartMerge = ({
               );
               hasInventoryIssues = true;
 
-              // Try to find the maximum available quantity
-              try {
-                const res = await api.get(
-                  "/categories/get-items?limit=10000&role=buyer"
-                );
-                const response: BackendResponse = res.data;
-
-                if (response.success && response.data) {
-                  const allItems = getAllItemsFromCategories(response.data);
-                  const foundItem = allItems.find(
-                    (i: BackendItem) => i._id === item._id
-                  );
-
-                  if (foundItem && foundItem.quantity > 0) {
-                    const maxQuantity = foundItem.quantity;
-                    const increment = item.measurement_unit === 1 ? 0.25 : 1;
-                    const adjustedQuantity =
-                      Math.floor(maxQuantity / increment) * increment;
-                    if (adjustedQuantity > 0) {
-                      validatedCart.push({
-                        ...item,
-                        quantity: adjustedQuantity,
-                      });
-                      console.log(
-                        `Adjusted ${item.name} quantity to available stock: ${adjustedQuantity}`
-                      );
-                    }
-                  }
-                }
-              } catch (error) {
-                console.error(
-                  "Failed to check individual item availability:",
-                  error
-                );
-              }
+        
             }
           }
 

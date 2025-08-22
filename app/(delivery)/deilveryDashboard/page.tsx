@@ -51,7 +51,7 @@ export default function Page() {
   const [editProfile, setEditProfile] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const { logout, user } = useUserAuth();
-  const { t, locale } = useLanguage();
+  const { t, locale,setLocale } = useLanguage();
   const dropdownRef = useRef(null);
 
   const {
@@ -584,6 +584,57 @@ export default function Page() {
                           {t("navbar.signOut")}
                         </span>
                       </button>
+
+
+
+
+
+
+
+
+            <div
+              className={`language-toggle hidden lg:flex items-center gap-1.5 px-2 py-1 rounded-lg border-gray-200 border hover:border-gray-300 dark:hover:border-gray-600 transition-colors`}
+            >
+              <span
+                className={`text-xs font-medium ${
+                  locale === "en"
+                    ? "text-blue-600 dark:text-blue-400"
+                    : "text-gray-400 dark:text-gray-500"
+                }`}
+              >
+                EN
+              </span>
+              <button
+                onClick={() => setLocale(locale === "en" ? "ar" : "en")}
+                className="relative w-8 h-4 bg-gray-200 dark:bg-gray-600 rounded-full transition-colors duration-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                style={{
+                  backgroundColor:
+                    locale === "ar"
+                                            ? "#4B5563"
+                      : "#D1D5DB",
+                }}
+                title="Toggle Language"
+              >
+                <div
+                  className="absolute top-0.5 left-0.5 w-3 h-3 bg-white dark:bg-gray-200 rounded-full shadow-sm transform transition-transform duration-200"
+                  style={{
+                    transform:
+                      locale === "ar" ? "translateX(16px)" : "translateX(0)",
+                  }}
+                />
+              </button>
+              <span
+                className={`text-xs font-medium ${
+                  locale === "ar"
+                    ? "text-blue-600 dark:text-blue-400"
+                    : "text-gray-400 dark:text-gray-500"
+                }`}
+              >
+                AR
+              </span>
+            </div>
+
+
                     </div>
                   </div>
                 )}

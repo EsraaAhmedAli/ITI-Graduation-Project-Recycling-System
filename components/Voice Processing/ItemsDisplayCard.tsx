@@ -126,7 +126,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
       const response = await api.get(
         `/categories/get-items?all=true&role=${userRole}`
       );
-      const allItems = response.data?.data || [];
+      const allItems = response.data?.items || [];
 
       console.log(
         `✅ Retrieved ${allItems.length} items from database with ${userRole} pricing`
