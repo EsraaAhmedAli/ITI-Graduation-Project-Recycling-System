@@ -7,7 +7,7 @@ import { X, Search } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import Button from "./Button";
-import Loader from "./Loader";
+import { Loader } from '@/components/common'
 interface SearchResult {
   _id: string;
   name: {
