@@ -1,5 +1,4 @@
 "use client";
-
 import Link from "next/link";
 import React, { useContext, useState, useMemo, useRef, useEffect, useCallback, memo } from "react";
 import {
@@ -104,19 +103,33 @@ const NavLink = memo(({ href, onClick, className, children, prefetch = true }) =
 NavLink.displayName = 'NavLink';
 
 // Memoized Dark Mode Toggle Component
-const DarkModeToggle = memo(({ darkMode, onToggle, className = "" }) => (
-  <button
-    onClick={onToggle}
-    className={`nav-link ${darkMode ? "dark" : "light"} hover:bg-green-100 dark:hover:bg-black rounded-full transition-colors ${className}`}
-    aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
-  >
-    {darkMode ? (
-      <Sun className="nav-icon w-5 h-5" />
-    ) : (
-      <Moon className="nav-icon w-5 h-5" />
-    )}
-  </button>
-));
+const DarkModeToggle = memo(({ darkMode, onToggle, className = "" }) => {
+  // Determine which icon to show based on current state
+  const getIcon = () => {
+  if (darkMode === true) {
+    return <Moon className="nav-icon w-5 h-5" />;
+  } else {
+    return <Sun className="nav-icon w-5 h-5" />;
+  }
+};
+
+
+  return (
+    <button
+      onClick={onToggle}
+      className={`nav-link ${darkMode ? "dark" : "light"} hover:bg-green-100 dark:hover:bg-black rounded-full transition-colors ${className}`}
+      aria-label={
+        darkMode === null
+          ? "Using system preference - click to change"
+          : darkMode
+            ? "Switch to light mode"
+            : "Switch to dark mode"
+      }
+    >
+      {getIcon()}
+    </button>
+  );
+});
 
 DarkModeToggle.displayName = 'DarkModeToggle';
 
@@ -167,77 +180,71 @@ export default function Navbar() {
   const profileRef = useRef(null);
   const isBuyer = user?.role === "buyer";
   const { locale, setLocale } = useLanguage();
-  
-  // State for dark mode with system preference as default
-  const [darkMode, setDarkMode] = useState(false);
-<<<<<<< HEAD
-  const [isSystemDark, setIsSystemDark] = useState(false);
+
+  // Hybrid Dark Mode State
+  const [darkMode, setDarkMode] = useState(null); // null means system preference
 
   const { t, convertNumber } = useLanguage();
 
-  // Check system preference on component mount
+  // Apply dark mode based on system preference or user choice
   useEffect(() => {
-    // Check if we're on the client side
-    if (typeof window !== 'undefined') {
-      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setIsSystemDark(systemPrefersDark);
-      
-      // Set initial dark mode based on system preference
-      setDarkMode(systemPrefersDark);
-      
-      // Listen for system preference changes
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      const handleChange = (e) => {
-        setIsSystemDark(e.matches);
-        // Only update if user hasn't manually overridden
-        const hasManualOverride = localStorage.getItem('darkMode') !== null;
-        if (!hasManualOverride) {
-          setDarkMode(e.matches);
+    const root = document.documentElement;
+
+    // If user hasn't made a choice, use system preference
+    if (darkMode === null) {
+      if (typeof window !== 'undefined') {
+        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (systemPrefersDark) {
+          root.classList.add("dark");
+        } else {
+          root.classList.remove("dark");
         }
-      };
-      
-      mediaQuery.addEventListener('change', handleChange);
-      
-      // Check for user preference in localStorage
-      const savedDarkMode = localStorage.getItem('darkMode');
-      if (savedDarkMode !== null) {
-        setDarkMode(savedDarkMode === 'true');
       }
-      
-      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+    // If user has made a choice, use it
+    else {
+      if (darkMode) {
+        root.classList.add("dark");
+      } else {
+        root.classList.remove("dark");
+      }
+    }
+  }, [darkMode]);
+
+  // Load user preference from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedMode = localStorage.getItem('darkMode');
+      if (savedMode !== null) {
+        setDarkMode(JSON.parse(savedMode));
+      } else {
+        setDarkMode(null); // Use system preference
+      }
     }
   }, []);
 
-  // Apply dark mode class to document
+  // Save user preference to localStorage
   useEffect(() => {
-    if (typeof document !== 'undefined') {
-      if (darkMode) {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
-      // Save user preference
-      localStorage.setItem('darkMode', darkMode.toString());
-=======
-  const { t, convertNumber } = useLanguage();
+    if (darkMode !== null && typeof window !== 'undefined') {
+      localStorage.setItem('darkMode', JSON.stringify(darkMode));
+    }
+  }, [darkMode]);
 
   // Memoized handlers for better performance
   const toggleMenu = useCallback(() => setIsOpen(prev => !prev), []);
-  const toggleDarkMode = useCallback(() => setDarkMode(prev => !prev), []);
+  const toggleDarkMode = useCallback(() => {
+    // Cycle through states: system → light → dark → system
+    if (darkMode === null) {
+      setDarkMode(false); // Force light
+    } else if (darkMode === false) {
+      setDarkMode(true); // Force dark
+    } else {
+      setDarkMode(null); // Back to system
+    }
+  }, [darkMode]);
   const toggleLanguage = useCallback(() => setLocale(locale === "en" ? "ar" : "en"), [locale, setLocale]);
   const toggleCart = useCallback(() => setIsCartOpen(prev => !prev), []);
   const toggleProfile = useCallback(() => setIsProfileOpen(prev => !prev), []);
-
-  // Apply dark mode to document
-  useEffect(() => {
-    const root = document.documentElement;
-    if (darkMode) {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
->>>>>>> 61da1fd15617936b636e764f2260c6d4e57050ad
-    }
-  }, [darkMode]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -286,7 +293,7 @@ export default function Navbar() {
   }, []);
 
   // Memoized cart items for performance
-  const cartItems = useMemo(() => 
+  const cartItems = useMemo(() =>
     cart?.slice(0, 4).map((item, index) => (
       <CartItem
         key={item._id || index}
@@ -298,7 +305,7 @@ export default function Navbar() {
         convertNumber={convertNumber}
         setIsCartOpen={setIsCartOpen}
       />
-    )), 
+    )),
     [cart, handleRemoveFromCart, locale, darkMode, t, convertNumber]
   );
 
@@ -357,30 +364,10 @@ export default function Navbar() {
 
           {/* Right side: Actions */}
           <div className="flex items-center gap-2 flex-shrink-0">
-<<<<<<< HEAD
-            {/* Dark Mode Toggle */}
-            <button
-              onClick={() => {
-                // Toggle dark mode and set manual override
-                setDarkMode(!darkMode);
-                localStorage.setItem('darkMode', (!darkMode).toString());
-              }}
-              className={`nav-link ${darkMode ? "dark" : "light"} hover:bg-green-100 dark:hover:bg-black rounded-full transition-colors`}
-              aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
-            >
-              {darkMode ? (
-                <Sun className="nav-icon w-5 h-5" />
-              ) : (
-                <Moon className="nav-icon w-5 h-5" />
-              )}
-            </button>
-
-=======
             {/* Dark Mode Toggle - Only show when not logged in */}
             {!user && (
               <DarkModeToggle darkMode={darkMode} onToggle={toggleDarkMode} />
             )}
->>>>>>> 61da1fd15617936b636e764f2260c6d4e57050ad
 
             {/* Collection Cart */}
             <div className="relative" ref={cartRef}>
@@ -404,13 +391,7 @@ export default function Navbar() {
 
               {/* Cart Dropdown */}
               {isCartOpen && (
-<<<<<<< HEAD
-                <div
-                  className={`nav-dropdown absolute right-0 mt-2 w-80 rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50`}
-                >
-=======
                 <div className={`nav-dropdown absolute right-0 mt-2 w-80 rounded-lg bg-white shadow-lg border py-2 z-50 ${darkMode ? "dark" : "light"}`}>
->>>>>>> 61da1fd15617936b636e764f2260c6d4e57050ad
                   <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-gray-700">
                     <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
                       {isBuyer ? t("navbar.myCart") : t("navbar.myCollection")}
@@ -467,59 +448,14 @@ export default function Navbar() {
               )}
             </div>
 
-<<<<<<< HEAD
-            {/* Language Switcher */}
-            <div
-              className={`language-toggle hidden lg:flex items-center gap-1.5 px-2 py-1 rounded-lg border-gray-200 dark:border-gray-700 border hover:border-gray-300 dark:hover:border-gray-600 transition-colors`}
-            >
-              <span
-                className={`text-xs font-medium ${locale === "en"
-                  ? "text-blue-600 dark:text-blue-400"
-                  : "text-gray-400 dark:text-gray-500"
-                  }`}
-              >
-                EN
-              </span>
-              <button
-                onClick={() => setLocale(locale === "en" ? "ar" : "en")}
-                className="relative w-8 h-4 bg-gray-200 dark:bg-gray-600 rounded-full transition-colors duration-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                style={{
-                  backgroundColor:
-                    locale === "ar"
-                      ? "#3B82F6"
-                      : darkMode
-                        ? "#4B5563"
-                        : "#D1D5DB",
-                }}
-                title="Toggle Language"
-              >
-                <div
-                  className="absolute top-0.5 left-0.5 w-3 h-3 bg-white dark:bg-gray-200 rounded-full shadow-sm transform transition-transform duration-200"
-                  style={{
-                    transform:
-                      locale === "ar" ? "translateX(16px)" : "translateX(0)",
-                  }}
-                />
-              </button>
-              <span
-                className={`text-xs font-medium ${locale === "ar"
-                  ? "text-blue-600 dark:text-blue-400"
-                  : "text-gray-400 dark:text-gray-500"
-                  }`}
-              >
-                AR
-              </span>
-            </div>
-=======
             {/* Language Switcher - Only show when not logged in */}
             {!user && (
-              <LanguageToggle 
-                locale={locale} 
-                onToggle={toggleLanguage} 
-                darkMode={darkMode} 
+              <LanguageToggle
+                locale={locale}
+                onToggle={toggleLanguage}
+                darkMode={darkMode}
               />
             )}
->>>>>>> 61da1fd15617936b636e764f2260c6d4e57050ad
 
             {/* Notification - Only show when logged in */}
             {user && (
@@ -558,11 +494,7 @@ export default function Navbar() {
 
                 {/* Profile Dropdown */}
                 {isProfileOpen && (
-<<<<<<< HEAD
-                  <div className="nav-dropdown bg-white dark:bg-gray-800 absolute right-0 mt-2 w-56 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
-=======
                   <div className="nav-dropdown bg-white dark:bg-gray-800 absolute right-0 mt-2 w-56 rounded-lg shadow-lg border dark:border-gray-700 py-2 z-50">
->>>>>>> 61da1fd15617936b636e764f2260c6d4e57050ad
                     <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
                       <div className="flex items-center gap-3">
                         <div className="relative">
@@ -621,13 +553,23 @@ export default function Navbar() {
                       {/* Dark Mode Toggle in Profile Dropdown */}
                       <div className="flex items-center justify-between px-4 py-2 text-gray-700 dark:text-gray-300">
                         <div className="flex items-center gap-3">
-                          {darkMode ? (
+                          {darkMode === null ? (
+                            <div className="relative w-4 h-4">
+                              <Sun className="w-3 h-3 absolute top-0 left-0 opacity-70" />
+                              <Moon className="w-2.5 h-2.5 absolute bottom-0 right-0 opacity-70" />
+                            </div>
+                          ) : darkMode ? (
                             <Sun className="w-4 h-4" />
                           ) : (
                             <Moon className="w-4 h-4" />
                           )}
                           <span className="text-sm font-medium">
-                            {darkMode ? t("navbar.lightMode") : t("navbar.darkMode")}
+                            {darkMode === null
+                              ? t("navbar.systemMode")
+                              : darkMode
+                                ? t("navbar.lightMode")
+                                : t("navbar.darkMode")
+                            }
                           </span>
                         </div>
                         <DarkModeToggle darkMode={darkMode} onToggle={toggleDarkMode} className="p-1" />
@@ -639,10 +581,10 @@ export default function Navbar() {
                           <Globe className="w-4 h-4" />
                           <span className="text-sm font-medium">Language</span>
                         </div>
-                        <LanguageToggle 
-                          locale={locale} 
-                          onToggle={toggleLanguage} 
-                          darkMode={darkMode} 
+                        <LanguageToggle
+                          locale={locale}
+                          onToggle={toggleLanguage}
+                          darkMode={darkMode}
                           showLabels={false}
                         />
                       </div>
@@ -655,16 +597,9 @@ export default function Navbar() {
                         className="flex items-center gap-3 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors"
                       >
                         <Wallet className="w-4 h-4" />
-<<<<<<< HEAD
-                        <span className="text-xs font-medium">
-                          {t("navbar.ewallet")}
-                        </span>
-                      </Link>
-=======
                         <span className="text-sm font-medium">{t("navbar.ewallet")}</span>
                       </NavLink>
 
->>>>>>> 61da1fd15617936b636e764f2260c6d4e57050ad
                       <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
 
                       <button
@@ -710,7 +645,7 @@ export default function Navbar() {
 
         {/* Mobile Menu */}
         {isOpen && (
-          <div className="mobile-menu lg:hidden backdrop-blur-lg border-t border-gray-200 dark:border-gray-700">
+          <div className="mobile-menu lg:hidden backdrop-blur-lg border-t">
             <div className="px-4 py-3 space-y-2">
               {/* Language Toggle for Mobile - Only show when not logged in */}
               {!user && (
@@ -719,13 +654,13 @@ export default function Navbar() {
                     <Globe className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                     <span className="font-medium text-sm text-blue-800 dark:text-blue-200">Language</span>
                   </div>
-                  <LanguageToggle 
-                    locale={locale} 
+                  <LanguageToggle
+                    locale={locale}
                     onToggle={() => {
                       toggleLanguage();
                       setIsOpen(false);
-                    }} 
-                    darkMode={darkMode} 
+                    }}
+                    darkMode={darkMode}
                   />
                 </div>
               )}
