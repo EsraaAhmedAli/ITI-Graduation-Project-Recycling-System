@@ -510,7 +510,7 @@ export default function Navbar() {
                       <div className="flex items-center justify-between px-4 py-2 text-gray-700 dark:text-gray-300">
                         <div className="flex items-center gap-3">
                           <Globe className="w-4 h-4" />
-                          <span className="text-sm font-medium">Language</span>
+                          <span className="text-sm font-medium">{t("navbar.language")}</span>
                         </div>
                         <LanguageToggle 
                           locale={locale} 
@@ -583,7 +583,7 @@ export default function Navbar() {
                 <div className="flex items-center justify-between w-full px-3 py-2.5 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg mb-2">
                   <div className="flex items-center gap-2">
                     <Globe className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                    <span className="font-medium text-sm text-blue-800 dark:text-blue-200">Language</span>
+                    <span className="font-medium text-sm text-blue-800 dark:text-blue-200">{t("navbar.language")}</span>
                   </div>
                   <LanguageToggle 
                     locale={locale} 

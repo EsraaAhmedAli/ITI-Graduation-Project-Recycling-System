@@ -235,7 +235,6 @@ export const useCartOperations = ({
         clearCartFromSession();
       }
 
-      toast.success("Cart cleared");
     } catch (err) {
       console.error("Failed to clear cart", err);
       toast.error("Failed to clear cart");

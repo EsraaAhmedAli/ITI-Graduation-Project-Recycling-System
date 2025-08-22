@@ -203,7 +203,6 @@ export default function PickupConfirmation() {
           );
           if (result.success) {
             console.log("Order created successfully:", result.orderId);
-            toast.success("Order placed successfully!");
             router.push("/profile");
             return;
           }
@@ -217,7 +216,6 @@ export default function PickupConfirmation() {
         );
         if (result.success) {
           console.log("Order created successfully:", result.orderId);
-          toast.success("Order placed successfully!");
           router.push("/profile");
           return;
         }

@@ -67,7 +67,11 @@
     "searchError": "حدث خطأ في البحث",
     "searching": "جار البحث..."
   },
+   "order" :{
+    "createdSucc": "تم إنشاء الطلب بنجاح!"
+  },
   "navbar": {
+    "language": "اللغة",
     "darkMode": "الوضع الليلي",
     "lightMode": "الوضع النهاري",
 
