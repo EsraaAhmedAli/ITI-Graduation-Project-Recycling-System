@@ -347,31 +347,7 @@ export default function ItemDetailsPage() {
               </span>
             </button>
 
-            {/* Environmental Benefits */}
-            <div className="bg-gray-50 rounded-xl p-5 space-y-3">
-              <h3 className="font-semibold text-gray-800 flex items-center">
-                <Leaf className="w-5 h-5 mr-2 text-green-600" />
-                {t("environmentalBenefit.environmentalBenefits")}
-              </h3>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li className="flex items-start">
-                  <span className="text-green-600 mr-2">•</span>
-                  {t("environmentalBenefit.reducesCO2Emissions", {
-                    amount: (selectedQuantity * 2.5).toFixed(1),
-                  })}
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-600 mr-2">•</span>
-                  {t("environmentalBenefit.savesWater", {
-                    amount: selectedQuantity * 15,
-                  })}
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-600 mr-2">•</span>
-                  {t("environmentalBenefit.conservesNaturalResources")}
-                </li>
-              </ul>
-            </div>
+        
           </div>
         </div>
 
