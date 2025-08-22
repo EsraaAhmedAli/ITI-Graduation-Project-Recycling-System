@@ -11,7 +11,7 @@ export default function ProfilePage() {
   return (
     <ProtectedRoute>
       <Suspense fallback={<Loader title="Loading profile..." />}>
-        <ReviewManager>
+        <ReviewManager >
           {({
             openReviewModal,
             deleteReview,

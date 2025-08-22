@@ -124,9 +124,9 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
 
       // Use the get-items endpoint with role-based pricing
       const response = await api.get(
-        `/categories/get-items?limit=1000&role=${userRole}`
+        `/categories/get-items?all=true&role=${userRole}`
       );
-      const allItems = response.data?.data || [];
+      const allItems = response.data?.items || [];
 
       console.log(
         `✅ Retrieved ${allItems.length} items from database with ${userRole} pricing`

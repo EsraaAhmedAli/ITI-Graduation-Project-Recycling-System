@@ -124,7 +124,7 @@ export async function extractMaterialsFromTranscription(
   });
 
   const chatRes = await client.chat.completions.create({
-    model: "llama-3.3-70b-versatile",
+    model: "llama-3.1-8b-instant",
     temperature: 1,
     response_format: { type: "json_object" },
     messages: [
