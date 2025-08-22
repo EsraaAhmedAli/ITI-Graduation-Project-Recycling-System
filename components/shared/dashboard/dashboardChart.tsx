@@ -1,4 +1,3 @@
-// components/dashboard/DashboardChartsComponent.tsx
 "use client";
 
 import React, { Suspense, useMemo } from "react";
