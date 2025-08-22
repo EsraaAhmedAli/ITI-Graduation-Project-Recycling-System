@@ -2,8 +2,8 @@ import type { NextConfig } from "next";
 import withFlowbiteReact from "flowbite-react/plugin/nextjs";
 
 const nextConfig: NextConfig = {
-  compress: true, // ONLY ADD THIS LINE
-    optimizeCss: false, // 🚨 Fix lightningcss issue
+  compress: true,
+  // Remove optimizeCss - it's not a valid Next.js option and causes the LightningCSS error
 
   images: {
     remotePatterns: [

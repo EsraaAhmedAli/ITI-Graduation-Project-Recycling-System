@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import api from "@/lib/axios";
 import { toast } from "react-hot-toast";
 import Image from "next/image";
-import { X, Search, ShoppingCart, Star } from "lucide-react";
+import { X, Search } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import Button from "./Button";
@@ -370,7 +370,7 @@ export default function NavbarSearch() {
                       <div className="flex items-center justify-between mb-6">
                         <h3 className="text-xl font-semibold text-gray-800">
                           {convertNumber(searchResults.length)}{" "}
-                          {t("search.resultsFor")} "{searchQuery}"
+                          {t("search.resultsFor")} {searchQuery}
                         </h3>
                         <button
                           onClick={handleClearSearch}
