@@ -4,7 +4,7 @@ import ReceiptCard from "../../../components/RecipetCard";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios";
-import Loader from "@/components/common/Loader";
+import { Loader } from '@/components/common'
 import { useLanguage } from "@/context/LanguageContext";
 
 const ReceiptPage = () => {

@@ -7,7 +7,7 @@ import DynamicTable from "@/components/shared/dashboardTable";
 import DeliveryAttachments from "@/components/shared/DeliveryAttachements";
 import { toast } from "react-hot-toast";
 import { Modal, ModalBody, ModalHeader, TextInput } from "flowbite-react";
-import Loader from "@/components/common/Loader";
+import { Loader } from '@/components/common'
 import { useQuery } from "@tanstack/react-query";
 import ReviewsModal from "@/components/ratingModal";
 import { useLanguage } from "@/context/LanguageContext";

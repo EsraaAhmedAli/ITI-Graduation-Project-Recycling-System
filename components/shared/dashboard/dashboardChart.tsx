@@ -7,7 +7,7 @@ import { StatCard } from "./component/StatCard";
 import { ErrorBoundary } from "./component/errorboundary";
 import { useLanguage } from "@/context/LanguageContext";
 import dynamic from "next/dynamic";
-import Loader from "@/components/common/Loader";
+import { Loader } from '@/components/common'
 
 // Create a reusable loading component to reduce duplication
 const ChartLoader = () => (

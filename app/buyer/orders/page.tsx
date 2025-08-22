@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { Order, OrdersResponse } from "@/components/Types/orders.type";
-import Loader from "@/components/common/Loader";
+import { Loader } from '@/components/common'
 import api from "@/lib/axios";
 import { ProtectedRoute } from "@/lib/userProtectedRoute";
 import { CheckCircle, Clock1, Truck, XCircle } from "lucide-react";

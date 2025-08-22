@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { CartItem } from "@/models/cart";
-import Loader from "@/components/common/Loader";
+import { Loader } from '@/components/common'
 import {
   Recycle,
   Plus,

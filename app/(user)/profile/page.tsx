@@ -3,7 +3,7 @@
 
 import React, { Suspense } from "react";
 import { ProtectedRoute } from "@/lib/userProtectedRoute";
-import Loader from "@/components/common/Loader";
+import { Loader } from '@/components/common'
 import ReviewManager from "@/components/profile/ReviewManager";
 import ProfileContent from "@/components/profile/profileContent";
 

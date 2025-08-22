@@ -8,7 +8,7 @@ import { CartItem, useCart } from "@/context/CartContext";
 import { Recycle, Leaf, Package, Minus, Plus } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useUserAuth } from "@/context/AuthFormContext";
-import Loader from "@/components/common/Loader";
+import { Loader } from '@/components/common'
 import { useCategories } from "@/hooks/useGetCategories";
 
 interface Item {

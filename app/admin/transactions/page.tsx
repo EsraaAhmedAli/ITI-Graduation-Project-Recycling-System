@@ -20,7 +20,7 @@ import {
   Mail,
   Check,
 } from "lucide-react";
-import Loader from "@/components/common/Loader";
+import { Loader } from '@/components/common'
 import { TablePagination } from "@/components/tablePagination/tablePagination";
 import { Modal, ModalBody, ModalFooter, ModalHeader, Toast } from "flowbite-react";
 import RefundModal from "@/components/shared/refundModal";

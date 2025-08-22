@@ -10,7 +10,7 @@ import { useCategories } from "@/hooks/useGetCategories";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalization } from "@/utils/localiztionUtil";
 import { Category } from "@/components/Types/categories.type";
-import Loader from "@/components/common/Loader";
+import { Loader } from '@/components/common'
 
 // Type definitions for better type safety
 // Updated to match the actual Category type from the API
