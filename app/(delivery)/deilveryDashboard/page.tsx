@@ -749,17 +749,17 @@ export default function Page() {
 
       {/* Complete Order with Photo Proof Modal */}
       {showCompleteModal && (
-        <Modal show={showCompleteModal} onClose={closeCompleteModal} size="lg">
+        <Modal show={showCompleteModal} onClose={closeCompleteModal} size="lg" >
           <ModalHeader>{t("courier.completeDelivery")}</ModalHeader>
           <ModalBody>
             <div className="space-y-6">
               <div>
-                <h3 className="font-medium text-gray-900 mb-2">
+                <h3 className="font-medium  mb-2" style={{color: "var(--color-base-800)"}}>
                   {t("courier.orderNumber", {
                     id: selectedOrder?._id?.slice(-8),
                   })}
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm "  style={{color: "var(--foreground)"}}>
                   {t("courier.customer")}: {selectedOrder?.user?.userName}
                 </p>
               </div>
@@ -907,7 +907,7 @@ export default function Page() {
 
               {/* Photo Upload Section */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium  mb-2" style={{color: "var(--color-base-800)"}}>
                   {t("courier.deliveryProofPhoto")} *
                 </label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
@@ -936,7 +936,7 @@ export default function Page() {
                   ) : (
                     <div className="text-center">
                       <Camera className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600 mb-2">
+                      <p className="text-sm mb-2" style={{color: "var(--color-base-800)"}}>
                         {t("courier.takePhotoOfOrder", {
                           action:
                             userRole === "customer"

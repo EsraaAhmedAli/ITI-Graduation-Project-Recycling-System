@@ -209,23 +209,23 @@ export default function Home() {
       </section>
 
       {/* Community Section - Reduced blur effects */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-emerald-50/80 via-blue-50/40 to-purple-50/60 dark:from-emerald-950/20 dark:via-blue-950/10 dark:to-purple-950/15 py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 rounded-2xl mx-4 sm:mx-6 lg:mx-12 my-8 sm:my-12 border border-white/20 dark:border-white/5">
+      <section  style={{ background: "var(--color-green-100)" }} className="relative overflow-hidden bg-gradient-to-br from-emerald-50/80 via-blue-50/40 to-purple-50/60 dark:from-emerald-950/20 dark:via-blue-950/10 dark:to-purple-950/15 py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 rounded-2xl mx-4 sm:mx-6 lg:mx-12 my-8 sm:my-12 border border-white/20 dark:border-white/5">
         {/* Reduced background decorative elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-br from-emerald-400/10 to-blue-400/10 dark:from-emerald-400/5 dark:to-blue-400/5 rounded-full blur-sm"></div>
           <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-gradient-to-br from-purple-400/10 to-pink-400/10 dark:from-purple-400/5 dark:to-pink-400/5 rounded-full blur-sm"></div>
         </div>
 
-        <div className="relative max-w-3xl mx-auto text-center">
+        <div className="relative max-w-3xl mx-auto text-center" >
           <div className="mb-8 sm:mb-10">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4 text-gray-900 dark:text-gray-100 leading-tight tracking-tight">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4 text-gray-900 dark:text-gray-100 leading-tight tracking-tight" style={{ color: "var(--color-base-800)" }}>
               {t("indexPage.community.title")}{" "}
               <span className="bg-gradient-to-r from-emerald-600 via-blue-600 to-purple-600 dark:from-emerald-400 dark:via-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
                 {t("indexPage.community.highlight")}
               </span>
             </h2>
             <div className="space-y-2">
-              <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
+              <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed" style={{ color: "var(--color-base-800)" }}>
                 {t("indexPage.community.desc1")}
               </p>
               <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 max-w-xl mx-auto font-medium">
