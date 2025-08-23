@@ -1427,5 +1427,72 @@
     "total": "Total",
     "processing": "Processing...",
     "confirmOrder": "Confirm Order"
+  },
+  
+  "addSubCategoryTo": "Add Sub-Category to",
+  "fillDetailsToAddSubCategory": "Fill in the details below to add a new sub-category",
+  "subCategoryNameEnglish": "Sub-Category Name (English)",
+  "subCategoryNameArabic": "Sub-Category Name (Arabic)",
+  "enterSubCategoryNameEnglish": "Enter sub-category name in English",
+  "enterSubCategoryNameArabic": "Enter sub-category name in Arabic",
+  "enterPoints": "Enter points",
+  "price": "Price",
+  "autoCalculatedPrice": "Auto-calculated price",
+  "quantity": "Quantity",
+  "enterQuantity": "Enter quantity",
+  "measurementUnit": "Measurement unit",
+  "selectUnit": "Select unit",
+  "kilogramKg": "Kilogram",
+  "piece": "Piece",
+  "subCategoryImage": "Sub-Category Image",
+  "uploadFile": "Upload file",
+  "orDragAndDrop": "Or drag and drop",
+  "imageFormatLimit": "PNG, JPG, GIF up to 5 MB",
+  "selected": "Selected",
+  "remove": "Remove",
+  "preview": "Preview",
+  "cancel": "Cancel",
+  "addSubCategory": "Add Sub-Category",
+  "processing": "Processing",
+  "invalidMeasurementUnit": "Invalid measurement unit",
+  "subCategoryAddedSuccessfully": "Sub-category added successfully!",
+  "somethingWentWrong": "Something went wrong!",
+  "navigation": {
+    "pages": "Pages",
+    "of": "of"
+  },
+"d" : {
+  "refresh": "Refresh" ,  
+  "refreshing": "Refreshing...",
+  "deliveryDashboard": "Delivery Dashboard",
+  "noAssignedOrders": "No Assigned Orders",
+  "noAssignedOrdersDesc": "Once orders are assigned to you, they will appear here."
+}
+,
+ "editProfile": {
+    "title": "Edit Profile",
+    "avatarAlt": "Avatar Preview",
+    "form": {
+      "fullName": "Full Name",
+      "phoneNumber": "Phone Number",
+      "phonePlaceholder": "10XXXXXXXX"
+    },
+    "validation": {
+      "nameRequired": "Name is required",
+      "nameMaxLength": "Name cannot exceed 20 characters",
+      "phoneRequired": "Phone number is required",
+      "phoneInvalid": "Enter valid Egyptian number (010/011/012/015)",
+      "imageFormat": "Only JPG, PNG, and WebP files are allowed.",
+      "imageSize": "Image must be smaller than 2MB."
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving..."
+    },
+    "messages": {
+      "updateSuccess": "Profile updated successfully",
+      "updateError": "Failed to update profile"
+    }
   }
 }

@@ -12,11 +12,9 @@ import {
   Package,
   Clock,
   User,
-  MapPin,
   Truck,
   LogOut,
   Edit3,
-  Save,
   RotateCw,
   Settings,
 } from "lucide-react";
@@ -452,48 +450,51 @@ export default function Page() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       {/* Header Section */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl shadow-lg">
-                <Truck className="w-8 h-8 text-white" />
+  <div className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0">
+            {/* Left side - Logo and Title */}
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="p-2 sm:p-3 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg sm:rounded-xl shadow-lg flex-shrink-0">
+                <Truck className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <button
                   onClick={() => {
                     setOpenProfile(false);
                     setEditProfile(false);
                     setShowPopup(false);
                   }}
+                  className="text-left"
                 >
-                  <h1 className="text-2xl font-bold text-gray-900">
-                    Delivery Dashboard
+                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
+                    {t("d.deliveryDashboard")}
                   </h1>
                 </button>
-                <p className="text-gray-600">
+                <p className="text-sm sm:text-base text-gray-600 truncate">
                   {t("courier.manageAssignedOrders")}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-lg border border-blue-200">
-                <Package className="w-5 h-5 text-blue-600" />
-                <span className="text-sm font-semibold text-blue-800">
+            {/* Right side - Orders count and User menu */}
+            <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto justify-between sm:justify-end">
+              {/* Orders count badge */}
+              <div className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-50 rounded-lg border border-blue-200">
+                <Package className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
+                <span className="text-sm font-semibold text-blue-800 whitespace-nowrap">
                   {orders.length} {t("courier.orders")}
                 </span>
               </div>
 
               {/* User Avatar Dropdown Trigger */}
-              <div className="relative" ref={dropdownRef}>
+              <div className="relative flex-shrink-0" ref={dropdownRef}>
                 <button
                   onClick={(e) => {
-                    e.stopPropagation(); // Prevent event bubbling
-
+                    e.stopPropagation();
                     setShowPopup(!showPopup);
                   }}
-                  className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 transition-colors focus:outline-none f"
+                  className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 transition-colors focus:outline-none"
                 >
                   <div className="relative">
                     <Image
@@ -501,20 +502,20 @@ export default function Page() {
                       alt="User Avatar"
                       width={40}
                       height={40}
-                      className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-gray-200"
                     />
-
                     {/* Online status indicator */}
-                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                    <div className="absolute -bottom-0.5 -end-0.5 sm:-bottom-1 sm:-end-1 w-3 h-3 sm:w-4 sm:h-4 bg-green-500 border-2 border-white rounded-full"></div>
                   </div>
                 </button>
 
                 {/* Dropdown Menu */}
                 {showPopup && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                  <div className="absolute end-0 mt-2 w-64 sm:w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                    {/* User info section */}
                     <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
                       <div className="flex items-center gap-3">
-                        <div className="relative">
+                        <div className="relative flex-shrink-0">
                           <Image
                             width={40}
                             height={40}
@@ -539,6 +540,7 @@ export default function Page() {
                       </div>
                     </div>
 
+                    {/* Menu items */}
                     <div className="py-1">
                       <button
                         onClick={() => {
@@ -547,9 +549,9 @@ export default function Page() {
                           setShowPopup(false);
                           setEditProfile(false);
                         }}
-                        className="flex items-center gap-3 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors w-full text-left"
+                        className="flex items-center gap-3 px-4 py-3 sm:py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors w-full text-left"
                       >
-                        <User className="w-4 h-4" />
+                        <User className="w-4 h-4 flex-shrink-0" />
                         <span className="text-sm font-medium">
                           {t("navbar.profile")}
                         </span>
@@ -562,9 +564,9 @@ export default function Page() {
                           setShowPopup(false);
                           setOpenProfile(false);
                         }}
-                        className="flex items-center gap-3 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors w-full text-left"
+                        className="flex items-center gap-3 px-4 py-3 sm:py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors w-full text-left"
                       >
-                        <Settings className="w-4 h-4" />
+                        <Settings className="w-4 h-4 flex-shrink-0" />
                         <span className="text-sm font-medium">
                           {t("navbar.settings")}
                         </span>
@@ -577,67 +579,103 @@ export default function Page() {
                           console.log("Logout clicked");
                           logout();
                         }}
-                        className="flex items-center gap-3 px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-300 transition-colors w-full text-left"
+                        className="flex items-center gap-3 px-4 py-3 sm:py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-300 transition-colors w-full text-left"
                       >
-                        <LogOut className="w-4 h-4" />
+                        <LogOut className="w-4 h-4 flex-shrink-0" />
                         <span className="text-sm font-medium">
                           {t("navbar.signOut")}
                         </span>
                       </button>
 
-
-
-
-
-
-
-
-            <div
-              className={`language-toggle hidden lg:flex items-center gap-1.5 px-2 py-1 rounded-lg border-gray-200 border hover:border-gray-300 dark:hover:border-gray-600 transition-colors`}
-            >
-              <span
-                className={`text-xs font-medium ${
-                  locale === "en"
-                    ? "text-blue-600 dark:text-blue-400"
-                    : "text-gray-400 dark:text-gray-500"
-                }`}
-              >
-                EN
-              </span>
-              <button
-                onClick={() => setLocale(locale === "en" ? "ar" : "en")}
-                className="relative w-8 h-4 bg-gray-200 dark:bg-gray-600 rounded-full transition-colors duration-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                style={{
-                  backgroundColor:
-                    locale === "ar"
-                                            ? "#4B5563"
-                      : "#D1D5DB",
-                }}
-                title="Toggle Language"
-              >
-                <div
-                  className="absolute top-0.5 left-0.5 w-3 h-3 bg-white dark:bg-gray-200 rounded-full shadow-sm transform transition-transform duration-200"
-                  style={{
-                    transform:
-                      locale === "ar" ? "translateX(16px)" : "translateX(0)",
-                  }}
-                />
-              </button>
-              <span
-                className={`text-xs font-medium ${
-                  locale === "ar"
-                    ? "text-blue-600 dark:text-blue-400"
-                    : "text-gray-400 dark:text-gray-500"
-                }`}
-              >
-                AR
-              </span>
-            </div>
-
-
+                      {/* Language toggle - moved inside dropdown for mobile */}
+                      <div className="border-t border-gray-100 dark:border-gray-700 my-1 lg:hidden"></div>
+                      
+                      <div className="px-4 py-2 lg:hidden">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Language
+                          </span>
+                          <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-600">
+                            <span
+                              className={`text-xs font-medium ${
+                                locale === "en"
+                                  ? "text-blue-600 dark:text-blue-400"
+                                  : "text-gray-400 dark:text-gray-500"
+                              }`}
+                            >
+                              EN
+                            </span>
+                            <button
+                              onClick={() => setLocale(locale === "en" ? "ar" : "en")}
+                              className="relative w-8 h-4 bg-gray-200 dark:bg-gray-600 rounded-full transition-colors duration-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              style={{
+                                backgroundColor:
+                                  locale === "ar" ? "#4B5563" : "#D1D5DB",
+                              }}
+                              title="Toggle Language"
+                            >
+                              <div
+                                className="absolute top-0.5 left-0.5 w-3 h-3 bg-white dark:bg-gray-200 rounded-full shadow-sm transform transition-transform duration-200"
+                                style={{
+                                  transform:
+                                    locale === "ar" ? "translateX(16px)" : "translateX(0)",
+                                }}
+                              />
+                            </button>
+                            <span
+                              className={`text-xs font-medium ${
+                                locale === "ar"
+                                  ? "text-blue-600 dark:text-blue-400"
+                                  : "text-gray-400 dark:text-gray-500"
+                              }`}
+                            >
+                              AR
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* Language toggle - visible only on desktop */}
+              <div className="language-toggle hidden lg:flex items-center gap-1.5 px-2 py-1 rounded-lg border-gray-200 border hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
+                <span
+                  className={`text-xs font-medium ${
+                    locale === "en"
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-gray-400 dark:text-gray-500"
+                  }`}
+                >
+                  EN
+                </span>
+                <button
+                  onClick={() => setLocale(locale === "en" ? "ar" : "en")}
+                  className="relative w-8 h-4 bg-gray-200 dark:bg-gray-600 rounded-full transition-colors duration-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  style={{
+                    backgroundColor:
+                      locale === "ar" ? "#4B5563" : "#D1D5DB",
+                  }}
+                  title="Toggle Language"
+                >
+                  <div
+                    className="absolute top-0.5 left-0.5 w-3 h-3 bg-white dark:bg-gray-200 rounded-full shadow-sm transform transition-transform duration-200"
+                    style={{
+                      transform:
+                        locale === "ar" ? "translateX(16px)" : "translateX(0)",
+                    }}
+                  />
+                </button>
+                <span
+                  className={`text-xs font-medium ${
+                    locale === "ar"
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-gray-400 dark:text-gray-500"
+                  }`}
+                >
+                  AR
+                </span>
               </div>
             </div>
           </div>
@@ -646,45 +684,50 @@ export default function Page() {
 
       {/* Main Content */}
       {!editProfile && !openProfile && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8">
+          {/* Refresh button */}
           <button
             onClick={() => refetch()}
             disabled={isFetching}
             className={`
-    my-2
-    flex items-center gap-2 px-4 py-2 rounded-lg
-    bg-gradient-to-r from-blue-600 to-blue-700
-    text-white font-medium shadow-sm
-    hover:from-blue-700 hover:to-blue-800 hover:shadow-md
-    active:scale-95 transition-all duration-200
-    disabled:opacity-70 disabled:cursor-not-allowed
-  `}
+              mb-4 w-full sm:w-auto
+              flex items-center justify-center sm:justify-start gap-2 px-4 py-2 rounded-lg
+              bg-gradient-to-r from-blue-600 to-blue-700
+              text-white font-medium shadow-sm
+              hover:from-blue-700 hover:to-blue-800 hover:shadow-md
+              active:scale-95 transition-all duration-200
+              disabled:opacity-70 disabled:cursor-not-allowed
+            `}
           >
             <RotateCw
               className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`}
             />
-            {isFetching ? "Refreshing..." : "Refresh"}
-          </button>{" "}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+            {isFetching ? t('d.refreshing') : t('d.refresh')}
+          </button>
+
+          {/* Orders table container */}
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
             {orders.length === 0 ? (
-              <div className="py-20 flex flex-col items-center justify-center text-gray-500">
-                <Truck className="mb-4 w-12 h-12 text-gray-400" />
-                <h2 className="text-xl font-semibold mb-2">
-                  No orders assigned yet
+              <div className="py-12 sm:py-20 px-4 flex flex-col items-center justify-center text-gray-500">
+                <Truck className="mb-4 w-10 h-10 sm:w-12 sm:h-12 text-gray-400" />
+                <h2 className="text-lg sm:text-xl font-semibold mb-2 text-center">
+                  {t("d.noAssignedOrders")}
                 </h2>
-                <p className="text-sm max-w-xs text-center">
-                  Once orders are assigned to you, they will appear here.
+                <p className="text-sm max-w-xs text-center leading-relaxed">
+                  {t("d.noAssignedOrdersDesc")}
                 </p>
               </div>
             ) : (
-              <DynamicTable
-                data={orders}
-                title="Assigned Orders"
-                columns={columns}
-                showActions={false}
-                showAddButton={false}
-                showFilter={false}
-              />
+              <div className="overflow-x-auto">
+                <DynamicTable
+                  data={orders}
+                  title="Assigned Orders"
+                  columns={columns}
+                  showActions={false}
+                  showAddButton={false}
+                  showFilter={false}
+                />
+              </div>
             )}
           </div>
         </div>

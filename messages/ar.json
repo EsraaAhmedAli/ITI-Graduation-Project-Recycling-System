@@ -1487,5 +1487,39 @@
   "navigation": {
     "pages": "الصفحات",
     "of": "من"
+  },
+  "d" : {
+  "refresh": "تحديث" ,  
+  "refreshing": "جاري التحديث...",
+  "deliveryDashboard": "لوحة تحكم التوصيل",
+  "noAssignedOrders": "لا توجد طلبات مخصصة",
+  "noAssignedOrdersDesc": "بمجرد تخصيص الطلبات لك، ستظهر هنا."
+}
+,
+"editProfile": {
+    "title": "تعديل الملف الشخصي",
+    "avatarAlt": "معاينة الصورة الشخصية",
+    "form": {
+      "fullName": "الاسم الكامل",
+      "phoneNumber": "رقم الهاتف",
+      "phonePlaceholder": "10XXXXXXXX"
+    },
+    "validation": {
+      "nameRequired": "الاسم مطلوب",
+      "nameMaxLength": "لا يمكن أن يتجاوز الاسم 20 حرفاً",
+      "phoneRequired": "رقم الهاتف مطلوب",
+      "phoneInvalid": "أدخل رقم مصري صحيح (010/011/012/015)",
+      "imageFormat": "يُسمح فقط بملفات JPG و PNG و WebP.",
+      "imageSize": "يجب أن يكون حجم الصورة أقل من 2 ميجابايت."
+    },
+    "buttons": {
+      "cancel": "إلغاء",
+      "save": "حفظ",
+      "saving": "جاري الحفظ..."
+    },
+    "messages": {
+      "updateSuccess": "تم تحديث الملف الشخصي بنجاح",
+      "updateError": "فشل في تحديث الملف الشخصي"
+    }
   }
 }

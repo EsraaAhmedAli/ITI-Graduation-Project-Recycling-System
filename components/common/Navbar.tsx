@@ -103,30 +103,14 @@ const NavLink = memo(({ href, onClick, className, children, prefetch = true }) =
 NavLink.displayName = 'NavLink';
 
 // Memoized Dark Mode Toggle Component
-const DarkModeToggle = memo(({ darkMode, onToggle, className = "" }) => {
-  // Determine which icon to show based on current state
-  const getIcon = () => {
-  if (darkMode === true) {
-    return <Moon className="nav-icon w-5 h-5" />;
-  } else {
-    return <Sun className="nav-icon w-5 h-5" />;
-  }
-};
-
-
+const DarkModeToggle = memo(({ isDark, onToggle, className = "" }) => {
   return (
     <button
       onClick={onToggle}
-      className={`nav-link ${darkMode ? "dark" : "light"} hover:bg-green-100 dark:hover:bg-black rounded-full transition-colors ${className}`}
-      aria-label={
-        darkMode === null
-          ? "Using system preference - click to change"
-          : darkMode
-            ? "Switch to light mode"
-            : "Switch to dark mode"
-      }
+      className={`nav-link ${isDark ? "dark" : "light"} hover:bg-green-100 dark:hover:bg-black rounded-full transition-colors ${className}`}
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
     >
-      {getIcon()}
+      {isDark ? <Sun className="nav-icon w-5 h-5" /> : <Moon className="nav-icon w-5 h-5" />}
     </button>
   );
 });
@@ -181,67 +165,55 @@ export default function Navbar() {
   const isBuyer = user?.role === "buyer";
   const { locale, setLocale } = useLanguage();
 
-  // Hybrid Dark Mode State
-  const [darkMode, setDarkMode] = useState(null); // null means system preference
+  // Fixed Dark Mode State - simple boolean
+  const [darkMode, setDarkMode] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const { t, convertNumber } = useLanguage();
 
-  // Apply dark mode based on system preference or user choice
+  // Initialize dark mode from localStorage or system preference
   useEffect(() => {
-    const root = document.documentElement;
-
-    // If user hasn't made a choice, use system preference
-    if (darkMode === null) {
-      if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !isInitialized) {
+      const savedMode = localStorage.getItem('darkMode');
+      
+      if (savedMode !== null) {
+        // User has a saved preference
+        const isDark = JSON.parse(savedMode);
+        setDarkMode(isDark);
+      } else {
+        // No saved preference, use system preference
         const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        if (systemPrefersDark) {
-          root.classList.add("dark");
-        } else {
-          root.classList.remove("dark");
-        }
+        setDarkMode(systemPrefersDark);
       }
+      
+      setIsInitialized(true);
     }
-    // If user has made a choice, use it
-    else {
+  }, [isInitialized]);
+
+  // Apply dark mode to DOM
+  useEffect(() => {
+    if (isInitialized) {
+      const root = document.documentElement;
       if (darkMode) {
         root.classList.add("dark");
       } else {
         root.classList.remove("dark");
       }
     }
-  }, [darkMode]);
+  }, [darkMode, isInitialized]);
 
-  // Load user preference from localStorage
+  // Save preference to localStorage when it changes
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedMode = localStorage.getItem('darkMode');
-      if (savedMode !== null) {
-        setDarkMode(JSON.parse(savedMode));
-      } else {
-        setDarkMode(null); // Use system preference
-      }
-    }
-  }, []);
-
-  // Save user preference to localStorage
-  useEffect(() => {
-    if (darkMode !== null && typeof window !== 'undefined') {
+    if (isInitialized && typeof window !== 'undefined') {
       localStorage.setItem('darkMode', JSON.stringify(darkMode));
     }
-  }, [darkMode]);
+  }, [darkMode, isInitialized]);
 
   // Memoized handlers for better performance
   const toggleMenu = useCallback(() => setIsOpen(prev => !prev), []);
   const toggleDarkMode = useCallback(() => {
-    // Cycle through states: system → light → dark → system
-    if (darkMode === null) {
-      setDarkMode(false); // Force light
-    } else if (darkMode === false) {
-      setDarkMode(true); // Force dark
-    } else {
-      setDarkMode(null); // Back to system
-    }
-  }, [darkMode]);
+    setDarkMode(prev => !prev);
+  }, []);
   const toggleLanguage = useCallback(() => setLocale(locale === "en" ? "ar" : "en"), [locale, setLocale]);
   const toggleCart = useCallback(() => setIsCartOpen(prev => !prev), []);
   const toggleProfile = useCallback(() => setIsProfileOpen(prev => !prev), []);
@@ -321,7 +293,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Left side: Logo + Search */}
-          <div className="flex items-center gap-6 min-w-0 flex-1">
+          <div className="flex items-center gap-6 min-w-0 flex-1 mr-4">
             <NavLink href="/" className="flex items-center flex-shrink-0">
               <div className="text-xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
                 {t("navbar.title")}
@@ -363,10 +335,12 @@ export default function Navbar() {
           </div>
 
           {/* Right side: Actions */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {/* Dark Mode Toggle - Only show when not logged in */}
+          <div className="flex items-center gap-3 flex-shrink-0 ml-4">
+            {/* Dark Mode Toggle - Only show on desktop when not logged in */}
             {!user && (
-              <DarkModeToggle darkMode={darkMode} onToggle={toggleDarkMode} />
+              <div className="hidden lg:block">
+                <DarkModeToggle isDark={darkMode} onToggle={toggleDarkMode} />
+              </div>
             )}
 
             {/* Collection Cart */}
@@ -391,7 +365,7 @@ export default function Navbar() {
 
               {/* Cart Dropdown */}
               {isCartOpen && (
-                <div className={`nav-dropdown absolute right-0 mt-2 w-80 rounded-lg bg-white shadow-lg border py-2 z-50 ${darkMode ? "dark" : "light"}`}>
+                <div className={`nav-dropdown absolute -start-[50px] mt-2 w-80 rounded-lg bg-white shadow-lg border py-2 z-50 ${darkMode ? "dark" : "light"}`}>
                   <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-gray-700">
                     <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
                       {isBuyer ? t("navbar.myCart") : t("navbar.myCollection")}
@@ -448,13 +422,15 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* Language Switcher - Only show when not logged in */}
+            {/* Language Switcher - Only show on desktop when not logged in */}
             {!user && (
-              <LanguageToggle
-                locale={locale}
-                onToggle={toggleLanguage}
-                darkMode={darkMode}
-              />
+              <div className="hidden lg:block">
+                <LanguageToggle
+                  locale={locale}
+                  onToggle={toggleLanguage}
+                  darkMode={darkMode}
+                />
+              </div>
             )}
 
             {/* Notification - Only show when logged in */}
@@ -494,7 +470,7 @@ export default function Navbar() {
 
                 {/* Profile Dropdown */}
                 {isProfileOpen && (
-                  <div className="nav-dropdown bg-white dark:bg-gray-800 absolute right-0 mt-2 w-56 rounded-lg shadow-lg border dark:border-gray-700 py-2 z-50">
+                  <div className="nav-dropdown bg-white dark:bg-gray-800 absolute -end-5 mt-2 w-56 rounded-lg shadow-lg border dark:border-gray-700 py-2 z-50">
                     <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
                       <div className="flex items-center gap-3">
                         <div className="relative">
@@ -553,26 +529,12 @@ export default function Navbar() {
                       {/* Dark Mode Toggle in Profile Dropdown */}
                       <div className="flex items-center justify-between px-4 py-2 text-gray-700 dark:text-gray-300">
                         <div className="flex items-center gap-3">
-                          {darkMode === null ? (
-                            <div className="relative w-4 h-4">
-                              <Sun className="w-3 h-3 absolute top-0 left-0 opacity-70" />
-                              <Moon className="w-2.5 h-2.5 absolute bottom-0 right-0 opacity-70" />
-                            </div>
-                          ) : darkMode ? (
-                            <Sun className="w-4 h-4" />
-                          ) : (
-                            <Moon className="w-4 h-4" />
-                          )}
+                          {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                           <span className="text-sm font-medium">
-                            {darkMode === null
-                              ? t("navbar.systemMode")
-                              : darkMode
-                                ? t("navbar.lightMode")
-                                : t("navbar.darkMode")
-                            }
+                            {darkMode ? t("navbar.lightMode") : t("navbar.darkMode")}
                           </span>
                         </div>
-                        <DarkModeToggle darkMode={darkMode} onToggle={toggleDarkMode} className="p-1" />
+                        <DarkModeToggle isDark={darkMode} onToggle={toggleDarkMode} className="p-1" />
                       </div>
 
                       {/* Language Toggle in Profile Dropdown */}
@@ -614,7 +576,7 @@ export default function Navbar() {
                 )}
               </div>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="hidden lg:flex items-center gap-2">
                 <NavLink
                   href="/auth"
                   className={`nav-link ${darkMode ? "dark" : "light"}`}
@@ -647,6 +609,25 @@ export default function Navbar() {
         {isOpen && (
           <div className="mobile-menu lg:hidden backdrop-blur-lg border-t">
             <div className="px-4 py-3 space-y-2">
+              {/* Dark Mode Toggle for Mobile - Only show when not logged in */}
+              {!user && (
+                <div className="flex items-center justify-between w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg mb-2">
+                  <div className="flex items-center gap-2">
+                    {darkMode ? <Sun className="w-4 h-4 text-gray-600 dark:text-gray-400" /> : <Moon className="w-4 h-4 text-gray-600 dark:text-gray-400" />}
+                    <span className="font-medium text-sm text-gray-800 dark:text-gray-200">
+                      {darkMode ? t("navbar.lightMode") : t("navbar.darkMode")}
+                    </span>
+                  </div>
+                  <DarkModeToggle 
+                    isDark={darkMode} 
+                    onToggle={() => {
+                      toggleDarkMode();
+                    }} 
+                    className="p-1" 
+                  />
+                </div>
+              )}
+
               {/* Language Toggle for Mobile - Only show when not logged in */}
               {!user && (
                 <div className="flex items-center justify-between w-full px-3 py-2.5 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg mb-2">
