@@ -67,7 +67,15 @@
     "searchError": "حدث خطأ في البحث",
     "searching": "جار البحث..."
   },
+  "order": {
+    "createdSucc": "تم إنشاء الطلب بنجاح!"
+  },
   "navbar": {
+    "language": "اللغة",
+    "darkMode": "الوضع الليلي",
+    "lightMode": "الوضع النهاري",
+    "systemMode": "الوضع التقليدي",
+
     "home": "الرئيسية",
     "marketplace": "السوق",
     "categories": "الأقسام",
@@ -1329,6 +1337,21 @@
     "processing": "جاري المعالجة...",
     "confirmOrder": "تأكيد الطلب"
   },
+  "reviews": {
+    "title": "مراجعات {{courierName}}",
+    "noReviews": "لا توجد مراجعات",
+    "reviewSingular": "مراجعة",
+    "reviewPlural": "مراجعات",
+    "loadError": "فشل في تحميل المراجعات",
+    "noReviewsYet": "لا توجد مراجعات بعد",
+    "noReviewsDescription": "هذا السائق لم يتلقى أي مراجعات.",
+    "starSingular": "نجمة",
+    "starPlural": "نجوم",
+    "orderDate": "الطلب",
+    "pagination": "صفحة {{currentPage}} من {{totalPages}}",
+    "previous": "السابق",
+    "next": "التالي"
+  },
   "delivery": {
     "title": "طلبات التوصيل",
     "description": "إدارة طلبات سائقي التوصيل والموافقات والمراجعات والوصول",
@@ -1392,9 +1415,7 @@
     "processing": "جاري المعالجة...",
     "selectAction": "اختر إجراء"
   },
-  "loaders_ar": {
-    "deliveryData": "جاري تحميل بيانات التوصيل..."
-  },
+
   "deliveryAttachments": {
     "title": "مرفقات التوصيل",
     "subtitle": "وثائق وصور التحقق",

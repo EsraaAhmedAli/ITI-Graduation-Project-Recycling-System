@@ -93,7 +93,6 @@ const CheckoutPage = ({ amount, checkoutData }: CheckoutPageProps) => {
       try {
         localStorage.removeItem("cart");
         localStorage.removeItem("cartItems");
-        console.log("✅ Cart cleared from localStorage");
       } catch (error) {
         console.error("❌ Failed to clear cart from localStorage:", error);
       }
@@ -474,7 +473,7 @@ const CheckoutPage = ({ amount, checkoutData }: CheckoutPageProps) => {
           <div className="text-center mb-8">
             <div className="flex items-center justify-center mb-4">
               <div className="text-lg lg:text-xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-                <h1>XChange</h1>
+                <h1>Karakeeb</h1>
               </div>
             </div>
           </div>

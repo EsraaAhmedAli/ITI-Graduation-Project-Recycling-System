@@ -37,6 +37,9 @@ type Column<T> = {
   width?: string;
   minWidth?: string;
   sortKey?: string;
+  // Add responsive width options
+  maxWidth?: string;
+  responsive?: boolean; // Whether column should be responsive
 };
 
 // Add pagination info type
@@ -437,7 +440,7 @@ function DynamicTable<T extends { [key: string]: unknown; id?: string | number }
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-green-100 w-full max-w-full overflow-hidden">
+    <div className="bg-white rounded-lg shadow-sm border border-green-100 w-full">
       {/* Header */}
       <div className="p-4 md:p-6 border-b border-green-100 bg-gradient-to-r from-green-100 to-emerald-100">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -584,142 +587,159 @@ function DynamicTable<T extends { [key: string]: unknown; id?: string | number }
         </div>
       </div>
 
- {/* Desktop Table View - FIXED */}
-<div className="hidden md:block">
-  <div className="overflow-x-auto max-w-full" onClick={() => setOpenMenuId(null)}>
-    <table className="w-full table-auto"><thead className="bg-green-50"><tr>
-          {columns.map((column, index) => (
-            <th
-              key={column.key}
-              className={`px-3 py-3 text-left text-xs font-medium text-green-700 uppercase tracking-wider ${
-                column.sortable ? "cursor-pointer hover:bg-green-100" : ""
-              }`}
-              style={{
-                width: column.width,
-                minWidth: column.minWidth,
-              }}
-              onClick={() => column.sortable && handleSort(column.key)}
-            >
-              <div className="flex items-center gap-2">
-                <span>{column.label}</span>
-                {column.sortable && sortColumn === column.key && (
-                  <span className="text-green-600 flex-shrink-0">
-                    {sortDirection === "asc" ? "↑" : "↓"}
-                  </span>
-                )}
-              </div>
-            </th>
-          ))}
-          {showActions && (
-            <th 
-              className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase tracking-wider whitespace-nowrap"
-              style={{ width: '140px', minWidth: '140px' }}
-            >
-              Actions
-            </th>
-          )}
-        </tr></thead><tbody className="bg-white divide-y divide-green-100">
-        {currentData.map((item, index) => (
-          <tr key={index} className="hover:bg-green-25 transition-colors">
-            {columns.map((column) => (
-              <td
-                key={column.key}
-                className="px-4 py-4 text-sm text-gray-900 whitespace-nowrap"
-                style={{
-                  minWidth: column.minWidth || '120px',
-                  maxWidth: column.width || '300px',
-                }}
-              >
-                <div className="overflow-hidden text-ellipsis">
-                  {column.render
-                    ? column.render(item)
-                    : renderCellValue(item[column.key], column)}
-                </div>
-              </td>
-            ))}
-            {showActions && (
-              <td className="px-4 py-4 text-sm text-gray-500" style={{ width: '140px', minWidth: '140px' }}>
-                <div className="relative">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleMenu(item.id || index);
-                    }}
-                    className="p-2 hover:bg-green-50 rounded-full text-green-600 transition-colors"
-                  >
-                    <MoreHorizontal className="w-4 h-4" />
-                  </button>
-                  {openMenuId === (item.id || index) && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-green-200">
-                      <div className="py-1">
-                        {onAddSubCategory && (
-                          <button
-                            onClick={() =>
-                              handleMenuAction("add-sub", item)
-                            }
-                            className="flex items-center gap-2 w-full px-4 py-2 text-sm text-green-700 hover:bg-green-50 transition-colors"
-                          >
-                            <Plus className="w-4 h-4" />
-                            Add Sub Category
-                          </button>
+      {/* Desktop Table View - COMPLETELY REWRITTEN FOR BETTER RESPONSIVE BEHAVIOR */}
+      <div className="hidden md:block">
+        <div className="overflow-auto" onClick={() => setOpenMenuId(null)}>
+          {/* Use a flexible table layout with proper column sizing */}
+          <div className="min-w-fit">
+            <table className="w-full table-auto border-collapse">
+              <thead className="bg-green-50 sticky top-0">
+                <tr>
+                  {columns.map((column) => (
+                    <th
+                      key={column.key}
+                      className={`px-3 py-3 text-left text-xs font-medium text-green-700 uppercase tracking-wider border-b border-green-100 ${
+                        column.sortable ? "cursor-pointer hover:bg-green-100" : ""
+                      }`}
+                      style={{
+                        // Use more flexible column sizing
+                        width: column.width || 'auto',
+                        minWidth: column.minWidth || '100px',
+                        maxWidth: column.maxWidth || 'none',
+                      }}
+                      onClick={() => column.sortable && handleSort(column.key)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="truncate">{column.label}</span>
+                        {column.sortable && sortColumn === column.key && (
+                          <span className="text-green-600 flex-shrink-0">
+                            {sortDirection === "asc" ? "↑" : "↓"}
+                          </span>
                         )}
-                        <button
-                          onClick={() => handleMenuAction("edit", item)}
-                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-green-700 hover:bg-green-50 transition-colors"
-                        >
-                          <Edit className="w-4 h-4" />
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleMenuAction("view", item)}
-                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-green-700 hover:bg-green-50 transition-colors"
-                        >
-                          <Eye className="w-4 h-4" />
-                          View Details
-                        </button>
-                        <hr className="my-1 border-green-100" />
-                        <button
-                          onClick={() => handleMenuAction("delete", item)}
-                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          Delete
-                        </button>
                       </div>
-                    </div>
+                    </th>
+                  ))}
+                  {showActions && (
+                    <th 
+                      className="px-3 py-3 text-left text-xs font-medium text-green-700 uppercase tracking-wider border-b border-green-100"
+                      style={{ width: '120px', minWidth: '120px' }}
+                    >
+                      Actions
+                    </th>
                   )}
-                </div>
-              </td>
-            )}
-          </tr>
-        ))}
-      </tbody></table>
-  </div>
-</div>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-green-100">
+                {currentData.map((item, index) => (
+                  <tr key={index} className="hover:bg-green-25 transition-colors">
+                    {columns.map((column) => (
+                      <td
+                        key={column.key}
+                        className="px-3 py-4 text-sm text-gray-900 border-b border-green-50"
+                        style={{
+                          minWidth: column.minWidth || '100px',
+                          maxWidth: column.maxWidth || 'none',
+                        }}
+                      >
+                        <div className="overflow-hidden">
+                          {/* Better text wrapping and overflow handling */}
+                          <div className={`
+                            ${column.key === 'email' || column.key === 'statusAction' || column.key === 'canReapply' ? 
+                              'break-words' : 'truncate'
+                            }
+                          `}>
+                            {column.render
+                              ? column.render(item)
+                              : renderCellValue(item[column.key], column)}
+                          </div>
+                        </div>
+                      </td>
+                    ))}
+                    {showActions && (
+                      <td className="px-3 py-4 text-sm text-gray-500 border-b border-green-50" style={{ width: '120px', minWidth: '120px' }}>
+                        <div className="relative">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleMenu(item.id || index);
+                            }}
+                            className="p-2 hover:bg-green-50 rounded-full text-green-600 transition-colors"
+                          >
+                            <MoreHorizontal className="w-4 h-4" />
+                          </button>
+                          {openMenuId === (item.id || index) && (
+                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-green-200">
+                              <div className="py-1">
+                                {onAddSubCategory && (
+                                  <button
+                                    onClick={() =>
+                                      handleMenuAction("add-sub", item)
+                                    }
+                                    className="flex items-center gap-2 w-full px-4 py-2 text-sm text-green-700 hover:bg-green-50 transition-colors"
+                                  >
+                                    <Plus className="w-4 h-4" />
+                                    Add Sub Category
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => handleMenuAction("edit", item)}
+                                  className="flex items-center gap-2 w-full px-4 py-2 text-sm text-green-700 hover:bg-green-50 transition-colors"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => handleMenuAction("view", item)}
+                                  className="flex items-center gap-2 w-full px-4 py-2 text-sm text-green-700 hover:bg-green-50 transition-colors"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                  View Details
+                                </button>
+                                <hr className="my-1 border-green-100" />
+                                <button
+                                  onClick={() => handleMenuAction("delete", item)}
+                                  className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
       {/* New Pagination Component */}
       {showPagination && totalPages > 1 && (
         <div className="flex flex-col items-center gap-4 bg-white rounded-lg shadow-sm border border-green-100 p-4">
           {/* Pagination Buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2">
             {/* Previous Button */}
             <button
               onClick={() => handlePageChange(currentPageValue - 1)}
               disabled={currentPageValue === 1}
-              className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
             >
               <ChevronLeft className="w-4 h-4" />
               {t("common.previous") || "Previous"}
             </button>
            
             {/* Page Numbers */}
-            <div className="flex gap-1">
+            <div className="flex gap-1 overflow-x-auto">
               {generatePageNumbers().map((pageNum, index) => (
                 <button
                   key={index}
                   onClick={() => typeof pageNum === 'number' ? handlePageChange(pageNum) : undefined}
                   disabled={pageNum === '...'}
-                  className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors flex-shrink-0 ${
                     pageNum === currentPageValue
                       ? 'bg-emerald-500 text-white'
                       : pageNum === '...'
@@ -736,7 +756,7 @@ function DynamicTable<T extends { [key: string]: unknown; id?: string | number }
             <button
               onClick={() => handlePageChange(currentPageValue + 1)}
               disabled={currentPageValue === totalPages || (paginationInfo && !paginationInfo?.hasNextPage)}
-              className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
             >
               {t("common.next") || "Next"}
               <ChevronRight className="w-4 h-4" />

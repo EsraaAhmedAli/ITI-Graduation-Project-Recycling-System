@@ -3,6 +3,7 @@ import { useState } from "react";
 import { toast } from "react-hot-toast";
 import api from "@/lib/axios";
 import { CartItem } from "@/models/cart";
+import { useLanguage } from "@/context/LanguageContext";
 // Save debug info that persists through redirects
 const saveDebugInfo = (info: any) => {
   try {
@@ -94,7 +95,7 @@ export const useCreateOrder = ({
   setCreatedOrderId = () => {}, // fallback no-op
 }: UseCreateOrderParams): UseCreateOrderReturn => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
-
+  const {t} = useLanguage()
   const createOrder = async (
     selectedAddress: Address | null,
     cart: CartItem[],
@@ -187,7 +188,7 @@ export const useCreateOrder = ({
       setCurrentStep(3);
       saveDebugInfo({ action: "STEP_SET_TO_3" });
 
-      toast.success("Order created successfully!");
+      toast.success(t('order.createdSucc'));
 
       return {
         success: true,
