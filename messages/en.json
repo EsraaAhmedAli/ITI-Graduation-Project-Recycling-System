@@ -46,6 +46,53 @@
       "error_message": "Something went wrong."
     }
   },
+  "tracking": {
+    "orderConfirmed": "Order Confirmed",
+    "orderConfirmedDesc": "Your pickup request has been confirmed",
+    "driverAssigned": "Driver Assigned",
+    "driverAssignedDesc": "Driver has been assigned to your pickup",
+    "itemsCollected": "Items Collected",
+    "itemsCollectedDesc": "All items have been collected",
+    "complete": "Complete",
+    "completeDesc": "Pickup completed and payment processed",
+    "pickupProgress": "Pickup Progress",
+    "orderInTransit": "Order in Transit",
+    "orderNumber": "Order #",
+    "inProgress": "In Progress",
+    "completedSuccessfully": "🎉 Pickup Completed Successfully!",
+    "completedMessage": "Your items have been collected and your rewards have been processed.",
+    "rateExperience": "Rate Experience",
+    "editReview": "Edit Review",
+    "pickupAddress": "Pickup Address",
+    "deliveryHeroToday": "Delivery hero for today",
+    "name": "Name",
+    "phone": "Phone",
+    "floor": "Floor",
+    "apartment": "Apartment",
+    "building": "Building",
+    "landmark": "Landmark",
+    "itemsCollectedTitle": "Items Collected",
+    "itemsToPickup": "Items to Pickup",
+    "quantity": "Quantity",
+    "points": "points",
+    "statusMessages": {
+      "confirmed": "Your pickup request has been confirmed. We're finding a driver for you.",
+      "assigntocourier": "A driver has been assigned to your pickup. They will be on their way soon.",
+      "collected": "Your items have been collected! They're now being processed for rewards.",
+      "completed": "🎉 Pickup completed successfully! Your rewards have been added to your account. Thank you for choosing our service!",
+      "default": "Order is being processed"
+    },
+    "loading": "Loading tracking information...",
+    "invalidOrderId": "Invalid order ID",
+    "orderNotFound": "Order not found",
+    "driverMovementUpdate": "Driver Movement Update - Warning",
+    "of": "of",
+    "safetyReportSubmitted": "Safety report submitted successfully!",
+    "safetyReportFailed": "Failed to submit safety report",
+    "emergencyContacted": "Emergency services contacted!",
+    "emergencyFailed": "Failed to contact emergency services",
+    "unknownCourier": "Unknown Courier"
+  },
   "search": {
     "title": "Search Items",
     "placeholder": "What are you looking for?",
@@ -71,7 +118,7 @@
     "language": "Language",
     "darkMode": "Dark Mode",
     "lightMode": "Light Mode",
-    "systemMode":"System Mode",
+    "systemMode": "System Mode",
 
     "home": "Home",
     "marketplace": "Marketplace",
@@ -1428,5 +1475,71 @@
     "total": "Total",
     "processing": "Processing...",
     "confirmOrder": "Confirm Order"
+  },
+
+  "addSubCategoryTo": "Add Sub-Category to",
+  "fillDetailsToAddSubCategory": "Fill in the details below to add a new sub-category",
+  "subCategoryNameEnglish": "Sub-Category Name (English)",
+  "subCategoryNameArabic": "Sub-Category Name (Arabic)",
+  "enterSubCategoryNameEnglish": "Enter sub-category name in English",
+  "enterSubCategoryNameArabic": "Enter sub-category name in Arabic",
+  "enterPoints": "Enter points",
+  "price": "Price",
+  "autoCalculatedPrice": "Auto-calculated price",
+  "quantity": "Quantity",
+  "enterQuantity": "Enter quantity",
+  "measurementUnit": "Measurement unit",
+  "selectUnit": "Select unit",
+  "kilogramKg": "Kilogram",
+  "piece": "Piece",
+  "subCategoryImage": "Sub-Category Image",
+  "uploadFile": "Upload file",
+  "orDragAndDrop": "Or drag and drop",
+  "imageFormatLimit": "PNG, JPG, GIF up to 5 MB",
+  "selected": "Selected",
+  "remove": "Remove",
+  "preview": "Preview",
+  "cancel": "Cancel",
+  "addSubCategory": "Add Sub-Category",
+  "processing": "Processing",
+  "invalidMeasurementUnit": "Invalid measurement unit",
+  "subCategoryAddedSuccessfully": "Sub-category added successfully!",
+  "somethingWentWrong": "Something went wrong!",
+  "navigation": {
+    "pages": "Pages",
+    "of": "of"
+  },
+  "d": {
+    "refresh": "Refresh",
+    "refreshing": "Refreshing...",
+    "deliveryDashboard": "Delivery Dashboard",
+    "noAssignedOrders": "No Assigned Orders",
+    "noAssignedOrdersDesc": "Once orders are assigned to you, they will appear here."
+  },
+  "editProfile": {
+    "title": "Edit Profile",
+    "avatarAlt": "Avatar Preview",
+    "form": {
+      "fullName": "Full Name",
+      "phoneNumber": "Phone Number",
+      "phonePlaceholder": "10XXXXXXXX"
+    },
+    "validation": {
+      "nameRequired": "Name is required",
+      "nameMaxLength": "Name cannot exceed 20 characters",
+      "phoneRequired": "Phone number is required",
+      "phoneInvalid": "Enter valid Egyptian number (010/011/012/015)",
+      "imageFormat": "Only JPG, PNG, and WebP files are allowed.",
+      "imageSize": "Image must be smaller than 2MB."
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving..."
+    },
+    "messages": {
+      "updateSuccess": "Profile updated successfully",
+      "updateError": "Failed to update profile"
+    }
   }
 }

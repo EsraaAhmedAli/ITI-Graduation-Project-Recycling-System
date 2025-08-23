@@ -8,9 +8,11 @@ import { Pencil } from "lucide-react";
 import { Avatar } from "flowbite-react";
 import { toast } from "react-toastify";
 import Image from "next/image";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function EditProfilePage() {
   const { user, setUser } = useContext(UserAuthContext) ?? {};
+  const { t } = useLanguage(); 
   const router = useRouter();
 
   const [name, setName] = useState(user?.name || "");
@@ -57,9 +59,9 @@ export default function EditProfilePage() {
   useEffect(() => {
     // Name validation
     if (!name.trim()) {
-      setNameError("Name is required");
+      setNameError(t("editProfile.validation.nameRequired"));
     } else if (name.trim().length > 20) {
-      setNameError("Name cannot exceed 20 characters");
+      setNameError(t("editProfile.validation.nameMaxLength"));
     } else {
       setNameError("");
     }
@@ -67,13 +69,13 @@ export default function EditProfilePage() {
     // Phone validation
     const phoneRegex = /^(10|11|12|15)[0-9]{8}$/;
     if (!phoneNumber.trim()) {
-      setPhoneNumberError("Phone number is required");
+      setPhoneNumberError(t("editProfile.validation.phoneRequired"));
     } else if (!phoneRegex.test(phoneNumber)) {
-      setPhoneNumberError("Enter valid Egyptian number (010/011/012/015)");
+      setPhoneNumberError(t("editProfile.validation.phoneInvalid"));
     } else {
       setPhoneNumberError("");
     }
-  }, [name, phoneNumber]);
+  }, [name, phoneNumber, t]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -83,12 +85,12 @@ export default function EditProfilePage() {
     const maxSize = 2 * 1024 * 1024; // 2MB
 
     if (!validTypes.includes(file.type)) {
-      setImageError("Only JPG, PNG, and WebP files are allowed.");
+      setImageError(t("editProfile.validation.imageFormat"));
       return;
     }
 
     if (file.size > maxSize) {
-      setImageError("Image must be smaller than 2MB.");
+      setImageError(t("editProfile.validation.imageSize"));
       return;
     }
 
@@ -117,10 +119,10 @@ export default function EditProfilePage() {
         router.push("/profile");
       }
 
-      toast.success("Profile updated successfully");
+      toast.success(t("editProfile.messages.updateSuccess"));
     } catch (err) {
       console.error("Error updating profile:", err?.response);
-      toast.error(err.response?.data?.message || "Failed to update profile");
+      toast.error(err.response?.data?.message || t("editProfile.messages.updateError"));
     } finally {
       setIsSaving(false);
     }
@@ -130,7 +132,7 @@ export default function EditProfilePage() {
     <div className="min-h-screen py-10 px-4 flex items-center justify-center" style={{ background: "var(--color-green-60)" }}>
       <div className="max-w-md w-full bg-white p-6 rounded-2xl shadow-md space-y-6">
         <h2 className="text-xl font-semibold text-center text-green-800">
-          Edit Profile
+          {t("editProfile.title")}
         </h2>
 
         {/* Avatar and edit icon */}
@@ -142,7 +144,7 @@ export default function EditProfilePage() {
                 priority
                 sizes="(max-width: 768px) 150px, (max-width: 1024px) 200px, 250px"
                 src={previewUrl}
-                alt="Avatar Preview"
+                alt={t("editProfile.avatarAlt")}
                 className="w-full h-full rounded-full object-cover border-2 border-gray-300"
               />
             ) : (
@@ -175,7 +177,7 @@ export default function EditProfilePage() {
         <div className="space-y-3">
           <div>
             <label className="text-sm font-medium text-gray-700 block mb-1">
-              Full Name
+              {t("editProfile.form.fullName")}
             </label>
             <input
               type="text"
@@ -193,7 +195,7 @@ export default function EditProfilePage() {
 
           <div>
             <label className="text-sm font-medium text-gray-700 block mb-1">
-              Phone Number
+              {t("editProfile.form.phoneNumber")}
             </label>
             <div className="flex rounded-lg border border-gray-300 overflow-hidden">
               <span className="bg-gray-100 px-3 py-2 text-gray-600 text-sm flex items-center">
@@ -209,7 +211,7 @@ export default function EditProfilePage() {
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 maxLength={10}
-                placeholder="10XXXXXXXX"
+                placeholder={t("editProfile.form.phonePlaceholder")}
               />
             </div>
             {phoneNumberError && (
@@ -228,7 +230,7 @@ export default function EditProfilePage() {
             }
             className="w-1/2 py-3 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 cursor-pointer"
           >
-            Cancel
+            {t("editProfile.buttons.cancel")}
           </button>
 
           <button
@@ -252,10 +254,10 @@ export default function EditProfilePage() {
                   <path d="M100 50.5908C100 78.2051..." fill="currentColor" />
                   <path d="M93.9676 39.0409C96.393 38.4038..." fill="#1C64F2" />
                 </svg>
-                Saving...
+                {t("editProfile.buttons.saving")}
               </>
             ) : (
-              "Save"
+              t("editProfile.buttons.save")
             )}
           </button>
         </div>

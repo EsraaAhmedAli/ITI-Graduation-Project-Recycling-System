@@ -17,9 +17,9 @@ import api from "../../../lib/axios";
 import { Modal, ModalBody, ModalHeader } from "flowbite-react";
 
 import { useLanguage } from "@/context/LanguageContext";
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useValueDebounce } from "@/hooks/useValueDebounce";
-import { Loader } from '@/components/common'
+import { Loader } from "@/components/common";
 type UserRole = "customer" | "buyer";
 const STATUS = {
   PENDING: "pending",
@@ -56,13 +56,13 @@ const fetchOrders = async (
   page: number,
   limit: number,
   userRole?: UserRole,
-  locale?:string,
+  locale?: string,
   filters?: Record<string, any>,
   search?: string // Add search parameter
 ) => {
   const params: any = { page, limit };
   if (userRole) params.userRole = userRole;
-  if(locale) params.lang = locale
+  if (locale) params.lang = locale;
   if (filters?.status?.length) params.status = filters.status.join(",");
   if (filters?.date?.[0]) params.date = filters.date[0];
   if (search && search.trim()) params.search = search.trim(); // Add search to params
@@ -96,14 +96,13 @@ export default function Page() {
   ]);
 
   const [isProofModalOpen, setIsProofModalOpen] = useState(false);
-  
-  
+
   const [selectedCompletedOrder, setSelectedCompletedOrder] =
     useState<any>(null);
   const [orderStatus, setOrderStatus] = useState(null);
-const searchParams = useSearchParams();
-const router = useRouter();
-const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const getFilteredFilters = () => {
     return filters.map((filter) => {
       if (filter.name === "status" && activeTab === "buyer") {
@@ -118,47 +117,49 @@ const pathname = usePathname();
     });
   };
   const [activeTab, setActiveTab] = useState<UserRole>(
-  (searchParams.get('tab') as UserRole) || 'customer'
-);
-const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
-    const debouncedSearchTerm = useValueDebounce(searchTerm, 500); // 500ms delay
+    (searchParams.get("tab") as UserRole) || "customer"
+  );
+  const [searchTerm, setSearchTerm] = useState(
+    searchParams.get("search") || ""
+  );
+  const debouncedSearchTerm = useValueDebounce(searchTerm, 500); // 500ms delay
 
+  const [currentPage, setCurrentPage] = useState(
+    parseInt(searchParams.get("page") || "1")
+  );
+  const [itemsPerPage, setItemsPerPage] = useState(
+    parseInt(searchParams.get("limit") || "5")
+  );
 
-const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page') || '1'));
-const [itemsPerPage, setItemsPerPage] = useState(parseInt(searchParams.get('limit') || '5'));
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    updateSearchParams({ page: page.toString() });
+  };
 
-const handlePageChange = (page: number) => {
-  setCurrentPage(page);
-  updateSearchParams({ page: page.toString() });
-};
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1);
+    updateSearchParams({
+      limit: newItemsPerPage.toString(),
+      page: "1",
+    });
+  };
 
-const handleItemsPerPageChange = (newItemsPerPage: number) => {
-  setItemsPerPage(newItemsPerPage);
-  setCurrentPage(1);
-  updateSearchParams({ 
-    limit: newItemsPerPage.toString(),
-    page: '1'
-  });
-};
+  const updateSearchParams = (updates: Record<string, string | null>) => {
+    const current = new URLSearchParams(Array.from(searchParams.entries()));
 
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === null || value === "") {
+        current.delete(key);
+      } else {
+        current.set(key, value);
+      }
+    });
 
-
-const updateSearchParams = (updates: Record<string, string | null>) => {
-  const current = new URLSearchParams(Array.from(searchParams.entries()));
-  
-  Object.entries(updates).forEach(([key, value]) => {
-    if (value === null || value === '') {
-      current.delete(key);
-    } else {
-      current.set(key, value);
-    }
-  });
-
-  const search = current.toString();
-  const query = search ? `?${search}` : '';
-  router.push(`${pathname}${query}`);
-};
-
+    const search = current.toString();
+    const query = search ? `?${search}` : "";
+    router.push(`${pathname}${query}`);
+  };
 
   const handleOpenCompletedDetails = (order: any) => {
     setSelectedCompletedOrder({
@@ -265,34 +266,32 @@ const updateSearchParams = (updates: Record<string, string | null>) => {
 
     return { status, date };
   }, [filters, activeTab]);
-const { locale } = useLanguage();
+  const { locale } = useLanguage();
 
+  // Key changes in the fetchOrders function call and DynamicTable usage
 
-// Key changes in the fetchOrders function call and DynamicTable usage
-
-const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
-  queryKey: [
-    "adminOrders",
-    currentPage,
-    activeTab,
-    activeFilters,
-    locale,
-    debouncedSearchTerm,
-  ],
-  queryFn: () =>
-    fetchOrders(
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
+    queryKey: [
+      "adminOrders",
       currentPage,
-      itemsPerPage,
       activeTab,
-      locale, // Fixed parameter order
       activeFilters,
-      debouncedSearchTerm
-    ),
-  refetchOnMount: true,
-  refetchOnWindowFocus: true,
-  staleTime: 0,
-});
-  
+      locale,
+      debouncedSearchTerm,
+    ],
+    queryFn: () =>
+      fetchOrders(
+        currentPage,
+        itemsPerPage,
+        activeTab,
+        locale, // Fixed parameter order
+        activeFilters,
+        debouncedSearchTerm
+      ),
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0,
+  });
 
   const { user } = useUserAuth();
 
@@ -458,25 +457,24 @@ const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
     }
   }, [couriers, refetch]);
 
-
-const handleTabChange = (tab: UserRole) => {
-  setActiveTab(tab);
-  handlePageChange(1);
-  setSearchTerm('');
-  updateSearchParams({
-    tab,
-    page: '1',
-    search: null,
-  });
-};
-const handleSearchChange = (value: string) => {
-  setSearchTerm(value);
-  handlePageChange(1);
-  updateSearchParams({
-    search: value || null,
-    page: '1',
-  });
-};
+  const handleTabChange = (tab: UserRole) => {
+    setActiveTab(tab);
+    handlePageChange(1);
+    setSearchTerm("");
+    updateSearchParams({
+      tab,
+      page: "1",
+      search: null,
+    });
+  };
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    handlePageChange(1);
+    updateSearchParams({
+      search: value || null,
+      page: "1",
+    });
+  };
 
   const handleDeleteOrder = async (orderId: string) => {
     const result = await Swal.fire({
@@ -565,6 +563,39 @@ const handleSearchChange = (value: string) => {
       }
     }
   };
+  const handleFiltersChange = (updatedFilters: Record<string, string[]>) => {
+    console.log("Filters changed:", updatedFilters);
+
+    // Update your filters state with the new active values
+    setFilters((prevFilters) =>
+      prevFilters.map((filter) => ({
+        ...filter,
+        active: updatedFilters[filter.name] || [],
+      }))
+    );
+
+    // Reset to first page when filters change
+    handlePageChange(1);
+
+    // Update URL params to reflect filter changes
+    const filterParams: Record<string, string | null> = { page: "1" };
+
+    // Add status filter to URL if it has values
+    if (updatedFilters.status?.length > 0) {
+      filterParams.status = updatedFilters.status.join(",");
+    } else {
+      filterParams.status = null;
+    }
+
+    // Add date filter to URL if it has a value
+    if (updatedFilters.date?.length > 0 && updatedFilters.date[0]) {
+      filterParams.date = updatedFilters.date[0];
+    } else {
+      filterParams.date = null;
+    }
+
+    updateSearchParams(filterParams);
+  };
 
   const handleMarkAsCompleted = async (orderId: string) => {
     const result = await Swal.fire({
@@ -587,7 +618,6 @@ const handleSearchChange = (value: string) => {
         toast.success("Order marked as completed successfully");
 
         refetch();
-    
       } catch (err) {
         console.error("Failed to mark order as completed:", err);
         toast.error("Failed to mark order as completed");
@@ -624,7 +654,6 @@ const handleSearchChange = (value: string) => {
     }
   };
 
-
   if (isError) {
     return (
       <div className="flex flex-col items-center justify-center min-h-96 bg-white rounded-lg shadow-sm border border-gray-200">
@@ -633,7 +662,8 @@ const handleSearchChange = (value: string) => {
             className="w-8 h-8 text-red-600"
             fill="none"
             stroke="currentColor"
-            viewBox="0 0 24 24">
+            viewBox="0 0 24 24"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -650,25 +680,23 @@ const handleSearchChange = (value: string) => {
         </p>
         <button
           onClick={() => refetch()}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+        >
           Try Again
         </button>
       </div>
     );
   }
 
-
-if (isLoading) {
-  return (
-   <Loader />
-  );
-}
+  if (isLoading) {
+    return <Loader />;
+  }
   const transformedData = orders.map((order: any) => ({
     orderId: order._id,
     onClickItemsId: () => {
       setOrderStatus(order.status);
       setSelectedOrderItems(order.items);
-      setSelectedUser(order.user)
+      setSelectedUser(order.user);
       setSelectedOrder(order);
       setIsItemsModalOpen(true);
     },
@@ -705,7 +733,8 @@ if (isLoading) {
         <div className="flex flex-col">
           <button
             onClick={row.onClickUser}
-            className="text-green-600 hover:underline font-medium text-left">
+            className="text-green-600 hover:underline font-medium text-left"
+          >
             {row.userName}
           </button>
 
@@ -721,7 +750,8 @@ if (isLoading) {
       render: (row: any) => (
         <button
           onClick={row.onClickItemsId}
-          className="text-green-600 hover:underline font-medium">
+          className="text-green-600 hover:underline font-medium"
+        >
           {row.orderId}
         </button>
       ),
@@ -749,7 +779,8 @@ if (isLoading) {
           return (
             <Button
               onClick={() => handleOpenCompletedDetails(order)}
-              className="px-5 py-2 text-xs font-semibold rounded-md bg-green-600 text-green-800 hover:bg-green-400 transition-colors">
+              className="px-5 py-2 text-xs font-semibold rounded-md bg-green-600 text-green-800 hover:bg-green-400 transition-colors"
+            >
               Completed
             </Button>
           );
@@ -760,7 +791,8 @@ if (isLoading) {
           return (
             <button
               onClick={() => handleShowCancelReason(order.statusHistory)}
-              className="px-5 py-2 text-xs font-semibold rounded-md bg-red-100 text-red-800 hover:bg-red-200 transition-colors">
+              className="px-5 py-2 text-xs font-semibold rounded-md bg-red-100 text-red-800 hover:bg-red-200 transition-colors"
+            >
               Cancelled
             </button>
           );
@@ -772,13 +804,15 @@ if (isLoading) {
             <div className="flex items-center gap-2">
               <Button
                 onClick={() => handleOpenCompletedDetails(order)}
-                className="px-5 py-2 text-xs font-semibold rounded-md bg-purple-500 text-purple-800 hover:bg-purple-200 transition-colors">
+                className="px-5 py-2 text-xs font-semibold rounded-md bg-purple-500 text-purple-800 hover:bg-purple-200 transition-colors"
+              >
                 see collection
               </Button>
               <button
                 onClick={() => handleMarkAsCompleted(order.orderId)}
                 className="px-5 py-2 text-xs font-semibold rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors"
-                title="Mark as completed">
+                title="Mark as completed"
+              >
                 click to complete
               </button>
             </div>
@@ -854,7 +888,8 @@ if (isLoading) {
             className={`px-2 py-1 rounded border ${getStatusColor(
               currentStatus
             )}`}
-            onClick={(e) => e.stopPropagation()}>
+            onClick={(e) => e.stopPropagation()}
+          >
             <option value={currentStatus}>
               {currentStatus === "assigntocourier"
                 ? "Assigned to Courier"
@@ -880,14 +915,19 @@ if (isLoading) {
       {/* Tab Navigation */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8 px-6" aria-label="Tabs" style={{ background: "var(--background)" }}>
+          <nav
+            className="-mb-px flex space-x-8 px-6"
+            aria-label="Tabs"
+            style={{ background: "var(--background)" }}
+          >
             <button
               onClick={() => handleTabChange("customer")}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === "customer"
                   ? "border-green-500 text-green-600"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}>
+              }`}
+            >
               Customer Orders
               {activeTab === "customer" && (
                 <span className="ml-2 bg-green-100 text-green-600 py-0.5 px-2.5 rounded-full text-xs font-medium">
@@ -901,7 +941,8 @@ if (isLoading) {
                 activeTab === "buyer"
                   ? "border-green-500 text-green-600"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}>
+              }`}
+            >
               Buyer Orders
               {activeTab === "buyer" && (
                 <span className="ml-2 bg-green-100 text-green-600 py-0.5 px-2.5 rounded-full text-xs font-medium">
@@ -926,45 +967,45 @@ if (isLoading) {
           </p>
           <button
             onClick={() => refetch()}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+          >
             Refresh
           </button>
         </div>
       ) : (
         <>
-      
-
-   <DynamicTable
-  data={transformedData}
-  columns={columns}
-  title={`${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Orders`}
-  itemsPerPage={itemsPerPage}
-  showAddButton={false}
-  
-  showFilter
-  showSearch={true}
-  searchTerm={searchTerm}
-  onSearchChange={handleSearchChange}
-  filtersConfig={getFilteredFilters()}
-  externalFilters={activeFilters}
-  onExternalFiltersChange={(updated) => {
-    // your existing filter logic
-  }}
-  activeFiltersCount={filters.reduce((acc, f) => acc + (f.active?.length || 0), 0)}
-  onDelete={(id: string) => handleDeleteOrder(id)}
-  paginationInfo={{
-    currentPage: data?.currentPage || currentPage,
-    totalPages: data?.totalPages || 1,
-    totalItems: data?.totalOrders || 0,
-    itemsPerPage: itemsPerPage,
-    hasNextPage: currentPage < (data?.totalPages || 1),
-    hasPrevPage: currentPage > 1,
-  }}
-  onPageChange={handlePageChange}
-  onItemsPerPageChange={handleItemsPerPageChange}
-  disableClientSideSearch={true}
-/>
-
+          <DynamicTable
+            data={transformedData}
+            columns={columns}
+            title={`${
+              activeTab.charAt(0).toUpperCase() + activeTab.slice(1)
+            } Orders`}
+            itemsPerPage={itemsPerPage}
+            showAddButton={false}
+            showFilter
+            showSearch={true}
+            searchTerm={searchTerm}
+            onSearchChange={handleSearchChange}
+            filtersConfig={getFilteredFilters()}
+            externalFilters={activeFilters}
+            onExternalFiltersChange={handleFiltersChange} // Add the actual handler
+            activeFiltersCount={filters.reduce(
+              (acc, f) => acc + (f.active?.length || 0),
+              0
+            )}
+            onDelete={(id: string) => handleDeleteOrder(id)}
+            paginationInfo={{
+              currentPage: data?.currentPage || currentPage,
+              totalPages: data?.totalPages || 1,
+              totalItems: data?.totalOrders || 0,
+              itemsPerPage: itemsPerPage,
+              hasNextPage: currentPage < (data?.totalPages || 1),
+              hasPrevPage: currentPage > 1,
+            }}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={handleItemsPerPageChange}
+            disableClientSideSearch={true}
+          />
         </>
       )}
 
@@ -980,7 +1021,6 @@ if (isLoading) {
         show={isItemsModalOpen}
         orderStatus={orderStatus}
         userRole={selectedUser}
-
         onclose={() => setIsItemsModalOpen(false)}
       />
       <CourierSelectionModal
@@ -1008,7 +1048,8 @@ if (isLoading) {
         show={showCancelReasonModal}
         size="md"
         popup={true}
-        onClose={() => setShowCancelReasonModal(false)}>
+        onClose={() => setShowCancelReasonModal(false)}
+      >
         <ModalHeader />
         <ModalBody>
           <div className="text-center">
@@ -1019,7 +1060,8 @@ if (isLoading) {
             <div className="mt-6">
               <button
                 onClick={() => setShowCancelReasonModal(false)}
-                className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+              >
                 Close
               </button>
             </div>

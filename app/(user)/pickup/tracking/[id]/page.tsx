@@ -22,33 +22,7 @@ import { useReviews } from "@/hooks/useReviews";
 import DeliveryReviewModal from "../../DeliveryReview";
 import PickupAddressCard from "@/components/pickupAdress";
 import { useLanguage } from "@/context/LanguageContext";
-
-const trackingSteps = [
-  {
-    id: "confirmed",
-    label: "Order Confirmed",
-    description: "Your pickup request has been confirmed",
-    icon: CheckCircle,
-  },
-  {
-    id: "assigntocourier",
-    label: "Driver Assigned",
-    description: "Driver has been assigned to your pickup",
-    icon: User,
-  },
-  {
-    id: "collected",
-    label: "Items Collected",
-    description: "All items have been collected",
-    icon: CheckCircle,
-  },
-  {
-    id: "completed",
-    label: "Complete",
-    description: "Pickup completed and payment processed",
-    icon: CheckCircle,
-  },
-];
+import Image from "next/image";
 
 interface TrackingStepProps {
   orderId?: string; // Optional - can come from props
@@ -81,7 +55,7 @@ export default function TrackingStep({
 
   const { user } = useUserAuth();
   const queryClient = useQueryClient();
-  const { locale } = useLanguage();
+  const { t, convertNumber, locale } = useLanguage();
   // Get orderId from route parameters (for standalone page) or props (for embedded use)
   const params = useParams();
   const routeOrderId = params?.id as string;
@@ -104,6 +78,32 @@ export default function TrackingStep({
     ? userReviews.find((review) => review.orderId === orderId)
     : null;
 
+  const trackingSteps = [
+    {
+      id: "confirmed",
+      label: t("tracking.orderConfirmed"),
+      description: t("tracking.orderConfirmedDesc"),
+      icon: CheckCircle,
+    },
+    {
+      id: "assigntocourier",
+      label: t("tracking.driverAssigned"),
+      description: t("tracking.driverAssignedDesc"),
+      icon: User,
+    },
+    {
+      id: "collected",
+      label: t("tracking.itemsCollected"),
+      description: t("tracking.itemsCollectedDesc"),
+      icon: CheckCircle,
+    },
+    {
+      id: "completed",
+      label: t("tracking.complete"),
+      description: t("tracking.completeDesc"),
+      icon: CheckCircle,
+    },
+  ];
   // Force refetch reviews when component mounts in embedded mode
   useEffect(() => {
     if (embedded && orderId) {
@@ -156,12 +156,12 @@ export default function TrackingStep({
     mutationFn: (report: SafetyReportData) =>
       api.post(`/orders/${orderId}/safety-report`, report),
     onSuccess: () => {
-      toast.success("Safety report submitted successfully!");
+      toast.success(t("tracking.safetyReportSubmitted"));
       setShowSafetyDialog(false);
     },
     onError: (error) => {
       console.error("Failed to submit safety report:", error);
-      toast.error("Failed to submit safety report");
+      toast.error(t("tracking.safetyReportFailed"));
     },
   });
 
@@ -189,7 +189,9 @@ export default function TrackingStep({
 
         if (newWarningCount <= 3) {
           toast.info(
-            `Driver Movement Update - Warning ${newWarningCount} of 3`
+            `${t("tracking.driverMovementUpdate")} ${convertNumber(
+              newWarningCount
+            )} ${t("tracking.of")} ${convertNumber(3)}`
           );
         }
       }
@@ -342,7 +344,7 @@ export default function TrackingStep({
   if (!orderId) {
     return (
       <div className="text-center p-8">
-        <p className="text-lg text-red-600">Invalid order ID</p>
+        <p className="text-lg text-red-600">{t("tracking.invalidOrderId")}</p>
       </div>
     );
   }
@@ -351,7 +353,7 @@ export default function TrackingStep({
     return (
       <div className="text-center p-8">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-        <p className="text-lg text-gray-600">Loading tracking information...</p>
+        <p className="text-lg text-gray-600">{t("tracking.loading")}</p>
       </div>
     );
   }
@@ -359,7 +361,7 @@ export default function TrackingStep({
   if (!order) {
     return (
       <div className="text-center p-8">
-        <p className="text-lg text-red-600">Order not found</p>
+        <p className="text-lg text-red-600">{t("tracking.orderNotFound")}</p>
       </div>
     );
   }
@@ -369,7 +371,7 @@ export default function TrackingStep({
       {/* Progress Indicator */}
       <div className="bg-white border border-gray-200 rounded-xl p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-6">
-          Pickup Progress
+          {t("tracking.pickupProgress")}
         </h2>
         <div className="relative">
           <div className="absolute top-6 left-0 right-0 h-1 bg-gray-200 rounded-full">
@@ -453,10 +455,12 @@ export default function TrackingStep({
           )}
         </div>
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          {trackingSteps[currentStepIndex]?.label || "Order in Transit"}
+          {trackingSteps[currentStepIndex]?.label ||
+            t("tracking.orderInTransit")}
         </h1>
         <p className="text-gray-600 mb-4">
-          Order #{orderId?.slice(-8) || orderId?.slice(-8)}
+          {t("tracking.orderNumber")}
+          {orderId?.slice(-8)}
         </p>
         <div
           className={`inline-flex items-center px-4 py-2 rounded-full text-lg font-semibold ${
@@ -465,7 +469,8 @@ export default function TrackingStep({
               : "bg-blue-100 text-blue-800"
           }`}
         >
-          {trackingSteps[currentStepIndex]?.description || "In Progress"}
+          {trackingSteps[currentStepIndex]?.description ||
+            t("tracking.inProgress")}
         </div>
         <div
           className="absolute transition-all duration-1000"
@@ -478,12 +483,9 @@ export default function TrackingStep({
         <div className="bg-green-50 border border-green-200 rounded-xl p-6">
           <div className="text-center mb-4">
             <h3 className="text-lg font-semibold text-green-800 mb-2">
-              🎉 Pickup Completed Successfully!
+              {t("tracking.completedSuccessfully")}
             </h3>
-            <p className="text-green-700">
-              Your items have been collected and your rewards have been
-              processed.
-            </p>
+            <p className="text-green-700">{t("tracking.completedMessage")}</p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -492,13 +494,17 @@ export default function TrackingStep({
               className="flex items-center justify-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors duration-200"
             >
               <Star className="w-4 h-4" />
-              {existingReview ? "Edit Review" : "Rate Experience"}
+              {existingReview
+                ? t("tracking.editReview")
+                : t("tracking.rateExperience")}
             </button>
 
             {existingReview && (
               <div className="flex items-center justify-center gap-2 px-4 py-2 bg-green-100 text-green-800 rounded-lg">
                 <Star className="w-4 h-4 fill-current" />
-                <span className="font-medium">{existingReview.stars}/5</span>
+                <span className="font-medium">
+                  {convertNumber(existingReview.stars)}/5
+                </span>
                 <MessageCircle className="w-4 h-4" />
               </div>
             )}
@@ -549,7 +555,9 @@ export default function TrackingStep({
               <CheckCircle className="w-5 h-5 text-purple-600" />
             </div>
             <h2 className="text-xl font-semibold text-gray-900">
-              Items {order.status === "completed" ? "Collected" : "to Pickup"}
+              {order.status === "completed"
+                ? t("tracking.itemsCollectedTitle")
+                : t("tracking.itemsToPickup")}
             </h2>
           </div>
           <div className="space-y-3">
@@ -562,7 +570,9 @@ export default function TrackingStep({
               >
                 <div className="flex items-center gap-3">
                   {item.image && (
-                    <img
+                    <Image
+                      width={40}
+                      height={40}
                       src={item.image}
                       alt={getDisplayName(item.name, locale)}
                       className="w-10 h-10 rounded-lg object-cover"
@@ -573,22 +583,21 @@ export default function TrackingStep({
                       {getDisplayName(item.name, locale)}
                     </p>
                     <p className="text-sm text-gray-500">
-                      Quantity: {item.quantity}
+                      {t("tracking.quantity")}: {convertNumber(item.quantity)}
                     </p>
                   </div>
                 </div>
+
                 <div className="text-right">
                   <p className="font-medium text-gray-900">
-                    {item.price * item.quantity} EGP
+                    {convertNumber(item.price * item.quantity)}{" "}
+                    <span className="text-sm font-normal text-gray-600">
+                      {locale === "ar" ? "جنيه" : "EGP"}
+                    </span>
                   </p>
-                  <p
-                    className={`text-sm ${
-                      order.status === "completed"
-                        ? "text-green-600"
-                        : "text-green-600"
-                    }`}
-                  >
-                    {item.points * item.quantity} points
+                  <p className="text-sm font-medium text-green-600">
+                    {convertNumber(item.points * item.quantity)}{" "}
+                    {t("tracking.points")}
                   </p>
                 </div>
               </div>
@@ -612,20 +621,12 @@ export default function TrackingStep({
         >
           {(() => {
             const currentStep = trackingSteps[currentStepIndex];
-            if (!currentStep) return "Order is being processed";
+            if (!currentStep) return t("tracking.statusMessages.default");
 
-            switch (currentStep.id) {
-              case "confirmed":
-                return "Your pickup request has been confirmed. We're finding a driver for you.";
-              case "assigntocourier":
-                return "A driver has been assigned to your pickup. They will be on their way soon.";
-              case "collected":
-                return "Your items have been collected! They're now being processed for rewards.";
-              case "completed":
-                return "🎉 Pickup completed successfully! Your rewards have been added to your account. Thank you for choosing our service!";
-              default:
-                return currentStep.description;
-            }
+            return (
+              t(`tracking.statusMessages.${currentStep.id}`) ||
+              currentStep.description
+            );
           })()}
         </p>
       </div>

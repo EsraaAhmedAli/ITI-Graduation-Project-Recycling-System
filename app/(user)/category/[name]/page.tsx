@@ -125,20 +125,20 @@ const ItemCard = memo(
 
     return (
       <article
-        className="group rounded-2xl shadow-sm border overflow-hidden transition-all duration-300 hover:-translate-y-1"
+        className="group rounded-xl sm:rounded-2xl shadow-sm border overflow-hidden transition-all duration-300 hover:-translate-y-1"
         style={{
           borderColor: "var(--border-color)",
           backgroundColor: "var(--color-card)",
           boxShadow:
-            "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
+            "0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 1px 1px 0 rgba(0, 0, 0, 0.04)",
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.boxShadow =
-            "0 10px 15px -3px rgba(16, 185, 129, 0.1), 0 4px 6px -2px rgba(16, 185, 129, 0.05)";
+            "0 6px 10px -3px rgba(16, 185, 129, 0.1), 0 2px 4px -1px rgba(16, 185, 129, 0.05)";
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.boxShadow =
-            "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)";
+            "0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 1px 1px 0 rgba(0, 0, 0, 0.04)";
         }}
         role="article"
         aria-labelledby={`item-${item._id}`}
@@ -155,10 +155,10 @@ const ItemCard = memo(
             src={item.image}
             alt={computedValues.itemName}
             fill
-            className="object-contain group-hover:scale-105 transition-transform duration-300 p-4"
+            className="object-contain group-hover:scale-105 transition-transform duration-300 p-2 sm:p-4"
             style={{ backgroundColor: "var(--color-image)" }}
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-            priority={index < 8} // Increased from 4 to 8 for better LCP
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
+            priority={index < 8}
             quality={index < 8 ? 85 : 75}
             placeholder="blur"
             blurDataURL={blurDataURL}
@@ -175,7 +175,7 @@ const ItemCard = memo(
             }}
           />
           <div
-            className="absolute top-3 right-3 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg"
+            className="absolute top-2 right-2 text-white px-2 py-0.5 rounded-full text-xs font-bold shadow-md"
             style={{
               background:
                 "linear-gradient(to right, var(--color-primary), var(--color-secondary))",
@@ -186,19 +186,19 @@ const ItemCard = memo(
         </div>
 
         {/* Content with fixed height to prevent CLS */}
-        <div className="p-4 h-32 flex flex-col justify-between">
+        <div className="p-2 sm:p-3 h-28 sm:h-32 flex flex-col justify-between">
           <div>
             <h3
               id={`item-${item._id}`}
-              className="font-bold mb-2 text-sm uppercase tracking-wide leading-tight line-clamp-2"
+              className="font-bold mb-1 text-xs sm:text-sm uppercase tracking-wide leading-tight line-clamp-2"
               style={{ color: "var(--text-gray-900)" }}
             >
               {computedValues.itemName}
             </h3>
 
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
               <span
-                className="text-xs font-medium px-2 py-0.5 rounded-lg"
+                className="text-xs font-medium px-1.5 py-0.5 rounded-md"
                 style={{
                   color: "var(--text-gray-600)",
                   backgroundColor: "var(--color-base-100)",
@@ -208,13 +208,13 @@ const ItemCard = memo(
               </span>
               <div className="text-end">
                 <span
-                  className="text-base font-bold"
+                  className="text-sm sm:text-base font-bold"
                   style={{ color: "var(--text-gray-900)" }}
                 >
                   {computedValues.priceDisplay.value}
                 </span>
                 <span
-                  className="text-xs ml-1"
+                  className="text-xs ml-0.5"
                   style={{ color: "var(--text-gray-600)" }}
                 >
                   {computedValues.priceDisplay.currency}
@@ -226,7 +226,7 @@ const ItemCard = memo(
           <button
             onClick={handleClick}
             disabled={isLoading}
-            className="w-full text-white py-2 px-3 rounded-xl font-semibold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm hover:shadow-md group/button h-10"
+            className="w-full text-white py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 sm:gap-2 shadow-sm hover:shadow-md group/button h-8 sm:h-10"
             style={{
               background: isLoading
                 ? "var(--text-gray-400)"
@@ -249,14 +249,14 @@ const ItemCard = memo(
           >
             {isLoading ? (
               <div
-                className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
+                className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
                 role="status"
                 aria-label="Loading"
               />
             ) : (
               <>
-                <Plus className="w-4 h-4 group-hover/button:rotate-90 transition-transform duration-200" />
-                <span className="text-sm">
+                <Plus className="w-3 h-3 sm:w-4 sm:h-4 group-hover/button:rotate-90 transition-transform duration-200" />
+                <span className="text-xs sm:text-sm">
                   {t("itemsModal.addToCollection")}
                 </span>
               </>
@@ -268,7 +268,6 @@ const ItemCard = memo(
   }
 );
 ItemCard.displayName = "ItemCard";
-
 // Memoized Pagination with better performance and theme variables
 const PaginationControls = memo(
   ({
@@ -675,7 +674,7 @@ export default function UserCategoryPage() {
           {!isLoading && data.length > 0 && (
             <>
               <div
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8"
+                className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4"
                 role="grid"
                 aria-label="Product grid"
               >

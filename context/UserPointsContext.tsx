@@ -102,7 +102,7 @@ export function UserPointsProvider({
       const res = await api.get("/orders?status=completed&limit=1");
       return res.data.totalCount || 0;
     },
-    enabled: !!userId && isCustomer, // Only enabled for customers
+    enabled: !!userId, // Only enabled for customers
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 
@@ -149,7 +149,7 @@ export function UserPointsProvider({
   const value = {
     userPoints: isCustomer ? userPoints || null : null,
     pointsLoading: isCustomer ? pointsLoading : false,
-    totalCompletedOrders: isCustomer ? totalCompletedOrders : 0,
+    totalCompletedOrders: totalCompletedOrders,
     refreshUserPoints,
     updateUserPoints,
     clearUserPoints,

@@ -1,6 +1,13 @@
 import React from "react";
 import { X } from "lucide-react";
-import { Modal, ModalBody, ModalFooter, ModalHeader, Button } from "flowbite-react";
+import {
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  Button,
+} from "flowbite-react";
+import Image from "next/image";
 
 interface ProofOfDeliveryModalProps {
   show: boolean;
@@ -46,26 +53,32 @@ export default function ProofOfDeliveryModal({
   };
 
   // Determine if order is completed or just collected
-  const isCompleted = orderDetails.completedAt && orderDetails.statusHistory?.some(h => h.status === 'completed');
-  const isCollected = orderDetails.collectedAt && orderDetails.statusHistory?.some(h => h.status === 'collected');
+  const isCompleted =
+    orderDetails.completedAt &&
+    orderDetails.statusHistory?.some((h) => h.status === "completed");
+  const isCollected =
+    orderDetails.collectedAt &&
+    orderDetails.statusHistory?.some((h) => h.status === "collected");
 
   // Get the current status for display
   const getCurrentStatus = () => {
-    if (isCompleted) return 'completed';
-    if (isCollected) return 'collected';
-    return 'unknown';
+    if (isCompleted) return "completed";
+    if (isCollected) return "collected";
+    return "unknown";
   };
 
   const currentStatus = getCurrentStatus();
-  console.log(orderDetails , 'orddeer');
-  
+  console.log(orderDetails, "orddeer");
 
   return (
     <Modal show={show} onClose={onClose} dismissible size="2xl">
       <ModalHeader>
         <div className="flex items-center justify-between w-full">
           <h3 className="text-lg font-semibold text-gray-900">
-            {currentStatus === 'completed' ? 'Proof of Delivery' : 'Collection Proof'} - Order #{orderDetails.orderId.slice(-8)}
+            {currentStatus === "completed"
+              ? "Proof of Delivery"
+              : "Collection Proof"}{" "}
+            - Order #{orderDetails.orderId.slice(-8)}
           </h3>
         </div>
       </ModalHeader>
@@ -74,13 +87,21 @@ export default function ProofOfDeliveryModal({
         {/* Proof of Delivery Photo */}
         <div>
           <h4 className="text-sm font-medium text-gray-900 mb-3">
-            {currentStatus === 'completed' ? 'Proof of Delivery Photo' : 'Collection Proof Photo'}
+            {currentStatus === "completed"
+              ? "Proof of Delivery Photo"
+              : "Collection Proof Photo"}
           </h4>
           {orderDetails.deliveryProof?.photoUrl ? (
             <div className="border w-1/2 mx-auto border-gray-200 rounded-lg overflow-hidden">
-              <img
+              <Image
+                width={50}
+                height={50}
                 src={orderDetails.deliveryProof.photoUrl}
-                alt={currentStatus === 'completed' ? 'Proof of Delivery' : 'Collection Proof'}
+                alt={
+                  currentStatus === "completed"
+                    ? "Proof of Delivery"
+                    : "Collection Proof"
+                }
                 className="w-full h-64 object-cover"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
@@ -115,20 +136,28 @@ export default function ProofOfDeliveryModal({
                 </svg>
               </div>
               <p className="text-gray-500">
-                No {currentStatus === 'completed' ? 'proof of delivery' : 'collection proof'} photo available
+                No{" "}
+                {currentStatus === "completed"
+                  ? "proof of delivery"
+                  : "collection proof"}{" "}
+                photo available
               </p>
             </div>
           )}
         </div>
 
         {/* Delivery Details */}
-        <div className={`grid grid-cols-1 ${isCompleted ? 'md:grid-cols-2' : ''} gap-6`}>
+        <div
+          className={`grid grid-cols-1 ${
+            isCompleted ? "md:grid-cols-2" : ""
+          } gap-6`}
+        >
           {/* Collection Details - Always show */}
           <div className="space-y-4">
             <h4 className="text-sm font-medium text-gray-900 border-b pb-2">
               Collection Details
             </h4>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
                 Collected At
@@ -136,16 +165,14 @@ export default function ProofOfDeliveryModal({
               <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md">
                 {formatDate(orderDetails.collectedAt || "")}
               </p>
-            </div>{
-              console.log(orderDetails)
-              
-            }
+            </div>
 
-<div>
-  <h2>Collected By:</h2>
-  <p>courier name : {orderDetails.courier?.name || 'unknow delivery'}</p>
-</div>
-   
+            <div>
+              <h2>Collected By:</h2>
+              <p>
+                courier name : {orderDetails.courier?.name || "unknow delivery"}
+              </p>
+            </div>
 
             {orderDetails.deliveryProof?.uploadedAt && (
               <div>
@@ -165,7 +192,7 @@ export default function ProofOfDeliveryModal({
               <h4 className="text-sm font-medium text-gray-900 border-b pb-2">
                 Completion Details
               </h4>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-600 mb-1">
                   Completed At
@@ -181,12 +208,19 @@ export default function ProofOfDeliveryModal({
                 </label>
                 <div className="bg-gray-50 p-3 rounded-md">
                   <p className="text-sm font-medium text-gray-900">
-                    {orderDetails.statusHistory?.find(h => h.status === 'completed')?.updatedBy === 'admin' 
-                      ? 'System Admin' 
-                      : orderDetails.statusHistory?.find(h => h.status === 'completed')?.updatedBy || 'Unknown'}
+                    {orderDetails.statusHistory?.find(
+                      (h) => h.status === "completed"
+                    )?.updatedBy === "admin"
+                      ? "System Admin"
+                      : orderDetails.statusHistory?.find(
+                          (h) => h.status === "completed"
+                        )?.updatedBy || "Unknown"}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    Updated By: {orderDetails.statusHistory?.find(h => h.status === 'completed')?.updatedBy || "N/A"}
+                    Updated By:{" "}
+                    {orderDetails.statusHistory?.find(
+                      (h) => h.status === "completed"
+                    )?.updatedBy || "N/A"}
                   </p>
                 </div>
               </div>
