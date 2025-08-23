@@ -1,6 +1,6 @@
- "use client";
+"use client";
 
-import { useEffect, useState, useMemo, useCallback, memo,useTransition } from "react";
+import { useEffect, useState, useMemo, useCallback, memo, useTransition, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Search, Filter, Frown } from "lucide-react";
@@ -14,28 +14,45 @@ import { useItemSocket } from "@/hooks/useItemSocket";
 import LazyPagination from "@/components/common/lazyPagination";
 import dynamic from "next/dynamic";
 
-// Lazy load FloatingRecorderButton for voice processing
+// Lazy load non-critical components
 const FloatingRecorderButton = dynamic(
   () => import('@/components/Voice Processing/FloatingRecorderButton'),
-  { ssr: false }
+  { 
+    ssr: false,
+    loading: () => null // Don't show loading state for non-critical component
+  }
 );
+
+// Preconnect to critical origins
+const preconnectOrigins = () => {
+  if (typeof document === 'undefined') return;
+  
+  const origins = [
+    'https://res.cloudinary.com', // Cloudinary for images
+    // Add other critical domains your app uses
+  ];
+  
+  origins.forEach(origin => {
+    const link = document.createElement('link');
+    link.rel = 'preconnect';
+    link.href = origin;
+    link.crossOrigin = 'anonymous';
+    document.head.appendChild(link);
+  });
+};
+
 const normalizeArabicText = (text: string): string => {
   if (!text) return text;
   
   return text
-    // Normalize different forms of Alef
     .replace(/[آأإا]/g, 'ا')
-    // Normalize different forms of Hamza
     .replace(/[ؤئء]/g, 'ء')
-    // Normalize different forms of Yaa
     .replace(/[يى]/g, 'ي')
-    // Normalize different forms of Haa
     .replace(/[هة]/g, 'ه')
-    // Remove diacritics/tashkeel
     .replace(/[ًٌٍَُِّْٰ]/g, '')
-    // Normalize Taa Marbouta
     .replace(/ة/g, 'ه');
 };
+
 interface Item {
   _id: string;
   name: {
@@ -70,11 +87,14 @@ interface MarketplaceClientProps {
   initialData: ServerData;
 }
 
-// Preload critical images using requestIdleCallback
+// Preload critical images using requestIdleCallback with better priority handling
 const preloadCriticalImages = (items: Item[]) => {
   if (typeof window === 'undefined') return;
   
   const preloadImage = (src: string) => {
+    // Check if already preloaded
+    if (document.querySelector(`link[href="${src}"]`)) return;
+    
     const link = document.createElement('link');
     link.rel = 'preload';
     link.as = 'image';
@@ -82,22 +102,24 @@ const preloadCriticalImages = (items: Item[]) => {
     document.head.appendChild(link);
   };
 
-  // Use requestIdleCallback to avoid blocking main thread
+  // Use requestIdleCallback with timeout to ensure execution
   if ('requestIdleCallback' in window) {
     requestIdleCallback(() => {
-      items.slice(0, 4).forEach((item) => {
+      // Preload only first 3 images for LCP optimization
+      items.slice(0, 3).forEach((item) => {
         preloadImage(getOptimizedImageUrl(item.image, 280));
       });
-    }, { timeout: 1000 });
+    }, { timeout: 500 });
   } else {
-    // Fallback for browsers without requestIdleCallback
+    // Fallback with setTimeout
     setTimeout(() => {
-      items.slice(0, 4).forEach((item) => {
+      items.slice(0, 3).forEach((item) => {
         preloadImage(getOptimizedImageUrl(item.image, 280));
       });
     }, 100);
   }
 };
+
 const createEnhancedSearch = (searchTerm: string, text: { en: string; ar: string }): boolean => {
   if (!searchTerm || !searchTerm.trim()) return true;
   
@@ -111,16 +133,16 @@ const createEnhancedSearch = (searchTerm: string, text: { en: string; ar: string
   const arabicMatch = text.ar.toLowerCase().includes(normalizedSearchTerm);
   const normalizedArabicMatch = normalizeArabicText(text.ar.toLowerCase()).includes(normalizedArabicSearchTerm);
   
-  // Cross-language search: English term searching in Arabic text
+  // Cross-language search
   const englishInArabic = !/[\u0600-\u06FF]/.test(searchTerm) ? 
     normalizeArabicText(text.ar.toLowerCase()).includes(normalizedSearchTerm) : false;
   
-  // Cross-language search: Arabic term searching in English text  
   const arabicInEnglish = /[\u0600-\u06FF]/.test(searchTerm) ?
     text.en.toLowerCase().includes(normalizedSearchTerm) : false;
   
   return englishMatch || arabicMatch || normalizedArabicMatch || englishInArabic || arabicInEnglish;
 };
+
 // Move outside component to prevent recreation
 const getOptimizedImageUrl = (url: string, width: number = 300) => {
   if (url.includes("cloudinary.com")) {
@@ -136,10 +158,10 @@ const generateBlurDataURL = (width: number = 280, height: number = 280) => {
       <rect width="100%" height="100%" fill="#f8fafc"/>
     </svg>
   `;
-  return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
+  return `data:image/svg+xml;base64,${btoa(svg)}`;
 };
 
-// Fixed image component - prevent flash by using better background and blur
+// Fixed image component with intersection observer for lazy loading
 const OptimizedItemImage = memo(({
   item,
   priority = false,
@@ -150,33 +172,57 @@ const OptimizedItemImage = memo(({
 }) => {
   const optimizedSrc = useMemo(() => getOptimizedImageUrl(item.image, 280), [item.image]);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [isInView, setIsInView] = useState(priority);
+  const imgRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (priority) return; // No need to observe if priority (already in view)
+    
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsInView(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '100px' } // Load images 100px before they enter viewport
+    );
+    
+    if (imgRef.current) {
+      observer.observe(imgRef.current);
+    }
+    
+    return () => observer.disconnect();
+  }, [priority]);
 
   return (
-    <div className="relative aspect-square bg-slate-50 overflow-hidden">
+    <div ref={imgRef} className="relative aspect-square bg-slate-50 overflow-hidden">
       {/* Background pattern to prevent flash */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-slate-100" />
       
-      <Image
-        src={optimizedSrc}
-        alt={item.name.en}
-        fill
-        className={`object-contain p-2 transition-opacity duration-300 ${
-          imageLoaded ? 'opacity-100' : 'opacity-0'
-        }`}
-        sizes="(max-width: 640px) 150px, (max-width: 768px) 120px, (max-width: 1024px) 180px, 200px"
-        priority={priority}
-        quality={priority ? 85 : 70}
-        placeholder="blur"
-        blurDataURL={generateBlurDataURL()}
-        loading={priority ? "eager" : "lazy"}
-        onLoad={() => setImageLoaded(true)}
-        style={{
-          backgroundColor: '#f8fafc', // Fallback background
-        }}
-      />
+      {isInView && (
+        <Image
+          src={optimizedSrc}
+          alt={item.name.en}
+          fill
+          className={`object-contain p-2 transition-opacity duration-300 ${
+            imageLoaded ? 'opacity-100' : 'opacity-0'
+          }`}
+          sizes="(max-width: 640px) 150px, (max-width: 768px) 120px, (max-width: 1024px) 180px, 200px"
+          priority={priority}
+          quality={priority ? 85 : 70}
+          placeholder="blur"
+          blurDataURL={generateBlurDataURL()}
+          loading={priority ? "eager" : "lazy"}
+          onLoad={() => setImageLoaded(true)}
+          style={{
+            backgroundColor: '#f8fafc',
+          }}
+        />
+      )}
       
-      {/* Loading indicator for non-priority images */}
-      {!imageLoaded && !priority && (
+      {/* Loading indicator */}
+      {!imageLoaded && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-400 rounded-full animate-spin" />
         </div>
@@ -187,7 +233,7 @@ const OptimizedItemImage = memo(({
 
 OptimizedItemImage.displayName = 'OptimizedItemImage';
 
-// Simplified Item Card - reduce complexity to improve TBT
+// Simplified Item Card
 const ItemCard = memo(({ 
   item, 
   index, 
@@ -208,7 +254,7 @@ const ItemCard = memo(({
       <Link
         href={`/marketplace/${encodeURIComponent(item.name.en)}`}
         className="h-full flex flex-col focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 rounded-lg"
-        prefetch={index < 2 ? true : false} // Only prefetch first 2 items
+        prefetch={index < 2} // Only prefetch first 2 items
       >
         <OptimizedItemImage
           item={item}
@@ -258,7 +304,7 @@ const useDebounce = (value: string, delay: number) => {
   return debouncedValue;
 };
 
-// Virtualized grid component for better performance with many items
+// Virtualized grid component with improved intersection handling
 const VirtualizedGrid = memo(({ 
   items, 
   renderItem 
@@ -267,33 +313,48 @@ const VirtualizedGrid = memo(({
   renderItem: (item: Item, index: number) => React.ReactNode;
 }) => {
   const [visibleRange, setVisibleRange] = useState({ start: 0, end: 20 });
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const handleScroll = () => {
-      const scrollTop = window.scrollY;
-      const itemHeight = 250; // Approximate item height
-      const containerHeight = window.innerHeight;
-      const itemsPerRow = window.innerWidth >= 1024 ? 5 : window.innerWidth >= 768 ? 4 : window.innerWidth >= 640 ? 3 : 2;
+    const calculateVisibleRange = () => {
+      if (!containerRef.current) return;
       
-      const start = Math.floor(scrollTop / itemHeight) * itemsPerRow;
+      const scrollTop = window.scrollY;
+      const containerTop = containerRef.current.offsetTop;
+      const relativeScrollTop = Math.max(0, scrollTop - containerTop);
+      
+      const itemHeight = 250;
+      const containerHeight = window.innerHeight;
+      const itemsPerRow = window.innerWidth >= 1024 ? 5 : 
+                         window.innerWidth >= 768 ? 4 : 
+                         window.innerWidth >= 640 ? 3 : 2;
+      
+      const start = Math.floor(relativeScrollTop / itemHeight) * itemsPerRow;
       const end = Math.min(start + (Math.ceil(containerHeight / itemHeight) + 2) * itemsPerRow, items.length);
       
       setVisibleRange({ start: Math.max(0, start - itemsPerRow), end });
     };
 
-    // Use passive listener for better performance
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll(); // Initial calculation
+    calculateVisibleRange();
     
-    return () => window.removeEventListener('scroll', handleScroll);
+    // Use passive listener and throttle scroll events
+    const throttledScroll = () => {
+      requestAnimationFrame(calculateVisibleRange);
+    };
+    
+    window.addEventListener('scroll', throttledScroll, { passive: true });
+    window.addEventListener('resize', throttledScroll, { passive: true });
+    
+    return () => {
+      window.removeEventListener('scroll', throttledScroll);
+      window.removeEventListener('resize', throttledScroll);
+    };
   }, [items.length]);
 
   const visibleItems = items.slice(visibleRange.start, visibleRange.end);
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+    <div ref={containerRef} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
       {/* Render spacer for items before visible range */}
       {visibleRange.start > 0 && (
         <div 
@@ -334,8 +395,7 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
   const [items, setItems] = useState(initialData.items);
   const [pagination, setPagination] = useState(initialData.pagination);
   
-  const debouncedSearchTerm = useDebounce(searchTerm, 400); // Increased debounce
-  const itemsPerPage = 10;
+  const debouncedSearchTerm = useDebounce(searchTerm, 400);
 
   // Memoize measurement text function
   const getMeasurementText = useCallback(
@@ -346,13 +406,18 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
   );
 
   useEffect(() => {
+    // Preconnect to external origins
+    preconnectOrigins();
+    
     // Use startTransition to prevent blocking
     startTransition(() => {
       setIsClient(true);
     });
     
     // Delay preloading to after initial render
-    preloadCriticalImages(initialData.items);
+    setTimeout(() => {
+      preloadCriticalImages(initialData.items);
+    }, 0);
     
     // Pre-populate React Query cache
     queryClient.setQueryData(["items", 1, null], {
@@ -363,7 +428,7 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
 
   const { data, isLoading } = useGetItems({
     currentPage,
-    itemsPerPage,
+    itemsPerPage: 10,
     userRole: user?.role,
     category: selectedCategory,
     search: debouncedSearchTerm,
@@ -372,11 +437,11 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
   // Conditionally load socket hook only when needed
   useItemSocket({
     currentPage,
-    itemsPerPage,
+    itemsPerPage: 10,
     userRole: user?.role,
     selectedCategory,
     searchTerm: debouncedSearchTerm,
-    enabled: isClient, // Only enable after client-side hydration
+    enabled: isClient,
   });
 
   useEffect(() => {
@@ -394,7 +459,7 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
     });
   }, [selectedCategory, debouncedSearchTerm]);
 
-  // Simplified categories fetch
+  // Simplified categories fetch with better caching
   const { data: categoriesData } = useQuery({
     queryKey: ["categories", user?.role],
     queryFn: async () => {
@@ -404,20 +469,19 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
       return [...new Set(allItems.map((item: Item) => item.categoryName.en))].sort();
     },
     initialData: initialData.categories,
-    staleTime: 20 * 60 * 1000, // 20 minutes
+    staleTime: 20 * 60 * 1000,
     refetchOnWindowFocus: false,
     enabled: isClient,
   });
 
   const uniqueCategories = categoriesData || initialData.categories;
 
-const filteredItems = useMemo(() => {
+  const filteredItems = useMemo(() => {
     if (!debouncedSearchTerm && selectedCategory === "all") {
       return items;
     }
 
     return items.filter((item) => {
-      // Enhanced search that works across languages and normalizes Arabic
       if (debouncedSearchTerm) {
         const matchesItemName = createEnhancedSearch(debouncedSearchTerm, item.name);
         const matchesCategoryName = createEnhancedSearch(debouncedSearchTerm, item.categoryName);
@@ -435,6 +499,7 @@ const filteredItems = useMemo(() => {
       return true;
     });
   }, [debouncedSearchTerm, selectedCategory, items]);
+
   const sortedFilteredItems = useMemo(() => {
     if (!debouncedSearchTerm) return filteredItems;
     
@@ -442,33 +507,27 @@ const filteredItems = useMemo(() => {
     const normalizedSearchTerm = normalizeArabicText(searchTerm);
     
     return [...filteredItems].sort((a, b) => {
-      // Calculate search scores for sorting
       const getSearchScore = (item: Item): number => {
         let score = 0;
         
-        // Exact matches get highest score (100)
         if (item.name.en.toLowerCase() === searchTerm || item.name.ar.toLowerCase() === searchTerm) {
           score += 100;
         }
         
-        // Normalized Arabic exact match gets high score (90)
         if (normalizeArabicText(item.name.ar.toLowerCase()) === normalizedSearchTerm) {
           score += 90;
         }
         
-        // Starts with match gets medium score (50)
         if (item.name.en.toLowerCase().startsWith(searchTerm) || 
             item.name.ar.toLowerCase().startsWith(searchTerm) ||
             normalizeArabicText(item.name.ar.toLowerCase()).startsWith(normalizedSearchTerm)) {
           score += 50;
         }
         
-        // Category name matches get bonus score (25)
         if (createEnhancedSearch(debouncedSearchTerm, item.categoryName)) {
           score += 25;
         }
         
-        // Contains match gets base score (10)
         if (score === 0) score = 10;
         
         return score;
@@ -477,15 +536,14 @@ const filteredItems = useMemo(() => {
       const scoreA = getSearchScore(a);
       const scoreB = getSearchScore(b);
       
-      // Sort by score descending, then alphabetically
       if (scoreA !== scoreB) {
         return scoreB - scoreA;
       }
       
-      // Fallback to alphabetical sort based on current locale
       return a.name[locale].localeCompare(b.name[locale]);
     });
   }, [filteredItems, debouncedSearchTerm, locale]);
+
   const handlePageChange = useCallback(
     (page: number) => {
       if (page >= 1 && page <= pagination.totalPages) {
@@ -494,26 +552,26 @@ const filteredItems = useMemo(() => {
           setSearchTerm("");
           setSelectedCategory("all");
         });
+        
+        // Scroll to top on page change
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     },
     [pagination.totalPages]
   );
 
-  // Handle search with transition
   const handleSearchChange = useCallback((value: string) => {
     startTransition(() => {
       setSearchTerm(value);
     });
   }, []);
 
-  // Handle category change with transition
   const handleCategoryChange = useCallback((value: string) => {
     startTransition(() => {
       setSelectedCategory(value);
     });
   }, []);
 
-  // Render item function for virtualized grid
   const renderItem = useCallback((item: Item, index: number) => (
     <ItemCard
       item={item}
@@ -525,7 +583,7 @@ const filteredItems = useMemo(() => {
     />
   ), [locale, convertNumber, t, getMeasurementText]);
 
-  // Updated Loading skeleton with proper background
+  // Updated Loading skeleton
   const LoadingSkeleton = memo(() => (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
       {[...Array(8)].map((_, i) => (
@@ -536,8 +594,8 @@ const filteredItems = useMemo(() => {
 
   return (
     <>
-      {/* Simplified Search Controls */}
-      <section className="mb-4 rounded-lg shadow-sm p-3 sticky top-0 z-10"  style={{ background: "var(--background)" }}>
+      {/* Search Controls */}
+      <section className="mb-4 rounded-lg shadow-sm p-3 sticky top-0 z-10 bg-white">
         <div className="flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
             <Search className="absolute top-3 left-3 h-4 w-4 text-gray-400" />
@@ -554,9 +612,8 @@ const filteredItems = useMemo(() => {
             <Filter className="absolute top-2 left-3 h-4 w-4 text-gray-400" />
             <select
               value={selectedCategory}
-              style={{ background: "var(--background)" }}
-              onChange={(e) => handleCategoryChange(e.target.value)}
               className="pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg w-full appearance-none bg-white focus:ring-1 focus:ring-green-500 focus:outline-none"
+              onChange={(e) => handleCategoryChange(e.target.value)}
             >
               <option value="all">{t("common.allCategories")}</option>
               {uniqueCategories.map((category: string) => (
@@ -570,7 +627,7 @@ const filteredItems = useMemo(() => {
       </section>
 
       {/* Results Info */}
- <div className="flex justify-between items-center mb-3 px-1">
+      <div className="flex justify-between items-center mb-3 px-1">
         <span className="text-xs text-gray-500">
           {t("common.showing")} {convertNumber(sortedFilteredItems.length)} {t("common.of")} {convertNumber(pagination.totalItems)} {t("common.items")}
         </span>
@@ -580,7 +637,7 @@ const filteredItems = useMemo(() => {
       </div>
 
       {/* Main Content */}
-   <main>
+      <main>
         {isLoading && !items.length ? (
           <LoadingSkeleton />
         ) : sortedFilteredItems.length === 0 ? (
@@ -589,7 +646,7 @@ const filteredItems = useMemo(() => {
             <h2 className="mt-2 text-sm font-medium text-gray-900">
               {t("common.noItemsFound") || "No items found"}
             </h2>
-            <p className="mt-1 text-xs text-gray-500" >
+            <p className="mt-1 text-xs text-gray-500">
               {debouncedSearchTerm || selectedCategory !== "all"
                 ? t("common.tryDifferentSearch") || "Try different search terms or check spelling"
                 : t("common.noItemsAvailable") || "No items available yet"}
@@ -602,13 +659,11 @@ const filteredItems = useMemo(() => {
           </div>
         ) : (
           <>
-            {/* Use Virtual Grid with sorted items */}
             <VirtualizedGrid 
               items={sortedFilteredItems}
               renderItem={renderItem}
             />
 
-            {/* Lazy-loaded Pagination */}
             {pagination.totalPages > 1 && (
               <LazyPagination 
                 pagination={pagination}
@@ -619,7 +674,6 @@ const filteredItems = useMemo(() => {
         )}
       </main>
       
-      {/* Voice Processing Component */}
       <FloatingRecorderButton />
     </>
   );

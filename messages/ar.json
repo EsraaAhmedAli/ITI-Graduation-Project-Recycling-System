@@ -200,6 +200,13 @@
     "users": "المستخدمين"
   },
   "ecoAssist": {
+    
+      "newChat": "دردشة جديدة",
+      "chatHistory": "سجل الدردشة",
+    "tokensUsed": "الرموز المستخدمة اليوم",
+    "tokenLimitNote": "الحد اليومي للرموز: {limit} رمز",
+    "tokenLimitReached": "لقد وصلت إلى الحد اليومي للرموز. حاول مرة أخرى غدًا.",
+    "clearHistory": "مسح المحادثة",
     "welcome": {
       "title": "كيف يمكنني مساعدتك في إعادة التدوير اليوم؟",
       "subtitle": "اسألني عن إعادة التدوير أو التبرع أو التخلص الصحيح من العناصر"
@@ -230,7 +237,8 @@
     },
     "quickTips": "نصائح سريعة",
     "statusMessage": "المساعد البيئي جاهز لمساعدتك في أسئلة إعادة التدوير",
-    "errors": {
+    "errors": {      "tokenLimitExceeded": "لقد وصلت إلى الحد اليومي للرموز. يرجى المحاولة مرة أخرى غدًا."
+,
       "noAnswer": "عذراً، لم أستطع العثور على إجابة.",
       "requestError": "عذراً، حدث خطأ في معالجة طلبك."
     }
@@ -1168,138 +1176,7 @@
     "returned": "مرتجع",
     "completed": "مكتمل"
   },
-  "items": {
-    "paaper": {
-      "news paper": "جرايد"
-    },
-    "plastic": {
-      "chair": "كرسي",
-      "coleman-water": "كولمان مياه",
-      "plastic-barrel": "برميل من البلاستيك",
-      "acrylic": "اكريلك",
-      "solid-plastic": "بلاستيك صلب",
-      "water colman": "كولمان مياه"
-    },
-    "paper": {
-      "news paper": "جرايد",
-      "books": "كتب",
-      "card-board": "ورق مقوى",
-      "magazines": "مجلات",
-      "paper": "ورق",
-      "shredded-paper": "ورق متقطع"
-    },
-    "cooking-oil": {
-      "used-cooking-oil": "زيت طهي مستعمل"
-    },
-    "e-waste": {
-      "mobile": "هاتف محمول",
-      "laptop": "لابتوب",
-      "router": "راوتر",
-      "computer-cpu": "وحدة المعالجة المركزية",
-      "reciever": "جهاز استقبال",
-      "tablet": "تابليت",
-      "printer": "طابعة",
-      "laptop battery": "بطارية لابتوب",
-      "old computer monitor": "شاشة كمبيوتر قديمة",
-      "scanner": "اسكانر",
-      "subwoofer": "صب ووفر",
-      "memory ram": "رامات",
-      "power supply": "باور سبلاي",
-      "screen card": "كارت شاشة",
-      "printing machine": "ماكينة طباعة",
-      "mobile motherboard": "مازر بورد موبايل",
-      "laptop motherboard": "مازر بورد لابتوب",
-      "playstation 1": "بلاي ستيشن 1",
-      "dvd player": "مشغل دي في دي",
-      "video device": "جهاز فيديو",
-      "microphone": "مايكروفون",
-      "pc fan": "مروحة كمبيوتر",
-      "processor": "بروسيسور",
-      "cd rom drive": "مشغل سي دي",
-      "airpods": "إيربودز",
-      "shaver": "ماكينة حلاقة",
-      "sound card": "كارت صوت",
-      "network card": "كارت شبكة",
-      "web camera": "كاميرا ويب",
-      "hard disk": "هارد ديسك",
-      "hoverboard": "هوفر بورد",
-      "radio sound": "راديو",
-      "ipod": "آيبود",
-      "projector": "بروجيكتور",
-      "mifi": "ماي فاي",
-      "powerbank": "باور بانك",
-      "usb modem": "مودم يو اس بي",
-      "wii": "وي",
-      "playstation 2": "بلاي ستيشن 2",
-      "xbox": "إكس بوكس",
-      "playstation portable": "بلاي ستيشن محمول",
-      "mb3": "إم بي 3",
-      "ups": "يو بي اس",
-      "big printer": "طابعة كبيرة",
-      "radio cassette": "راديو كاسيت",
-      "digital camera": "كاميرا ديجيتال",
-      "dvr": "دي في ار",
-      "camera switch": "مفتاح كاميرا",
-      "fax": "فاكس",
-      "paper shredder": "مفرمة ورق"
-    },
-    "metals": {
-      "copper": "نحاس",
-      "basin mixer": "خلاط حوض",
-      "aluminium": "ألومنيوم",
-      "cooking pan": "طاسة",
-      "fire extinguisher": "طفاية حريق",
-      "iron.": "حديد",
-      "chandeliers": "نجف",
-      "clothes dryer": "مجفف ملابس",
-      "alumetal door": "باب ألوميتال",
-      "washing machine base": "قاعدة غسالة",
-      "water motor": "موتور مياه",
-      "trans": "ترانس",
-      "balloon motor": "موتور بالونة",
-      "pan": "طاسة",
-      "granite pot": "حلة جرانيت",
-      "stainless sink": "حوض ستانلس",
-      "cans": "علب صفيح",
-      "ladder": "سلم",
-      "stainless": "ستانلس",
-      "tinplate": "صفيح",
-      "office chair": "كرسي مكتب",
-      "fridge motor": "موتور ثلاجة",
-      "washing motor": "موتور غسالة",
-      "ceramic pot": "حلة سيراميك",
-      "tefal pot": "حلة تيفال",
-      "stainless kettle": "كاتل ستانلس",
-      "water knob": "مقبض مياه",
-      "ethernet cable": "كابل إنترنت"
-    },
-    "home appliances": {
-      "fan": "مروحة",
-      "iron": "مكواة",
-      "gas heater 10 liter": "سخان غاز 10 لتر",
-      "indoor ac unit": "وحدة تكييف داخلية",
-      "blender": "خلاط",
-      "microwave": "ميكروويف",
-      "fridge": "ثلاجة",
-      "washing machine": "غسالة",
-      "dishwasher": "غسالة أطباق",
-      "vacuum": "مكنسة كهربائية",
-      "kettle": "كاتل",
-      "chopper": "مفرمة",
-      "heater device": "دفاية",
-      "cooker": "بوتاجاز",
-      "electric fryer": "قلاية كهربائية",
-      "ventilation fan": "شفاط",
-      "kitchen machine": "كيتشن ماشين",
-      "mixer": "مضرب",
-      "toaster": "توستر",
-      "hair dryer": "سيشوار",
-      "babyliss": "بيبي ليس",
-      "insect killer": "صاعق ناموس",
-      "electric fly insect killer": "صاعق حشرات",
-      "small led rechargeable": "كشاف ليد صغير شحن"
-    }
-  },
+
   "redeemEcoPoints": "استبدال النقاط البيئية",
   "loading": "جارٍ التحميل...",
   "points": "نقاط",
@@ -1568,5 +1445,65 @@
       "updateSuccess": "تم تحديث الملف الشخصي بنجاح",
       "updateError": "فشل في تحديث الملف الشخصي"
     }
+  },
+  
+  "contact": {
+    "formAria": "نموذج التواصل",
+    "name": "الاسم",
+    "email": "البريد الإلكتروني",
+    "message": "الرسالة",
+    "send": "إرسال الرسالة",
+    "sending": "جاري الإرسال...",
+    "success": "تم إرسال البريد الإلكتروني، شكرًا لك!",
+    "error": "فشل في إرسال الرسالة",
+    "submitting": "جارٍ إرسال رسالتك، يرجى الانتظار...",
+    "ready": "جاهز للإرسال",
+    "placeholders": {
+      "name": "اكتب اسمك الكامل",
+      "email": "you@example.com",
+      "message": "أخبرنا كيف يمكننا مساعدتك..."
+    },
+    "errors": {
+      "nameRequired": "الاسم مطلوب",
+      "emailRequired": "البريد الإلكتروني مطلوب",
+      "invalidEmail": "البريد الإلكتروني غير صالح",
+      "messageRequired": "الرسالة مطلوبة",
+      "messageMin": "يجب أن تكون الرسالة على الأقل 10 أحرف"
+    },
+      "title": "تواصل معنا",
+    "description": "سواء كان لديك أسئلة، أفكار، أو ملاحظات، يسعدنا أن نسمع منك. لنجعل كوكبنا أكثر خضرة معًا."
+  },
+   "slider": {
+    "phoneRecycling": {
+      "title": "خصم 20% على إعادة تدوير الهواتف",
+      "description": "قم بتبديل جهازك القديم ووفر في عملية الشراء التالية مع مساعدة الكوكب",
+      "cta": "إعادة تدوير الآن",
+      "learnMore": "/about/about-phone-recycling"
+    },
+    "deviceChallenge": {
+      "title": "انضم إلى تحدي الـ 10 آلاف جهاز",
+      "description": "نهدف إلى إعادة تدوير 10,000 جهاز بطريقة مسؤولة هذا الشهر - كن جزءاً من الحل!",
+      "cta": "شارك",
+      "learnMore": "/about/about-community-challenge"
+    },
+    "fashionRecycling": {
+      "title": "برنامج إعادة تدوير الأزياء",
+      "description": "احصل على خصم 30% عندما تأتي بملابس مستعملة لإعادة التدوير",
+      "cta": "احصل على العرض",
+      "learnMore": "/about/about-fashion-recycling"
+    },
+    "badges": {
+      "communityChallenge": "تحدي المجتمع",
+      "limitedOffer": "عرض محدود"
+    },
+    "common": {
+      "learnMore": "اعرف المزيد"
+    },
+    "navigation": {
+      "previous": "الشريحة السابقة",
+      "next": "الشريحة التالية",
+      "goToSlide": "انتقل إلى الشريحة {{number}}"
+    }
   }
+
 }

@@ -86,13 +86,7 @@ export default function ContactPage() {
       <section className="min-h-screen bg-base-100 py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           {/* Page header with semantic HTML */}
-          <header className="mb-8">
-            <h1 className="text-4xl font-bold text-primary mb-4">Contact Us</h1>
-            <p className="text-base-content text-lg">
-              Whether you have questions, ideas, or feedback, we would love to hear
-              from you. Let us make the planet greener together.
-            </p>
-          </header>
+       
 
           {/* Client component for the form */}
           <main>
