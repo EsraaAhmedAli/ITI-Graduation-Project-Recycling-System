@@ -331,7 +331,6 @@ const stockPercentage = Math.max(0, Math.min(100, (remainingQuantity / currentSt
   };
 
   const handleOperation = (op: "+" | "-") => {
-    console.log(`HANDLEEEEEEEEEEEEEEEEEEEEE OPERATION ${op}`);
     console.log(item);
     const step = item.measurement_unit === 1 ? 0.25 : 1;
     const appliedStep = op === "+" ? step : -step;
