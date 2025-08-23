@@ -87,7 +87,7 @@ export default function FilterDrawer({
                   onChange={() => handleChange(filter.name, opt.value)}
                   className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
                 />
-                <span>{opt.label}</span>
+                <span style={{color:"var(--color-base-900)"}}>{opt.label}</span>
               </label>
             ))}
           </div>
@@ -125,7 +125,8 @@ export default function FilterDrawer({
                     ? "ring-2 ring-offset-1 ring-green-600"
                     : "border-transparent"
                 }`}
-                style={{ backgroundColor: opt.color || opt.value }}
+              
+               style={{ backgroundColor: opt.color || opt.value }}
                 title={opt.label}
               />
             ))}
@@ -317,7 +318,7 @@ export default function FilterDrawer({
                   onClick={() => toggleGroup(filter.name)}
                   className="flex justify-between items-center w-full rtl:flex-row-reverse"
                 >
-                  <span className="font-medium">{filter.title}</span>
+                  <span className="font-medium" style={{color:"var(--color-base-900)"}}>{filter.title}</span>
                   {expandedGroups[filter.name] ? (
                     <ChevronUp className="w-4 h-4" />
                   ) : (
