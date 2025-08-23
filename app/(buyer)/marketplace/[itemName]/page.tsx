@@ -43,7 +43,6 @@ interface Item {
 
 export default function ItemDetailsPage() {
   const { itemName } = useParams();
-  console.log(itemName);
   
  const decodedName =
   typeof itemName === "string" ? decodeURIComponent(itemName) : "";
@@ -61,7 +60,6 @@ export default function ItemDetailsPage() {
 
   useEffect(() => {
   const decodedName = decodeURIComponent(itemName.toString().toLowerCase());
-  console.log(decodedName,'ddd');
   
   const existing = cart.find(
     (item) => item?.name?.en.toLowerCase() === decodedName
@@ -71,11 +69,7 @@ export default function ItemDetailsPage() {
     setInputValue(existing.quantity.toString());
   }
 }, [cart, itemName]);
-  console.log("🔍 Item Details Page loaded:", {
-    itemName,
-    decodedName,
-    params: useParams(),
-  });
+
 
   useEffect(() => {
     console.log("🛒 Updated cart:", cart);
