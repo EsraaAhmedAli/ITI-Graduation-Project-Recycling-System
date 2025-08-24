@@ -11,6 +11,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useLocalization } from "@/utils/localiztionUtil";
 import { Category } from "@/components/Types/categories.type";
 import { Loader } from '@/components/common'
+import TableSkeleton from "@/components/shared/tableSkeleton";
 
 // Type definitions for better type safety
 // Updated to match the actual Category type from the API
@@ -167,7 +168,7 @@ export default function Page() {
   return (
     <>
       {isLoading ? (
-        <Loader  />
+  <TableSkeleton rows={5} columns={3} showActions={true} />
       ) : error ? (
         <p className="text-center text-red-500 py-10">
           {t("categories.errorLoadingCategories") || "Error loading categories"}

@@ -20,11 +20,11 @@ import {
   Mail,
   Check,
 } from "lucide-react";
-import { Loader } from '@/components/common'
 import { TablePagination } from "@/components/tablePagination/tablePagination";
-import { Modal, ModalBody, ModalFooter, ModalHeader, Toast } from "flowbite-react";
+import { Modal, ModalBody, ModalFooter, ModalHeader } from "flowbite-react";
 import RefundModal from "@/components/shared/refundModal";
 import { useLanguage } from "@/context/LanguageContext";
+import TableSkeleton from "@/components/shared/tableSkeleton";
 
 // Toast notification types
 interface ToastNotification {
@@ -515,7 +515,7 @@ const{t}=useLanguage()
 
   // Loading state
   if (isLoading && payments.length === 0) {
-    return <Loader />;
+    return<TableSkeleton rows={5} columns={columns.length} showActions={true} />;
   }
 
   // Error state
@@ -631,8 +631,7 @@ const{t}=useLanguage()
           </div>
         </div>
       )}
-{isRefunding && <Loader />
-}
+
       {/* Transactions Table */}
       <div className="bg-white rounded-lg shadow-sm border border-green-100">
         <DynamicTable<PaymentData>
@@ -831,6 +830,7 @@ const{t}=useLanguage()
       <RefundModal
         isOpen={refundModal.isOpen}
         payment={refundModal.payment}
+        
         isRefunding={isRefunding}
         onClose={handleRefundModalClose}
         onConfirm={handleRefundConfirm}

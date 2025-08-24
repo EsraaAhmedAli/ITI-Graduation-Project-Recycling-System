@@ -20,6 +20,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useValueDebounce } from "@/hooks/useValueDebounce";
 import { Loader } from "@/components/common";
+import TableSkeleton from "@/components/shared/tableSkeleton";
 type UserRole = "customer" | "buyer";
 const STATUS = {
   PENDING: "pending",
@@ -333,6 +334,7 @@ export default function Page() {
   const [isCourierModalOpen, setIsCourierModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState<string | null>(null);
   const [showCancelReasonModal, setShowCancelReasonModal] = useState(false);
+const [isSearchingLocal, setIsSearchingLocal] = useState(false);
 
   const [selectedOrderForCourier, setSelectedOrderForCourier] = useState<
     string | null
@@ -468,14 +470,22 @@ export default function Page() {
       search: null,
     });
   };
-  const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
-    handlePageChange(1);
-    updateSearchParams({
-      search: value || null,
-      page: "1",
-    });
-  };
+const handleSearchChange = (value: string) => {
+  if (value.trim()) {
+    setIsSearchingLocal(true);
+  }
+  setSearchTerm(value);
+  handlePageChange(1);
+  updateSearchParams({
+    search: value || null,
+    page: "1",
+  });
+};
+useEffect(() => {
+  if (data || !debouncedSearchTerm) {
+    setIsSearchingLocal(false);
+  }
+}, [data, debouncedSearchTerm])
 
   const handleDeleteOrder = async (orderId: string) => {
     const result = await Swal.fire({
@@ -689,9 +699,9 @@ export default function Page() {
     );
   }
 
-  if (isLoading) {
-    return <Loader />;
-  }
+  if (isLoading && !debouncedSearchTerm) {
+  return <TableSkeleton rows={5} columns={5} showActions={true} />;
+}
   const transformedData = orders.map((order: any) => ({
     orderId: order._id,
     onClickItemsId: () => {
@@ -977,6 +987,8 @@ export default function Page() {
       ) : (
         <>
           <DynamicTable
+            isSearching={isSearchingLocal || isFetching}
+
             data={transformedData}
             columns={columns}
             title={`${

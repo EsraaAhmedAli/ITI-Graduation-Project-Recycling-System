@@ -6,7 +6,11 @@ import { useUserAuth } from "@/context/AuthFormContext";
 import api from "@/lib/axios";
 import { Review } from "@/components/profile/ReviewTabs";
 
-export function useReviews() {
+interface UseReviewsOptions {
+  enabled?: boolean;
+}
+
+export function useReviews({ enabled = true }: UseReviewsOptions = {}) {
   const { user, token } = useUserAuth();
   const queryClient = useQueryClient();
 
@@ -16,10 +20,10 @@ export function useReviews() {
     }
 
     try {
-      const response = await api.get("/reviews/my-reviews",{
-        params:{
-          page:1,
-          limit:50
+      const response = await api.get("/reviews/my-reviews", {
+        params: {
+          page: 1,
+          limit: 50
         }
       });
       return response.data.reviews || [];
@@ -38,9 +42,9 @@ export function useReviews() {
   } = useQuery({
     queryKey: ["user-reviews", user?._id], // Include user ID for cache invalidation
     queryFn: fetchUserReviews,
-    enabled: !!(user && token), // Only run query when user is authenticated
+    enabled: enabled && !!(user && token), // Only run query when enabled AND user is authenticated
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
-    refetchOnMount:true,
+    refetchOnMount: true,
     retry: 2, // Retry failed requests 2 times
     onError: (error) => {
       console.error("Error fetching user reviews:", error);
