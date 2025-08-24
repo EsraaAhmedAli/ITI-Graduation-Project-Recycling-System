@@ -1,7 +1,7 @@
-import React from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useLanguage } from '@/context/LanguageContext';
-import { PaginationInfo } from '@/hooks/useGetItemsPaginated';
+import React from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
+import { PaginationInfo } from "@/hooks/useGetItemsPaginated";
 
 interface PaginationProps {
   pagination: PaginationInfo;
@@ -25,23 +25,34 @@ export const Pagination: React.FC<PaginationProps> = ({
   }
 
   return (
-    <div className={`flex flex-col items-center gap-4 ${className}`}>
+    <div
+      className={`flex flex-col items-center gap-3 sm:gap-4 w-full max-w-full px-2 ${className}`}
+    >
       {/* Pagination Info */}
-      <div className="text-sm text-slate-600 text-center">
+      <div className="text-xs sm:text-sm text-slate-600 text-center truncate w-full">
         {t("common.showing", {
           start: (pagination.currentPage - 1) * pagination.itemsPerPage + 1,
-          end: Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems),
-          total: pagination.totalItems
-        }) || `Showing ${(pagination.currentPage - 1) * pagination.itemsPerPage + 1}-${Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} of ${pagination.totalItems} items`}
+          end: Math.min(
+            pagination.currentPage * pagination.itemsPerPage,
+            pagination.totalItems
+          ),
+          total: pagination.totalItems,
+        }) ||
+          `Showing ${
+            (pagination.currentPage - 1) * pagination.itemsPerPage + 1
+          }-${Math.min(
+            pagination.currentPage * pagination.itemsPerPage,
+            pagination.totalItems
+          )} of ${pagination.totalItems} items`}
       </div>
 
       {/* Pagination Buttons */}
-      <div className="flex items-center gap-2 flex-wrap justify-center">
+      <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-2 w-full max-w-full">
         {/* Previous Button */}
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center justify-center gap-1 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
           <span className="hidden sm:inline">
@@ -50,18 +61,20 @@ export const Pagination: React.FC<PaginationProps> = ({
         </button>
 
         {/* Page Numbers */}
-        <div className="flex gap-1">
+        <div className="flex flex-wrap gap-1 max-w-full overflow-hidden">
           {generatePageNumbers().map((pageNum, index) => (
             <button
               key={index}
-              onClick={() => typeof pageNum === 'number' ? onPageChange(pageNum) : undefined}
-              disabled={pageNum === '...'}
-              className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors min-w-[40px] ${
+              onClick={() =>
+                typeof pageNum === "number" ? onPageChange(pageNum) : undefined
+              }
+              disabled={pageNum === "..."}
+              className={`px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors min-w-[34px] sm:min-w-[40px] ${
                 pageNum === currentPage
-                  ? 'bg-emerald-500 text-white shadow-sm'
-                  : pageNum === '...'
-                  ? 'text-slate-400 cursor-default'
-                  : 'text-slate-600 bg-white border border-slate-200 hover:bg-slate-50'
+                  ? "bg-emerald-500 text-white shadow-sm"
+                  : pageNum === "..."
+                  ? "text-slate-400 cursor-default"
+                  : "text-slate-600 bg-white border border-slate-200 hover:bg-slate-50"
               }`}
             >
               {pageNum}
@@ -73,18 +86,16 @@ export const Pagination: React.FC<PaginationProps> = ({
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={!pagination.hasNextPage}
-          className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center justify-center gap-1 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          <span className="hidden sm:inline">
-            {t("common.next") || "Next"}
-          </span>
+          <span className="hidden sm:inline">{t("common.next") || "Next"}</span>
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Additional Stats (Optional) */}
-      <div className="text-xs text-slate-500 text-center">
-        Page {currentPage} of {pagination.totalPages}
+      {/* Additional Stats */}
+      <div className="text-xs sm:text-sm text-slate-500 text-center">
+        Page {currentPage} {t("common.of") || "of"} {pagination.totalPages}
       </div>
     </div>
   );

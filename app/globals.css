@@ -3,8 +3,10 @@
 @source "../.flowbite-react/class-list.json";
 @import "keen-slider/keen-slider.min.css";
 
-
-@theme {
+/* Browser Dark Mode Conflict Prevention */
+:root {
+  color-scheme: light;
+  /* Your existing theme variables */
   --color-primary: #0e9f6e;
   --color-secondary: #8bc34a;
   /* --color-button-primary: */
@@ -33,10 +35,7 @@
   --radius-selector: 0.5rem;
   --radius-field: 0.25rem;
   --radius-box: 0.5rem;
-}
 
-
-:root {
   /* Colors */
   --background: #ffffff;
   --foreground: #171717;
@@ -113,6 +112,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   --background: #000000;
   --foreground: #ededed;
   --border-color: #1a1a1a;
@@ -161,10 +161,19 @@
   --color-card: #535353;
 }
 
+/* Force override browser auto-dark-mode */
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
 /* Base Styles */
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--background) !important;
+  color: var(--foreground) !important;
   font-family: Arial, Helvetica, sans-serif;
 }
 
@@ -178,33 +187,38 @@ input::-webkit-inner-spin-button {
   margin: 0;
 }
 
+/* Prevent browser auto-styling on all elements */
+* {
+  color-scheme: inherit;
+}
+
 /* Components */
 .pickup-btn {
   @apply flex items-center gap-2 px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg;
-  background-color: var(--color-primary);
-  color: white;
+  background-color: var(--color-primary) !important;
+  color: white !important;
 }
 
 .pickup-btn:hover {
-  background-color: var(--color-green-600);
+  background-color: var(--color-green-600) !important;
 }
 
 .pickup-btn:disabled {
   @apply cursor-not-allowed shadow-none;
-  background-color: var(--text-gray-400);
+  background-color: var(--text-gray-400) !important;
 }
 
 .dark .pickup-btn {
-  background-color: var(--color-green-600);
+  background-color: var(--color-green-600) !important;
 }
 
 .dark .pickup-btn:hover {
-  background-color: var(--color-green-600);
+  background-color: var(--color-green-600) !important;
 }
 
 .dark .pickup-btn:disabled {
-  background-color: var(--text-gray-700);
-  color: var(--text-gray-400);
+  background-color: var(--text-gray-700) !important;
+  color: var(--text-gray-400) !important;
 }
 
 /* Payment Method Card */
@@ -215,7 +229,8 @@ input::-webkit-inner-spin-button {
   cursor: pointer;
   transition: all 300ms;
   display: block;
-  background-color: var(--color-card);
+  background-color: var(--color-card) !important;
+  color: var(--foreground) !important;
 }
 
 .payment-method-card:hover {
@@ -224,14 +239,14 @@ input::-webkit-inner-spin-button {
 
 .payment-method-card.selected {
   border-color: var(--color-primary);
-  background-color: var(--color-green-50);
+  background-color: var(--color-green-50) !important;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .dark .payment-method-card {
   border-color: var(--text-gray-600);
-  background-color: var(--color-base-100);
+  background-color: var(--color-base-100) !important;
 }
 
 .dark .payment-method-card:hover {
@@ -240,7 +255,7 @@ input::-webkit-inner-spin-button {
 
 .dark .payment-method-card.selected {
   border-color: var(--color-primary);
-  background-color: var(--section-gradient-start);
+  background-color: var(--section-gradient-start) !important;
 }
 
 /* Payment Icons */
@@ -250,28 +265,28 @@ input::-webkit-inner-spin-button {
 }
 
 .payment-icon-container.cash {
-  background-color: var(--color-green-100);
-  color: var(--color-green-600);
+  background-color: var(--color-green-100) !important;
+  color: var(--color-green-600) !important;
 }
 
 .payment-icon-container.credit_card {
-  background-color: var(--icon-bg-blue);
-  color: var(--icon-text-blue);
+  background-color: var(--icon-bg-blue) !important;
+  color: var(--icon-text-blue) !important;
 }
 
 .payment-icon-container.other {
-  background-color: var(--icon-bg-purple);
-  color: var(--icon-text-purple);
+  background-color: var(--icon-bg-purple) !important;
+  color: var(--icon-text-purple) !important;
 }
 
 .dark .payment-icon-container.cash {
-  background-color: var(--section-gradient-start);
-  color: var(--color-green-100);
+  background-color: var(--section-gradient-start) !important;
+  color: var(--color-green-100) !important;
 }
 
 /* Navbar */
 .navbar {
-  background: var(--background);
+  background: var(--background) !important;
   border-color: var(--border-color);
 }
 
@@ -284,21 +299,22 @@ input::-webkit-inner-spin-button {
   transition: all 0.2s ease;
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--text-gray-600);
+  color: var(--text-gray-600) !important;
+  background-color: transparent !important;
 }
 
 .nav-link:hover {
-  color: var(--text-gray-900);
-  background-color: var(--nav-hover-bg);
+  color: var(--text-gray-900) !important;
+  background-color: var(--nav-hover-bg) !important;
 }
 
 .dark .nav-link:hover {
-  color: var(--foreground);
-  background-color: var(--nav-hover-bg);
+  color: var(--foreground) !important;
+  background-color: var(--nav-hover-bg) !important;
 }
 
 .dark .nav-link {
-  color: var(--text-gray-300);
+  color: var(--text-gray-300) !important;
 }
 
 /* Cart */
@@ -312,22 +328,23 @@ input::-webkit-inner-spin-button {
   transition: all 0.2s ease;
   font-weight: 500;
   font-size: 0.875rem;
-  color: var(--text-gray-600);
+  color: var(--text-gray-600) !important;
+  background-color: transparent !important;
 }
 
 .cart-button:hover {
-  color: var(--text-gray-900);
-  background-color: var(--color-green-50);
+  color: var(--text-gray-900) !important;
+  background-color: var(--color-green-50) !important;
   border-color: var(--border-color);
 }
 
 .dark .cart-button {
-  color: var(--text-gray-300);
+  color: var(--text-gray-300) !important;
 }
 
 .dark .cart-button:hover {
-  color: var(--foreground);
-  background-color: var(--color-base-800);
+  color: var(--foreground) !important;
+  background-color: var(--color-base-800) !important;
   border-color: var(--text-gray-600);
 }
 
@@ -335,8 +352,8 @@ input::-webkit-inner-spin-button {
   position: absolute;
   top: -0.5rem;
   right: -0.5rem;
-  background-color: var(--color-error);
-  color: white;
+  background-color: var(--color-error) !important;
+  color: white !important;
   font-size: 0.75rem;
   font-weight: bold;
   min-width: 1.125rem;
@@ -347,6 +364,43 @@ input::-webkit-inner-spin-button {
   justify-content: center;
   padding: 0 0.25rem;
   border: 1px solid var(--background);
+}
+
+/* Cart Dropdown Specific Fixes */
+.cart-dropdown {
+  background-color: var(--color-card) !important;
+  color: var(--foreground) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.cart-dropdown * {
+  color: inherit;
+  background-color: transparent;
+}
+
+.cart-dropdown h3,
+.cart-dropdown .cart-item-name {
+  color: var(--foreground) !important;
+  background-color: transparent !important;
+}
+
+.cart-dropdown .text-gray-500,
+.cart-dropdown .text-gray-400,
+.cart-dropdown .text-gray-600 {
+  color: var(--text-gray-600) !important;
+  background-color: transparent !important;
+}
+
+/* Prevent auto-dark-mode on dropdowns and modals */
+[role="dialog"],
+[role="menu"],
+[role="listbox"],
+.dropdown,
+.modal,
+.popover {
+  color-scheme: normal !important;
+  background-color: var(--color-card) !important;
+  color: var(--foreground) !important;
 }
 
 @layer utilities {
@@ -382,6 +436,7 @@ input::-webkit-inner-spin-button {
     -webkit-text-fill-color: transparent;
   }
 }
+
 @keyframes scroll-horizontal {
   0% {
     transform: translateX(0);
@@ -408,8 +463,10 @@ input::-webkit-inner-spin-button {
     animation: none;
     overflow-x: auto;
   }
-  
-  .transform, .transition-transform, .transition-all {
+
+  .transform,
+  .transition-transform,
+  .transition-all {
     transition: none;
   }
 }
