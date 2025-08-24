@@ -59,93 +59,93 @@ export default function CartPage() {
   });
 
   // Create a stock levels map from the React Query data
- const stockLevels = useMemo(() => {
-  // Don't calculate stock levels until we have data
-  if (!itemsData?.data || userRole !== "buyer" || isLoadingItems) return {};
+  const stockLevels = useMemo(() => {
+    // Don't calculate stock levels until we have data
+    if (!itemsData?.data || userRole !== "buyer" || isLoadingItems) return {};
 
-  const stockMap: { [key: string]: number } = {};
-  cart.forEach((cartItem) => {
-    const foundItem = itemsData.data.find(
-      (apiItem: any) => apiItem._id === cartItem._id
-    );
-    // Only set stock level if we found the item in the API response
-    if (foundItem && typeof foundItem.quantity === 'number') {
-      stockMap[cartItem._id] = foundItem.quantity;
-    }
-  });
+    const stockMap: { [key: string]: number } = {};
+    cart.forEach((cartItem) => {
+      const foundItem = itemsData.data.find(
+        (apiItem: any) => apiItem._id === cartItem._id
+      );
+      // Only set stock level if we found the item in the API response
+      if (foundItem && typeof foundItem.quantity === 'number') {
+        stockMap[cartItem._id] = foundItem.quantity;
+      }
+    });
 
-  console.log('Stock levels calculated:', stockMap);
-  return stockMap;
-}, [itemsData, cart, userRole, isLoadingItems]);
+    console.log('Stock levels calculated:', stockMap);
+    return stockMap;
+  }, [itemsData, cart, userRole, isLoadingItems]);
 
   // Real-time stock change detection and notification
   const [previousStockLevels, setPreviousStockLevels] = useState<{ [key: string]: number }>({});
 
   // Initialize previous stock levels on first load
-useEffect(() => {
-  if (userRole === "buyer" && 
-      Object.keys(stockLevels).length > 0 && 
+  useEffect(() => {
+    if (userRole === "buyer" &&
+      Object.keys(stockLevels).length > 0 &&
       !isLoadingItems &&
       Object.keys(previousStockLevels).length === 0) {
-    console.log('Initializing previous stock levels:', stockLevels);
-    setPreviousStockLevels({ ...stockLevels });
-  }
-}, [stockLevels, userRole, previousStockLevels, isLoadingItems]);
-  // Socket-based stock change notifications
-// Fix the stock change detection useEffect
-useEffect(() => {
-  if (userRole === "buyer" && Object.keys(stockLevels).length > 0) {
-    // Skip initial setup - only compare when we have previous data
-    const hasPreviousData = Object.keys(previousStockLevels).length > 0;
-    
-    if (!hasPreviousData) {
-      // Initial setup - just store the current stock levels
+      console.log('Initializing previous stock levels:', stockLevels);
       setPreviousStockLevels({ ...stockLevels });
-      return;
     }
+  }, [stockLevels, userRole, previousStockLevels, isLoadingItems]);
+  // Socket-based stock change notifications
+  // Fix the stock change detection useEffect
+  useEffect(() => {
+    if (userRole === "buyer" && Object.keys(stockLevels).length > 0) {
+      // Skip initial setup - only compare when we have previous data
+      const hasPreviousData = Object.keys(previousStockLevels).length > 0;
 
-    // Check for actual stock changes
-    let hasChanges = false;
-    const newPreviousLevels = { ...previousStockLevels };
-    
-    Object.keys(stockLevels).forEach(itemId => {
-      const currentStock = stockLevels[itemId];
-      const previousStock = previousStockLevels[itemId];
-      
-      // Only show notifications for actual changes
-      if (previousStock !== undefined && currentStock !== previousStock) {
-        hasChanges = true;
-        const cartItem = cart.find(item => item._id === itemId);
-        if (cartItem) {
-          const stockChange = currentStock - previousStock;
-          const itemName = typeof cartItem.name === 'string' 
-            ? cartItem.name 
-            : cartItem.name[locale] || cartItem.name.en;
-          
-          if (stockChange < 0) {
-            toast.error(
-              `Stock Alert: ${itemName} - ${Math.abs(stockChange)} units removed from inventory (Now: ${currentStock})`,
-              { duration: 5000 }
-            );
-          } else if (stockChange > 0) {
-            toast.success(
-              `Stock Alert: ${itemName} - ${stockChange} units added to inventory (Now: ${currentStock})`,
-              { duration: 4000 }
-            );
+      if (!hasPreviousData) {
+        // Initial setup - just store the current stock levels
+        setPreviousStockLevels({ ...stockLevels });
+        return;
+      }
+
+      // Check for actual stock changes
+      let hasChanges = false;
+      const newPreviousLevels = { ...previousStockLevels };
+
+      Object.keys(stockLevels).forEach(itemId => {
+        const currentStock = stockLevels[itemId];
+        const previousStock = previousStockLevels[itemId];
+
+        // Only show notifications for actual changes
+        if (previousStock !== undefined && currentStock !== previousStock) {
+          hasChanges = true;
+          const cartItem = cart.find(item => item._id === itemId);
+          if (cartItem) {
+            const stockChange = currentStock - previousStock;
+            const itemName = typeof cartItem.name === 'string'
+              ? cartItem.name
+              : cartItem.name[locale] || cartItem.name.en;
+
+            if (stockChange < 0) {
+              toast.error(
+                `Stock Alert: ${itemName} - ${Math.abs(stockChange)} units removed from inventory (Now: ${currentStock})`,
+                { duration: 5000 }
+              );
+            } else if (stockChange > 0) {
+              toast.success(
+                `Stock Alert: ${itemName} - ${stockChange} units added to inventory (Now: ${currentStock})`,
+                { duration: 4000 }
+              );
+            }
           }
         }
+
+        // Update the previous stock level for this item
+        newPreviousLevels[itemId] = currentStock;
+      });
+
+      // Only update previous stock levels if there were actual changes
+      if (hasChanges) {
+        setPreviousStockLevels(newPreviousLevels);
       }
-      
-      // Update the previous stock level for this item
-      newPreviousLevels[itemId] = currentStock;
-    });
-    
-    // Only update previous stock levels if there were actual changes
-    if (hasChanges) {
-      setPreviousStockLevels(newPreviousLevels);
     }
-  }
-}, [stockLevels, cart, userRole, locale, previousStockLevels]);
+  }, [stockLevels, cart, userRole, locale, previousStockLevels]);
   // Remove the aggressive refresh mechanisms and keep only essential ones
   useEffect(() => {
     const handleFocus = () => {
@@ -158,75 +158,75 @@ useEffect(() => {
     return () => window.removeEventListener('focus', handleFocus);
   }, [userRole, refetchItems]);
 
-useEffect(() => {
-  // Don't run stock checking if we're still loading or don't have stock data
-  if (userRole === "buyer" && (isLoadingItems || Object.keys(stockLevels).length === 0)) {
-    return;
-  }
-
-  if (userRole !== "buyer" || cart.length === 0) {
-    const results: { [key: string]: boolean } = {};
-    const exceedsStock: { [key: string]: boolean } = {};
-    const warnings: { [key: string]: string } = {};
-    
-    cart.forEach((item) => {
-      results[item._id] = true;
-      exceedsStock[item._id] = false;
-      warnings[item._id] = "";
-    });
-    
-    setCanIncrease(results);
-    setExceedsStockItems(exceedsStock);
-    setStockWarnings(warnings);
-    setHasExceedsStockItems(false);
-    return;
-  }
-
-  const results: { [key: string]: boolean } = {};
-  const exceedsStock: { [key: string]: boolean } = {};
-  const warnings: { [key: string]: string } = {};
-  let hasAnyExceedsStock = false;
-
-  cart.forEach((item) => {
-    const increment = item.measurement_unit === 1 ? 0.25 : 1;
-    const availableStock = stockLevels[item._id];
-    const itemName = typeof item.name === 'string' 
-      ? item.name 
-      : item.name[locale] || item.name.en;
-
-    // Only check stock if we have stock data for this item
-    if (availableStock === undefined) {
-      // If we don't have stock data yet, assume it's fine
-      results[item._id] = true;
-      exceedsStock[item._id] = false;
-      warnings[item._id] = "";
+  useEffect(() => {
+    // Don't run stock checking if we're still loading or don't have stock data
+    if (userRole === "buyer" && (isLoadingItems || Object.keys(stockLevels).length === 0)) {
       return;
     }
 
-    // Check if cart quantity exceeds available stock
-    const exceedsAvailableStock = item.quantity > availableStock;
-    exceedsStock[item._id] = exceedsAvailableStock;
+    if (userRole !== "buyer" || cart.length === 0) {
+      const results: { [key: string]: boolean } = {};
+      const exceedsStock: { [key: string]: boolean } = {};
+      const warnings: { [key: string]: string } = {};
 
-    if (exceedsAvailableStock) {
-      hasAnyExceedsStock = true;
-      if (availableStock === 0) {
-        warnings[item._id] = `${itemName} is currently out of stock`;
-      } else {
-        warnings[item._id] = `Only ${availableStock} available, you have ${item.quantity} in cart`;
-      }
-    } else {
-      warnings[item._id] = "";
+      cart.forEach((item) => {
+        results[item._id] = true;
+        exceedsStock[item._id] = false;
+        warnings[item._id] = "";
+      });
+
+      setCanIncrease(results);
+      setExceedsStockItems(exceedsStock);
+      setStockWarnings(warnings);
+      setHasExceedsStockItems(false);
+      return;
     }
 
-    // Check if we can increase quantity
-    results[item._id] = availableStock >= item.quantity + increment;
-  });
+    const results: { [key: string]: boolean } = {};
+    const exceedsStock: { [key: string]: boolean } = {};
+    const warnings: { [key: string]: string } = {};
+    let hasAnyExceedsStock = false;
 
-  setCanIncrease(results);
-  setExceedsStockItems(exceedsStock);
-  setStockWarnings(warnings);
-  setHasExceedsStockItems(hasAnyExceedsStock);
-}, [cart, userRole, stockLevels, locale, isLoadingItems]);
+    cart.forEach((item) => {
+      const increment = item.measurement_unit === 1 ? 0.25 : 1;
+      const availableStock = stockLevels[item._id];
+      const itemName = typeof item.name === 'string'
+        ? item.name
+        : item.name[locale] || item.name.en;
+
+      // Only check stock if we have stock data for this item
+      if (availableStock === undefined) {
+        // If we don't have stock data yet, assume it's fine
+        results[item._id] = true;
+        exceedsStock[item._id] = false;
+        warnings[item._id] = "";
+        return;
+      }
+
+      // Check if cart quantity exceeds available stock
+      const exceedsAvailableStock = item.quantity > availableStock;
+      exceedsStock[item._id] = exceedsAvailableStock;
+
+      if (exceedsAvailableStock) {
+        hasAnyExceedsStock = true;
+        if (availableStock === 0) {
+          warnings[item._id] = `${itemName} is currently out of stock`;
+        } else {
+          warnings[item._id] = `Only ${availableStock} available, you have ${item.quantity} in cart`;
+        }
+      } else {
+        warnings[item._id] = "";
+      }
+
+      // Check if we can increase quantity
+      results[item._id] = availableStock >= item.quantity + increment;
+    });
+
+    setCanIncrease(results);
+    setExceedsStockItems(exceedsStock);
+    setStockWarnings(warnings);
+    setHasExceedsStockItems(hasAnyExceedsStock);
+  }, [cart, userRole, stockLevels, locale, isLoadingItems]);
 
   // Initialize input values when cart changes
   useEffect(() => {
@@ -583,8 +583,8 @@ useEffect(() => {
                   layout
                   style={{ background: "var(--color-card)" }}
                   className={`bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-shadow ${exceedsStockItems[item._id]
-                      ? "border-orange-200 bg-orange-50"
-                      : "border-gray-100"
+                    ? "border-orange-200 bg-orange-50"
+                    : "border-gray-100"
                     }`}
                 >
                   <div className="p-4 flex flex-col sm:flex-row gap-4 relative">
@@ -652,7 +652,8 @@ useEffect(() => {
                               onConfirm: () => removeFromCart(item),
                             });
                           }}
-                          className="text-gray-400 hover:text-red-500 transition-colors ml-2"
+                          style={{ color: "var(--foreground)"}}
+                          className="text-gray-400 hover:text-red-500 transition-colors mt-4 p-2 rounded-md"
                         >
                           <X className="w-5 h-5" />
                         </button>
@@ -704,7 +705,7 @@ useEffect(() => {
                           </span>{" "}
                           {convertNumber(item.price.toFixed(2))} {coin}
                         </div>
-                        <div className="text-sm text-gray-800 dark:text-gray-200">
+                        <div className="text-sm text-gray-800 dark:text-gray-200" >
                           {convertNumber(item.quantity)} ×{" "}
                           {convertNumber(item.price.toFixed(2))} =
                           <span className="font-medium text-primary">
@@ -725,10 +726,10 @@ useEffect(() => {
                                 handleDecrease(item);
                               }}
                               disabled={item.quantity <= (item.measurement_unit === 1 ? 0.25 : 1)}
-                              style={{color :"var(--foreground)", background: "var(--color-base-200)"}}
+                              style={{ color: "var(--foreground)", background: "var(--color-base-200)" }}
                               className={`w-8 h-8 flex items-center justify-center rounded-full border transition-all ${item.quantity <= (item.measurement_unit === 1 ? 0.25 : 1)
-                                  ? "text-gray-300 bg-gray-100 border-gray-200 cursor-not-allowed"
-                                  : "text-gray-600 hover:bg-gray-50 border-gray-300"
+                                ? "text-gray-300 bg-gray-100 border-gray-200 cursor-not-allowed"
+                                : "text-gray-600 hover:bg-gray-50 border-gray-300"
                                 }`}
                             >
                               -
@@ -745,10 +746,10 @@ useEffect(() => {
                                 onChange={(e) => handleInputChange(item._id, e.target.value, item)}
                                 onBlur={() => handleInputBlur(item._id, item)}
                                 className={`w-16 px-2 py-1 text-center text-sm font-medium border rounded-md focus:outline-none focus:ring-2 ${inputErrors[item._id]
-                                    ? "border-red-300 focus:ring-red-500 focus:border-red-500"
-                                    : exceedsStockItems[item._id]
-                                      ? "border-orange-300 focus:ring-orange-500 focus:border-orange-500"
-                                      : "border-gray-300 focus:ring-green-500 focus:border-green-500"
+                                  ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                                  : exceedsStockItems[item._id]
+                                    ? "border-orange-300 focus:ring-orange-500 focus:border-orange-500"
+                                    : "border-gray-300 focus:ring-green-500 focus:border-green-500"
                                   }`}
                                 placeholder={
                                   item.measurement_unit === 1
@@ -765,10 +766,10 @@ useEffect(() => {
                                 handleIncrease(item);
                               }}
                               disabled={userRole === "buyer" && !canIncrease[item._id]}
-                              style={{color :"var(--foreground)", background: "var(--color-base-200)"}}
+                              style={{ color: "var(--foreground)", background: "var(--color-base-200)" }}
                               className={`w-8 h-8 flex items-center justify-center rounded-full border transition-all ${userRole === "buyer" && !canIncrease[item._id]
-                                  ? "text-gray-300 bg-gray-100 border-gray-200 cursor-not-allowed"
-                                  : "text-gray-600 hover:bg-gray-50 border-gray-300"
+                                ? "text-gray-300 bg-gray-100 border-gray-200 cursor-not-allowed"
+                                : "text-gray-600 hover:bg-gray-50 border-gray-300"
                                 }`}
                             >
                               +
@@ -864,8 +865,8 @@ useEffect(() => {
                     }}
                     disabled={totalPrice < 100 || hasExceedsStockItems}
                     className={`flex items-center gap-2 px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg ${totalPrice < 100 || hasExceedsStockItems
-                        ? "bg-gray-300 text-white cursor-not-allowed"
-                        : "bg-green-500 hover:bg-green-600 text-white"
+                      ? "bg-gray-300 text-white cursor-not-allowed"
+                      : "bg-green-500 hover:bg-green-600 text-white"
                       }`}
                   >
                     <Truck className="w-5 h-5" />
