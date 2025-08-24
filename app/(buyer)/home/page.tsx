@@ -13,6 +13,7 @@ const FloatingRecorderButton = dynamic(
   () => import('@/components/Voice Processing/FloatingRecorderButton'),
   { ssr: false }
 );
+console.log("esraa")
 
 interface Item {
   _id: string;
