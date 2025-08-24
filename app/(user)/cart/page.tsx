@@ -725,6 +725,7 @@ useEffect(() => {
                                 handleDecrease(item);
                               }}
                               disabled={item.quantity <= (item.measurement_unit === 1 ? 0.25 : 1)}
+                              style={{color :"var(--foreground)", background: "var(--color-base-200)"}}
                               className={`w-8 h-8 flex items-center justify-center rounded-full border transition-all ${item.quantity <= (item.measurement_unit === 1 ? 0.25 : 1)
                                   ? "text-gray-300 bg-gray-100 border-gray-200 cursor-not-allowed"
                                   : "text-gray-600 hover:bg-gray-50 border-gray-300"
@@ -764,6 +765,7 @@ useEffect(() => {
                                 handleIncrease(item);
                               }}
                               disabled={userRole === "buyer" && !canIncrease[item._id]}
+                              style={{color :"var(--foreground)", background: "var(--color-base-200)"}}
                               className={`w-8 h-8 flex items-center justify-center rounded-full border transition-all ${userRole === "buyer" && !canIncrease[item._id]
                                   ? "text-gray-300 bg-gray-100 border-gray-200 cursor-not-allowed"
                                   : "text-gray-600 hover:bg-gray-50 border-gray-300"
