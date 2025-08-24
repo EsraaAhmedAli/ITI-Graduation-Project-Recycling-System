@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import api from "@/lib/axios";
 import { Category } from "@/components/Types/categories.type";
 import toast from "react-hot-toast";
@@ -15,17 +15,26 @@ interface ApiResponse<T> {
     totalPages: number;
     hasNextPage: boolean;
   };
+  searchInfo?: {
+    searchTerm: string;
+    hasSearch: boolean;
+    resultsCount: number;
+    currentPageResults: number;
+  };
 }
 
 interface UseCategoriesOptions {
   enabled?: boolean;
   page?: number;
   limit?: number;
+  search?: string; // Add search parameter
 }
 
 export function useCategories(options: UseCategoriesOptions = {}) {
-  const { enabled = true, page = 1, limit = 10, ...queryOptions } = options;
+  const { enabled = true, page = 1, limit = 10, search, ...queryOptions } = options;
   const hasShownErrorRef = useRef(false);
+  const [searchTerm, setSearchTerm] = useState(search || "");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(search || "");
 
   let languageContext;
   let locale = "en";
@@ -39,14 +48,48 @@ export function useCategories(options: UseCategoriesOptions = {}) {
     console.warn("Language context not available, using defaults:", error);
   }
 
+  // Debounce search term to avoid too many API calls
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Update search term when external search prop changes
+  useEffect(() => {
+    if (search !== undefined) {
+      setSearchTerm(search);
+    }
+  }, [search]);
+
   const query = useQuery<ApiResponse<Category[]>>({
-    queryKey: ["categories list", locale, page, limit],
+    queryKey: ["categories list", locale, page, limit, debouncedSearchTerm],
     queryFn: async () => {
       try {
-        console.log(`Fetching categories for locale: ${locale}, page: ${page}, limit: ${limit}`);
-        // Use getCategoriesWithPagination endpoint that returns pagination info
-        const res = await api.get(`/categories?language=${locale}&page=${page}&limit=${limit}`);
+        console.log(`Fetching categories for locale: ${locale}, page: ${page}, limit: ${limit}, search: "${debouncedSearchTerm}"`);
+        
+        // Build query parameters
+        const params = new URLSearchParams({
+          language: locale,
+          page: page.toString(),
+          limit: limit.toString(),
+        });
+
+        // Add search parameter if it exists
+        if (debouncedSearchTerm && debouncedSearchTerm.trim()) {
+          params.append('search', debouncedSearchTerm.trim());
+        }
+
+        // Use different endpoints based on search
+        const endpoint = debouncedSearchTerm && debouncedSearchTerm.trim() 
+          ? '/categories/search' 
+          : '/categories';
+        
+        const res = await api.get(`${endpoint}?${params.toString()}`);
         console.log("Categories fetched successfully:", res.data);
+        console.log("Search info from API:", res.data.searchInfo);
         return res.data;
       } catch (error) {
         console.error("Categories API error:", error);
@@ -54,10 +97,10 @@ export function useCategories(options: UseCategoriesOptions = {}) {
       }
     },
     enabled,
-    staleTime: 2000, // 2 seconds
-    cacheTime: 2000, // 10 minutes cache
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
+    staleTime: debouncedSearchTerm ? 1000 : 5000, // Shorter stale time for search results
+    cacheTime: debouncedSearchTerm ? 5000 : 30000, // Shorter cache time for search results
+    refetchOnMount: false, // Don't refetch on mount for search results
+    refetchOnWindowFocus: false, // Don't refetch on focus for search results
     refetchOnReconnect: "stale",
     retry: (failureCount, error) => {
       if (failureCount < 2) {
@@ -66,6 +109,8 @@ export function useCategories(options: UseCategoriesOptions = {}) {
       }
       return false;
     },
+    // Keep previous data while fetching new search results to avoid flickering
+    keepPreviousData: true,
   });
 
   useEffect(() => {
@@ -256,6 +301,25 @@ export function useCategories(options: UseCategoriesOptions = {}) {
     }
   };
 
+  // Search functionality
+  const handleSearch = (newSearchTerm: string) => {
+    setSearchTerm(newSearchTerm);
+  };
+
+  // Check if currently searching - improved logic
+  const isSearching = useMemo(() => {
+    // We're searching if:
+    // 1. The search term is different from debounced term (user is typing)
+    // 2. OR we're fetching and there's an active search term
+    const isTyping = searchTerm !== debouncedSearchTerm;
+    const isFetchingWithSearch = query.isFetching && Boolean(debouncedSearchTerm);
+    
+    return isTyping || isFetchingWithSearch;
+  }, [query.isFetching, searchTerm, debouncedSearchTerm]);
+
+  // Get search info from API response
+  const searchInfo = query.data?.searchInfo;
+
   return {
     ...query,
     getCategoryIdByItemName,
@@ -266,7 +330,15 @@ export function useCategories(options: UseCategoriesOptions = {}) {
     refetch: query.refetch,
     isContextLoaded,
     locale,
-    // Add pagination info to the return
     pagination: query.data?.pagination,
+    // Search related returns
+    searchTerm,
+    handleSearch,
+    isSearching,
+    hasActiveSearch: Boolean(debouncedSearchTerm && debouncedSearchTerm.trim()),
+    searchInfo, // Include search info from API response
+    // Additional useful properties
+    totalSearchResults: searchInfo?.resultsCount || 0,
+    currentPageResults: searchInfo?.currentPageResults || 0,
   };
 }
