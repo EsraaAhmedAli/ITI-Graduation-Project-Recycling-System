@@ -166,6 +166,18 @@ export default function ProofOfDeliveryModal({
                 {formatDate(orderDetails.collectedAt || "")}
               </p>
             </div>
+          {
+            orderDetails.quantityAdjustmentNotes && (
+              <div >
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                  Quantity Adjustment Notes
+                </label>
+                <p className="text-sm text-gray-900 bg-red-50 p-3 rounded-md">
+                  {orderDetails.quantityAdjustmentNotes}
+                </p>
+              </div>
+            )
+          }
 
             <div>
               <h2>Collected By:</h2>

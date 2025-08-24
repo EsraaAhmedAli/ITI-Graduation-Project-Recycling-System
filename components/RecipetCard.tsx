@@ -3,6 +3,7 @@
 import React, { useRef } from "react";
 import html2pdf from "html2pdf.js";
 import { Download, Printer } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 type ReceiptProps = {
   orderId: string;
@@ -24,7 +25,7 @@ const ReceiptCard = ({
   userName,
 }: ReceiptProps) => {
   const receiptRef = useRef<HTMLDivElement>(null);
-
+const {locale} = useLanguage()
   const handleDownload = () => {
     if (!receiptRef.current) return;
 
@@ -78,7 +79,9 @@ const ReceiptCard = ({
             {items?.map((item, index) => (
               <div key={index} className="flex justify-between items-center py-1">
                 <div className="flex-1">
-                  <p className="text-sm font-medium">{item.name}</p>
+             {console.log(item)
+             }
+                  <p className="text-sm font-medium">{item.name[locale]}</p>
                   <p className="text-xs text-gray-600">Quantity: {item.quantity}</p>
                 </div>
                 <div className="text-right">

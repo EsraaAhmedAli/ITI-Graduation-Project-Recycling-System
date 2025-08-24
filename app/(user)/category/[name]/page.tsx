@@ -337,11 +337,12 @@ const PaginationControls = memo(
         </div>
 
         {/* Pagination Buttons with fixed height container */}
-        <div className="flex items-center gap-2 min-h-[44px]">
+<div className="flex items-center justify-center gap-1 sm:gap-2 min-h-[44px]">
+
           <button
             onClick={handlePrevious}
             disabled={currentPage === 1}
-            className="flex items-center gap-1 px-3 py-2 text-sm font-medium border rounded-lg hover:bg-opacity-75 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium border rounded-lg hover:bg-opacity-75 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             style={{
               color: "var(--text-gray-600)",
               backgroundColor: "var(--color-card)",
@@ -364,7 +365,8 @@ const PaginationControls = memo(
             {t("common.previous") || "Previous"}
           </button>
 
-          <div className="flex gap-1" role="group" aria-label="Page numbers">
+<div className="flex gap-1 flex-wrap justify-center" role="group" aria-label="Page numbers">
+
             {pageNumbers.map((pageNum, index) => (
               <button
                 key={`page-${index}-${pageNum}`}
@@ -422,7 +424,7 @@ const PaginationControls = memo(
           <button
             onClick={handleNext}
             disabled={!pagination?.hasNextPage}
-            className="flex items-center gap-1 px-3 py-2 text-sm font-medium border rounded-lg hover:bg-opacity-75 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium border rounded-lg hover:bg-opacity-75 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             style={{
               color: "var(--text-gray-600)",
               backgroundColor: "var(--color-card)",
@@ -674,8 +676,7 @@ export default function UserCategoryPage() {
           {!isLoading && data.length > 0 && (
             <>
               <div
-                className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4"
-                role="grid"
+className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-4 gap-3 sm:gap-4"                role="grid"
                 aria-label="Product grid"
               >
                 {data.map((item, index) => (

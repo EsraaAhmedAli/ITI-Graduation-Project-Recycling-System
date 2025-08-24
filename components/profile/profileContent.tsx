@@ -9,6 +9,7 @@ import React, {
   Suspense,
   lazy,
   startTransition,
+  useEffect,
 } from "react";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { useLanguage } from "@/context/LanguageContext";
@@ -122,11 +123,13 @@ const ProfileContent = memo(function ProfileContent({
   const handleRecyclingUpdate = useCallback(
     (points: number) => {
       handleRecyclingPointsUpdate(points);
-      closeRecyclingModal();
     },
-    [handleRecyclingPointsUpdate, closeRecyclingModal]
+    [handleRecyclingPointsUpdate]
   );
 
+  useEffect(() => {
+  console.log("🔄 PARENT - RecyclingModal open state:", isRecyclingModalOpen);
+}, [isRecyclingModalOpen]);
   // Early return for loading state
   if (!user) {
     return (

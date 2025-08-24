@@ -1035,6 +1035,7 @@
   },
   "pickup": {
     "steps": {
+            "payment": "Payment",
       "address": "Address",
       "review": "Review",
       "waiting": "Waiting",
@@ -1610,6 +1611,37 @@
       "next": "Next slide",
       "goToSlide": "Go to slide {{number}}"
     }
+  },
+  
+  "payment": {
+    "title": "Payment Method",
+    "subtitle": "Choose your preferred payment method",
+    "methods": {
+      "cash": {
+        "name": "Cash on Delivery",
+        "description": "Pay when your order arrives"
+      },
+      "credit_card": {
+        "name": "Credit/Debit Card",
+        "description": "Pay securely with your card"
+      },
+      "wallet": {
+        "name": "Wallet Balance",
+        "description": "Use your wallet balance (${{balance}} available)"
+      }
+    },
+    "orderSummary": {
+      "title": "Order Summary",
+      "subtotal": "Subtotal",
+      "deliveryFee": "Delivery Fee",
+      "total": "Total",
+      "currency": "EGP"
+    },
+    "buttons": {
+      "back": "Back",
+      "continue": "Continue"
+    }
   }
+
 
 }

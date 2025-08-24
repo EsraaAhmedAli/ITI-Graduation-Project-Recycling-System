@@ -59,65 +59,93 @@ export default function CartPage() {
   });
 
   // Create a stock levels map from the React Query data
-  const stockLevels = useMemo(() => {
-    if (!itemsData?.data || userRole !== "buyer") return {};
+ const stockLevels = useMemo(() => {
+  // Don't calculate stock levels until we have data
+  if (!itemsData?.data || userRole !== "buyer" || isLoadingItems) return {};
 
-    const stockMap: { [key: string]: number } = {};
-    cart.forEach((cartItem) => {
-      const foundItem = itemsData.data.find(
-        (apiItem: any) => apiItem._id === cartItem._id
-      );
-      stockMap[cartItem._id] = foundItem?.quantity || 0;
-    });
+  const stockMap: { [key: string]: number } = {};
+  cart.forEach((cartItem) => {
+    const foundItem = itemsData.data.find(
+      (apiItem: any) => apiItem._id === cartItem._id
+    );
+    // Only set stock level if we found the item in the API response
+    if (foundItem && typeof foundItem.quantity === 'number') {
+      stockMap[cartItem._id] = foundItem.quantity;
+    }
+  });
 
-    return stockMap;
-  }, [itemsData, cart, userRole]);
+  console.log('Stock levels calculated:', stockMap);
+  return stockMap;
+}, [itemsData, cart, userRole, isLoadingItems]);
 
   // Real-time stock change detection and notification
   const [previousStockLevels, setPreviousStockLevels] = useState<{ [key: string]: number }>({});
 
   // Initialize previous stock levels on first load
-  useEffect(() => {
-    if (userRole === "buyer" && Object.keys(stockLevels).length > 0 && Object.keys(previousStockLevels).length === 0) {
-      setPreviousStockLevels({ ...stockLevels });
-    }
-  }, [stockLevels, userRole, previousStockLevels]);
-
+useEffect(() => {
+  if (userRole === "buyer" && 
+      Object.keys(stockLevels).length > 0 && 
+      !isLoadingItems &&
+      Object.keys(previousStockLevels).length === 0) {
+    console.log('Initializing previous stock levels:', stockLevels);
+    setPreviousStockLevels({ ...stockLevels });
+  }
+}, [stockLevels, userRole, previousStockLevels, isLoadingItems]);
   // Socket-based stock change notifications
-  useEffect(() => {
-    if (userRole === "buyer" && Object.keys(stockLevels).length > 0) {
-      // Check for stock changes
-      Object.keys(stockLevels).forEach(itemId => {
-        const currentStock = stockLevels[itemId];
-        const previousStock = previousStockLevels[itemId];
+// Fix the stock change detection useEffect
+useEffect(() => {
+  if (userRole === "buyer" && Object.keys(stockLevels).length > 0) {
+    // Skip initial setup - only compare when we have previous data
+    const hasPreviousData = Object.keys(previousStockLevels).length > 0;
+    
+    if (!hasPreviousData) {
+      // Initial setup - just store the current stock levels
+      setPreviousStockLevels({ ...stockLevels });
+      return;
+    }
 
-        if (previousStock !== undefined && currentStock !== previousStock && previousStock !== 0) {
-          const cartItem = cart.find(item => item._id === itemId);
-          if (cartItem) {
-            const stockChange = currentStock - previousStock;
-            const itemName = typeof cartItem.name === 'string'
-              ? cartItem.name
-              : cartItem.name[locale] || cartItem.name.en;
-
-            if (stockChange < 0) {
-              toast.error(
-                `Stock Alert: ${itemName} - ${Math.abs(stockChange)} units removed from inventory (Now: ${currentStock})`,
-                { duration: 5000 }
-              );
-            } else if (stockChange > 0) {
-              toast.success(
-                `Stock Alert: ${itemName} - ${stockChange} units added to inventory (Now: ${currentStock})`,
-                { duration: 4000 }
-              );
-            }
+    // Check for actual stock changes
+    let hasChanges = false;
+    const newPreviousLevels = { ...previousStockLevels };
+    
+    Object.keys(stockLevels).forEach(itemId => {
+      const currentStock = stockLevels[itemId];
+      const previousStock = previousStockLevels[itemId];
+      
+      // Only show notifications for actual changes
+      if (previousStock !== undefined && currentStock !== previousStock) {
+        hasChanges = true;
+        const cartItem = cart.find(item => item._id === itemId);
+        if (cartItem) {
+          const stockChange = currentStock - previousStock;
+          const itemName = typeof cartItem.name === 'string' 
+            ? cartItem.name 
+            : cartItem.name[locale] || cartItem.name.en;
+          
+          if (stockChange < 0) {
+            toast.error(
+              `Stock Alert: ${itemName} - ${Math.abs(stockChange)} units removed from inventory (Now: ${currentStock})`,
+              { duration: 5000 }
+            );
+          } else if (stockChange > 0) {
+            toast.success(
+              `Stock Alert: ${itemName} - ${stockChange} units added to inventory (Now: ${currentStock})`,
+              { duration: 4000 }
+            );
           }
         }
-      });
-
-      setPreviousStockLevels({ ...stockLevels });
+      }
+      
+      // Update the previous stock level for this item
+      newPreviousLevels[itemId] = currentStock;
+    });
+    
+    // Only update previous stock levels if there were actual changes
+    if (hasChanges) {
+      setPreviousStockLevels(newPreviousLevels);
     }
-  }, [stockLevels, cart, userRole, locale]);
-
+  }
+}, [stockLevels, cart, userRole, locale, previousStockLevels]);
   // Remove the aggressive refresh mechanisms and keep only essential ones
   useEffect(() => {
     const handleFocus = () => {
@@ -130,61 +158,75 @@ export default function CartPage() {
     return () => window.removeEventListener('focus', handleFocus);
   }, [userRole, refetchItems]);
 
-  useEffect(() => {
-    if (userRole !== "buyer" || cart.length === 0) {
-      const results: { [key: string]: boolean } = {};
-      const exceedsStock: { [key: string]: boolean } = {};
-      const warnings: { [key: string]: string } = {};
+useEffect(() => {
+  // Don't run stock checking if we're still loading or don't have stock data
+  if (userRole === "buyer" && (isLoadingItems || Object.keys(stockLevels).length === 0)) {
+    return;
+  }
 
-      cart.forEach((item) => {
-        results[item._id] = true;
-        exceedsStock[item._id] = false;
-        warnings[item._id] = "";
-      });
-
-      setCanIncrease(results);
-      setExceedsStockItems(exceedsStock);
-      setStockWarnings(warnings);
-      setHasExceedsStockItems(false);
-      return;
-    }
-
+  if (userRole !== "buyer" || cart.length === 0) {
     const results: { [key: string]: boolean } = {};
     const exceedsStock: { [key: string]: boolean } = {};
     const warnings: { [key: string]: string } = {};
-    let hasAnyExceedsStock = false;
-
+    
     cart.forEach((item) => {
-      const increment = item.measurement_unit === 1 ? 0.25 : 1;
-      const availableStock = stockLevels[item._id] || 0;
-      const itemName = typeof item.name === 'string'
-        ? item.name
-        : item.name[locale] || item.name.en;
-
-      // Check if cart quantity exceeds available stock
-      const exceedsAvailableStock = item.quantity > availableStock;
-      exceedsStock[item._id] = exceedsAvailableStock;
-
-      if (exceedsAvailableStock) {
-        hasAnyExceedsStock = true;
-        if (availableStock === 0) {
-          warnings[item._id] = `${itemName} is currently out of stock`;
-        } else {
-          warnings[item._id] = `Only ${availableStock} available, you have ${item.quantity} in cart`;
-        }
-      } else {
-        warnings[item._id] = "";
-      }
-
-      // Check if we can increase quantity (allow increase only if within stock limits)
-      results[item._id] = availableStock >= item.quantity + increment;
+      results[item._id] = true;
+      exceedsStock[item._id] = false;
+      warnings[item._id] = "";
     });
-
+    
     setCanIncrease(results);
     setExceedsStockItems(exceedsStock);
     setStockWarnings(warnings);
-    setHasExceedsStockItems(hasAnyExceedsStock);
-  }, [cart, userRole, stockLevels]);
+    setHasExceedsStockItems(false);
+    return;
+  }
+
+  const results: { [key: string]: boolean } = {};
+  const exceedsStock: { [key: string]: boolean } = {};
+  const warnings: { [key: string]: string } = {};
+  let hasAnyExceedsStock = false;
+
+  cart.forEach((item) => {
+    const increment = item.measurement_unit === 1 ? 0.25 : 1;
+    const availableStock = stockLevels[item._id];
+    const itemName = typeof item.name === 'string' 
+      ? item.name 
+      : item.name[locale] || item.name.en;
+
+    // Only check stock if we have stock data for this item
+    if (availableStock === undefined) {
+      // If we don't have stock data yet, assume it's fine
+      results[item._id] = true;
+      exceedsStock[item._id] = false;
+      warnings[item._id] = "";
+      return;
+    }
+
+    // Check if cart quantity exceeds available stock
+    const exceedsAvailableStock = item.quantity > availableStock;
+    exceedsStock[item._id] = exceedsAvailableStock;
+
+    if (exceedsAvailableStock) {
+      hasAnyExceedsStock = true;
+      if (availableStock === 0) {
+        warnings[item._id] = `${itemName} is currently out of stock`;
+      } else {
+        warnings[item._id] = `Only ${availableStock} available, you have ${item.quantity} in cart`;
+      }
+    } else {
+      warnings[item._id] = "";
+    }
+
+    // Check if we can increase quantity
+    results[item._id] = availableStock >= item.quantity + increment;
+  });
+
+  setCanIncrease(results);
+  setExceedsStockItems(exceedsStock);
+  setStockWarnings(warnings);
+  setHasExceedsStockItems(hasAnyExceedsStock);
+}, [cart, userRole, stockLevels, locale, isLoadingItems]);
 
   // Initialize input values when cart changes
   useEffect(() => {

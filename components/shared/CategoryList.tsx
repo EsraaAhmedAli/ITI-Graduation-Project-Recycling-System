@@ -15,7 +15,7 @@ const CategoryCard = dynamic(() => import("./CategoryCard"), {
 // Category Skeleton Component matching the ItemCard skeleton pattern
 const CategorySkeleton = memo(() => (
   <div className="animate-pulse">
-    <div className="w-64 h-60 mb-8 rounded-3xl overflow-hidden shadow-lg bg-slate-200">
+<div className="w-full max-w-64 h-60 mb-8 rounded-3xl overflow-hidden shadow-lg bg-slate-200">
       {/* Image skeleton */}
       <div className="flex flex-col items-center justify-center p-4 h-full">
         <div className="relative mb-6">
@@ -53,7 +53,7 @@ const CategorySkeletonGrid = memo(({
     <div className={
       horizontal
         ? "flex gap-6 pl-4 min-w-max pb-4"
-        : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 pl-10"
+:"grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 px-4 sm:px-6 lg:px-8"
     }>
       {Array(count).fill(0).map((_, i) => (
         <CategorySkeleton key={`category-skeleton-${i}`} />
@@ -119,7 +119,7 @@ const CategoryList = memo(function CategoryList({
   if (isLoading) {
     return (
       <div className="space-y-8">
-        <section className="mb-16 px-2 sm:px-4">
+        <section className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-6">
           {/* Header skeleton */}
           <div className="pl-18 mb-8 mt-16">
             <div className="animate-pulse">
@@ -160,7 +160,7 @@ const CategoryList = memo(function CategoryList({
 
   return (
     <div className="space-y-8">
-      <section className="mb-16 px-2 sm:px-4">
+      <section className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-6">
         <HeaderSection t={t} />
 
         {horizontal ? (
@@ -225,7 +225,7 @@ const GridCategoryList = memo(({
   renderCategory: (category: Category, index: number) => React.ReactNode 
 }) => (
   <div 
-    className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 pl-10"
+className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 px-4 sm:px-6 lg:px-8"
     role="grid"
     aria-label="Category grid"
   >
