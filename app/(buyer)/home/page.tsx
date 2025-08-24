@@ -410,7 +410,7 @@ export default function BuyerHomePage() {
   }, [fetchMaterials]);
 
   return (
-    <div className="dark:bg-black-200 min-h-screen">
+    <div className="dark:bg-black-200 min-h-screen ">
       <PromotionSlider t={t}  locale={locale}/>
       <div className="container mx-auto px-4 py-8 dark:bg-black-200">
         <br/>

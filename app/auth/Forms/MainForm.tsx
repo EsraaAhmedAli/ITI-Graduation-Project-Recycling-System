@@ -15,158 +15,185 @@ const ForgetPasswordForm = lazy(() => import("./ForgotPasswordForm"));
 
 // Form-specific loading skeletons
 const LoginFormSkeleton = () => (
-  <div className="animate-pulse space-y-6">
-    {/* Email field */}
-    <div className="space-y-2">
-      <div className="h-4 bg-gray-200 rounded w-20"></div>
-      <div className="h-12 bg-gray-200 rounded-lg"></div>
+  <div className="space-y-6">
+    <div className="space-y-4">
+      {/* Email field - matching FloatingInput structure */}
+      <div className="relative">
+        <div className="h-14 bg-gray-200 rounded-lg animate-pulse"></div>
+        <div className="absolute top-2 left-3 h-3 w-16 bg-gray-300 rounded animate-pulse"></div>
+      </div>
+
+      {/* Password field with icon - matching FloatingInput with eye icon */}
+      <div className="relative">
+        <div className="h-14 bg-gray-200 rounded-lg animate-pulse"></div>
+        <div className="absolute top-2 left-3 h-3 w-20 bg-gray-300 rounded animate-pulse"></div>
+        {/* Eye icon placeholder */}
+        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 bg-gray-300 rounded animate-pulse"></div>
+      </div>
     </div>
 
-    {/* Password field */}
-    <div className="space-y-2">
-      <div className="h-4 bg-gray-200 rounded w-24"></div>
-      <div className="h-12 bg-gray-200 rounded-lg"></div>
-    </div>
-
-    {/* Remember me checkbox */}
-    <div className="flex items-center space-x-2">
-      <div className="h-4 w-4 bg-gray-200 rounded"></div>
-      <div className="h-4 bg-gray-200 rounded w-24"></div>
-    </div>
-
-    {/* Login button */}
-    <div className="h-12 bg-gray-200 rounded-lg"></div>
+    {/* Submit button - matching the actual button height and styling */}
+    <div className="h-11 bg-gray-200 rounded-lg animate-pulse"></div>
 
     {/* Forgot password link */}
-    <div className="text-center">
-      <div className="h-4 bg-gray-200 rounded w-32 mx-auto"></div>
+    <div className="flex justify-end">
+      <div className="h-4 bg-gray-200 rounded w-28 animate-pulse"></div>
     </div>
 
-    {/* Divider */}
-    <div className="flex items-center space-x-4">
-      <div className="flex-1 h-px bg-gray-200"></div>
-      <div className="h-4 bg-gray-200 rounded w-8"></div>
-      <div className="flex-1 h-px bg-gray-200"></div>
-    </div>
+    {/* Social buttons section - matching SocialButtons component */}
+    <div className="space-y-4">
+      {/* Divider */}
+      <div className="flex items-center space-x-4">
+        <div className="flex-1 h-px bg-gray-200 animate-pulse"></div>
+        <div className="h-4 bg-gray-200 rounded w-8 animate-pulse"></div>
+        <div className="flex-1 h-px bg-gray-200 animate-pulse"></div>
+      </div>
 
-    {/* Google sign in button */}
-    <div className="h-12 bg-gray-200 rounded-lg"></div>
+      {/* Google sign in button */}
+      <div className="h-11 bg-gray-200 rounded-lg animate-pulse"></div>
+    </div>
 
     {/* Sign up link */}
     <div className="text-center">
-      <div className="h-4 bg-gray-200 rounded w-40 mx-auto"></div>
+      <div className="h-4 bg-gray-200 rounded w-40 mx-auto animate-pulse"></div>
     </div>
   </div>
 );
 
 const SignUpFormSkeleton = () => (
-  <div className="animate-pulse space-y-6">
-    {/* Name fields (first name, last name) */}
-    <div className="grid grid-cols-2 gap-4">
-      <div className="space-y-2">
-        <div className="h-4 bg-gray-200 rounded w-20"></div>
-        <div className="h-12 bg-gray-200 rounded-lg"></div>
+  <div className="space-y-6">
+    {/* BasicInfo fields - matching your actual step 1 */}
+    <div className="space-y-4">
+      {/* First Name & Last Name - grid layout like your actual form */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="relative">
+          <div className="h-14 bg-gray-200 rounded-lg animate-pulse"></div>
+          <div className="absolute top-2 left-3 h-3 w-16 bg-gray-300 rounded animate-pulse"></div>
+        </div>
+        <div className="relative">
+          <div className="h-14 bg-gray-200 rounded-lg animate-pulse"></div>
+          <div className="absolute top-2 left-3 h-3 w-16 bg-gray-300 rounded animate-pulse"></div>
+        </div>
       </div>
-      <div className="space-y-2">
-        <div className="h-4 bg-gray-200 rounded w-20"></div>
-        <div className="h-12 bg-gray-200 rounded-lg"></div>
+
+      {/* Email field */}
+      <div className="relative">
+        <div className="h-14 bg-gray-200 rounded-lg animate-pulse"></div>
+        <div className="absolute top-2 left-3 h-3 w-16 bg-gray-300 rounded animate-pulse"></div>
+      </div>
+
+      {/* Phone field with country code selector */}
+      <div>
+        <div className="h-4 bg-gray-200 rounded w-28 mb-1 animate-pulse"></div>
+        <div className="flex">
+          <div className="h-14 w-20 bg-gray-200 rounded-l-lg animate-pulse"></div>
+          <div className="h-14 flex-1 bg-gray-200 rounded-r-lg animate-pulse"></div>
+        </div>
+      </div>
+
+      {/* Password field with icon */}
+      <div className="relative">
+        <div className="h-14 bg-gray-200 rounded-lg animate-pulse"></div>
+        <div className="absolute top-2 left-3 h-3 w-20 bg-gray-300 rounded animate-pulse"></div>
+        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 bg-gray-300 rounded animate-pulse"></div>
+      </div>
+
+      {/* Confirm Password field with icon */}
+      <div className="relative">
+        <div className="h-14 bg-gray-200 rounded-lg animate-pulse"></div>
+        <div className="absolute top-2 left-3 h-3 w-32 bg-gray-300 rounded animate-pulse"></div>
+        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 bg-gray-300 rounded animate-pulse"></div>
       </div>
     </div>
 
-    {/* Email field */}
-    <div className="space-y-2">
-      <div className="h-4 bg-gray-200 rounded w-20"></div>
-      <div className="h-12 bg-gray-200 rounded-lg"></div>
-    </div>
-
-    {/* Phone field */}
-    <div className="space-y-2">
-      <div className="h-4 bg-gray-200 rounded w-24"></div>
-      <div className="h-12 bg-gray-200 rounded-lg"></div>
-    </div>
-
-    {/* Password field */}
-    <div className="space-y-2">
-      <div className="h-4 bg-gray-200 rounded w-24"></div>
-      <div className="h-12 bg-gray-200 rounded-lg"></div>
-    </div>
-
-    {/* Confirm password field */}
-    <div className="space-y-2">
-      <div className="h-4 bg-gray-200 rounded w-32"></div>
-      <div className="h-12 bg-gray-200 rounded-lg"></div>
-    </div>
-
-    {/* Terms and conditions checkbox */}
-    <div className="flex items-start space-x-2">
-      <div className="h-4 w-4 bg-gray-200 rounded mt-1"></div>
-      <div className="space-y-1 flex-1">
-        <div className="h-4 bg-gray-200 rounded w-full"></div>
-        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+    {/* Terms checkbox - matching your actual terms section */}
+    <div className="flex items-start space-x-3">
+      <div className="h-5 w-5 bg-gray-200 rounded mt-1 animate-pulse"></div>
+      <div className="flex-1 space-y-2">
+        <div className="h-4 bg-gray-200 rounded w-full animate-pulse"></div>
+        <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse"></div>
       </div>
     </div>
 
-    {/* Sign up button */}
-    <div className="h-12 bg-gray-200 rounded-lg"></div>
+    {/* Submit button */}
+    <div className="h-11 bg-gray-200 rounded-lg animate-pulse"></div>
 
-    {/* Already have account link */}
+    {/* Social divider - only show on step 1 */}
+    <div className="relative">
+      <div className="absolute inset-0 flex items-center">
+        <div className="w-full h-px bg-gray-200 animate-pulse"></div>
+      </div>
+      <div className="relative flex justify-center text-sm">
+        <div className="px-2 bg-white">
+          <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+
+    {/* Social buttons */}
+    <div className="space-y-3">
+      <div className="h-11 bg-gray-200 rounded-lg animate-pulse"></div>
+    </div>
+
+    {/* Footer link */}
     <div className="text-center">
-      <div className="h-4 bg-gray-200 rounded w-48 mx-auto"></div>
+      <div className="h-4 bg-gray-200 rounded w-48 mx-auto animate-pulse"></div>
     </div>
   </div>
 );
 
 const ForgotPasswordFormSkeleton = () => (
-  <div className="animate-pulse space-y-6">
-    {/* Description text */}
-    <div className="space-y-2">
-      <div className="h-4 bg-gray-200 rounded w-full"></div>
-      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+  <div className="space-y-6">
+    {/* Role Stepper skeleton */}
+    <div className="h-8 bg-gray-200 rounded mb-4 animate-pulse"></div>
+
+    {/* Step content - could be email input, OTP, or reset form */}
+    <div className="space-y-4">
+      {/* Main input field (email/OTP/password depending on step) */}
+      <div className="relative">
+        <div className="h-14 bg-gray-200 rounded-lg animate-pulse"></div>
+        <div className="absolute top-2 left-3 h-3 w-20 bg-gray-300 rounded animate-pulse"></div>
+      </div>
+
+      {/* Optional second field (for password reset step) */}
+      <div className="relative">
+        <div className="h-14 bg-gray-200 rounded-lg animate-pulse"></div>
+        <div className="absolute top-2 left-3 h-3 w-24 bg-gray-300 rounded animate-pulse"></div>
+        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 bg-gray-300 rounded animate-pulse"></div>
+      </div>
     </div>
 
-    {/* Email field */}
-    <div className="space-y-2">
-      <div className="h-4 bg-gray-200 rounded w-20"></div>
-      <div className="h-12 bg-gray-200 rounded-lg"></div>
-    </div>
+    {/* Action button */}
+    <div className="h-11 bg-gray-200 rounded-lg animate-pulse"></div>
 
-    {/* Send reset link button */}
-    <div className="h-12 bg-gray-200 rounded-lg"></div>
-
-    {/* Back to login link */}
+    {/* Back link */}
     <div className="text-center">
-      <div className="h-4 bg-gray-200 rounded w-28 mx-auto"></div>
+      <div className="h-4 bg-gray-200 rounded w-28 mx-auto animate-pulse"></div>
     </div>
   </div>
 );
 
 const RoleSelectSkeleton = () => (
-  <div className="animate-pulse space-y-6">
-    {/* Description text */}
-    <div className="text-center space-y-2 mb-8">
-      <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
-      <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
-    </div>
-
-    {/* Role cards */}
-    <div className="grid gap-4">
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="p-4 border-2 border-gray-200 rounded-lg">
-          <div className="flex items-center space-x-4">
-            <div className="h-12 w-12 bg-gray-200 rounded-full"></div>
-            <div className="flex-1 space-y-2">
-              <div className="h-5 bg-gray-200 rounded w-32"></div>
-              <div className="h-4 bg-gray-200 rounded w-full"></div>
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-
-    {/* Continue button */}
-    <div className="h-12 bg-gray-200 rounded-lg"></div>
-  </div>
+  <ol className="flex items-center justify-center w-full mb-5">
+    {/* Generate 2-4 step circles (average of different roles) */}
+    {[1, 2, 3].map((idx) => {
+      const isLast = idx === 3;
+      return (
+        <li
+          key={idx}
+          className={`flex items-center ${
+            !isLast
+              ? "w-full after:content-[''] after:w-full after:h-1 after:border-b after:border-4 after:inline-block after:ml-4 after:border-gray-200 animate-pulse"
+              : ""
+          }`}
+        >
+          <span className="flex items-center justify-center w-10 h-10 rounded-full shrink-0 lg:h-12 lg:w-12 bg-gray-200 animate-pulse">
+            <div className="w-4 h-4 lg:w-5 lg:h-5 bg-gray-300 rounded animate-pulse"></div>
+          </span>
+        </li>
+      );
+    })}
+  </ol>
 );
 
 export const roleKeys = {
@@ -331,15 +358,11 @@ export default function MainForm() {
       {/* Body */}
       <div className="relative p-6 flex-auto">
         {/* Show the stepper only for signup mode with selected role */}
-        {mode === "signup" && selectedRole && (
-          <Suspense
-            fallback={
-              <div className="h-8 bg-gray-200 rounded mb-4 animate-pulse"></div>
-            }
-          >
-            <RoleStepper role={selectedRole} step={step} />
-          </Suspense>
-        )}
+       {mode === "signup" && selectedRole && (
+  <Suspense fallback={<RoleSelectSkeleton />}>
+    <RoleStepper role={selectedRole} step={step} />
+  </Suspense>
+)}
 
         <form onSubmit={handleSubmit(onSubmit)}>{renderFormContent()}</form>
       </div>

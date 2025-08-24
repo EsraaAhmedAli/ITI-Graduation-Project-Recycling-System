@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import DynamicTable from "@/components/shared/dashboardTable";
 import api from "@/lib/axios";
@@ -16,10 +16,12 @@ const AdminUsersPage = () => {
   const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
 
-  const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
-    setCurrentPage(1);
-  };
+const handleSearchChange = (value: string) => {
+  setIsSearching(true);
+  setSearchTerm(value);
+  setCurrentPage(1);
+};
+
   const debouncedSearchTerm = useValueDebounce(searchTerm, 500); // 500ms delay
 
 
@@ -79,6 +81,7 @@ const AdminUsersPage = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
+const [isSearching, setIsSearching] = useState(false);
 
   const activeFilters = useMemo(() => ({
     role: userFilters.find(f => f.name === 'role')?.active || [],
@@ -91,7 +94,11 @@ queryKey: ['users', currentPage, itemsPerPage, activeFilters, debouncedSearchTer
 
     queryFn: () => fetchUsers(currentPage, itemsPerPage, activeFilters, debouncedSearchTerm)
   });
-
+useEffect(() => {
+  if (data) {
+    setIsSearching(false);
+  }
+}, [data]);
   const users = data?.data || [];
 
   const handlePageChange = (page: number) => {
@@ -212,14 +219,28 @@ queryKey: ['users', currentPage, itemsPerPage, activeFilters, debouncedSearchTer
 
   return (
     <>
-      {isLoading ? (
-        <Loader />
-      ) : error ? (
+      { error ? (
         <p className="text-center py-10 text-red-500">{error.message}</p>
-      ) : users?.length === 0 ? (
-        <p className="text-center py-10 text-gray-400">No users found.</p>
-      ) : (
+      ) :  !isLoading && !isSearching && users?.length === 0  ? (
+ <div className="text-center py-10">
+    <p className="text-gray-400 mb-4">No users found.</p>
+    {(searchTerm || Object.values(activeFilters).some(arr => arr.length > 0)) && (
+      <button
+        onClick={() => {
+          setSearchTerm('');
+          setUserFilters(prev => prev.map(f => ({ ...f, active: [] })));
+          setCurrentPage(1);
+        }}
+        className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+      >
+        Clear All Filters
+      </button>
+    )}
+  </div>      ) : (
         <DynamicTable
+          isSearching={isSearching} // Add this
+      isLoading={isLoading ||isSearching} // Only show loading if not searching
+
           data={users}
           columns={columns}
           title="Users"

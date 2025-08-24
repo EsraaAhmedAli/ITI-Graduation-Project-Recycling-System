@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo, useCallback, memo, Suspense } from "react";
+import React, { useState, useMemo, useCallback, memo, Suspense, startTransition } from "react";
 import dynamic from "next/dynamic";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCategories } from "@/hooks/useGetCategories";
 import { Category } from "../Types/categories.type";
 import { useLanguage } from "@/context/LanguageContext";
@@ -12,21 +13,17 @@ const CategoryCard = dynamic(() => import("./CategoryCard"), {
   loading: () => <CategorySkeleton />
 });
 
-// Category Skeleton Component matching the ItemCard skeleton pattern
+// Category Skeleton Component
 const CategorySkeleton = memo(() => (
   <div className="animate-pulse">
-<div className="w-full max-w-64 h-60 mb-8 rounded-3xl overflow-hidden shadow-lg bg-slate-200">
-      {/* Image skeleton */}
+    <div className="w-full max-w-64 h-60 mb-8 rounded-3xl overflow-hidden shadow-lg bg-slate-200">
       <div className="flex flex-col items-center justify-center p-4 h-full">
         <div className="relative mb-6">
           <div className="w-28 h-28 rounded-full bg-slate-300 p-1 shadow-md">
             <div className="w-full h-full rounded-full bg-slate-200 border-4 border-white" />
           </div>
-          {/* Icon overlay skeleton */}
           <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-10 h-10 bg-slate-300 rounded-full border-2 border-gray-100" />
         </div>
-        
-        {/* Title skeleton */}
         <div className="flex flex-col items-center mb-4">
           <div className="w-32 h-5 bg-slate-300 rounded mb-1" />
           <div className="w-12 h-1 bg-slate-300 rounded-full" />
@@ -53,7 +50,7 @@ const CategorySkeletonGrid = memo(({
     <div className={
       horizontal
         ? "flex gap-6 pl-4 min-w-max pb-4"
-:"grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 px-4 sm:px-6 lg:px-8"
+        : "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 px-4 sm:px-6 lg:px-8"
     }>
       {Array(count).fill(0).map((_, i) => (
         <CategorySkeleton key={`category-skeleton-${i}`} />
@@ -67,33 +64,91 @@ interface CategoryListProps {
   basePath: string;
   maxToShow?: number;
   horizontal?: boolean;
+  enablePagination?: boolean;
+  itemsPerPage?: number;
 }
 
 const CategoryList = memo(function CategoryList({
-  maxToShow = 10,
+  maxToShow,
   horizontal = false,
+  enablePagination = false,
+  itemsPerPage = 10,
 }: CategoryListProps) {
   const [showAll, setShowAll] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const { t } = useLanguage();
-  const { data, isLoading, error } = useCategories();
+  
+  // Use pagination only if enablePagination is true
+  const { data, isLoading, error, isFetching } = useCategories(
+    enablePagination 
+      ? { page: currentPage, limit: itemsPerPage }
+      : { page: 1, limit: 1000 }
+  );
 
-  // Memoize categories with better dependency tracking
+  // Generate page numbers for pagination (matching items pagination style)
+  const generatePageNumbers = useCallback((): (number | string)[] => {
+    const pagination = data?.pagination;
+    if (!pagination) return [];
+    
+    const totalPages = pagination.totalPages;
+    const current = pagination.currentPage;
+    const delta = 2;
+    const range: (number | string)[] = [];
+    const rangeWithDots: (number | string)[] = [];
+
+    for (let i = Math.max(2, current - delta); i <= Math.min(totalPages - 1, current + delta); i++) {
+      range.push(i);
+    }
+
+    if (current - delta > 2) {
+      rangeWithDots.push(1, '...');
+    } else {
+      rangeWithDots.push(1);
+    }
+
+    rangeWithDots.push(...range);
+
+    if (current + delta < totalPages - 1) {
+      rangeWithDots.push('...', totalPages);
+    } else if (totalPages > 1) {
+      rangeWithDots.push(totalPages);
+    }
+
+    return rangeWithDots.filter((item, index, arr) => arr.indexOf(item) === index);
+  }, [data?.pagination]);
+
+  // Handle page changes
+  const handlePageChange = useCallback((page: number) => {
+    startTransition(() => {
+      setCurrentPage(page);
+    });
+  }, []);
+
+  // Memoize categories logic
   const { categoriesToShow, shouldShowSeeMoreButton, totalCategories } = useMemo(() => {
     if (!data?.data) return { categoriesToShow: [], shouldShowSeeMoreButton: false, totalCategories: 0 };
     
     const categories = data.data;
-    const total = categories.length;
     
-    const toShow = showAll || !maxToShow 
-      ? categories 
-      : categories.slice(0, maxToShow);
+    if (enablePagination) {
+      return {
+        categoriesToShow: categories,
+        shouldShowSeeMoreButton: false,
+        totalCategories: data.pagination?.totalItems || categories.length
+      };
+    } else {
+      const total = categories.length;
+      const toShow = showAll || !maxToShow 
+        ? categories 
+        : categories.slice(0, maxToShow);
 
-    return {
-      categoriesToShow: toShow,
-      shouldShowSeeMoreButton: !showAll && maxToShow && total > maxToShow,
-      totalCategories: total
-    };
-  }, [data?.data, showAll, maxToShow]);
+      return {
+        categoriesToShow: toShow,
+        shouldShowSeeMoreButton: !showAll && maxToShow && total > maxToShow,
+        totalCategories: total
+      };
+    }
+  }, [data?.data, data?.pagination, showAll, maxToShow, enablePagination]);
 
   const handleSeeMoreClick = useCallback(() => {
     setShowAll(true);
@@ -115,12 +170,158 @@ const CategoryList = memo(function CategoryList({
     [horizontal]
   );
 
+  // Updated Pagination Controls Component (matching items style exactly)
+  const PaginationControls = memo(({ 
+    pagination,
+    currentPage,
+    onPageChange,
+    generatePageNumbers,
+    t
+  }: {
+    pagination: any;
+    currentPage: number;
+    onPageChange: (page: number) => void;
+    generatePageNumbers: () => (number | string)[];
+    t: (key: string, params?: any) => string;
+  }) => {
+    const pageNumbers = useMemo(() => generatePageNumbers(), [generatePageNumbers]);
+
+    const handlePrevious = useCallback(() => {
+      if (currentPage > 1) {
+        onPageChange(currentPage - 1);
+      }
+    }, [currentPage, onPageChange]);
+
+    const handleNext = useCallback(() => {
+      if (pagination?.hasNextPage) {
+        onPageChange(currentPage + 1);
+      }
+    }, [currentPage, pagination?.hasNextPage, onPageChange]);
+
+    if (!pagination || pagination.totalPages <= 1) return null;
+
+    return (
+      <nav
+        className="flex flex-col items-center gap-4"
+        aria-label="Pagination Navigation"
+        role="navigation"
+      >
+        {/* Pagination Buttons with fixed height container - matching items style */}
+        <div className="flex items-center justify-center gap-1 sm:gap-2 min-h-[44px] my-2">
+          <button
+            onClick={handlePrevious}
+            disabled={currentPage === 1}
+            className="flex items-center gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium border rounded-lg hover:bg-opacity-75 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            style={{
+              color: "var(--text-gray-600)",
+              backgroundColor: "var(--color-card)",
+              borderColor: "var(--border-color)",
+            }}
+            onMouseEnter={(e) => {
+              if (currentPage !== 1) {
+                e.currentTarget.style.backgroundColor = "var(--color-base-100)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (currentPage !== 1) {
+                e.currentTarget.style.backgroundColor = "var(--color-card)";
+              }
+            }}
+            aria-label="Go to previous page"
+            type="button"
+          >
+            <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+            {t("common.previous") || "Previous"}
+          </button>
+
+          <div className="flex gap-1 flex-wrap justify-center" role="group" aria-label="Page numbers">
+            {pageNumbers.map((pageNum, index) => (
+              <button
+                key={`page-${index}-${pageNum}`}
+                onClick={() =>
+                  typeof pageNum === "number" ? onPageChange(pageNum) : undefined
+                }
+                disabled={pageNum === "..."}
+                className="px-3 py-2 text-sm font-medium rounded-lg transition-colors min-w-[44px]"
+                style={{
+                  color:
+                    pageNum === currentPage
+                      ? "white"
+                      : pageNum === "..."
+                      ? "var(--text-gray-400)"
+                      : "var(--text-gray-600)",
+                  backgroundColor:
+                    pageNum === currentPage
+                      ? "var(--color-primary)"
+                      : pageNum === "..."
+                      ? "transparent"
+                      : "var(--color-card)",
+                  borderColor:
+                    pageNum === currentPage
+                      ? "var(--color-primary)"
+                      : "var(--border-color)",
+                  border: pageNum === "..." ? "none" : "1px solid",
+                  cursor: pageNum === "..." ? "default" : "pointer",
+                }}
+                onMouseEnter={(e) => {
+                  if (pageNum !== currentPage && pageNum !== "...") {
+                    e.currentTarget.style.backgroundColor = "var(--color-base-100)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (pageNum !== currentPage && pageNum !== "...") {
+                    e.currentTarget.style.backgroundColor = "var(--color-card)";
+                  }
+                }}
+                aria-label={
+                  typeof pageNum === "number"
+                    ? `Go to page ${pageNum}`
+                    : undefined
+                }
+                aria-current={pageNum === currentPage ? "page" : undefined}
+                type="button"
+              >
+                {pageNum}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={handleNext}
+            disabled={!pagination?.hasNextPage}
+            className="flex items-center gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium border rounded-lg hover:bg-opacity-75 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            style={{
+              color: "var(--text-gray-600)",
+              backgroundColor: "var(--color-card)",
+              borderColor: "var(--border-color)",
+            }}
+            onMouseEnter={(e) => {
+              if (pagination?.hasNextPage) {
+                e.currentTarget.style.backgroundColor = "var(--color-base-100)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (pagination?.hasNextPage) {
+                e.currentTarget.style.backgroundColor = "var(--color-card)";
+              }
+            }}
+            aria-label="Go to next page"
+            type="button"
+          >
+            {t("common.next") || "Next"}
+            <ChevronRight className="w-4 h-4" aria-hidden="true" />
+          </button>
+        </div>
+      </nav>
+    );
+  });
+  PaginationControls.displayName = "PaginationControls";
+
   // Loading state with skeleton
   if (isLoading) {
     return (
       <div className="space-y-8">
         <section className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-6">
-          {/* Header skeleton */}
           <div className="pl-18 mb-8 mt-16">
             <div className="animate-pulse">
               <div className="w-80 h-8 bg-slate-200 rounded mb-2" />
@@ -128,24 +329,31 @@ const CategoryList = memo(function CategoryList({
             </div>
           </div>
 
-          {/* Categories skeleton grid */}
           <CategorySkeletonGrid 
-            count={maxToShow || 10} 
+            count={enablePagination ? itemsPerPage : (maxToShow || 10)} 
             horizontal={horizontal} 
           />
 
-          {/* See more button skeleton */}
-          {maxToShow && (
+          {/* Pagination skeleton when pagination is enabled */}
+          {enablePagination && (
+            <div className="flex justify-center mt-8">
+              <div className="flex gap-2 animate-pulse">
+                <div className="w-20 h-10 bg-slate-200 rounded" />
+                <div className="w-10 h-10 bg-slate-200 rounded" />
+                <div className="w-10 h-10 bg-slate-200 rounded" />
+                <div className="w-10 h-10 bg-slate-200 rounded" />
+                <div className="w-20 h-10 bg-slate-200 rounded" />
+              </div>
+            </div>
+          )}
+
+          {/* See more button skeleton when pagination is disabled */}
+          {!enablePagination && maxToShow && (
             <div className="flex justify-center mt-8">
               <div className="w-32 h-10 bg-slate-200 rounded-full animate-pulse" />
             </div>
           )}
         </section>
-
-        {/* Footer message skeleton */}
-        <div className="text-center mt-8">
-          <div className="w-64 h-4 bg-slate-200 rounded animate-pulse mx-auto" />
-        </div>
       </div>
     );
   }
@@ -163,25 +371,43 @@ const CategoryList = memo(function CategoryList({
       <section className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-6">
         <HeaderSection t={t} />
 
-        {horizontal ? (
-          <HorizontalCategoryList 
-            categories={categoriesToShow}
-            renderCategory={renderCategory}
-          />
-        ) : (
-          <GridCategoryList 
-            categories={categoriesToShow}
-            renderCategory={renderCategory}
-          />
-        )}
+     
 
-        {shouldShowSeeMoreButton && (
-          <SeeMoreButton 
-            onClick={handleSeeMoreClick}
-            totalCategories={totalCategories}
-            t={t}
-          />
-        )}
+        <main>
+          {horizontal ? (
+            <HorizontalCategoryList 
+              categories={categoriesToShow}
+              renderCategory={renderCategory}
+            />
+          ) : (
+            <GridCategoryList 
+              categories={categoriesToShow}
+              renderCategory={renderCategory}
+            />
+          )}
+
+          {/* Pagination Controls - only show when pagination is enabled */}
+          {enablePagination && (
+            <Suspense fallback={<div className="h-20" />}>
+              <PaginationControls
+                pagination={data?.pagination}
+                currentPage={currentPage}
+                onPageChange={handlePageChange}
+                generatePageNumbers={generatePageNumbers}
+                t={t}
+              />
+            </Suspense>
+          )}
+
+          {/* See More Button - only show when pagination is disabled */}
+          {!enablePagination && shouldShowSeeMoreButton && (
+            <SeeMoreButton 
+              onClick={handleSeeMoreClick}
+              totalCategories={totalCategories}
+              t={t}
+            />
+          )}
+        </main>
       </section>
 
       <FooterMessage t={t} />
@@ -189,7 +415,7 @@ const CategoryList = memo(function CategoryList({
   );
 });
 
-// Optimized sub-components
+// Optimized sub-components (keeping existing ones)
 const HeaderSection = memo(({ t }: { t: (key: string) => string }) => (
   <div className="pl-18 mb-8 mt-16">
     <h2 className="text-3xl md:text-3xl font-bold text-start text-accent-content mb-2">
@@ -225,7 +451,7 @@ const GridCategoryList = memo(({
   renderCategory: (category: Category, index: number) => React.ReactNode 
 }) => (
   <div 
-className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 px-4 sm:px-6 lg:px-8"
+    className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 px-4 sm:px-6 lg:px-8"
     role="grid"
     aria-label="Category grid"
   >

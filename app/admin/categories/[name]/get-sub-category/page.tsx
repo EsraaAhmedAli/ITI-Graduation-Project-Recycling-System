@@ -9,6 +9,7 @@ import { useLocalization } from "@/utils/localiztionUtil";
 import Button from "@/components/common/Button";
 import { useGetItemsPaginated } from "@/hooks/useGetItemsPaginated";
 import { Loader } from '@/components/common'
+import TableSkeleton from "@/components/shared/tableSkeleton";
 
 interface SubcategoryItem {
   _id: string;
@@ -39,6 +40,7 @@ export default function Page() {
   const { getDisplayName, getMeasurementUnit, formatCurrency, t, locale } = useLocalization();
   
   const [searchTerm, setSearchTerm] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [previousPage, setPreviousPage] = useState(1);
 
@@ -61,6 +63,8 @@ export default function Page() {
     currentPage,
     handlePageChange,
     generatePageNumbers,
+      isSearching: hookIsSearching, // Add this line
+
     categoryStats
   } = useGetItemsPaginated({
     categoryName: decodedName,
@@ -79,12 +83,17 @@ export default function Page() {
     }
   }, [debouncedSearchTerm, currentPage, searchTerm]);
 
-  const handleSearchChange = useCallback((term: string) => {
-    setSearchTerm(term);
-    // Only reset to first page when the debounced search actually changes
-    // This prevents page resets on every keystroke
-  }, []);
-
+const handleSearchChange = useCallback((term: string) => {
+  if (term) {
+    setIsSearching(true);
+  }
+  setSearchTerm(term);
+}, []);
+useEffect(() => {
+  if (items || !debouncedSearchTerm) {
+    setIsSearching(false);
+  }
+}, [items, debouncedSearchTerm]);
   // Reset to page 1 only when debounced search term actually changes
   useEffect(() => {
     if (debouncedSearchTerm !== searchTerm) return; // Wait for debounce
@@ -204,9 +213,12 @@ export default function Page() {
       </div>
     );
   }
+if (loading && !isSearching && !hookIsSearching && !debouncedSearchTerm) {
+  return <TableSkeleton rows={5} columns={columns.length} showActions={true} />;
+}
 
   // Show no results found with back button when searching
-  if (items.length === 0 && !loading && debouncedSearchTerm) {
+if (items.length === 0 && !loading && !isSearching && debouncedSearchTerm) {
     return (
       <div className="space-y-6">
         <div className="text-center py-10">
@@ -254,31 +266,22 @@ export default function Page() {
     );
   }
 
+  console.log('=== DEBUG INFO ===');
+console.log('searchTerm:', searchTerm);
+console.log('debouncedSearchTerm:', debouncedSearchTerm);
+console.log('isSearching (local):', isSearching);
+console.log('hookIsSearching:', hookIsSearching);
+console.log('loading:', loading);
+console.log('isFetching:', isFetching);
+console.log('currentPage:', currentPage);
+console.log('Combined isSearching for DynamicTable:', isSearching || hookIsSearching);
+console.log('isLoading for DynamicTable:', loading && !debouncedSearchTerm && !isSearching && !hookIsSearching);
+console.log('==================');
+
   return (
     <div className="space-y-6">
-      {isFetching && <Loader />}
 
-      {/* Show search status */}
-      {debouncedSearchTerm && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-blue-600 font-medium">
-                Searching for: "{debouncedSearchTerm}"
-              </span>
-              <span className="text-blue-500 text-sm">
-                ({pagination?.totalItems || 0} results found)
-              </span>
-            </div>
-            <button
-              onClick={handleBackToResults}
-              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-            >
-              Clear search ×
-            </button>
-          </div>
-        </div>
-      )}
+  
 
       {/* Dynamic Table with built-in pagination */}
       <DynamicTable
@@ -290,13 +293,14 @@ export default function Page() {
         onEdit={(item) => router.push(`/admin/categories/${name}/edit-sub-category/${item._id}`)}
         onDelete={handleDelete}
         onImageClick={(item) => router.push(`/admin/categories`)}
-        
+isLoading={loading && !debouncedSearchTerm && !isSearching && !hookIsSearching}
         showPagination={true}
         disableClientSideSearch={true}
         searchTerm={searchTerm} // Use immediate search term for UI
         onSearchChange={handleSearchChange}
         showFilter={false}
-        
+isSearching={isSearching || hookIsSearching}
+
         paginationInfo={{
           currentPage: currentPage,
           totalPages: pagination?.totalPages || 1,
@@ -308,7 +312,6 @@ export default function Page() {
         
         onPageChange={handlePageChange}
         isFetching={isFetching}
-        isLoading={loading}
         disableClientSideSearch={true}
         itemsPerPage={5}
       />

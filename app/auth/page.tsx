@@ -51,7 +51,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   if (!isOpen) return null;
 
   return (
-    <Suspense fallback={<ModalSkeleton />}>
+    <Suspense fallback={null}>
       <Wrapper>
         <AuthenticationProvider onClose={onClose}>
           <FormProvider {...methods}>

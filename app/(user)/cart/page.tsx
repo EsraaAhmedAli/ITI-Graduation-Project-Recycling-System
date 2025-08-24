@@ -702,7 +702,8 @@ export default function CartPage() {
                               onConfirm: () => removeFromCart(item),
                             });
                           }}
-                          className="text-gray-400 hover:text-red-500 transition-colors ml-2"
+                          style={{ color: "var(--foreground)"}}
+                          className="text-gray-400 hover:text-red-500 transition-colors mt-4 p-2 rounded-md"
                         >
                           <X className="w-5 h-5" />
                         </button>
@@ -754,7 +755,7 @@ export default function CartPage() {
                           </span>{" "}
                           {convertNumber(item.price.toFixed(2))} {coin}
                         </div>
-                        <div className="text-sm text-gray-800 dark:text-gray-200">
+                        <div className="text-sm text-gray-800 dark:text-gray-200" >
                           {convertNumber(item.quantity)} ×{" "}
                           {convertNumber(item.price.toFixed(2))} =
                           <span className="font-medium text-primary">

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, memo } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -7,7 +7,6 @@ import api from "@/lib/axios";
 import { toast } from "react-hot-toast";
 import Image from "next/image";
 import { X, Search } from "lucide-react";
-import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import Button from "./Button";
 import { Loader } from "@/components/common";
@@ -70,6 +69,22 @@ export default function NavbarSearch({
   const { t, locale, convertNumber } = useLanguage();
   const router = useRouter();
 
+  // Add this skeleton component
+const ItemSkeleton = memo(() => (
+  <div className="animate-pulse rounded-2xl  overflow-hidden bg-white dark:bg-gray-800">
+    <div className="h-40 w-full bg-gray-300 dark:bg-gray-600" />
+    <div className="p-4">
+      <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded mb-2" />
+      <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4 mb-3" />
+      <div className="flex justify-between items-center mb-3">
+        <div className="h-6 w-16 bg-gray-300 dark:bg-gray-600 rounded-lg" />
+        <div className="h-4 w-12 bg-gray-300 dark:bg-gray-600 rounded" />
+      </div>
+      <div className="h-10 bg-gray-300 dark:bg-gray-600 rounded-xl w-full" />
+    </div>
+  </div>
+));
+ItemSkeleton.displayName = "ItemSkeleton";
   // Handle item click with proper navigation
   const handleItemClick = useCallback(
     (item: SearchResult) => {
@@ -80,7 +95,8 @@ export default function NavbarSearch({
       setIsSearching(false);
       if (onClose) onClose();
 
-      const categorySlug = item.categoryName.en;
+      const categorySlug =
+        item.categoryName?.en;
 
       console.log("🚀 Navigating to:", `/category/${categorySlug}`);
       router.push(`/category/${categorySlug}`);
@@ -171,7 +187,7 @@ export default function NavbarSearch({
 
       return { data, alphabetStats };
     },
-    enabled: isOpen,
+  enabled: true, // Change this from `enabled: isOpen`
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -391,7 +407,7 @@ export default function NavbarSearch({
         {/* Header with close button */}
         <div
           style={{ background: "var(--background)" }}
-          className="flex-shrink-0 flex justify-between items-center p-4 border-b shadow-sm"
+          className="flex-shrink-0 flex justify-between items-center p-4  shadow-sm"
         >
           <h2
             className="text-2xl font-bold "
@@ -410,7 +426,7 @@ export default function NavbarSearch({
 
         {/* Search Input with Button */}
         <div
-          className="flex-shrink-0 p-4 border-b bg-gray-50"
+          className="flex-shrink-0 p-4  bg-gray-50"
           style={{ background: "var(--background)" }}
         >
           <div className="flex flex-col sm:flex-row gap-3 w-full">
@@ -463,9 +479,9 @@ export default function NavbarSearch({
         >
           <div className="p-4">
             {/* Alphabet Index */}
-            {!hasSearched && !indexLoading && !isSearching && (
+            {!hasSearched  && !isSearching && (
               <div className="mb-6">
-                <div className="bg-white rounded-xl p-6 shadow-sm border">
+                <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
                   <h4 className="text-center text-gray-700 font-medium mb-4 text-lg">
                     {t("search.browseByLetter")}
                   </h4>
@@ -518,10 +534,12 @@ export default function NavbarSearch({
 
             {/* Search Results or Loading States */}
             <div>
-              {indexLoading || isSearching ? (
-                <div className="flex justify-center">
-                  <Loader />
-                </div>
+              { isSearching ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    {Array(8).fill(0).map((_, i) => (
+      <ItemSkeleton key={`search-skeleton-${i}`} />
+    ))}
+  </div>
               ) : hasSearched ? (
                 <>
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">

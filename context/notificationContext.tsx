@@ -251,16 +251,12 @@ export const NotificationProvider = ({
     setUnreadCount((prevCount) => prevCount + 1);
 
     // Show toast notification asynchronously
-    import("react-toastify").then(({ toast }) => {
+    import("react-hot-toast").then(({ toast }) => {
       const titleText = getLocalizedText(normalizedNew.title);
       const bodyText = getLocalizedText(normalizedNew.body);
-      toast.info(`${titleText}: ${bodyText}`, {
+      toast.success(`${titleText}: ${bodyText}`, {
         position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
+      
       });
     }).catch(() => {
       // Silently fail if toast not available
