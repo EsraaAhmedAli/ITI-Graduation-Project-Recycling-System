@@ -33,6 +33,8 @@ const EWallet = () => {
   const [currentTransactionPage, setCurrentTransactionPage] = useState(0);
   const [paymentStep, setPaymentStep] = useState(1);
   const [selectedGateway, setSelectedGateway] = useState("");
+  const [processedWithdrawAmount, setProcessedWithdrawAmount] = useState("");
+
   const { user } = useUserAuth();
   const [transactions, setTransactions] = useState([]);
   const { t, convertNumber, locale } = useLanguage();
@@ -116,7 +118,7 @@ const EWallet = () => {
       setPaymentStep(1);
     }
   };
-
+  // Updated processPayment function
   const processPayment = async () => {
     if (!selectedGateway || !withdrawAmount) return;
 
@@ -130,6 +132,9 @@ const EWallet = () => {
         type: "withdrawal",
       };
 
+      // Store the amount in state BEFORE processing
+      setProcessedWithdrawAmount((prev) => withdrawAmount);
+
       console.log("Sending transaction:", transaction);
 
       await api.post(`users/${user._id}/transactions`, transaction);
@@ -137,12 +142,13 @@ const EWallet = () => {
       // Update local balance immediately for better UX
       setBalance((prev) => prev - transaction.amount);
 
-      setPaymentStep(3); // Show success step
+      setPaymentStep((prev) => 3); // Show success step
 
       // Close modal after short delay and then show toast
       setTimeout(async () => {
         setShowPaymentGateway(false);
         setWithdrawAmount("");
+        setProcessedWithdrawAmount(""); // Clear this too
         setSelectedGateway("");
         setPaymentStep(1);
 
@@ -468,7 +474,7 @@ const EWallet = () => {
                 </h3>
                 <p className="text-gray-600">
                   {t("ewallet.payment.step3.subtitle", {
-                    amount: convertNumber(withdrawAmount),
+                    amount: convertNumber(processedWithdrawAmount || "0"),
                     currency: t("ewallet.withdraw.currency"),
                   })}
                 </p>

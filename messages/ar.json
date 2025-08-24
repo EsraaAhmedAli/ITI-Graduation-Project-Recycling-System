@@ -673,7 +673,7 @@
       },
       "step3": {
         "title": "تم الدفع بنجاح!",
-        "subtitle": "تمت معالجة عملية سحب {amount} {currency} بنجاح"
+        "subtitle": "تمت معالجة عملية سحب {{amount}} {{currency}} بنجاح"
       }
     }
   },

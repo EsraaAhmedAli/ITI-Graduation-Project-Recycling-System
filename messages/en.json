@@ -818,7 +818,7 @@
       },
       "step3": {
         "title": "Payment Successful!",
-        "subtitle": "Your {amount} {currency} withdrawal has been processed successfully"
+        "subtitle": "Your {{amount}} {{currency}} withdrawal has been processed successfully"
       }
     }
   },
