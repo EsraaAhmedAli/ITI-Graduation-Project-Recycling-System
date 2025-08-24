@@ -13,13 +13,159 @@ const RoleSelect = lazy(() => import("@/app/auth/common/RoleSelectionStep"));
 const SignUpForm = lazy(() => import("./SignUpForm"));
 const ForgetPasswordForm = lazy(() => import("./ForgotPasswordForm"));
 
-// Loading fallback component
-const FormSkeleton = () => (
-  <div className="animate-pulse space-y-4">
-    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-    <div className="h-10 bg-gray-200 rounded"></div>
-    <div className="h-10 bg-gray-200 rounded"></div>
-    <div className="h-10 bg-gray-200 rounded w-1/2"></div>
+// Form-specific loading skeletons
+const LoginFormSkeleton = () => (
+  <div className="animate-pulse space-y-6">
+    {/* Email field */}
+    <div className="space-y-2">
+      <div className="h-4 bg-gray-200 rounded w-20"></div>
+      <div className="h-12 bg-gray-200 rounded-lg"></div>
+    </div>
+
+    {/* Password field */}
+    <div className="space-y-2">
+      <div className="h-4 bg-gray-200 rounded w-24"></div>
+      <div className="h-12 bg-gray-200 rounded-lg"></div>
+    </div>
+
+    {/* Remember me checkbox */}
+    <div className="flex items-center space-x-2">
+      <div className="h-4 w-4 bg-gray-200 rounded"></div>
+      <div className="h-4 bg-gray-200 rounded w-24"></div>
+    </div>
+
+    {/* Login button */}
+    <div className="h-12 bg-gray-200 rounded-lg"></div>
+
+    {/* Forgot password link */}
+    <div className="text-center">
+      <div className="h-4 bg-gray-200 rounded w-32 mx-auto"></div>
+    </div>
+
+    {/* Divider */}
+    <div className="flex items-center space-x-4">
+      <div className="flex-1 h-px bg-gray-200"></div>
+      <div className="h-4 bg-gray-200 rounded w-8"></div>
+      <div className="flex-1 h-px bg-gray-200"></div>
+    </div>
+
+    {/* Google sign in button */}
+    <div className="h-12 bg-gray-200 rounded-lg"></div>
+
+    {/* Sign up link */}
+    <div className="text-center">
+      <div className="h-4 bg-gray-200 rounded w-40 mx-auto"></div>
+    </div>
+  </div>
+);
+
+const SignUpFormSkeleton = () => (
+  <div className="animate-pulse space-y-6">
+    {/* Name fields (first name, last name) */}
+    <div className="grid grid-cols-2 gap-4">
+      <div className="space-y-2">
+        <div className="h-4 bg-gray-200 rounded w-20"></div>
+        <div className="h-12 bg-gray-200 rounded-lg"></div>
+      </div>
+      <div className="space-y-2">
+        <div className="h-4 bg-gray-200 rounded w-20"></div>
+        <div className="h-12 bg-gray-200 rounded-lg"></div>
+      </div>
+    </div>
+
+    {/* Email field */}
+    <div className="space-y-2">
+      <div className="h-4 bg-gray-200 rounded w-20"></div>
+      <div className="h-12 bg-gray-200 rounded-lg"></div>
+    </div>
+
+    {/* Phone field */}
+    <div className="space-y-2">
+      <div className="h-4 bg-gray-200 rounded w-24"></div>
+      <div className="h-12 bg-gray-200 rounded-lg"></div>
+    </div>
+
+    {/* Password field */}
+    <div className="space-y-2">
+      <div className="h-4 bg-gray-200 rounded w-24"></div>
+      <div className="h-12 bg-gray-200 rounded-lg"></div>
+    </div>
+
+    {/* Confirm password field */}
+    <div className="space-y-2">
+      <div className="h-4 bg-gray-200 rounded w-32"></div>
+      <div className="h-12 bg-gray-200 rounded-lg"></div>
+    </div>
+
+    {/* Terms and conditions checkbox */}
+    <div className="flex items-start space-x-2">
+      <div className="h-4 w-4 bg-gray-200 rounded mt-1"></div>
+      <div className="space-y-1 flex-1">
+        <div className="h-4 bg-gray-200 rounded w-full"></div>
+        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+      </div>
+    </div>
+
+    {/* Sign up button */}
+    <div className="h-12 bg-gray-200 rounded-lg"></div>
+
+    {/* Already have account link */}
+    <div className="text-center">
+      <div className="h-4 bg-gray-200 rounded w-48 mx-auto"></div>
+    </div>
+  </div>
+);
+
+const ForgotPasswordFormSkeleton = () => (
+  <div className="animate-pulse space-y-6">
+    {/* Description text */}
+    <div className="space-y-2">
+      <div className="h-4 bg-gray-200 rounded w-full"></div>
+      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+    </div>
+
+    {/* Email field */}
+    <div className="space-y-2">
+      <div className="h-4 bg-gray-200 rounded w-20"></div>
+      <div className="h-12 bg-gray-200 rounded-lg"></div>
+    </div>
+
+    {/* Send reset link button */}
+    <div className="h-12 bg-gray-200 rounded-lg"></div>
+
+    {/* Back to login link */}
+    <div className="text-center">
+      <div className="h-4 bg-gray-200 rounded w-28 mx-auto"></div>
+    </div>
+  </div>
+);
+
+const RoleSelectSkeleton = () => (
+  <div className="animate-pulse space-y-6">
+    {/* Description text */}
+    <div className="text-center space-y-2 mb-8">
+      <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
+      <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
+    </div>
+
+    {/* Role cards */}
+    <div className="grid gap-4">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="p-4 border-2 border-gray-200 rounded-lg">
+          <div className="flex items-center space-x-4">
+            <div className="h-12 w-12 bg-gray-200 rounded-full"></div>
+            <div className="flex-1 space-y-2">
+              <div className="h-5 bg-gray-200 rounded w-32"></div>
+              <div className="h-4 bg-gray-200 rounded w-full"></div>
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    {/* Continue button */}
+    <div className="h-12 bg-gray-200 rounded-lg"></div>
   </div>
 );
 
@@ -111,30 +257,46 @@ export default function MainForm() {
     }
   }, [mode, selectedRole, roleConfig, t]);
 
+  // Get the appropriate skeleton based on mode
+  const getSkeletonComponent = () => {
+    switch (mode) {
+      case "role-select":
+        return <RoleSelectSkeleton />;
+      case "login":
+        return <LoginFormSkeleton />;
+      case "signup":
+        return <SignUpFormSkeleton />;
+      case "forgot-password":
+        return <ForgotPasswordFormSkeleton />;
+      default:
+        return <LoginFormSkeleton />;
+    }
+  };
+
   // Render form content based on mode
   const renderFormContent = () => {
     switch (mode) {
       case "role-select":
         return (
-          <Suspense fallback={<FormSkeleton />}>
+          <Suspense fallback={getSkeletonComponent()}>
             <RoleSelect prevStep={prevStep} />
           </Suspense>
         );
       case "login":
         return (
-          <Suspense fallback={<FormSkeleton />}>
+          <Suspense fallback={getSkeletonComponent()}>
             <LoginForm />
           </Suspense>
         );
       case "signup":
         return selectedRole ? (
-          <Suspense fallback={<FormSkeleton />}>
+          <Suspense fallback={getSkeletonComponent()}>
             <SignUpForm />
           </Suspense>
         ) : null;
       case "forgot-password":
         return (
-          <Suspense fallback={<FormSkeleton />}>
+          <Suspense fallback={getSkeletonComponent()}>
             <ForgetPasswordForm />
           </Suspense>
         );

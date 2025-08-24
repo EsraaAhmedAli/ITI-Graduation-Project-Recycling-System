@@ -455,7 +455,7 @@ export default function Navbar() {
     border border-gray-200 dark:border-gray-700 py-2 z-50
     w-80 sm:w-56
     max-w-[90vw]
-    -end-1/2 translate-x-1/2
+    -end-40
   "
                 >
                   {/* Header */}

@@ -80,8 +80,7 @@ export default function NavbarSearch({
       setIsSearching(false);
       if (onClose) onClose();
 
-      const categorySlug =
-        item.categoryName?.en?.toLowerCase().replace(/\s+/g, "-") || "";
+      const categorySlug = item.categoryName.en;
 
       console.log("🚀 Navigating to:", `/category/${categorySlug}`);
       router.push(`/category/${categorySlug}`);

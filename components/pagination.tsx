@@ -61,7 +61,7 @@ export const Pagination: React.FC<PaginationProps> = ({
         </button>
 
         {/* Page Numbers */}
-        <div className="flex flex-wrap gap-1 max-w-full overflow-hidden">
+        <div className="flex flex-nowrap gap-1 overflow-x-auto scrollbar-hide max-w-full px-1">
           {generatePageNumbers().map((pageNum, index) => (
             <button
               key={index}

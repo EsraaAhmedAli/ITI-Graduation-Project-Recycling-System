@@ -71,7 +71,7 @@ const EmailInput = () => {
         onClick={handleSubmit(handleEmailSubmit)}
         loading={loading}
         disabled={isDisabled}
-        className="bg-primary w-full rounded-lg mt-5 p-2 hover:bg-secondary"
+        className="bg-green-600 w-full rounded-lg mt-5 p-2 hover:bg-secondary"
       >
         {loading ? t("auth.login.sendingReset") : t("auth.login.sendReset")}
       </Button>
