@@ -467,11 +467,11 @@ export default function Page() {
                   }}
                   className="text-left"
                 >
-                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
+                  <h1 className="text-xl sm:text-2xl font-bold truncate" style={{color:"var(--color-base-900)"}}>
                     {t("d.deliveryDashboard")}
                   </h1>
                 </button>
-                <p className="text-sm sm:text-base text-gray-600 truncate">
+                <p className="text-sm sm:text-base text-gray-600 truncate" >
                   {t("courier.manageAssignedOrders")}
                 </p>
               </div>
@@ -754,12 +754,12 @@ export default function Page() {
           <ModalBody>
             <div className="space-y-6">
               <div>
-                <h3 className="font-medium  mb-2" style={{color: "var(--color-base-800)"}}>
+                <h3 className="font-medium mb-2" style={{color: "var(--color-base-900)"}}>
                   {t("courier.orderNumber", {
                     id: selectedOrder?._id?.slice(-8),
                   })}
                 </h3>
-                <p className="text-sm "  style={{color: "var(--foreground)"}}>
+                <p className="text-sm "  style={{color: "var(--color-base-900)"}}>
                   {t("courier.customer")}: {selectedOrder?.user?.userName}
                 </p>
               </div>
@@ -768,7 +768,7 @@ export default function Page() {
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                   <div className="flex items-center gap-2 mb-3">
                     <Edit3 className="w-4 h-4 text-yellow-600" />
-                    <h4 className="font-medium text-yellow-800">
+                    <h4 className="font-medium text-yellow-800" >
                       {t("courier.verifyQuantities")}
                     </h4>
                   </div>
@@ -782,7 +782,7 @@ export default function Page() {
                           className="bg-white rounded p-3 border border-yellow-200"
                         >
                           <div className="mb-2">
-                            <span className="font-medium text-gray-900 text-sm">
+                            <span className="font-medium text-gray-900 text-sm" style={{color: "var(--color-base-900)"}}>
                               {item.name}
                             </span>
                             <span className="text-xs text-gray-500 ml-2">
@@ -792,7 +792,7 @@ export default function Page() {
 
                           <div className="grid grid-cols-2 gap-2">
                             <div>
-                              <label className="block text-xs text-gray-600 mb-1">
+                              <label className="block text-xs text-gray-600 mb-1" >
                                 {t("courier.original")}
                               </label>
                               <input
@@ -892,22 +892,28 @@ export default function Page() {
               {/* General Notes for Non-Customer Orders */}
               {userRole !== "customer" && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t("courier.estimatedWeight")}:
-                  </label>
-                  <textarea
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder={t("courier.orderWeight")}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    rows={3}
-                  />
-                </div>
+  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+    {t("courier.estimatedWeight")}:
+  </label>
+  <textarea
+    value={notes}
+    onChange={(e) => setNotes(e.target.value)}
+    placeholder={t("courier.orderWeight")}
+    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 
+               rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 
+               focus:border-blue-500 
+               placeholder-gray-400 dark:placeholder-gray-500
+               text-gray-900 dark:text-gray-100
+               bg-white dark:bg-gray-800"
+    rows={3}
+  />
+</div>
+
               )}
 
               {/* Photo Upload Section */}
               <div>
-                <label className="block text-sm font-medium  mb-2" style={{color: "var(--color-base-800)"}}>
+                <label className="block text-sm font-medium mb-2" style={{color: "var(--color-base-900)"}}>
                   {t("courier.deliveryProofPhoto")} *
                 </label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
@@ -936,7 +942,7 @@ export default function Page() {
                   ) : (
                     <div className="text-center">
                       <Camera className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm mb-2" style={{color: "var(--color-base-800)"}}>
+                      <p className="text-sm mb-2" style={{color: "var(--color-base-900)"}}>
                         {t("courier.takePhotoOfOrder", {
                           action:
                             userRole === "customer"

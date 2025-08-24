@@ -29,7 +29,7 @@ export default function CartPage() {
   const [totalPoints, setTotalPoints] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
   const { user } = useUserAuth();
-    const { t, locale, convertNumber } = useLanguage();
+  const { t, locale, convertNumber } = useLanguage();
 
   // States for input handling
   const [inputValues, setInputValues] = useState<{ [key: string]: string }>({});
@@ -54,7 +54,7 @@ export default function CartPage() {
 
   // Initialize socket connection for real-time updates on cart items only
   useItemSocket({
-    itemIds: cartItemIds, 
+    itemIds: cartItemIds,
     userRole: userRole || "buyer",
   });
 
@@ -80,7 +80,7 @@ export default function CartPage() {
 
   // Real-time stock change detection and notification
   const [previousStockLevels, setPreviousStockLevels] = useState<{ [key: string]: number }>({});
-  
+
   // Initialize previous stock levels on first load
 useEffect(() => {
   if (userRole === "buyer" && 
@@ -539,9 +539,9 @@ useEffect(() => {
       ) : (
         <>
           <div
-           className={`rounded-xl p-4 mb-6 grid grid-cols-1 ${user?.role == 'customer' ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`} style={{background:"var(--color-green-50)"}}>
-          
-            <div className="bg-white p-4 rounded-lg shadow-sm text-center" style={{background:"var(--background)"}}>
+            className={`rounded-xl p-4 mb-6 grid grid-cols-1 ${user?.role == 'customer' ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`} style={{ background: "var(--color-green-50)" }}>
+
+            <div className="bg-white p-4 rounded-lg shadow-sm text-center" style={{ background: "var(--background)" }}>
               <div className="text-gray-500 text-sm">
                 {t("cart.cartSummary.totalItems")}
               </div>
@@ -550,7 +550,7 @@ useEffect(() => {
               </div>
             </div>
             {user?.role == "customer" && (
-              <div className="bg-white p-4 rounded-lg shadow-sm text-center" style={{background:"var(--background)"}}>
+              <div className="bg-white p-4 rounded-lg shadow-sm text-center" style={{ background: "var(--background)" }}>
                 <div className="text-gray-500 text-sm">
                   {t("cart.cartSummary.earnedPoints")}
                 </div>
@@ -559,7 +559,7 @@ useEffect(() => {
                 </div>
               </div>
             )}
-            <div className="bg-white p-4 rounded-lg shadow-sm text-center" style={{background:"var(--background)"}}>
+            <div className="bg-white p-4 rounded-lg shadow-sm text-center" style={{ background: "var(--background)" }}>
               <div className="text-gray-500 text-sm">
                 {user?.role == "customer"
                   ? t("cart.cartSummary.earnedMoney")
@@ -582,11 +582,10 @@ useEffect(() => {
                   exit="exit"
                   layout
                   style={{ background: "var(--color-card)" }}
-                  className={`bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-shadow ${
-                    exceedsStockItems[item._id]
+                  className={`bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-shadow ${exceedsStockItems[item._id]
                       ? "border-orange-200 bg-orange-50"
                       : "border-gray-100"
-                  }`}
+                    }`}
                 >
                   <div className="p-4 flex flex-col sm:flex-row gap-4 relative">
                     {/* Stock Warning Badge */}
@@ -605,7 +604,7 @@ useEffect(() => {
                       stockLevels[item._id] !== undefined &&
                       stockLevels[item._id] > 0 &&
                       stockLevels[item._id] <
-                        item.quantity + (item.measurement_unit === 1 ? 0.25 : 1) && (
+                      item.quantity + (item.measurement_unit === 1 ? 0.25 : 1) && (
                         <div className="absolute top-2 right-2 z-10">
                           <span className="bg-yellow-500 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-sm">
                             Low Stock
@@ -639,8 +638,8 @@ useEffect(() => {
                               {typeof item.categoryName === "string"
                                 ? item.categoryName
                                 : item.categoryName[locale] ||
-                                  item.categoryName.en ||
-                                  ""}
+                                item.categoryName.en ||
+                                ""}
                             </span>
                           </p>
                         </div>
@@ -694,7 +693,7 @@ useEffect(() => {
                             <AlertTriangle className="w-4 h-4" />
                             {stockWarnings[item._id]}
                           </p>
-                         
+
                         </div>
                       )}
 
@@ -705,13 +704,14 @@ useEffect(() => {
                           </span>{" "}
                           {convertNumber(item.price.toFixed(2))} {coin}
                         </div>
-                        <div className="text-gray-600 text-sm">
+                        <div className="text-sm text-gray-800 dark:text-gray-200">
                           {convertNumber(item.quantity)} ×{" "}
                           {convertNumber(item.price.toFixed(2))} =
                           <span className="font-medium text-primary">
                             {convertNumber((item.quantity * item.price).toFixed(2))} {coin}
                           </span>
                         </div>
+
                       </div>
 
                       {/* Enhanced Quantity Controls */}
@@ -725,11 +725,10 @@ useEffect(() => {
                                 handleDecrease(item);
                               }}
                               disabled={item.quantity <= (item.measurement_unit === 1 ? 0.25 : 1)}
-                              className={`w-8 h-8 flex items-center justify-center rounded-full border transition-all ${
-                                item.quantity <= (item.measurement_unit === 1 ? 0.25 : 1)
+                              className={`w-8 h-8 flex items-center justify-center rounded-full border transition-all ${item.quantity <= (item.measurement_unit === 1 ? 0.25 : 1)
                                   ? "text-gray-300 bg-gray-100 border-gray-200 cursor-not-allowed"
                                   : "text-gray-600 hover:bg-gray-50 border-gray-300"
-                              }`}
+                                }`}
                             >
                               -
                             </button>
@@ -744,13 +743,12 @@ useEffect(() => {
                                 }
                                 onChange={(e) => handleInputChange(item._id, e.target.value, item)}
                                 onBlur={() => handleInputBlur(item._id, item)}
-                                className={`w-16 px-2 py-1 text-center text-sm font-medium border rounded-md focus:outline-none focus:ring-2 ${
-                                  inputErrors[item._id]
+                                className={`w-16 px-2 py-1 text-center text-sm font-medium border rounded-md focus:outline-none focus:ring-2 ${inputErrors[item._id]
                                     ? "border-red-300 focus:ring-red-500 focus:border-red-500"
                                     : exceedsStockItems[item._id]
-                                    ? "border-orange-300 focus:ring-orange-500 focus:border-orange-500"
-                                    : "border-gray-300 focus:ring-green-500 focus:border-green-500"
-                                }`}
+                                      ? "border-orange-300 focus:ring-orange-500 focus:border-orange-500"
+                                      : "border-gray-300 focus:ring-green-500 focus:border-green-500"
+                                  }`}
                                 placeholder={
                                   item.measurement_unit === 1
                                     ? convertNumber("0.25")
@@ -766,11 +764,10 @@ useEffect(() => {
                                 handleIncrease(item);
                               }}
                               disabled={userRole === "buyer" && !canIncrease[item._id]}
-                              className={`w-8 h-8 flex items-center justify-center rounded-full border transition-all ${
-                                userRole === "buyer" && !canIncrease[item._id]
+                              className={`w-8 h-8 flex items-center justify-center rounded-full border transition-all ${userRole === "buyer" && !canIncrease[item._id]
                                   ? "text-gray-300 bg-gray-100 border-gray-200 cursor-not-allowed"
                                   : "text-gray-600 hover:bg-gray-50 border-gray-300"
-                              }`}
+                                }`}
                             >
                               +
                             </button>
@@ -804,7 +801,7 @@ useEffect(() => {
             </AnimatePresence>
           </div>
 
-          <div className="mt-8 bg-white rounded-xl shadow p-6" style={{background:"var(--color-card)"}}>
+          <div className="mt-8 bg-white rounded-xl shadow p-6" style={{ background: "var(--color-card)" }}>
             {/* Stock Exceeds Warning */}
             {hasExceedsStockItems && (
               <div className="mb-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
@@ -864,11 +861,10 @@ useEffect(() => {
                       }
                     }}
                     disabled={totalPrice < 100 || hasExceedsStockItems}
-                    className={`flex items-center gap-2 px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg ${
-                      totalPrice < 100 || hasExceedsStockItems
+                    className={`flex items-center gap-2 px-6 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg ${totalPrice < 100 || hasExceedsStockItems
                         ? "bg-gray-300 text-white cursor-not-allowed"
                         : "bg-green-500 hover:bg-green-600 text-white"
-                    }`}
+                      }`}
                   >
                     <Truck className="w-5 h-5" />
                     {t("cart.checkout.schedulePickup")}
