@@ -32,6 +32,7 @@ interface NotificationContextType {
   hasMore: boolean;
   loadingMore: boolean;
   refreshNotifications: () => void;
+  isSocketConnected: boolean;
 }
 
 const NotificationContext = createContext<NotificationContextType>({
@@ -44,6 +45,7 @@ const NotificationContext = createContext<NotificationContextType>({
   hasMore: false,
   loadingMore: false,
   refreshNotifications: () => {},
+  isSocketConnected: false,
 });
 
 export const useNotification = () => useContext(NotificationContext);
@@ -61,7 +63,6 @@ const getLocalizedText = (text: string | LocalizedText, language: string = 'en')
 const normalizeNotification = (notif: any): Notification => ({
   ...notif,
   isRead: notif.isRead ?? notif.read ?? false,
-  // Keep original structure but ensure we can extract text when needed
   title: notif.title,
   body: notif.body,
 });
@@ -78,77 +79,96 @@ export const NotificationProvider = ({
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isSocketConnected, setIsSocketConnected] = useState(false);
   
   // Use refs to prevent stale closures in socket handlers
-  const notificationsRef = useRef<Notification[]>([]);
-  const unreadCountRef = useRef(0);
+  const socketRef = useRef<any>(null);
+  const cleanupRef = useRef<(() => void) | null>(null);
   
-  // Update refs when state changes
-  useEffect(() => {
-    notificationsRef.current = notifications;
-  }, [notifications]);
-  
-  useEffect(() => {
-    unreadCountRef.current = unreadCount;
-  }, [unreadCount]);
+  // Debounce socket events to prevent rapid updates
+  const lastNotificationTime = useRef(0);
+  const NOTIFICATION_DEBOUNCE_MS = 100;
 
   // Check if user should receive notifications
   const shouldDisableNotifications = useMemo(() => {
     return user?.role === "admin" || user?.role === "delivery";
   }, [user?.role]);
 
-  // Memoized functions to prevent unnecessary re-renders
-  const markAsRead = useCallback((id: string) => {
+  // Optimized mark as read with batch processing
+  const markAsRead = useCallback(async (id: string) => {
     if (shouldDisableNotifications) return;
 
-    setNotifications((prev) => {
-      const updated = prev.map((notif) =>
+    // Optimistic update
+    setNotifications((prev) => 
+      prev.map((notif) => 
         notif._id === id ? { ...notif, isRead: true } : notif
-      );
-      return updated;
-    });
-    
+      )
+    );
     setUnreadCount((prev) => Math.max(0, prev - 1));
+
+    // Send to server asynchronously
+    try {
+      await api.patch(`/notifications/${id}/mark-read`);
+    } catch (error) {
+      console.error("Failed to mark notification as read:", error);
+      // Revert optimistic update on error
+      setNotifications((prev) => 
+        prev.map((notif) => 
+          notif._id === id ? { ...notif, isRead: false } : notif
+        )
+      );
+      setUnreadCount((prev) => prev + 1);
+    }
   }, [shouldDisableNotifications]);
 
   const markAllAsRead = useCallback(async () => {
-    if (shouldDisableNotifications) {
-      console.log("🚫 markAllAsRead blocked for admin/delivery user");
-      return;
-    }
+    if (shouldDisableNotifications) return;
+
+    const unreadNotifications = notifications.filter(notif => !notif.isRead);
+    if (unreadNotifications.length === 0) return;
+
+    // Optimistic update
+    setNotifications((prev) =>
+      prev.map((notif) => ({ ...notif, isRead: true }))
+    );
+    setUnreadCount(0);
 
     try {
-      const response = await api.patch("/notifications/mark-read", {
+      await api.patch("/notifications/mark-read", {
         notificationIds: [],
       });
-
-      if (response.data.success) {
-        setNotifications((prev) =>
-          prev.map((notif) => ({ ...notif, isRead: true }))
-        );
-        setUnreadCount(0);
-      }
     } catch (error) {
       console.error("Failed to mark all notifications as read:", error);
+      // Revert on error
+      setNotifications((prev) =>
+        prev.map((notif) => {
+          const wasUnread = unreadNotifications.some(unread => unread._id === notif._id);
+          return wasUnread ? { ...notif, isRead: false } : notif;
+        })
+      );
+      setUnreadCount(unreadNotifications.length);
     }
-  }, [shouldDisableNotifications]);
+  }, [shouldDisableNotifications, notifications]);
 
   const loadMoreNotifications = useCallback(async () => {
-    if (shouldDisableNotifications || !hasMore || loadingMore) {
-      return;
-    }
+    if (shouldDisableNotifications || !hasMore || loadingMore) return;
 
     setLoadingMore(true);
     try {
       const nextPage = currentPage + 1;
       const res = await api.get(`/notifications?page=${nextPage}&limit=${PAGE_SIZE}`);
       
-      // Handle new response structure
       const responseData = res.data.data || res.data;
       const newNotifications = (responseData.notifications || []).map(normalizeNotification);
       const paginationData = responseData.pagination || {};
 
-      setNotifications((prev) => [...prev, ...newNotifications]);
+      setNotifications((prev) => {
+        // Remove duplicates
+        const existingIds = new Set(prev.map(n => n._id));
+        const uniqueNew = newNotifications.filter(n => !existingIds.has(n._id));
+        return [...prev, ...uniqueNew];
+      });
+      
       setCurrentPage(nextPage);
       setHasMore(paginationData.hasMore ?? false);
     } catch (error) {
@@ -162,16 +182,17 @@ export const NotificationProvider = ({
     if (shouldDisableNotifications) return;
 
     try {
-      const notifsRes = await api.get(`/notifications?page=1&limit=${PAGE_SIZE}`);
+      const [notifsRes, countRes] = await Promise.all([
+        api.get(`/notifications?page=1&limit=${PAGE_SIZE}`),
+        api.get("/notifications/unread-count")
+      ]);
       
-      // Handle new response structure
       const responseData = notifsRes.data.data || notifsRes.data;
       const normalizedNotifications = (responseData.notifications || []).map(normalizeNotification);
       const paginationData = responseData.pagination || {};
       
-      // Extract unread count from root level or fallback to calculating it
-      const unreadCountFromAPI = notifsRes.data.unreadCount ?? 
-        normalizedNotifications.filter(notif => !notif.isRead).length;
+      const unreadCountFromAPI = countRes.data.unreadCount ?? 
+        countRes.data.data?.unreadCount ?? 0;
 
       setNotifications(normalizedNotifications);
       setCurrentPage(1);
@@ -183,49 +204,93 @@ export const NotificationProvider = ({
   }, [shouldDisableNotifications]);
 
   const handleNotificationClick = useCallback(async (id: string) => {
-    if (shouldDisableNotifications) {
-      console.log("🚫 handleNotificationClick blocked for admin/delivery user");
+    if (shouldDisableNotifications) return;
+    await markAsRead(id);
+  }, [shouldDisableNotifications, markAsRead]);
+
+  // Socket event handlers (stable references)
+  const handleConnect = useCallback(() => {
+    console.log("🔗 Socket connected for notifications");
+    setIsSocketConnected(true);
+    
+    if (user?._id && socketRef.current) {
+      socketRef.current.emit("joinRoom", { userId: user._id });
+      socketRef.current.emit("requestUnreadCount", { userId: user._id });
+    }
+  }, [user?._id]);
+
+  const handleDisconnect = useCallback(() => {
+    console.log("❌ Socket disconnected");
+    setIsSocketConnected(false);
+  }, []);
+
+  const handleNewNotification = useCallback((newNotification: Notification) => {
+    // Debounce rapid notifications
+    const now = Date.now();
+    if (now - lastNotificationTime.current < NOTIFICATION_DEBOUNCE_MS) {
       return;
     }
+    lastNotificationTime.current = now;
 
-    try {
-      const response = await api.patch(`/notifications/${id}/mark-read`);
+    console.log("🔔 New notification received via socket:", newNotification);
+    
+    const normalizedNew = normalizeNotification(newNotification);
 
-      if (response.data.success) {
-        setNotifications((prev) =>
-          prev.map((notif) =>
-            notif._id === id ? { ...notif, isRead: true } : notif
-          )
-        );
-
-        // Try to get fresh unread count, but handle both response structures
-        try {
-          const countRes = await api.get("/notifications/unread-count");
-          const unreadCountValue = countRes.data.unreadCount ?? 
-            countRes.data.data?.unreadCount ?? 
-            0;
-          setUnreadCount(unreadCountValue);
-        } catch (countError) {
-          // Fallback to decrementing if the count endpoint fails
-          setUnreadCount((prev) => Math.max(0, prev - 1));
-        }
+    setNotifications((prevNotifications) => {
+      // Check for duplicates
+      const exists = prevNotifications.some(notif => notif._id === normalizedNew._id);
+      if (exists) {
+        console.log("⚠️ Duplicate notification ignored:", normalizedNew._id);
+        return prevNotifications;
       }
-    } catch (error) {
-      console.error("Failed to mark notification as read:", error);
-    }
-  }, [shouldDisableNotifications]);
+      
+      const updated = [normalizedNew, ...prevNotifications];
+      return updated.slice(0, MAX_NOTIFICATIONS);
+    });
+    
+    setUnreadCount((prevCount) => prevCount + 1);
+
+    // Show toast notification asynchronously
+    import("react-toastify").then(({ toast }) => {
+      const titleText = getLocalizedText(normalizedNew.title);
+      const bodyText = getLocalizedText(normalizedNew.body);
+      toast.info(`${titleText}: ${bodyText}`, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    }).catch(() => {
+      // Silently fail if toast not available
+    });
+  }, []);
+
+  const handleNotificationCount = useCallback((data: any) => {
+    console.log("📊 Unread count update from socket:", data);
+    const count = typeof data === 'number' ? data : data.unreadCount || data.count || 0;
+    setUnreadCount(count);
+  }, []);
 
   // Socket and data initialization
   useEffect(() => {
     if (!user || !token || shouldDisableNotifications) {
       if (shouldDisableNotifications) {
-        // Clear state for admin/delivery users
         setNotifications([]);
         setUnreadCount(0);
         setHasMore(false);
         setCurrentPage(1);
         setIsInitialized(true);
+        setIsSocketConnected(false);
       }
+      
+      // Cleanup existing socket
+      if (cleanupRef.current) {
+        cleanupRef.current();
+        cleanupRef.current = null;
+      }
+      
       return;
     }
 
@@ -233,22 +298,32 @@ export const NotificationProvider = ({
     
     const fetchInitialData = async () => {
       try {
-        const notifsRes = await api.get(`/notifications?page=1&limit=${PAGE_SIZE}`);
+        // Batch initial requests
+        const [notifsRes, countRes] = await Promise.allSettled([
+          api.get(`/notifications?page=1&limit=${PAGE_SIZE}`),
+          api.get("/notifications/unread-count")
+        ]);
         
         if (!isMounted) return;
 
-        // Handle new response structure
-        const responseData = notifsRes.data.data || notifsRes.data;
-        const normalizedNotifications = (responseData.notifications || []).map(normalizeNotification);
-        const paginationData = responseData.pagination || {};
-        
-        // Extract unread count from root level
-        const unreadCountValue = notifsRes.data.unreadCount ?? 0;
+        // Handle notifications response
+        if (notifsRes.status === 'fulfilled') {
+          const responseData = notifsRes.value.data.data || notifsRes.value.data;
+          const normalizedNotifications = (responseData.notifications || []).map(normalizeNotification);
+          const paginationData = responseData.pagination || {};
+          
+          setNotifications(normalizedNotifications);
+          setCurrentPage(1);
+          setHasMore(paginationData.hasMore ?? false);
+        }
 
-        setNotifications(normalizedNotifications);
-        setCurrentPage(1);
-        setHasMore(paginationData.hasMore ?? false);
-        setUnreadCount(unreadCountValue);
+        // Handle unread count response
+        if (countRes.status === 'fulfilled') {
+          const unreadCountValue = countRes.value.data.unreadCount ?? 
+            countRes.value.data.data?.unreadCount ?? 0;
+          setUnreadCount(unreadCountValue);
+        }
+
         setIsInitialized(true);
       } catch (error) {
         console.error("❌ Failed to fetch notifications:", error);
@@ -258,79 +333,59 @@ export const NotificationProvider = ({
 
     fetchInitialData();
 
-    // Socket setup
-    const socket = initSocket(token);
+    // Socket setup with improved error handling
+    try {
+      const socket = initSocket(token);
+      socketRef.current = socket;
 
-    const handleConnect = () => {
-      console.log("🔗 Socket connected");
-      socket.emit("test", "Hello from client");
-      socket.emit("joinRoom", { userId: user._id });
-      
-      // Request current unread count on connect
-      socket.emit("requestUnreadCount", { userId: user._id });
-    };
+      // Event listeners
+      socket.on("connect", handleConnect);
+      socket.on("disconnect", handleDisconnect);
+      socket.on("notification:new", handleNewNotification);
+      socket.on("notification:count", handleNotificationCount);
+      socket.on("notification:unreadCount", handleNotificationCount);
 
-    const handleNewNotification = (newNotification: Notification) => {
-      console.log("🔔 New notification received:", newNotification);
-      
-      const normalizedNew = normalizeNotification(newNotification);
+      socket.on("connect_error", (error) => {
+        console.error("❌ Socket connection error:", error);
+        setIsSocketConnected(false);
+      });
 
-      setNotifications((prev) => {
-        // Check for duplicates
-        const exists = prev.some(notif => notif._id === normalizedNew._id);
-        if (exists) return prev;
+      // Health check ping (less frequent)
+      const pingInterval = setInterval(() => {
+        if (socket.connected && user?._id) {
+          socket.emit("ping", { timestamp: Date.now(), userId: user._id });
+        }
+      }, 60000); // Ping every 60 seconds instead of 30
+
+      // Cleanup function
+      cleanupRef.current = () => {
+        clearInterval(pingInterval);
         
-        const updated = [normalizedNew, ...prev];
-        return updated.slice(0, MAX_NOTIFICATIONS); // Limit size
-      });
-      
-      setUnreadCount((prev) => prev + 1);
+        if (socket) {
+          socket.off("connect", handleConnect);
+          socket.off("disconnect", handleDisconnect);
+          socket.off("notification:new", handleNewNotification);
+          socket.off("notification:count", handleNotificationCount);
+          socket.off("notification:unreadCount", handleNotificationCount);
+          socket.off("connect_error");
+        }
+        
+        socketRef.current = null;
+      };
 
-      // Show toast notification with localized text
-      import("react-toastify").then(({ toast }) => {
-        const titleText = getLocalizedText(normalizedNew.title);
-        const bodyText = getLocalizedText(normalizedNew.body);
-        toast.info(`${titleText}: ${bodyText}`);
-      });
-    };
-
-    const handleNotificationCount = (data: any) => {
-      console.log("📊 Unread count update:", data);
-      const count = typeof data === 'number' ? data : data.unreadCount || data.count || 0;
-      setUnreadCount(count);
-    };
-
-    // Attach socket listeners
-    socket.on("connect", handleConnect);
-    socket.on("notification:new", handleNewNotification);
-    socket.on("notification:count", handleNotificationCount);
-    socket.on("notification:unreadCount", handleNotificationCount);
-    
-    // Handle reconnection
-    socket.on("reconnect", () => {
-      console.log("🔄 Socket reconnected");
-      socket.emit("joinRoom", { userId: user._id });
-      socket.emit("requestUnreadCount", { userId: user._id });
-    });
-
-    // Debug logging
-    socket.onAny((eventName, ...args) => {
-      console.log("🔍 Socket event received:", eventName, args);
-    });
+    } catch (error) {
+      console.error("❌ Failed to initialize socket:", error);
+      setIsSocketConnected(false);
+    }
 
     return () => {
       isMounted = false;
-      const currentSocket = getSocket();
-      if (currentSocket) {
-        currentSocket.off("connect", handleConnect);
-        currentSocket.off("notification:new", handleNewNotification);
-        currentSocket.off("notification:count", handleNotificationCount);
-        currentSocket.off("notification:unreadCount", handleNotificationCount);
-        currentSocket.off("reconnect");
-        currentSocket.offAny();
+      if (cleanupRef.current) {
+        cleanupRef.current();
+        cleanupRef.current = null;
       }
     };
-  }, [user, token, shouldDisableNotifications]);
+  }, [user, token, shouldDisableNotifications, handleConnect, handleDisconnect, handleNewNotification, handleNotificationCount]);
 
   // Memoize context value to prevent unnecessary re-renders
   const contextValue = useMemo<NotificationContextType>(() => ({
@@ -343,6 +398,7 @@ export const NotificationProvider = ({
     hasMore: shouldDisableNotifications ? false : hasMore,
     loadingMore: shouldDisableNotifications ? false : loadingMore,
     refreshNotifications,
+    isSocketConnected: shouldDisableNotifications ? false : isSocketConnected,
   }), [
     shouldDisableNotifications,
     notifications,
@@ -354,6 +410,7 @@ export const NotificationProvider = ({
     hasMore,
     loadingMore,
     refreshNotifications,
+    isSocketConnected,
   ]);
 
   return (

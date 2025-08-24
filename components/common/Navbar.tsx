@@ -86,9 +86,10 @@ const CartItem = memo(
                 ? t("cart.item.kg")
                 : t("cart.item.pcs")}
             </p>
-            <p className="text-green-600 dark:text-green-400 text-xs font-medium">
+            
+            {/* <p className="text-green-600 dark:text-green-400 text-xs font-medium">
               {convertNumber(item.points)} {t("cart.item.pts")}
-            </p>
+            </p> */}
           </div>
         </div>
         <button

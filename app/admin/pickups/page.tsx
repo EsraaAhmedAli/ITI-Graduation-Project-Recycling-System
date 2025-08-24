@@ -169,6 +169,7 @@ export default function Page() {
       completedAt: order.completedAt,
       courier: order.courier,
       statusHistory: order.statusHistory,
+          quantityAdjustmentNotes: order.deliveryAdjNotes, // Add this line
     });
     setIsProofModalOpen(true);
   };
@@ -707,6 +708,7 @@ export default function Page() {
     userRole: order.user?.role || "Unknown",
     // Add these new fields for proof of delivery (matching your API structure)
     deliveryProof: order.deliveryProof,
+    deliveryAdjNotes: order.quantityAdjustmentNotes,
     collectedAt: order.collectedAt,
     completedAt: order.completedAt,
     courier: order.courier,

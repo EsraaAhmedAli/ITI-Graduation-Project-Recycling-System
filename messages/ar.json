@@ -875,6 +875,7 @@
   },
   "pickup": {
     "steps": {
+            "payment": "الدفع",
       "address": "العنوان",
       "review": "المراجعة",
       "waiting": "الانتظار",
@@ -1503,6 +1504,37 @@
       "previous": "الشريحة السابقة",
       "next": "الشريحة التالية",
       "goToSlide": "انتقل إلى الشريحة {{number}}"
+    }
+  }
+,
+
+  "payment": {
+    "title": "طريقة الدفع",
+    "subtitle": "اختر طريقة الدفع المفضلة لديك",
+    "methods": {
+      "cash": {
+        "name": "الدفع عند الاستلام",
+        "description": "ادفع عندما يصل طلبك"
+      },
+      "credit_card": {
+        "name": "بطاقة ائتمان/خصم",
+        "description": "ادفع بأمان باستخدام بطاقتك"
+      },
+      "wallet": {
+        "name": "رصيد المحفظة",
+        "description": "استخدم رصيد محفظتك ({{balance}}$ متاح)"
+      }
+    },
+    "orderSummary": {
+      "title": "ملخص الطلب",
+      "subtotal": "المجموع الفرعي",
+      "deliveryFee": "رسوم التوصيل",
+      "total": "الإجمالي",
+      "currency": "جنيه"
+    },
+    "buttons": {
+      "back": "رجوع",
+      "continue": "متابعة"
     }
   }
 

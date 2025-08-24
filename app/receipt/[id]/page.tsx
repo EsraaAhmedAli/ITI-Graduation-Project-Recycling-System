@@ -35,7 +35,7 @@ const ReceiptPage = () => {
         deliveryFee={order?.deliveryFee || 0}
         points={totalPoints}
         items={order?.items?.map((item) => ({
-          name: item.itemName,
+          name: item.name,
           quantity: item.quantity,
         }))}
         userName={order?.user?.userName || "Customer"}

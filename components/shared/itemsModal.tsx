@@ -378,12 +378,14 @@ export default function ItemsModal({
                     </p>
                   )}
 
-                  {selectedOrder?.paymentMethod !== null &&
-                    userRole !== "customer" && (
-                      <p className="text-sm font-semibold text-green-700">
-                        payment Method: {selectedOrder.paymentMethod}
-                      </p>
-                    )}
+              {
+  userRole?.role !== "customer" && userRole !== "customer" && (
+    <p className="text-sm font-semibold text-green-700">
+      payment Method: {selectedOrder.paymentMethod}
+    </p>
+  )
+}
+
                 </div>
               </div>
             </div>
