@@ -49,7 +49,17 @@ interface SearchResponse {
   message?: string;
 }
 
-export default function NavbarSearch() {
+interface NavbarSearchProps {
+  variant?: "desktop" | "mobile" | "icon-only";
+  className?: string;
+  onClose?: () => void;
+}
+
+export default function NavbarSearch({
+  variant = "desktop",
+  className = "",
+  onClose,
+}: NavbarSearchProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -60,32 +70,23 @@ export default function NavbarSearch() {
   const { t, locale, convertNumber } = useLanguage();
   const router = useRouter();
 
-  // Handle item click with proper navigation - SIMPLE VERSION
+  // Handle item click with proper navigation
   const handleItemClick = useCallback(
     (item: SearchResult) => {
-      // Close modal and clear search state completely
       setIsOpen(false);
       setSearchQuery("");
       setHasSearched(false);
       setSearchResults([]);
       setIsSearching(false);
+      if (onClose) onClose();
 
-      // Clear any global search state that might affect other pages
-      // If you have global state, clear it here too
-
-      // Simple navigation without search params that might interfere
       const categorySlug =
         item.categoryName?.en?.toLowerCase().replace(/\s+/g, "-") || "";
 
       console.log("🚀 Navigating to:", `/category/${categorySlug}`);
-
-      // Navigate WITHOUT search parameters to avoid interference
       router.push(`/category/${categorySlug}`);
-
-      // Alternative: Force page refresh to ensure clean state
-      // window.location.href = `/category/${categorySlug}`;
     },
-    [router]
+    [router, onClose]
   );
 
   // Memoized alphabet generation
@@ -171,9 +172,9 @@ export default function NavbarSearch() {
 
       return { data, alphabetStats };
     },
-    enabled: isOpen, // Only fetch when modal is open
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+    enabled: isOpen,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });
@@ -193,12 +194,11 @@ export default function NavbarSearch() {
     }
   }, [indexData, hasSearched]);
 
-  // Search function (no debounce)
+  // Search function
   const performSearch = useCallback(
     async (query: string) => {
       if (!query.trim()) {
         setHasSearched(false);
-        // Restore index data if available
         if (indexData) {
           setSearchResults(indexData.data);
         }
@@ -257,7 +257,6 @@ export default function NavbarSearch() {
       const value = e.target.value;
       setSearchQuery(value);
 
-      // If search query is cleared, restore index data
       if (!value.trim() && hasSearched) {
         setHasSearched(false);
         if (indexData) {
@@ -292,7 +291,6 @@ export default function NavbarSearch() {
   const handleClearSearch = useCallback(() => {
     setSearchQuery("");
     setHasSearched(false);
-    // Restore index data
     if (indexData) {
       setSearchResults(indexData.data);
     }
@@ -315,9 +313,61 @@ export default function NavbarSearch() {
     [alphabetStats.alphabet, alphabet]
   );
 
+  // Render different variants
+  const renderTrigger = () => {
+    switch (variant) {
+      case "desktop":
+        return (
+          <div className={`relative ${className}`}>
+            <button
+              onClick={handleOpen}
+              className="flex items-center gap-2 px-3 py-2 rounded-md transition-colors group w-full max-w-sm bg-gray-100 hover:bg-gray-200 border border-gray-200"
+            >
+              <Search className="w-4 h-4 text-gray-500" />
+              <span className="text-sm text-gray-500 truncate">
+                {t("search.placeholder")}
+              </span>
+              <div className="ml-auto text-xs px-1.5 py-0.5 rounded text-gray-400 bg-gray-200">
+                ⌘K
+              </div>
+            </button>
+          </div>
+        );
+
+      case "mobile":
+        return (
+          <button
+            onClick={handleOpen}
+            className={`flex items-center gap-3 px-3 py-2 text-left w-full rounded-lg transition-colors hover:bg-gray-100 ${className}`}
+          >
+            <Search className="w-5 h-5 text-gray-600" />
+            <span className="font-medium text-gray-700">
+              {t("search.title")}
+            </span>
+          </button>
+        );
+
+      case "icon-only":
+      default:
+        return (
+          <button
+            onClick={handleOpen}
+            className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors bg-gray-100 hover:bg-gray-200 border border-gray-200 ${className}`}
+            title={t("search.tooltipSearch")}
+          >
+            <Search className="w-5 h-5 text-gray-500" />
+          </button>
+        );
+    }
+  };
+
+  // Modal content
   // Modal content
   const modalContent = (
-    <div className={`fixed inset-0 z-50 bg-white ${isRTL ? "rtl" : "ltr"}`} style={{background:"var(--background)"}}>
+    <div
+      className={`fixed inset-0 z-50 bg-white ${isRTL ? "rtl" : "ltr"}`}
+      style={{ background: "var(--background)" }}
+    >
       <style jsx>{`
         .search-scroll::-webkit-scrollbar {
           width: 6px;
@@ -338,10 +388,16 @@ export default function NavbarSearch() {
           scrollbar-color: #cbd5e1 #f1f5f9;
         }
       `}</style>
-      <div className="h-full flex flex-col max-h-screen overflow-hidden" >
+      <div className="h-full flex flex-col max-h-screen overflow-hidden">
         {/* Header with close button */}
-        <div style={{background:"var(--background)"}} className="flex-shrink-0 flex justify-between items-center p-4 border-b shadow-sm">
-          <h2 className="text-2xl font-bold " style={{color:"var(--color-base-800)"}}>
+        <div
+          style={{ background: "var(--background)" }}
+          className="flex-shrink-0 flex justify-between items-center p-4 border-b shadow-sm"
+        >
+          <h2
+            className="text-2xl font-bold "
+            style={{ color: "var(--color-base-800)" }}
+          >
             {t("search.title")}
           </h2>
           <button
@@ -354,42 +410,47 @@ export default function NavbarSearch() {
         </div>
 
         {/* Search Input with Button */}
-        <div className="flex-shrink-0 p-4 border-b bg-gray-50"  style={{background:"var(--background)"}}>
-          <div className="flex gap-3">
+        <div
+          className="flex-shrink-0 p-4 border-b bg-gray-50"
+          style={{ background: "var(--background)" }}
+        >
+          <div className="flex flex-col sm:flex-row gap-3 w-full">
+            {/* Search Input */}
             <div className="relative flex-1">
-            <input
-  ref={inputRef}
-  type="search"
-  placeholder={t("search.placeholder")}
-  className={`w-full p-3 text-base 
-    border border-gray-300 rounded-lg 
-    focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 
-    ${isRTL ? "pr-10 text-right" : "pl-10"} 
-    text-gray-900 dark:text-gray-100 
-    placeholder-gray-400 dark:placeholder-gray-500 
-    bg-white dark:bg-gray-800 
-    dark:border-gray-600`}
-  onChange={handleChange}
-  onKeyPress={handleKeyPress}
-  value={searchQuery}
-  autoFocus
-  dir={isRTL ? "rtl" : "ltr"}
-/>
+              <input
+                ref={inputRef}
+                type="search"
+                placeholder={t("search.placeholder")}
+                className={`w-full p-3 text-base
+        border border-gray-300 rounded-lg 
+        focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 
+        ps-10
+        text-gray-900 dark:text-gray-100 
+        placeholder-gray-400 dark:placeholder-gray-500 
+        bg-white dark:bg-gray-800 
+        dark:border-gray-600`}
+                onChange={handleChange}
+                onKeyPress={handleKeyPress}
+                value={searchQuery}
+                autoFocus
+                dir={isRTL ? "rtl" : "ltr"}
+              />
 
-              <div
-             
-                className={`absolute inset-y-0 flex items-center ${
-                  isRTL ? "right-0 pr-3" : "left-0 pl-3"
-                }`}
-              >
+              {/* Search Icon */}
+              <div className="absolute inset-y-0 start-3 flex items-center">
                 <Search className="w-5 h-5 text-gray-400" />
               </div>
             </div>
+
+            {/* Search Button */}
             <Button
               onClick={handleSearch}
               disabled={isSearching}
               loading={isSearching}
-              className="flex-shrink-0 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-w-[100px] justify-center"
+              className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors 
+               disabled:opacity-50 disabled:cursor-not-allowed 
+               flex items-center gap-2 justify-center 
+               sm:min-w-[100px] w-full sm:w-auto"
             >
               {isSearching ? t("search.searching") : t("search.buttonText")}
             </Button>
@@ -397,12 +458,15 @@ export default function NavbarSearch() {
         </div>
 
         {/* Content Area - Scrollable */}
-        <div className="flex-1 overflow-y-auto bg-gray-50 search-scroll" style={{background:"var(--background)"}}>
+        <div
+          className="flex-1 overflow-y-auto bg-gray-50 search-scroll"
+          style={{ background: "var(--background)" }}
+        >
           <div className="p-4">
             {/* Alphabet Index */}
             {!hasSearched && !indexLoading && !isSearching && (
               <div className="mb-6">
-                <div className="bg-white rounded-xl p-6 shadow-sm border" >
+                <div className="bg-white rounded-xl p-6 shadow-sm border">
                   <h4 className="text-center text-gray-700 font-medium mb-4 text-lg">
                     {t("search.browseByLetter")}
                   </h4>
@@ -461,14 +525,15 @@ export default function NavbarSearch() {
                 </div>
               ) : hasSearched ? (
                 <>
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-semibold text-gray-800">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-800 break-words">
                       {convertNumber(searchResults.length)}{" "}
-                      {t("search.resultsFor")} {searchQuery}
+                      {t("search.resultsFor")} "{searchQuery}"
                     </h3>
+
                     <button
                       onClick={handleClearSearch}
-                      className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                      className="text-sm text-blue-600 hover:text-blue-700 font-medium self-start sm:self-auto"
                     >
                       {t("search.clearAndBrowse")}
                     </button>
@@ -510,7 +575,7 @@ export default function NavbarSearch() {
                           </div>
 
                           {/* Content Section */}
-                          <div className="p-4 space-y-2" >
+                          <div className="p-4 space-y-2">
                             <div className="flex items-start justify-between gap-2">
                               <h4 className="font-semibold text-gray-900 text-base leading-tight group-hover:text-blue-600 transition-colors duration-300 line-clamp-2">
                                 {item.displayName || item.name?.[locale]}
@@ -544,7 +609,10 @@ export default function NavbarSearch() {
                   )}
                 </>
               ) : (
-                <div className="text-center py-12" style={{background:"var(--background)"}}>
+                <div
+                  className="text-center py-12"
+                  style={{ background: "var(--background)" }}
+                >
                   <div className="text-6xl mb-4">🔤</div>
                   <h3 className="text-xl font-semibold text-gray-700 mb-3">
                     {t("search.readyToSearch")}
@@ -560,17 +628,26 @@ export default function NavbarSearch() {
       </div>
     </div>
   );
+  // Add keyboard shortcuts (Cmd+K / Ctrl+K and Escape)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        handleOpen();
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        handleClose();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [handleOpen, handleClose]);
 
   return (
-    <div className="relative" >
-      {/* Small Search Trigger */}
-      <button
-        onClick={handleOpen}
-        className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-        title={t("search.tooltipSearch")}
-      >
-        <Search className="w-5 h-5 text-gray-500" />
-      </button>
+    <div className="relative">
+      {renderTrigger()}
 
       {/* Portal Modal */}
       {isOpen &&

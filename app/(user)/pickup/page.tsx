@@ -9,7 +9,7 @@ import Button from "@/components/common/Button";
 import AddressStep from "./AddressStep";
 import { toast } from "react-toastify";
 import { UserAuthContext } from "@/context/AuthFormContext";
-import { Loader } from '@/components/common'
+import { Loader } from "@/components/common";
 import { useCart } from "@/context/CartContext";
 import { CartItem } from "@/models/cart";
 import Link from "next/link";
@@ -286,19 +286,19 @@ export default function PickupConfirmation() {
   };
 
   // Payment method options
-const paymentMethods = [
-  {
-    id: "cash" as PaymentMethod,
-    icon: Banknote,
-  },
-  {
-    id: "credit_card" as PaymentMethod,
-    icon: CreditCard,
-  },
-];
+  const paymentMethods = [
+    {
+      id: "cash" as PaymentMethod,
+      icon: Banknote,
+    },
+    {
+      id: "credit_card" as PaymentMethod,
+      icon: CreditCard,
+    },
+  ];
 
   if (loading) {
-    return <Loader  />;
+    return <Loader />;
   }
 
   // Show message if user is not logged in instead of app UI
@@ -319,7 +319,10 @@ const paymentMethods = [
   }
 
   return (
-    <div className="lg:w-3xl w-full mx-auto md:p-8 p-5 rounded-2xl shadow-lg border border-green-100" style={{ background: "var(--color-card)" }}>
+    <div
+      className="lg:w-3xl w-full mx-auto md:p-8 p-5 rounded-2xl shadow-lg border border-green-100"
+      style={{ background: "var(--color-card)" }}
+    >
       <div className="flex my-3 flex-col md:flex-row items-start md:items-center gap-4 md:gap-0">
         <Step
           label={t("pickup.steps.address")}
@@ -328,16 +331,18 @@ const paymentMethods = [
           active={currentStep >= Steps.ADDRESS}
         />
 
-    {/* Only show payment step and connectors for buyers */}
+        {/* Only show payment step and connectors for buyers */}
         {user?.role === "buyer" && (
           <>
             <div
-              className={`hidden md:flex flex-grow h-0.5 mx-2 ${currentStep >= Steps.PAYMENT ? "bg-green-700" : "bg-gray-300"
-                }`}
+              className={`hidden md:flex flex-grow h-0.5 mx-2 ${
+                currentStep >= Steps.PAYMENT ? "bg-green-700" : "bg-gray-300"
+              }`}
             />
             <div
-              className={`flex md:hidden w-0.5 h-6 ${currentStep >= Steps.PAYMENT ? "bg-green-700" : "bg-gray-300"
-                }`}
+              className={`flex md:hidden w-0.5 h-6 ${
+                currentStep >= Steps.PAYMENT ? "bg-green-700" : "bg-gray-300"
+              }`}
             />
             <Step
               label={t("pickup.steps.payment")}
@@ -348,12 +353,14 @@ const paymentMethods = [
           </>
         )}
         <div
-          className={`hidden md:flex flex-grow h-0.5 mx-2 ${currentStep >= Steps.REVIEW ? "bg-green-700" : "bg-gray-300"
-            }`}
+          className={`hidden md:flex flex-grow h-0.5 mx-2 ${
+            currentStep >= Steps.REVIEW ? "bg-green-700" : "bg-gray-300"
+          }`}
         />
         <div
-          className={`flex md:hidden w-0.5 h-6 ${currentStep >= Steps.REVIEW ? "bg-green-700" : "bg-gray-300"
-            }`}
+          className={`flex md:hidden w-0.5 h-6 ${
+            currentStep >= Steps.REVIEW ? "bg-green-700" : "bg-gray-300"
+          }`}
         />
         <Step
           label={t("pickup.steps.review")}
@@ -389,11 +396,9 @@ const paymentMethods = [
                   <MapPin className="w-8 h-8 text-white" />
                 </div>
                 <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-                  {t('addresses.choose')}
+                  {t("addresses.choose")}
                 </h2>
-                <p className="text-gray-600">
-                  {t('addresses.select')}
-                </p>
+                <p className="text-gray-600">{t("addresses.select")}</p>
               </div>
 
               {/* Address Grid */}
@@ -402,28 +407,30 @@ const paymentMethods = [
                   <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded-3xl border border-gray-200">
                     <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                      {t('addresses.noAddressesTitle')}
+                      {t("addresses.noAddressesTitle")}
                     </h3>
                     <p className="text-gray-600 mb-6">
-                      {t('addresses.noAddressesDescription')}
+                      {t("addresses.noAddressesDescription")}
                     </p>
                   </div>
                 ) : (
                   addresses.map((addr) => (
                     <div
                       key={addr._id.toString()}
-                      className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 cursor-pointer hover:shadow-lg hover:-translate-y-1 ${selectedAddress?._id === addr._id
+                      className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 cursor-pointer hover:shadow-lg hover:-translate-y-1 ${
+                        selectedAddress?._id === addr._id
                           ? "border-emerald-300 bg-gradient-to-r from-emerald-50 via-white to-emerald-50 shadow-emerald-100 shadow-lg"
                           : "border-gray-200 bg-white hover:border-blue-200 hover:shadow-blue-100"
-                        }`}
+                      }`}
                       onClick={() => handleSelectAddress(addr)}
                     >
                       {/* Selection Indicator */}
                       <div
-                        className={`absolute top-0 left-0 right-0 h-1 transition-all duration-300 ${selectedAddress?._id === addr._id
+                        className={`absolute top-0 left-0 right-0 h-1 transition-all duration-300 ${
+                          selectedAddress?._id === addr._id
                             ? "bg-gradient-to-r from-emerald-400 to-green-500"
                             : "bg-transparent"
-                          }`}
+                        }`}
                       />
 
                       <div className="p-5">
@@ -432,10 +439,11 @@ const paymentMethods = [
                           <div className="flex items-center gap-4 flex-1">
                             {/* Icon */}
                             <div
-                              className={`relative p-3 rounded-xl transition-all duration-300 ${selectedAddress?._id === addr._id
+                              className={`relative p-3 rounded-xl transition-all duration-300 ${
+                                selectedAddress?._id === addr._id
                                   ? "bg-emerald-100 text-emerald-600 scale-110"
                                   : "bg-gray-100 text-gray-600 group-hover:bg-blue-100 group-hover:text-blue-600"
-                                }`}
+                              }`}
                             >
                               <Home className="w-5 h-5" />
                               {selectedAddress?._id === addr._id && (
@@ -463,7 +471,7 @@ const paymentMethods = [
                                 </h3>
                                 {selectedAddress?._id === addr._id && (
                                   <span className="bg-emerald-100 text-emerald-700 text-xs font-medium px-2 py-1 rounded-full">
-                                    {t('addresses.selected')}
+                                    {t("addresses.selected")}
                                   </span>
                                 )}
                               </div>
@@ -498,7 +506,7 @@ const paymentMethods = [
                                 handleEditAddress(addr);
                               }}
                               className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200 opacity-0 group-hover:opacity-100"
-                              title={t('addresses.editAddress')}
+                              title={t("addresses.editAddress")}
                             >
                               <Edit3 className="w-4 h-4" />
                             </button>
@@ -508,17 +516,18 @@ const paymentMethods = [
                                 handleDeleteAddress(addr._id.toString());
                               }}
                               className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200 opacity-0 group-hover:opacity-100"
-                              title={t('addresses.deleteAddress')}
+                              title={t("addresses.deleteAddress")}
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
 
                             {/* Radio Button */}
                             <div
-                              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${selectedAddress?._id === addr._id
+                              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
+                                selectedAddress?._id === addr._id
                                   ? "border-emerald-500 bg-emerald-500"
                                   : "border-gray-300 group-hover:border-blue-400"
-                                }`}
+                              }`}
                             >
                               {selectedAddress?._id === addr._id && (
                                 <div className="w-2 h-2 bg-white rounded-full" />
@@ -555,23 +564,22 @@ const paymentMethods = [
                   <div className="p-1 rounded-lg bg-gray-100 group-hover:bg-blue-100 transition-colors duration-300">
                     <Plus className="w-5 h-5" />
                   </div>
-                  {t('addresses.addNew')}
+                  {t("addresses.addNew")}
                 </button>
 
-             <Button
-  onClick={handleNextStep}
-  disabled={!selectedAddress}
-  className={`w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 rounded-2xl font-semibold transition-all duration-300 transform
+                <Button
+                  onClick={handleNextStep}
+                  disabled={!selectedAddress}
+                  className={`w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 rounded-2xl font-semibold transition-all duration-300 transform
     ${
       selectedAddress
         ? "bg-green-600 hover:bg-green-700 text-white dark:bg-green-500 dark:hover:bg-green-400"
         : "bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:text-gray-400"
     }`}
->
-  {t("ewallet.withdraw.buttons.continue")}
-  <ChevronRight className="w-5 h-5" />
-</Button>
-
+                >
+                  {t("ewallet.withdraw.buttons.continue")}
+                  <ChevronRight className="w-5 h-5" />
+                </Button>
               </div>
 
               {/* Updated Progress Indicator - Only 3 steps */}
@@ -580,8 +588,9 @@ const paymentMethods = [
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                   <div className="w-8 h-1 bg-green-500 rounded-full"></div>
                   <div
-                    className={`w-2 h-2 rounded-full ${user?.role === "buyer" ? "bg-gray-300" : "bg-green-500"
-                      }`}
+                    className={`w-2 h-2 rounded-full ${
+                      user?.role === "buyer" ? "bg-gray-300" : "bg-green-500"
+                    }`}
                   ></div>
                   {user?.role === "buyer" && (
                     <>
@@ -598,148 +607,163 @@ const paymentMethods = [
         </>
       )}
 
-     {currentStep === Steps.PAYMENT && (
-  <div className="max-w-4xl mx-auto p-6 space-y-6">
-    {/* Header */}
-    <div className="text-center space-y-2 mb-8">
-      <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-4">
-        <Wallet className="w-8 h-8 text-white" />
-      </div>
-      <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-        {t('payment.title')}
-      </h2>
-      <p className="text-gray-600">
-        {t('payment.subtitle')}
-      </p>
-    </div>
-
-    {/* Payment Methods */}
-    <div className="grid gap-4 md:grid-cols-2">
-      {paymentMethods.map((method) => {
-        const IconComponent = method.icon;
-        const isSelected = selectedPaymentMethod === method.id;
-
-        return (
-          <div
-            key={method.id}
-            className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 ${isSelected
-                ? "border-green-500 bg-green-50 shadow-md"
-                : "border-gray-200 hover:border-blue-300"
-              }`}
-            onClick={() => setSelectedPaymentMethod(method.id)}
-          >
-            <div className="flex items-center gap-4">
-              <div
-                className={`p-3 rounded-lg ${method.id === "cash"
-                    ? "bg-green-100 text-green-600"
-                    : method.id === "credit_card"
-                      ? "bg-blue-100 text-blue-600"
-                      : "bg-purple-100 text-purple-600"
-                  }`}
-              >
-                <IconComponent className="w-6 h-6" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-lg">{t(`payment.methods.${method.id}.name`)}</h3>
-                <p className="text-gray-600 text-sm">
-                  {t(`payment.methods.${method.id}.description`)}
-                </p>
-              </div>
-              {isSelected && (
-                <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
-                  <Check className="w-3 h-3 text-white" />
-                </div>
-              )}
+      {currentStep === Steps.PAYMENT && (
+        <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
+          {/* Header */}
+          <div className="text-center space-y-2 mb-6 sm:mb-8">
+            <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-3 sm:mb-4">
+              <Wallet className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
             </div>
+            <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+              {t("payment.title")}
+            </h2>
+            <p className="text-gray-600 text-sm sm:text-base">
+              {t("payment.subtitle")}
+            </p>
           </div>
-        );
-      })}
 
-      {user?.attachments?.balance && user.attachments.balance > 0 && (
-        <div
-          className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 ${selectedPaymentMethod === "wallet"
-              ? "border-green-500 bg-green-50 shadow-md"
-              : "border-gray-200 hover:border-blue-300"
-            }`}
-          onClick={() => setSelectedPaymentMethod("wallet")}
-        >
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-purple-100 rounded-lg text-purple-600">
-              <Wallet className="w-6 h-6" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-bold text-lg">{t('payment.methods.wallet.name')}</h3>
-              <p className="text-gray-600 text-sm">
-                {t('payment.methods.wallet.description', {
-                  balance: user.attachments.balance.toFixed(2)
-                })}
-              </p>
-            </div>
-            {selectedPaymentMethod === "wallet" && (
-              <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
-                <Check className="w-3 h-3 text-white" />
+          {/* Payment Methods */}
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+            {paymentMethods.map((method) => {
+              const IconComponent = method.icon;
+              const isSelected = selectedPaymentMethod === method.id;
+
+              return (
+                <div
+                  key={method.id}
+                  className={`p-4 sm:p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 ${
+                    isSelected
+                      ? "border-green-500 bg-green-50 shadow-md"
+                      : "border-gray-200 hover:border-blue-300"
+                  }`}
+                  onClick={() => setSelectedPaymentMethod(method.id)}
+                >
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div
+                      className={`p-2 sm:p-3 rounded-lg ${
+                        method.id === "cash"
+                          ? "bg-green-100 text-green-600"
+                          : method.id === "credit_card"
+                          ? "bg-blue-100 text-blue-600"
+                          : "bg-purple-100 text-purple-600"
+                      }`}
+                    >
+                      <IconComponent className="w-5 h-5 sm:w-6 sm:h-6" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-base sm:text-lg">
+                        {t(`payment.methods.${method.id}.name`)}
+                      </h3>
+                      <p className="text-gray-600 text-xs sm:text-sm">
+                        {t(`payment.methods.${method.id}.description`)}
+                      </p>
+                    </div>
+                    {isSelected && (
+                      <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-green-500 flex items-center justify-center">
+                        <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Wallet Option */}
+            {user?.attachments?.balance && user.attachments.balance > 0 && (
+              <div
+                className={`p-4 sm:p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 ${
+                  selectedPaymentMethod === "wallet"
+                    ? "border-green-500 bg-green-50 shadow-md"
+                    : "border-gray-200 hover:border-blue-300"
+                }`}
+                onClick={() => setSelectedPaymentMethod("wallet")}
+              >
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="p-2 sm:p-3 bg-purple-100 rounded-lg text-purple-600">
+                    <Wallet className="w-5 h-5 sm:w-6 sm:h-6" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-base sm:text-lg">
+                      {t("payment.methods.wallet.name")}
+                    </h3>
+                    <p className="text-gray-600 text-xs sm:text-sm">
+                      {t("payment.methods.wallet.description", {
+                        balance: user.attachments.balance.toFixed(2),
+                      })}
+                    </p>
+                  </div>
+                  {selectedPaymentMethod === "wallet" && (
+                    <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-green-500 flex items-center justify-center">
+                      <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" />
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
-        </div>
-      )}
-    </div>
 
-    {/* Order Summary */}
-    <div className="bg-gray-50 rounded-xl p-6 space-y-3">
-      <h3 className="font-semibold text-gray-800 mb-4">{t('payment.orderSummary.title')}</h3>
-      <div className="flex justify-between text-sm">
-        <span className="text-gray-600">{t('payment.orderSummary.subtotal')}</span>
-        <span className="font-medium text-gray-600">
-          {t('payment.orderSummary.currency')}{totalPrice.toFixed(2)}
-        </span>
-      </div>
-      {selectedAddress?.city && (
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600">{t('payment.orderSummary.deliveryFee')}</span>
-          <span className="font-medium text-gray-600">
-            {t('payment.orderSummary.currency')}{(deliveryFees[selectedAddress.city] || 0).toFixed(2)}
-          </span>
-        </div>
-      )}
-      <div className="border-t pt-3 flex justify-between font-semibold text-lg text-gray-600">
-        <span>{t('payment.orderSummary.total')}</span>
-        <span className="text-gray-600">
-          {t('payment.orderSummary.currency')}
-          {(
-            totalPrice +
-            (selectedAddress?.city
-              ? deliveryFees[selectedAddress.city] || 0
-              : 0)
-          ).toFixed(2)}
-        </span>
-      </div>
-    </div>
+          {/* Order Summary */}
+          <div className="bg-gray-50 rounded-xl p-4 sm:p-6 space-y-3">
+            <h3 className="font-semibold text-gray-800 mb-3 sm:mb-4 text-sm sm:text-base">
+              {t("payment.orderSummary.title")}
+            </h3>
+            <div className="flex justify-between text-xs sm:text-sm">
+              <span className="text-gray-600">
+                {t("payment.orderSummary.subtotal")}
+              </span>
+              <span className="font-medium text-gray-600">
+                {totalPrice.toFixed(2)} {t("payment.orderSummary.currency")}
+              </span>
+            </div>
+            {selectedAddress?.city && (
+              <div className="flex justify-between text-xs sm:text-sm">
+                <span className="text-gray-600">
+                  {t("payment.orderSummary.deliveryFee")}
+                </span>
+                <span className="font-medium text-gray-600">
+                  {(deliveryFees[selectedAddress.city] || 0).toFixed(2)}{" "}
+                  {t("payment.orderSummary.currency")}
+                </span>
+              </div>
+            )}
+            <div className="border-t pt-3 flex justify-between font-semibold text-base sm:text-lg text-gray-600">
+              <span>{t("payment.orderSummary.total")}</span>
+              <span className="text-gray-600">
+                {(
+                  totalPrice +
+                  (selectedAddress?.city
+                    ? deliveryFees[selectedAddress.city] || 0
+                    : 0)
+                ).toFixed(2)}{" "}
+                {t("payment.orderSummary.currency")}
+              </span>
+            </div>
+          </div>
 
-    {/* Bottom Actions */}
-    <div className="flex justify-between pt-8 border-t border-gray-200">
-      <Button
-        onClick={() => goToStep(Steps.ADDRESS)}
-        className="px-6 py-3 bg-gray-200 text-gray-700 hover:bg-gray-300"
-      >
-        {t('payment.buttons.back')}
-      </Button>
-      <Button
-        onClick={handlePaymentNext}
-        disabled={!selectedPaymentMethod}
-        style={{background:"var(--color-green-600)"}}
-        className={`px-6 py-3 flex items-center gap-2 rounded-lg font-medium transition-colors
-          ${selectedPaymentMethod
-            ? "bg-green-600 hover:bg-green-700 text-white dark:bg-green-500 dark:hover:bg-green-400"
-            : "bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:text-gray-400"
+          {/* Bottom Actions */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-between pt-6 sm:pt-8 border-t border-gray-200">
+            <Button
+              onClick={() => goToStep(Steps.ADDRESS)}
+              className="w-full sm:w-auto px-5 sm:px-6 py-2.5 sm:py-3 bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm sm:text-base"
+            >
+              {t("payment.buttons.back")}
+            </Button>
+            <Button
+              onClick={handlePaymentNext}
+              disabled={!selectedPaymentMethod}
+              className={`w-full sm:w-auto px-5 sm:px-6 py-2.5 sm:py-3 flex items-center justify-center gap-2 rounded-lg font-medium text-sm sm:text-base transition-colors
+          ${
+            selectedPaymentMethod
+              ? "bg-green-600 hover:bg-green-700 text-white dark:bg-green-500 dark:hover:bg-green-400"
+              : "bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:text-gray-400"
           }`}
-      >
-        {t('payment.buttons.continue')}
-        <ChevronRight className="w-5 h-5" />
-      </Button>
-    </div>
-  </div>
-)}
+            >
+              {t("payment.buttons.continue")}
+              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {currentStep === Steps.REVIEW && (
         <Review
