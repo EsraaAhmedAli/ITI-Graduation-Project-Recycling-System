@@ -45,119 +45,211 @@ export default function ContactForm() {
     /\S+@\S+\.\S+/.test(email) || t("contact.errors.invalidEmail");
 
   return (
-<main>
-       <header className="mb-8">
-        <h1 className="text-4xl font-bold text-primary mb-4">
-  {t("contact.title")}
-</h1>
-<p className="text-base-content text-lg">
-  {t("contact.description")}
-</p>
-
-          </header>
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="bg-white shadow-lg rounded-2xl p-8 grid gap-6"
-      noValidate
-      aria-label={t("contact.formAria")}
-    >
-      {/* Name */}
-      <div>
-        <label htmlFor="name" className="block font-medium text-base-content mb-2">
-          {t("contact.name")} *
-        </label>
-        <input
-          id="name"
-          type="text"
-          {...register("name", { required: t("contact.errors.nameRequired") })}
-          className={`mt-1 w-full border border-base-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-primary transition-colors ${
-            errors.name ? "border-error" : ""
-          }`}
-          placeholder={t("contact.placeholders.name")}
-          aria-invalid={errors.name ? "true" : "false"}
-          aria-describedby={errors.name ? "name-error" : undefined}
-        />
-        {errors.name && (
-          <p id="name-error" className="text-error text-sm mt-1" role="alert">
-            {errors.name.message}
+    <main className="min-h-screen p-6" style={{
+      backgroundColor: 'var(--background)',
+      color: 'var(--foreground)'
+    }}>
+      <div className="max-w-2xl mx-auto">
+        <header className="mb-8 contact-header">
+          <h1 className="text-4xl font-bold mb-4" style={{
+            color: 'var(--color-primary)'
+          }}>
+            {t("contact.title")}
+          </h1>
+          <p className="text-lg" style={{
+            color: 'var(--color-base-content)'
+          }}>
+            {t("contact.description")}
           </p>
-        )}
-      </div>
+        </header>
 
-      {/* Email */}
-      <div>
-        <label htmlFor="email" className="block font-medium text-base-content mb-2">
-          {t("contact.email")} *
-        </label>
-        <input
-          id="email"
-          type="email"
-          {...register("email", {
-            required: t("contact.errors.emailRequired"),
-            validate: validateEmail,
-          })}
-          className={`mt-1 w-full border border-base-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-primary transition-colors ${
-            errors.email ? "border-error" : ""
-          }`}
-          placeholder={t("contact.placeholders.email")}
-          aria-invalid={errors.email ? "true" : "false"}
-          aria-describedby={errors.email ? "email-error" : undefined}
-        />
-        {errors.email && (
-          <p id="email-error" className="text-error text-sm mt-1" role="alert">
-            {errors.email.message}
-          </p>
-        )}
-      </div>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="contact-form shadow-lg rounded-2xl p-8 grid gap-6"
+          style={{
+            backgroundColor: 'var(--color-card)',
+            color: 'var(--foreground)',
+            border: '1px solid var(--border-color)'
+          }}
+          noValidate
+          aria-label={t("contact.formAria")}
+        >
+          {/* Name */}
+          <div>
+            <label 
+              htmlFor="name" 
+              className="block font-medium mb-2"
+              style={{ color: 'var(--color-base-content)' }}
+            >
+              {t("contact.name")} *
+            </label>
+            <input
+              id="name"
+              type="text"
+              {...register("name", { required: t("contact.errors.nameRequired") })}
+              className={`mt-1 w-full rounded-md p-3 focus:outline-none focus:ring-2 transition-colors ${
+                errors.name ? "border-2" : "border"
+              }`}
+              style={{
+                backgroundColor: 'var(--background)',
+                color: 'var(--foreground)',
+                borderColor: errors.name ? 'var(--color-error)' : 'var(--border-color)',
+                focusBorderColor: 'var(--color-primary)'
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = 'var(--color-primary)';
+                e.target.style.boxShadow = '0 0 0 2px rgba(14, 159, 110, 0.1)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = errors.name ? 'var(--color-error)' : 'var(--border-color)';
+                e.target.style.boxShadow = 'none';
+              }}
+              placeholder={t("contact.placeholders.name")}
+              aria-invalid={errors.name ? "true" : "false"}
+              aria-describedby={errors.name ? "name-error" : undefined}
+            />
+            {errors.name && (
+              <p 
+                id="name-error" 
+                className="text-sm mt-1" 
+                role="alert"
+                style={{ color: 'var(--color-error)' }}
+              >
+                {errors.name.message}
+              </p>
+            )}
+          </div>
 
-      {/* Message */}
-      <div>
-        <label htmlFor="message" className="block font-medium text-base-content mb-2">
-          {t("contact.message")} *
-        </label>
-        <textarea
-          id="message"
-          rows={5}
-          {...register("message", {
-            required: t("contact.errors.messageRequired"),
-            minLength: {
-              value: 10,
-              message: t("contact.errors.messageMin"),
-            },
-          })}
-          className={`mt-1 w-full border border-base-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-primary resize-none transition-colors ${
-            errors.message ? "border-error" : ""
-          }`}
-          placeholder={t("contact.placeholders.message")}
-          aria-invalid={errors.message ? "true" : "false"}
-          aria-describedby={errors.message ? "message-error" : undefined}
-        />
-        {errors.message && (
-          <p
-            id="message-error"
-            className="text-error text-sm mt-1"
-            role="alert"
+          {/* Email */}
+          <div>
+            <label 
+              htmlFor="email" 
+              className="block font-medium mb-2"
+              style={{ color: 'var(--color-base-content)' }}
+            >
+              {t("contact.email")} *
+            </label>
+            <input
+              id="email"
+              type="email"
+              {...register("email", {
+                required: t("contact.errors.emailRequired"),
+                validate: validateEmail,
+              })}
+              className={`mt-1 w-full rounded-md p-3 focus:outline-none focus:ring-2 transition-colors ${
+                errors.email ? "border-2" : "border"
+              }`}
+              style={{
+                backgroundColor: 'var(--background)',
+                color: 'var(--foreground)',
+                borderColor: errors.email ? 'var(--color-error)' : 'var(--border-color)'
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = 'var(--color-primary)';
+                e.target.style.boxShadow = '0 0 0 2px rgba(14, 159, 110, 0.1)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = errors.email ? 'var(--color-error)' : 'var(--border-color)';
+                e.target.style.boxShadow = 'none';
+              }}
+              placeholder={t("contact.placeholders.email")}
+              aria-invalid={errors.email ? "true" : "false"}
+              aria-describedby={errors.email ? "email-error" : undefined}
+            />
+            {errors.email && (
+              <p 
+                id="email-error" 
+                className="text-sm mt-1" 
+                role="alert"
+                style={{ color: 'var(--color-error)' }}
+              >
+                {errors.email.message}
+              </p>
+            )}
+          </div>
+
+          {/* Message */}
+          <div>
+            <label 
+              htmlFor="message" 
+              className="block font-medium mb-2"
+              style={{ color: 'var(--color-base-content)' }}
+            >
+              {t("contact.message")} *
+            </label>
+            <textarea
+              id="message"
+              rows={5}
+              {...register("message", {
+                required: t("contact.errors.messageRequired"),
+                minLength: {
+                  value: 10,
+                  message: t("contact.errors.messageMin"),
+                },
+              })}
+              className={`mt-1 w-full rounded-md p-3 focus:outline-none focus:ring-2 resize-none transition-colors ${
+                errors.message ? "border-2" : "border"
+              }`}
+              style={{
+                backgroundColor: 'var(--background)',
+                color: 'var(--foreground)',
+                borderColor: errors.message ? 'var(--color-error)' : 'var(--border-color)'
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = 'var(--color-primary)';
+                e.target.style.boxShadow = '0 0 0 2px rgba(14, 159, 110, 0.1)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = errors.message ? 'var(--color-error)' : 'var(--border-color)';
+                e.target.style.boxShadow = 'none';
+              }}
+              placeholder={t("contact.placeholders.message")}
+              aria-invalid={errors.message ? "true" : "false"}
+              aria-describedby={errors.message ? "message-error" : undefined}
+            />
+            {errors.message && (
+              <p
+                id="message-error"
+                className="text-sm mt-1"
+                role="alert"
+                style={{ color: 'var(--color-error)' }}
+              >
+                {errors.message.message}
+              </p>
+            )}
+          </div>
+
+          {/* Button */}
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="font-semibold py-3 px-6 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all disabled:cursor-not-allowed"
+            style={{
+              backgroundColor: isSubmitting ? 'var(--text-gray-400)' : 'var(--color-primary)',
+              color: 'white',
+              opacity: isSubmitting ? 0.5 : 1,
+              focusRingColor: 'var(--color-primary)'
+            }}
+            onMouseEnter={(e) => {
+              if (!isSubmitting) {
+                e.currentTarget.style.backgroundColor = 'var(--color-green-600)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isSubmitting) {
+                e.currentTarget.style.backgroundColor = 'var(--color-primary)';
+              }
+            }}
+            aria-describedby="submit-status"
           >
-            {errors.message.message}
+            {isSubmitting ? t("contact.sending") : t("contact.send")}
+          </button>
+
+          <p id="submit-status" className="sr-only">
+            {isSubmitting ? t("contact.submitting") : t("contact.ready")}
           </p>
-        )}
+        </form>
       </div>
-
-      {/* Button */}
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="bg-primary text-white font-semibold py-3 px-6 rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-        aria-describedby="submit-status"
-      >
-        {isSubmitting ? t("contact.sending") : t("contact.send")}
-      </button>
-
-      <p id="submit-status" className="sr-only">
-        {isSubmitting ? t("contact.submitting") : t("contact.ready")}
-      </p>
-    </form>
-
-</main>
+    </main>
   );
 }
