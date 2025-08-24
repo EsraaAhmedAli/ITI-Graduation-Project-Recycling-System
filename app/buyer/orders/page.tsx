@@ -115,7 +115,8 @@ function ProfileContent() {
                     ? "border-green-600 text-green-800"
                     : "border-transparent text-gray-500 hover:text-green-700"
                 }`}
-                onClick={() => setActiveTab(tab)}>
+                onClick={() => setActiveTab(tab)}
+              >
                 {t(`profile.tabs.${tab}`)}
               </button>
             ))}
@@ -135,7 +136,8 @@ function ProfileContent() {
             {filteredOrders.map((order) => (
               <div
                 key={order._id}
-                className="rounded-xl p-4 bg-green-50 shadow-sm flex flex-col justify-between">
+                className="rounded-xl p-4 bg-green-50 shadow-sm flex flex-col justify-between"
+              >
                 <div className="flex justify-between items-center mb-2 text-sm text-gray-600">
                   <span>
                     {t("profile.orders.date")}:{" "}
@@ -185,7 +187,8 @@ function ProfileContent() {
 
                 <button
                   onClick={() => openItemsModal(order.items)}
-                  className="self-start text-sm text-green-500 rounded-md transition">
+                  className="self-start text-sm text-green-500 rounded-md transition"
+                >
                   {t("profile.orders.viewDetails")}
                 </button>
               </div>
@@ -280,7 +283,8 @@ function PaymentsHistory() {
         payments.map((payment, index) => (
           <div
             key={payment._id || index}
-            className="rounded-xl p-4 bg-green-50 shadow-sm flex flex-col justify-between">
+            className="rounded-xl p-4 bg-green-50 shadow-sm flex flex-col justify-between"
+          >
             <div className="flex justify-between items-center mb-2 text-sm text-gray-600">
               <span>
                 Date:{" "}
@@ -315,7 +319,8 @@ function PaymentsHistory() {
                 href={payment.receipt_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 inline-block text-sm text-green-600 hover:underline">
+                className="mt-3 inline-block text-sm text-green-600 hover:underline"
+              >
                 View Receipt
               </a>
             )}

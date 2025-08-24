@@ -11,6 +11,8 @@ import { Loader } from '@/components/common'
 import { useQuery } from "@tanstack/react-query";
 import ReviewsModal from "@/components/ratingModal";
 import { useLanguage } from "@/context/LanguageContext";
+import TableSkeleton from "@/components/shared/tableSkeleton";
+import DeliveryTableSkeleton from "@/components/shared/deliveryTableSkeleton";
 
 export interface DeliveryItem {
   userId: string; // unique user or courier ID
@@ -437,8 +439,11 @@ export default function Page() {
       </div>
 
       {loading ? (
-        <Loader />
-      ) : (
+  <DeliveryTableSkeleton 
+    rows={5}
+    title={t('delivery.title')}
+    description={t('delivery.description')}
+  />    ) : (
         <>
           {/* Enhanced Summary stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">

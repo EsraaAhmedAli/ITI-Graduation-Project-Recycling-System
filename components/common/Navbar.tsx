@@ -86,7 +86,7 @@ const CartItem = memo(
                 ? t("cart.item.kg")
                 : t("cart.item.pcs")}
             </p>
-            
+
             {/* <p className="text-green-600 dark:text-green-400 text-xs font-medium">
               {convertNumber(item.points)} {t("cart.item.pts")}
             </p> */}
@@ -132,6 +132,13 @@ const DarkModeToggle = memo(({ darkMode, onToggle, className = "" }) => {
     return darkMode;
   };
 
+  const AuthButtonsSkeleton = memo(() => (
+    <div className="hidden lg:flex items-center space-x-2">
+      <div className="w-16 h-8 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-lg"></div>
+      <div className="w-20 h-8 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-lg"></div>
+    </div>
+  ));
+  AuthButtonsSkeleton.displayName = "AuthButtonsSkeleton";
   const effectiveState = getEffectiveState();
 
   return (
@@ -152,7 +159,6 @@ const DarkModeToggle = memo(({ darkMode, onToggle, className = "" }) => {
     </button>
   );
 });
-
 DarkModeToggle.displayName = "DarkModeToggle";
 
 // Memoized Language Toggle Component
@@ -356,13 +362,6 @@ export default function Navbar() {
     [cart, handleRemoveFromCart, locale, darkMode, t, convertNumber]
   );
 
-  const AuthButtonsSkeleton = memo(() => (
-    <div className="hidden lg:flex items-center space-x-2">
-      <div className="w-16 h-8 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-lg"></div>
-      <div className="w-20 h-8 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-lg"></div>
-    </div>
-  ));
-
   return (
     <nav className="navbar sticky top-0 z-50 backdrop-blur-lg shadow-sm">
       <div className="max-w-7xl mx-auto px-1 min-[375px]:px-2 sm:px-4 lg:px-8">
@@ -375,7 +374,9 @@ export default function Navbar() {
                 {t("navbar.title")}
               </div>
             </NavLink>
-            <NavbarSearch />
+            <div className="hidden 2xl:flex items-center max-w-md mx-8">
+              <NavbarSearch variant="desktop" className="w-full" />
+            </div>
           </div>
 
           {/* Center: Navigation Links - Desktop */}
@@ -419,7 +420,7 @@ export default function Navbar() {
             {/* Dark Mode Toggle - Only show when not logged in */}
             {!user && (
               <div className="hidden lg:block">
-                <DarkModeToggle isDark={darkMode} onToggle={toggleDarkMode} />
+                <DarkModeToggle darkMode={darkMode} onToggle={toggleDarkMode} />
               </div>
             )}
 
@@ -449,13 +450,19 @@ export default function Navbar() {
               {/* Cart Dropdown */}
               {isCartOpen && (
                 <div
-                  className={`absolute top-full mt-2 rounded-lg bg-white shadow-lg border py-2 z-50 
-  ${darkMode ? "dark" : "light"}
-  left-1/2 -translate-x-1/2
-  w-[calc(100vw-2rem)] sm:w-80
-  max-w-80
+                  className={`
+  absolute top-full mt-2 rounded-lg bg-white dark:bg-gray-900 shadow-lg
+  border border-gray-200 dark:border-gray-700 py-2 z-50
+  max-w-[90vw]
+  ${user 
+    ? isBuyer 
+      ? 'w-80 sm:w-72 ltr:-right-2 rtl:-left-2' 
+      : 'w-80 sm:w-72 -end-1/2 translate-x-1/2'
+    : 'w-80 sm:w-56 ltr:right-0 rtl:left-0'
+  }
 `}
                 >
+                  {/* Header */}
                   <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-gray-700">
                     <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
                       {isBuyer ? t("navbar.myCart") : t("navbar.myCollection")}
@@ -530,7 +537,7 @@ export default function Navbar() {
 
             {/* Notification - Only show when logged in */}
             {user && (
-              <div className="px-1 hidden min-[640px]:block">
+              <div className="px-1">
                 <NotificationBell />
               </div>
             )}
@@ -731,6 +738,18 @@ export default function Navbar() {
         {isOpen && (
           <div className="mobile-menu block min-[1290px]:hidden backdrop-blur-lg border-t">
             <div className="px-4 py-3 space-y-2">
+              {/* Mobile: Search in menu */}
+              <div>
+                <NavbarSearch
+                  variant="mobile"
+                  className="w-full"
+                  onClose={() => setIsOpen(false)}
+                />
+              </div>
+
+              {/* Divider */}
+              <div className="border-t border-gray-200 my-2"></div>
+
               {/* Dark Mode Toggle for Mobile - Only show when not logged in */}
               {!user && (
                 <div className="flex items-center justify-between w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg mb-2">
@@ -803,7 +822,7 @@ export default function Navbar() {
                 onClick={() => setIsOpen(false)}
                 className={`nav-link ${darkMode ? "dark" : "light"}`}
               >
-                <FaRobot className="nav-icon" />
+                <FaRobot className="nav-icon w-6 h-6" />
                 <span>{t("navbar.ecoAssist")}</span>
               </NavLink>
               {user && (

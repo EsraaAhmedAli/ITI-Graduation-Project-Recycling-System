@@ -17,6 +17,7 @@ import { useUserPoints } from "@/context/UserPointsContext";
 import { useRouter } from "next/navigation";
 
 import { useProfileLogic } from "@/hooks/useProfileLogic";
+import ReviewManager from "./ReviewManager";
 import ProfileHeader from "./profileHeader";
 import StatsSection from "./statsSection";
 import TabNavigation from "./tabNavigation";
@@ -35,19 +36,7 @@ const PointsActivitySkeleton = () => (
   <div className="animate-pulse h-20 bg-gray-200 rounded" />
 );
 
-interface ProfileContentProps {
-  openReviewModal: (order: any) => void;
-  deleteReview: (orderId: string) => Promise<void>;
-  userReviews: any[];
-  isReviewsLoading: boolean;
-}
-
-const ProfileContent = memo(function ProfileContent({
-  openReviewModal,
-  deleteReview,
-  userReviews,
-  isReviewsLoading,
-}: ProfileContentProps) {
+const ProfileContent = memo(function ProfileContent() {
   const { user } = useUserAuth();
   const {
     userPoints,
@@ -128,8 +117,9 @@ const ProfileContent = memo(function ProfileContent({
   );
 
   useEffect(() => {
-  console.log("🔄 PARENT - RecyclingModal open state:", isRecyclingModalOpen);
-}, [isRecyclingModalOpen]);
+    console.log("🔄 PARENT - RecyclingModal open state:", isRecyclingModalOpen);
+  }, [isRecyclingModalOpen]);
+
   // Early return for loading state
   if (!user) {
     return (
@@ -185,24 +175,28 @@ const ProfileContent = memo(function ProfileContent({
           t={t}
         />
 
-        {/* Tab Content */}
-        <TabContent
-          activeTab={activeTab}
-          isLoading={isLoading}
-          isReviewsLoading={isReviewsLoading}
-          filteredOrders={filteredOrders}
-          userReviews={userReviews}
-          user={user}
-          openReviewModal={openReviewModal}
-          deleteReview={deleteReview}
-          openItemsModal={openItemsModal}
-          handleCancelOrder={handleCancelOrder}
-          router={router}
-          shouldShowSeeMore={shouldShowSeeMore}
-          isFetchingNextPage={isFetchingNextPage}
-          loadMoreOrders={loadMoreOrders}
-          t={t}
-        />
+        {/* Tab Content with ReviewManager */}
+        <ReviewManager isReviewsTabActive={activeTab === 'reviews'}>
+          {({ openReviewModal, deleteReview, userReviews, isReviewsLoading }) => (
+            <TabContent
+              activeTab={activeTab}
+              isLoading={isLoading}
+              isReviewsLoading={isReviewsLoading}
+              filteredOrders={filteredOrders}
+              userReviews={userReviews}
+              user={user}
+              openReviewModal={openReviewModal}
+              deleteReview={deleteReview}
+              openItemsModal={openItemsModal}
+              handleCancelOrder={handleCancelOrder}
+              router={router}
+              shouldShowSeeMore={shouldShowSeeMore}
+              isFetchingNextPage={isFetchingNextPage}
+              loadMoreOrders={loadMoreOrders}
+              t={t}
+            />
+          )}
+        </ReviewManager>
 
         {/* Modals - Only render when open to reduce DOM size */}
         {isRecyclingModalOpen && (

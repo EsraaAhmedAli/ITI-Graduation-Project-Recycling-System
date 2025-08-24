@@ -10,25 +10,9 @@ export type City =
   | "Beni Suef"
   | "Damietta"
   | "Faiyum"
-  | "Ismailia"
-  | "Kafr El Sheikh"
-  | "Luxor"
-  | "Matruh"
-  | "Minya"
-  | "Monufia"
-  | "New Valley"
-  | "North Sinai"
-  | "Port Said"
-  | "Qalyubia"
-  | "Qena"
-  | "Red Sea"
-  | "Sharqia"
-  | "Sohag"
-  | "South Sinai"
-  | "Suez"
-  | "Beheira"
-  | "Dakahlia"
-  | "Gharbia";
+  
+
+
 
 export type Area =
   | "Nasr City"

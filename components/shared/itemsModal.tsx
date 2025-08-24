@@ -52,12 +52,13 @@ export default function ItemsModal({
 
   return (
     <Modal show={show} onClose={onclose} size="xl" dismissible>
-      <div className="border-b-0 pb-2 px-6 pt-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center text-white font-semibold text-lg shadow-lg">
+      {/* Header */}
+      <div className="border-b-0 pb-2 px-4 sm:px-6 pt-4">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center text-white font-semibold text-lg shadow-lg shrink-0">
               <svg
-                className="w-6 h-6"
+                className="w-5 h-5 sm:w-6 sm:h-6"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -70,11 +71,11 @@ export default function ItemsModal({
                 />
               </svg>
             </div>
-            <div>
-              <h3 className="text-xl font-bold text-gray-800">
+            <div className="truncate">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-800 truncate">
                 {t("itemsModal.headerTitle")}
               </h3>
-              <p className="text-sm text-gray-500">
+              <p className="text-xs sm:text-sm text-gray-500 truncate">
                 {t("itemsModal.headerSubtitle")}
               </p>
             </div>
@@ -82,7 +83,7 @@ export default function ItemsModal({
 
           <button
             onClick={onclose}
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors duration-200 shrink-0"
             aria-label="Close modal"
           >
             <svg
@@ -333,10 +334,10 @@ export default function ItemsModal({
             })}
 
             {/* Order Total */}
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-5 border border-green-100 mt-6">
-              <div className="flex items-center justify-between">
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 sm:p-5 border border-green-100 mt-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 bg-green-500 rounded-lg flex items-center justify-center">
                     <svg
                       className="w-5 h-5 text-white"
                       fill="none"
@@ -352,22 +353,19 @@ export default function ItemsModal({
                     </svg>
                   </div>
                   <div>
-                    <h4 className="text-lg font-semibold text-gray-800">
+                    <h4 className="text-base sm:text-lg font-semibold text-gray-800">
                       {t("itemsModal.orderTotal")}
                     </h4>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-xs sm:text-sm text-gray-600">
                       {t("itemsModal.itemsCount", { count: formatted })}
                     </p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-green-600">
+                <div className="text-left sm:text-right w-full sm:w-auto">
+                  <p className="text-xl sm:text-2xl font-bold text-green-600">
                     {t("itemsModal.totalPrice", { total: formattedTotal })}
                     {selectedOrder?.deliveryFee != 0 && (
-                      <span className="">
-                        {" "}
-                        + {selectedOrder.deliveryFee} Fee
-                      </span>
+                      <span> + {selectedOrder.deliveryFee} Fee</span>
                     )}
                   </p>
                   {userRole == "customer" && (
@@ -377,24 +375,20 @@ export default function ItemsModal({
                       })}
                     </p>
                   )}
-
-              {
-  userRole?.role !== "customer" && userRole !== "customer" && (
-    <p className="text-sm font-semibold text-green-700">
-      payment Method: {selectedOrder.paymentMethod}
-    </p>
-  )
-}
-
+                  {userRole?.role !== "customer" && userRole !== "customer" && (
+                    <p className="text-sm font-semibold text-green-700">
+                      Payment Method: {selectedOrder.paymentMethod}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
           </div>
         ) : (
           <div className="text-center py-8">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg
-                className="w-8 h-8 text-gray-400"
+                className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -407,10 +401,10 @@ export default function ItemsModal({
                 />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">
               No Items Found
             </h3>
-            <p className="text-gray-600">
+            <p className="text-gray-600 text-sm sm:text-base">
               This order does not contain any items.
             </p>
           </div>

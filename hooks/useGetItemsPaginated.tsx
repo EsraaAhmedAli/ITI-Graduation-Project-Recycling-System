@@ -53,7 +53,8 @@
     // Data
     data: LocalizedItem[];
     pagination: PaginationInfo | undefined;
-    
+        isSearching: boolean; // Add this line
+
     // Loading states
     isLoading: boolean;
     isFetching: boolean;
@@ -81,6 +82,7 @@
     options: UseGetItemsPaginatedOptions = {}
     ): UseGetItemsPaginatedReturn => {
     const {
+        
         categoryName,
         itemsPerPage = 12,
         enabled = true,
@@ -153,7 +155,8 @@ useEffect(() => {
         isLoading, 
         error, 
         isFetching,
-        isError 
+        isError ,
+        
     } = useQuery<ApiResponse>({
         queryKey,
         queryFn: async () => {
@@ -269,6 +272,8 @@ const handlePageChange = (newPage: number) => {
         isLoading,
         isFetching,
         isError,
+isSearching: Boolean(searchTerm && isFetching), // Replace with this
+
         error,
         
         // Pagination controls
