@@ -3,14 +3,14 @@
 @source "../.flowbite-react/class-list.json";
 @import "keen-slider/keen-slider.min.css";
 
-/* Browser Dark Mode Conflict Prevention */
 
 
 
+ /* --color-button-primary: */
 @theme {
   --color-primary: #0e9f6e;
   --color-secondary: #8bc34a;
-  /* --color-button-primary: */
+ 
   --color-primary-content: oklch(93% 0.034 272.788);
   --color-secondary-content: oklch(94% 0.028 342.258);
   --color-accent: #ffc107;
