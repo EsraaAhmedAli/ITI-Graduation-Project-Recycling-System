@@ -2,36 +2,13 @@ import React from 'react';
 
 interface DeliveryTableSkeletonProps {
   rows?: number;
-  title?: string;
-  description?: string;
 }
 
 const DeliveryTableSkeleton: React.FC<DeliveryTableSkeletonProps> = ({ 
-  rows = 5,
-  title,
-  description
+  rows = 5
 }) => {
   return (
     <div className="p-4 sm:p-6">
-      {/* Title and Description Skeleton */}
-      <div className="mb-6">
-        {title ? (
-          <h1 className="text-2xl font-bold" style={{color:"var(--color-base-900)"}}>
-            {title}
-          </h1>
-        ) : (
-          <div className="h-8 bg-gray-200 rounded animate-pulse w-64 mb-2"></div>
-        )}
-        
-        {description ? (
-          <p className="text-gray-600 mt-1">
-            {description}
-          </p>
-        ) : (
-          <div className="h-5 bg-gray-200 rounded animate-pulse w-96 mt-1"></div>
-        )}
-      </div>
-
       {/* Summary Stats Skeleton */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
@@ -55,19 +32,7 @@ const DeliveryTableSkeleton: React.FC<DeliveryTableSkeletonProps> = ({
       {/* Table Container with responsive wrapper */}
       <div className="w-full overflow-hidden">
         <div className="bg-white rounded-lg shadow-sm border border-green-100 w-full max-w-full overflow-hidden">
-          {/* Header Skeleton */}
-          <div className="p-4 md:p-6 border-b border-green-100 bg-gradient-to-r from-green-100 to-emerald-100">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-4 min-w-0">
-                <div className="h-8 bg-green-200 rounded animate-pulse w-32"></div>
-                <div className="h-6 bg-green-200 rounded-full animate-pulse w-20"></div>
-              </div>
-              <div className="flex items-center gap-2 md:gap-3">
-                <div className="h-10 bg-gray-200 rounded-lg animate-pulse w-48"></div>
-                <div className="h-10 bg-gray-200 rounded-lg animate-pulse w-24"></div>
-              </div>
-            </div>
-          </div>
+      
 
           {/* Mobile Card Skeleton */}
           <div className="block md:hidden p-4 space-y-4">

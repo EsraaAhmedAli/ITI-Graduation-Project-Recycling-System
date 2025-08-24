@@ -23,6 +23,8 @@ export default function UserCategoriesPage() {
       {/* Main content - let CategoryList handle its own loading state */}
       <Suspense fallback={null}>
         <CategoryList 
+          enablePagination={true} 
+  itemsPerPage={10} 
           basePath="user" 
           horizontal={false}
           maxToShow={10} // Limit initial render for performance

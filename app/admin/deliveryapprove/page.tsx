@@ -429,20 +429,10 @@ export default function Page() {
 
   return (
     <div className="p-4 sm:p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold" style={{color:"var(--color-base-900)"}}>
-          {t('delivery.title')}
-        </h1>
-        <p className="text-gray-600 mt-1">
-          {t('delivery.description')}
-        </p>
-      </div>
 
       {loading ? (
   <DeliveryTableSkeleton 
     rows={5}
-    title={t('delivery.title')}
-    description={t('delivery.description')}
   />    ) : (
         <>
           {/* Enhanced Summary stats */}

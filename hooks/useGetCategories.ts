@@ -8,13 +8,25 @@ import { useLanguage } from "@/context/LanguageContext";
 interface ApiResponse<T> {
   success: boolean;
   data: T;
+  pagination?: {
+    currentPage: number;
+    itemsPerPage: number;
+    totalItems: number;
+    totalPages: number;
+    hasNextPage: boolean;
+  };
 }
 
-export function useCategories(options: { enabled?: boolean } = {}) {
-  const { enabled = true, ...queryOptions } = options;
+interface UseCategoriesOptions {
+  enabled?: boolean;
+  page?: number;
+  limit?: number;
+}
+
+export function useCategories(options: UseCategoriesOptions = {}) {
+  const { enabled = true, page = 1, limit = 10, ...queryOptions } = options;
   const hasShownErrorRef = useRef(false);
 
-  // Safe context access with error handling
   let languageContext;
   let locale = "en";
   let isContextLoaded = false;
@@ -28,12 +40,13 @@ export function useCategories(options: { enabled?: boolean } = {}) {
   }
 
   const query = useQuery<ApiResponse<Category[]>>({
-    queryKey: ["categories list", locale],
+    queryKey: ["categories list", locale, page, limit],
     queryFn: async () => {
       try {
-        console.log(`Fetching categories for locale: ${locale}`);
-        const res = await api.get(`/categories?language=${locale}`);
-        console.log("Categories fetched successfully");
+        console.log(`Fetching categories for locale: ${locale}, page: ${page}, limit: ${limit}`);
+        // Use getCategoriesWithPagination endpoint that returns pagination info
+        const res = await api.get(`/categories?language=${locale}&page=${page}&limit=${limit}`);
+        console.log("Categories fetched successfully:", res.data);
         return res.data;
       } catch (error) {
         console.error("Categories API error:", error);
@@ -41,17 +54,11 @@ export function useCategories(options: { enabled?: boolean } = {}) {
       }
     },
     enabled,
-    // FIXED: Increase stale time to reduce refetches
-    staleTime: 10 * 60 * 1000, // 10 minutes instead of 2
-    cacheTime: 15 * 60 * 1000, // 15 minutes cache
-
-    // FIXED: Reduce aggressive refetch behaviors
-    refetchOnMount: "stale", // Only refetch if data is stale
-    refetchOnWindowFocus: false, // Don't refetch on window focus
-    refetchOnReconnect: "stale", // Only refetch on reconnect if stale
-
-    // Only enable query when language context is loaded and we're in browser
-
+    staleTime: 2000, // 2 seconds
+    cacheTime: 2000, // 10 minutes cache
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: "stale",
     retry: (failureCount, error) => {
       if (failureCount < 2) {
         console.log(`Retrying categories fetch (attempt ${failureCount + 1})`);
@@ -61,7 +68,6 @@ export function useCategories(options: { enabled?: boolean } = {}) {
     },
   });
 
-  // Handle errors only once to prevent multiple toasts
   useEffect(() => {
     if (query.isError && query.failureCount > 1 && !hasShownErrorRef.current) {
       console.error("Categories query failed:", query.error);
@@ -69,13 +75,11 @@ export function useCategories(options: { enabled?: boolean } = {}) {
       hasShownErrorRef.current = true;
     }
 
-    // Reset error flag when query succeeds
     if (query.isSuccess) {
       hasShownErrorRef.current = false;
     }
   }, [query.isError, query.failureCount, query.error, query.isSuccess]);
 
-  // Rest of your helper functions remain the same...
   const getItemDisplayName = (item: any): string => {
     if (!item) {
       console.warn("getItemDisplayName called with null/undefined item");
@@ -262,5 +266,7 @@ export function useCategories(options: { enabled?: boolean } = {}) {
     refetch: query.refetch,
     isContextLoaded,
     locale,
+    // Add pagination info to the return
+    pagination: query.data?.pagination,
   };
 }

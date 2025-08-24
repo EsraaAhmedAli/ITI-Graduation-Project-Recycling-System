@@ -6,12 +6,11 @@ import { StatCard } from "./component/StatCard";
 import { ErrorBoundary } from "./component/errorboundary";
 import { useLanguage } from "@/context/LanguageContext";
 import dynamic from "next/dynamic";
-import { Loader } from '@/components/common'
 import { DashboardSkeleton } from "../dashboardSkeleton";
 
 // Create a reusable loading component to reduce duplication
 const ChartLoader = () => (
-  <div className="bg-white rounded-lg border h-64 sm:h-72 md:h-80 p-4">
+  <div className="bg-white rounded-lg  h-64 sm:h-72 md:h-80 p-4">
     <div className="h-6 bg-gray-200 rounded animate-pulse w-32 mb-4"></div>
     <div className="h-full bg-gray-100 rounded animate-pulse"></div>
   </div>
