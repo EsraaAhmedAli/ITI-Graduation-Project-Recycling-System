@@ -886,6 +886,7 @@
     "addToCollection": "Add to Collection"
   },
   "common": {
+    "backToAllCategories": "Back to All Categories",
     "only": "Only",
     "left": "left",
     "previous": "previous",
