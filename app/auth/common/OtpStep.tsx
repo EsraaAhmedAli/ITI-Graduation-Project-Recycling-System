@@ -24,6 +24,7 @@ export default function OTPInput({ comeFrom }: OTPInputProps) {
   const { setUser, setToken } = useUserAuth();
   const { t } = useLanguage();
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
   // 1. Helper function for validating the full OTP array
   const validateOtp = () => {
     const values = getValues("otp") || [];
@@ -99,6 +100,7 @@ export default function OTPInput({ comeFrom }: OTPInputProps) {
 
     if (otpValue.length !== length) return;
 
+    setLoading(true);
     try {
       await verifyOtp({ email, otpCode: otpValue });
       if (selectedRole !== "delivery" && comeFrom === "signup") {
@@ -109,18 +111,22 @@ export default function OTPInput({ comeFrom }: OTPInputProps) {
       setStep(step + 1);
     } catch {
       toast.error(t("auth.otp.unVerified"));
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleResendOtp = async () => {
+    setLoading(true);
     try {
       await initiateSignup(getValues("email"));
       toast(t("resend_success"));
     } catch {
       toast(t("resend_failed"));
+    } finally {
+      setLoading(false);
     }
   };
-
   return (
     <>
       <div className="space-y-4 text-center">
@@ -177,10 +183,10 @@ export default function OTPInput({ comeFrom }: OTPInputProps) {
         </p>
         <Button
           onClick={handleSubmit}
-          disabled={!canSubmit}
+          disabled={!canSubmit || loading}
           className="bg-green-700 text-white m-auto w-50 h-10 rounded-lg hover:bg-green-800 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {t("auth.otp.confirm")}
+          {loading ? t("auth.otp.confirming") : t("auth.otp.confirm")}
         </Button>
       </div>
     </>

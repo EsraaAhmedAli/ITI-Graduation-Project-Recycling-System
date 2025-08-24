@@ -1,8 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
 import { ButtonProps } from "../Interfaces/Ui.interface";
-
-const defaultClassName =
-  "bg-primary text-white rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed";
 
 export default function Button({
   children,
@@ -13,8 +10,11 @@ export default function Button({
   className = "",
   loading = false,
   disabled,
+  onClick,
   ...rest
 }: ButtonProps) {
+  const [clicked, setClicked] = useState(false);
+
   const style: React.CSSProperties = {
     width,
     height,
@@ -29,14 +29,28 @@ export default function Button({
     ${className}
   `.trim();
 
+  const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (clicked) return; // prevent multiple clicks
+    setClicked(true);
+
+    try {
+      await onClick?.(e);
+    } finally {
+      // if parent is controlling loading, rely on that
+      // otherwise, you can re-enable here if you want
+      setClicked(false);
+    }
+  };
+
   return (
     <button
       style={style}
       className={combinedClassName}
-      disabled={loading || disabled} // disable when loading
+      disabled={loading || disabled || clicked}
+      onClick={handleClick}
       {...rest}
     >
-      {loading && (
+      {(loading || clicked) && (
         <svg
           aria-hidden="true"
           role="status"
