@@ -106,95 +106,97 @@ const LazyPagination = memo(
     if (totalPages <= 1) return null;
 
     return (
-      <div className="border-t border-gray-200 px-4 sm:px-6 py-4 mt-6 rounded-b-2xl bg-white shadow-inner">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          {/* Navigation Controls */}
-          <nav
-            className="flex items-center gap-1 sm:gap-2"
-            role="navigation"
-            aria-label="Pagination Navigation"
-          >
-            {/* Big Previous (Jump Backward) */}
-            {showBigJumps && canJumpBackward && (
-              <button
-                onClick={handleBigPrevious}
-                className="p-1.5 sm:px-3 sm:py-2 text-sm font-medium text-green-700 bg-white border border-green-300 rounded-lg hover:bg-green-50 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                aria-label={`Jump backward ${pageGroupSize} pages`}
-                title={`Jump to page ${Math.max(
-                  1,
-                  currentPage - pageGroupSize
-                )}`}
-              >
-                <ChevronsLeft className="w-4 h-4 sm:hidden" />
-                <span className="hidden sm:inline">&laquo;</span>
-              </button>
-            )}
-
-            {/* Previous */}
-            <button
-              onClick={handlePrevious}
-              disabled={!hasPreviousPage}
-              className="p-1.5 sm:px-3 sm:py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-              aria-label="Go to previous page"
+      <div className="w-full mt-6">
+        <div className="max-w-fit mx-auto   px-4 sm:px-6 py-4 rounded-b-2xl bg-white shadow-inner">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            {/* Navigation Controls */}
+            <nav
+              className="flex items-center gap-1 sm:gap-2"
+              role="navigation"
+              aria-label="Pagination Navigation"
             >
-              <ChevronLeft className="w-4 h-4 sm:hidden" />
-              <span className="hidden sm:inline">Previous</span>
-            </button>
-
-            {/* Page Numbers */}
-            <div className="flex items-center gap-1">
-              {visiblePages.map((page) => (
+              {/* Big Previous (Jump Backward) */}
+              {showBigJumps && canJumpBackward && (
                 <button
-                  key={page}
-                  onClick={() => handlePageClick(page)}
-                  disabled={page === currentPage}
-                  className={`w-8 h-8 sm:px-3 sm:py-2 sm:w-auto sm:h-auto flex items-center justify-center text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                    page === currentPage
-                      ? "bg-green-500 text-white cursor-not-allowed focus:ring-green-500"
-                      : "text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 hover:text-gray-700 focus:ring-gray-500"
-                  }`}
-                  aria-label={`Go to page ${page}`}
-                  aria-current={page === currentPage ? "page" : undefined}
+                  onClick={handleBigPrevious}
+                  className="p-1.5 sm:px-3 sm:py-2 text-sm font-medium text-green-700 bg-white border border-green-300 rounded-lg hover:bg-green-50 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                  aria-label={`Jump backward ${pageGroupSize} pages`}
+                  title={`Jump to page ${Math.max(
+                    1,
+                    currentPage - pageGroupSize
+                  )}`}
                 >
-                  {page}
+                  <ChevronsLeft className="w-4 h-4 sm:hidden" />
+                  <span className="hidden sm:inline">&laquo;</span>
                 </button>
-              ))}
-            </div>
+              )}
 
-            {/* Next */}
-            <button
-              onClick={handleNext}
-              disabled={!hasNextPage}
-              className="p-1.5 sm:px-3 sm:py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-              aria-label="Go to next page"
-            >
-              <ChevronRight className="w-4 h-4 sm:hidden" />
-              <span className="hidden sm:inline">Next</span>
-            </button>
-
-            {/* Big Next (Jump Forward) */}
-            {showBigJumps && canJumpForward && (
+              {/* Previous */}
               <button
-                onClick={handleBigNext}
-                className="p-1.5 sm:px-3 sm:py-2 text-sm font-medium text-green-700 bg-white border border-green-300 rounded-lg hover:bg-green-50 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                aria-label={`Jump forward ${pageGroupSize} pages`}
-                title={`Jump to page ${Math.min(
-                  totalPages,
-                  currentPage + pageGroupSize
-                )}`}
+                onClick={handlePrevious}
+                disabled={!hasPreviousPage}
+                className="p-1.5 sm:px-3 sm:py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                aria-label="Go to previous page"
               >
-                <ChevronsRight className="w-4 h-4 sm:hidden" />
-                <span className="hidden sm:inline">&raquo;</span>
+                <ChevronLeft className="w-4 h-4 sm:hidden" />
+                <span className="hidden sm:inline">Previous</span>
               </button>
-            )}
-          </nav>
 
-          {/* Page Counter */}
-          {showPageCounter && (
-            <div className="text-sm text-gray-700 font-medium">
-              Page {currentPage} of {totalPages}
-            </div>
-          )}
+              {/* Page Numbers */}
+              <div className="flex items-center gap-1">
+                {visiblePages.map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageClick(page)}
+                    disabled={page === currentPage}
+                    className={`w-8 h-8 sm:px-3 sm:py-2 sm:w-auto sm:h-auto flex items-center justify-center text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                      page === currentPage
+                        ? "bg-green-500 text-white cursor-not-allowed focus:ring-green-500"
+                        : "text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 hover:text-gray-700 focus:ring-gray-500"
+                    }`}
+                    aria-label={`Go to page ${page}`}
+                    aria-current={page === currentPage ? "page" : undefined}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+
+              {/* Next */}
+              <button
+                onClick={handleNext}
+                disabled={!hasNextPage}
+                className="p-1.5 sm:px-3 sm:py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                aria-label="Go to next page"
+              >
+                <ChevronRight className="w-4 h-4 sm:hidden" />
+                <span className="hidden sm:inline">Next</span>
+              </button>
+
+              {/* Big Next (Jump Forward) */}
+              {showBigJumps && canJumpForward && (
+                <button
+                  onClick={handleBigNext}
+                  className="p-1.5 sm:px-3 sm:py-2 text-sm font-medium text-green-700 bg-white border border-green-300 rounded-lg hover:bg-green-50 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                  aria-label={`Jump forward ${pageGroupSize} pages`}
+                  title={`Jump to page ${Math.min(
+                    totalPages,
+                    currentPage + pageGroupSize
+                  )}`}
+                >
+                  <ChevronsRight className="w-4 h-4 sm:hidden" />
+                  <span className="hidden sm:inline">&raquo;</span>
+                </button>
+              )}
+            </nav>
+
+            {/* Page Counter */}
+            {showPageCounter && (
+              <div className="text-sm text-gray-700 font-medium">
+                Page {currentPage} of {totalPages}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );

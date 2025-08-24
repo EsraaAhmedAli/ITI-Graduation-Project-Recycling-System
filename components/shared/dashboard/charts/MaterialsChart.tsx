@@ -32,7 +32,8 @@ interface MaterialsChartProps {
 }
 
 const MaterialsChart = memo<MaterialsChartProps>(({ topMaterials, loading }) => {
-  const [sortBy, setSortBy] = useState<'quantity' | 'category' | 'points'>('quantity');
+const [sortBy, setSortBy] = useState<'quantity' | 'points'>('quantity');
+
   const { locale, t, convertNumber } = useLanguage();
 
   // Memoize chart data
@@ -40,17 +41,13 @@ const MaterialsChart = memo<MaterialsChartProps>(({ topMaterials, loading }) => 
     if (!topMaterials || topMaterials.length === 0) return null;
 
     // Sort materials based on selected criteria
-    const sortedMaterials = [...topMaterials].sort((a, b) => {
-      if (sortBy === 'quantity') {
-        return b.totalQuantity - a.totalQuantity;
-      } else if (sortBy === 'points') {
-        return b.totalPoints - a.totalPoints;
-      }
-      // Sort by category name
-      const categoryA = a.categoryName[locale] || a.categoryName.en;
-      const categoryB = b.categoryName[locale] || b.categoryName.en;
-      return categoryA.localeCompare(categoryB);
-    });
+  const sortedMaterials = [...topMaterials].sort((a, b) => {
+  if (sortBy === 'quantity') {
+    return b.totalQuantity - a.totalQuantity;
+  } else {
+    return b.totalPoints - a.totalPoints;
+  }
+});
 
     return {
       labels: sortedMaterials.map(m => {
@@ -104,7 +101,8 @@ const MaterialsChart = memo<MaterialsChartProps>(({ topMaterials, loading }) => 
           afterLabel: function(context: any) {
             const material = topMaterials[context.dataIndex];
             if (material) {
-              const categoryName = material.categoryName[locale] || material.categoryName.en;
+              const categoryName = material.categoryName|| material.categoryName.en;
+              
               return [
                 `${t('materials.category')}: ${categoryName}`,
                 `${t('common.unitKg')}: ${material.unit}`,
@@ -172,13 +170,13 @@ const MaterialsChart = memo<MaterialsChartProps>(({ topMaterials, loading }) => 
         </span>
         <select 
           value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as 'quantity' | 'category' | 'points')}
+onChange={(e) => setSortBy(e.target.value as 'quantity' | 'points')}
+
           className="text-xs border border-green-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white transition-colors"
           disabled={loading}
         >
           <option value="quantity">{t('materials.sortByQuantity')}</option>
           <option value="points">{t('common.points')}</option>
-          <option value="category">{t('materials.category')}</option>
         </select>
       </div>
       

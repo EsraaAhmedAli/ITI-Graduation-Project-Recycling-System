@@ -68,6 +68,7 @@ interface CategoryListProps {
   itemsPerPage?: number;
 }
 
+
 const CategoryList = memo(function CategoryList({
   maxToShow,
   horizontal = false,
@@ -77,7 +78,12 @@ const CategoryList = memo(function CategoryList({
   const [showAll, setShowAll] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const { t } = useLanguage();
-  
+  const scrollToTop = useCallback(() => {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+}, []);
   // Use pagination only if enablePagination is true
   const { data, isLoading, error, isFetching } = useCategories(
     enablePagination 
@@ -118,11 +124,15 @@ const CategoryList = memo(function CategoryList({
   }, [data?.pagination]);
 
   // Handle page changes
-  const handlePageChange = useCallback((page: number) => {
-    startTransition(() => {
-      setCurrentPage(page);
-    });
-  }, []);
+const handlePageChange = useCallback((page: number) => {
+  startTransition(() => {
+    setCurrentPage(page);
+    // Scroll to top after page change
+    setTimeout(() => {
+      scrollToTop();
+    }, 50); // Small delay to ensure state update
+  });
+}, [scrollToTop]);
 
   // Memoize categories logic
   const { categoriesToShow, shouldShowSeeMoreButton, totalCategories } = useMemo(() => {
@@ -171,150 +181,154 @@ const CategoryList = memo(function CategoryList({
   );
 
   // Updated Pagination Controls Component (matching items style exactly)
-  const PaginationControls = memo(({ 
-    pagination,
-    currentPage,
-    onPageChange,
-    generatePageNumbers,
-    t
-  }: {
-    pagination: any;
-    currentPage: number;
-    onPageChange: (page: number) => void;
-    generatePageNumbers: () => (number | string)[];
-    t: (key: string, params?: any) => string;
-  }) => {
-    const pageNumbers = useMemo(() => generatePageNumbers(), [generatePageNumbers]);
+const PaginationControls = memo(({ 
+  pagination,
+  currentPage,
+  onPageChange,
+  generatePageNumbers,
+  t
+}: {
+  pagination: any;
+  currentPage: number;
+  onPageChange: (page: number) => void;
+  generatePageNumbers: () => (number | string)[];
+  t: (key: string, params?: any) => string;
+}) => {
+  const pageNumbers = useMemo(() => generatePageNumbers(), [generatePageNumbers]);
 
-    const handlePrevious = useCallback(() => {
-      if (currentPage > 1) {
-        onPageChange(currentPage - 1);
-      }
-    }, [currentPage, onPageChange]);
+  const handlePrevious = useCallback(() => {
+    if (currentPage > 1) {
+      onPageChange(currentPage - 1);
+    }
+  }, [currentPage, onPageChange]);
 
-    const handleNext = useCallback(() => {
-      if (pagination?.hasNextPage) {
-        onPageChange(currentPage + 1);
-      }
-    }, [currentPage, pagination?.hasNextPage, onPageChange]);
+  const handleNext = useCallback(() => {
+    if (pagination?.hasNextPage) {
+      onPageChange(currentPage + 1);
+    }
+  }, [currentPage, pagination?.hasNextPage, onPageChange]);
 
-    if (!pagination || pagination.totalPages <= 1) return null;
+  const handlePageClick = useCallback((pageNum: number) => {
+    onPageChange(pageNum);
+  }, [onPageChange]);
 
-    return (
-      <nav
-        className="flex flex-col items-center gap-4"
-        aria-label="Pagination Navigation"
-        role="navigation"
-      >
-        {/* Pagination Buttons with fixed height container - matching items style */}
-        <div className="flex items-center justify-center gap-1 sm:gap-2 min-h-[44px] my-2">
-          <button
-            onClick={handlePrevious}
-            disabled={currentPage === 1}
-            className="flex items-center gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium border rounded-lg hover:bg-opacity-75 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            style={{
-              color: "var(--text-gray-600)",
-              backgroundColor: "var(--color-card)",
-              borderColor: "var(--border-color)",
-            }}
-            onMouseEnter={(e) => {
-              if (currentPage !== 1) {
-                e.currentTarget.style.backgroundColor = "var(--color-base-100)";
+  if (!pagination || pagination.totalPages <= 1) return null;
+
+  return (
+    <nav
+      className="flex flex-col items-center gap-4"
+      aria-label="Pagination Navigation"
+      role="navigation"
+    >
+      {/* Pagination Buttons with fixed height container */}
+      <div className="flex items-center justify-center gap-1 sm:gap-2 min-h-[44px] my-2">
+        <button
+          onClick={handlePrevious}
+          disabled={currentPage === 1}
+          className="flex items-center gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium border rounded-lg hover:bg-opacity-75 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          style={{
+            color: "var(--text-gray-600)",
+            backgroundColor: "var(--color-card)",
+            borderColor: "var(--border-color)",
+          }}
+          onMouseEnter={(e) => {
+            if (currentPage !== 1) {
+              e.currentTarget.style.backgroundColor = "var(--color-base-100)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (currentPage !== 1) {
+              e.currentTarget.style.backgroundColor = "var(--color-card)";
+            }
+          }}
+          aria-label="Go to previous page"
+          type="button"
+        >
+          <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+          {t("common.previous") || "Previous"}
+        </button>
+
+        <div className="flex gap-1 flex-wrap justify-center" role="group" aria-label="Page numbers">
+          {pageNumbers.map((pageNum, index) => (
+            <button
+              key={`page-${index}-${pageNum}`}
+              onClick={() =>
+                typeof pageNum === "number" ? handlePageClick(pageNum) : undefined
               }
-            }}
-            onMouseLeave={(e) => {
-              if (currentPage !== 1) {
-                e.currentTarget.style.backgroundColor = "var(--color-card)";
-              }
-            }}
-            aria-label="Go to previous page"
-            type="button"
-          >
-            <ChevronLeft className="w-4 h-4" aria-hidden="true" />
-            {t("common.previous") || "Previous"}
-          </button>
-
-          <div className="flex gap-1 flex-wrap justify-center" role="group" aria-label="Page numbers">
-            {pageNumbers.map((pageNum, index) => (
-              <button
-                key={`page-${index}-${pageNum}`}
-                onClick={() =>
-                  typeof pageNum === "number" ? onPageChange(pageNum) : undefined
+              disabled={pageNum === "..."}
+              className="px-3 py-2 text-sm font-medium rounded-lg transition-colors min-w-[44px]"
+              style={{
+                color:
+                  pageNum === currentPage
+                    ? "white"
+                    : pageNum === "..."
+                    ? "var(--text-gray-400)"
+                    : "var(--text-gray-600)",
+                backgroundColor:
+                  pageNum === currentPage
+                    ? "var(--color-primary)"
+                    : pageNum === "..."
+                    ? "transparent"
+                    : "var(--color-card)",
+                borderColor:
+                  pageNum === currentPage
+                    ? "var(--color-primary)"
+                    : "var(--border-color)",
+                border: pageNum === "..." ? "none" : "1px solid",
+                cursor: pageNum === "..." ? "default" : "pointer",
+              }}
+              onMouseEnter={(e) => {
+                if (pageNum !== currentPage && pageNum !== "...") {
+                  e.currentTarget.style.backgroundColor = "var(--color-base-100)";
                 }
-                disabled={pageNum === "..."}
-                className="px-3 py-2 text-sm font-medium rounded-lg transition-colors min-w-[44px]"
-                style={{
-                  color:
-                    pageNum === currentPage
-                      ? "white"
-                      : pageNum === "..."
-                      ? "var(--text-gray-400)"
-                      : "var(--text-gray-600)",
-                  backgroundColor:
-                    pageNum === currentPage
-                      ? "var(--color-primary)"
-                      : pageNum === "..."
-                      ? "transparent"
-                      : "var(--color-card)",
-                  borderColor:
-                    pageNum === currentPage
-                      ? "var(--color-primary)"
-                      : "var(--border-color)",
-                  border: pageNum === "..." ? "none" : "1px solid",
-                  cursor: pageNum === "..." ? "default" : "pointer",
-                }}
-                onMouseEnter={(e) => {
-                  if (pageNum !== currentPage && pageNum !== "...") {
-                    e.currentTarget.style.backgroundColor = "var(--color-base-100)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (pageNum !== currentPage && pageNum !== "...") {
-                    e.currentTarget.style.backgroundColor = "var(--color-card)";
-                  }
-                }}
-                aria-label={
-                  typeof pageNum === "number"
-                    ? `Go to page ${pageNum}`
-                    : undefined
+              }}
+              onMouseLeave={(e) => {
+                if (pageNum !== currentPage && pageNum !== "...") {
+                  e.currentTarget.style.backgroundColor = "var(--color-card)";
                 }
-                aria-current={pageNum === currentPage ? "page" : undefined}
-                type="button"
-              >
-                {pageNum}
-              </button>
-            ))}
-          </div>
-
-          <button
-            onClick={handleNext}
-            disabled={!pagination?.hasNextPage}
-            className="flex items-center gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium border rounded-lg hover:bg-opacity-75 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            style={{
-              color: "var(--text-gray-600)",
-              backgroundColor: "var(--color-card)",
-              borderColor: "var(--border-color)",
-            }}
-            onMouseEnter={(e) => {
-              if (pagination?.hasNextPage) {
-                e.currentTarget.style.backgroundColor = "var(--color-base-100)";
+              }}
+              aria-label={
+                typeof pageNum === "number"
+                  ? `Go to page ${pageNum}`
+                  : undefined
               }
-            }}
-            onMouseLeave={(e) => {
-              if (pagination?.hasNextPage) {
-                e.currentTarget.style.backgroundColor = "var(--color-card)";
-              }
-            }}
-            aria-label="Go to next page"
-            type="button"
-          >
-            {t("common.next") || "Next"}
-            <ChevronRight className="w-4 h-4" aria-hidden="true" />
-          </button>
+              aria-current={pageNum === currentPage ? "page" : undefined}
+              type="button"
+            >
+              {pageNum}
+            </button>
+          ))}
         </div>
-      </nav>
-    );
-  });
+
+        <button
+          onClick={handleNext}
+          disabled={!pagination?.hasNextPage}
+          className="flex items-center gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium border rounded-lg hover:bg-opacity-75 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          style={{
+            color: "var(--text-gray-600)",
+            backgroundColor: "var(--color-card)",
+            borderColor: "var(--border-color)",
+          }}
+          onMouseEnter={(e) => {
+            if (pagination?.hasNextPage) {
+              e.currentTarget.style.backgroundColor = "var(--color-base-100)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (pagination?.hasNextPage) {
+              e.currentTarget.style.backgroundColor = "var(--color-card)";
+            }
+          }}
+          aria-label="Go to next page"
+          type="button"
+        >
+          {t("common.next") || "Next"}
+          <ChevronRight className="w-4 h-4" aria-hidden="true" />
+        </button>
+      </div>
+    </nav>
+  );
+});
   PaginationControls.displayName = "PaginationControls";
 
   // Loading state with skeleton
