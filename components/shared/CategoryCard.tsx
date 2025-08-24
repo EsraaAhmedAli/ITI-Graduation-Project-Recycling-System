@@ -51,7 +51,7 @@ const CategoryCard = memo(function CategoryCard({ name, image, displayName, onCl
         onKeyDown={handleKeyDown}
         aria-label={`View ${categoryDisplayName} category`}
       >
-        <div className="w-64 h-60 mb-8 rounded-3xl overflow-hidden shadow-lg bg-gradient-to-br from-[var(--color-base-100)] via-yellow-50 to-[var(--color-base-200)] flex flex-col items-center justify-center p-4 relative transition-all duration-300 group-hover:shadow-xl group-hover:shadow-green-300/30">
+<div className="w-full max-w-64 h-60 mb-8 rounded-3xl overflow-hidden shadow-lg bg-gradient-to-br from-[var(--color-base-100)] via-yellow-50 to-[var(--color-base-200)] flex flex-col items-center justify-center p-4 relative transition-all duration-300 group-hover:shadow-xl group-hover:shadow-green-300/30">
           
           {/* Image container with optimizations */}
           <div className="relative mb-6">

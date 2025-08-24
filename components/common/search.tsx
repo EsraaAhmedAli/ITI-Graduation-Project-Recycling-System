@@ -317,7 +317,7 @@ export default function NavbarSearch() {
 
   // Modal content
   const modalContent = (
-    <div className={`fixed inset-0 z-50 bg-white ${isRTL ? "rtl" : "ltr"}`}>
+    <div className={`fixed inset-0 z-50 bg-white ${isRTL ? "rtl" : "ltr"}`} style={{background:"var(--background)"}}>
       <style jsx>{`
         .search-scroll::-webkit-scrollbar {
           width: 6px;
@@ -338,10 +338,10 @@ export default function NavbarSearch() {
           scrollbar-color: #cbd5e1 #f1f5f9;
         }
       `}</style>
-      <div className="h-full flex flex-col max-h-screen overflow-hidden">
+      <div className="h-full flex flex-col max-h-screen overflow-hidden" >
         {/* Header with close button */}
-        <div className="flex-shrink-0 flex justify-between items-center p-4 border-b bg-white shadow-sm">
-          <h2 className="text-2xl font-bold text-gray-800">
+        <div style={{background:"var(--background)"}} className="flex-shrink-0 flex justify-between items-center p-4 border-b shadow-sm">
+          <h2 className="text-2xl font-bold " style={{color:"var(--color-base-800)"}}>
             {t("search.title")}
           </h2>
           <button
@@ -354,23 +354,30 @@ export default function NavbarSearch() {
         </div>
 
         {/* Search Input with Button */}
-        <div className="flex-shrink-0 p-4 border-b bg-gray-50">
+        <div className="flex-shrink-0 p-4 border-b bg-gray-50"  style={{background:"var(--background)"}}>
           <div className="flex gap-3">
             <div className="relative flex-1">
-              <input
-                ref={inputRef}
-                type="search"
-                placeholder={t("search.placeholder")}
-                className={`w-full p-3 text-base border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 ${
-                  isRTL ? "pr-10 text-right" : "pl-10"
-                }`}
-                onChange={handleChange}
-                onKeyPress={handleKeyPress}
-                value={searchQuery}
-                autoFocus
-                dir={isRTL ? "rtl" : "ltr"}
-              />
+            <input
+  ref={inputRef}
+  type="search"
+  placeholder={t("search.placeholder")}
+  className={`w-full p-3 text-base 
+    border border-gray-300 rounded-lg 
+    focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 
+    ${isRTL ? "pr-10 text-right" : "pl-10"} 
+    text-gray-900 dark:text-gray-100 
+    placeholder-gray-400 dark:placeholder-gray-500 
+    bg-white dark:bg-gray-800 
+    dark:border-gray-600`}
+  onChange={handleChange}
+  onKeyPress={handleKeyPress}
+  value={searchQuery}
+  autoFocus
+  dir={isRTL ? "rtl" : "ltr"}
+/>
+
               <div
+             
                 className={`absolute inset-y-0 flex items-center ${
                   isRTL ? "right-0 pr-3" : "left-0 pl-3"
                 }`}
@@ -390,12 +397,12 @@ export default function NavbarSearch() {
         </div>
 
         {/* Content Area - Scrollable */}
-        <div className="flex-1 overflow-y-auto bg-gray-50 search-scroll">
+        <div className="flex-1 overflow-y-auto bg-gray-50 search-scroll" style={{background:"var(--background)"}}>
           <div className="p-4">
             {/* Alphabet Index */}
             {!hasSearched && !indexLoading && !isSearching && (
               <div className="mb-6">
-                <div className="bg-white rounded-xl p-6 shadow-sm border">
+                <div className="bg-white rounded-xl p-6 shadow-sm border" >
                   <h4 className="text-center text-gray-700 font-medium mb-4 text-lg">
                     {t("search.browseByLetter")}
                   </h4>
@@ -503,7 +510,7 @@ export default function NavbarSearch() {
                           </div>
 
                           {/* Content Section */}
-                          <div className="p-4 space-y-2">
+                          <div className="p-4 space-y-2" >
                             <div className="flex items-start justify-between gap-2">
                               <h4 className="font-semibold text-gray-900 text-base leading-tight group-hover:text-blue-600 transition-colors duration-300 line-clamp-2">
                                 {item.displayName || item.name?.[locale]}
@@ -537,7 +544,7 @@ export default function NavbarSearch() {
                   )}
                 </>
               ) : (
-                <div className="text-center py-12">
+                <div className="text-center py-12" style={{background:"var(--background)"}}>
                   <div className="text-6xl mb-4">🔤</div>
                   <h3 className="text-xl font-semibold text-gray-700 mb-3">
                     {t("search.readyToSearch")}
@@ -555,7 +562,7 @@ export default function NavbarSearch() {
   );
 
   return (
-    <div className="relative">
+    <div className="relative" >
       {/* Small Search Trigger */}
       <button
         onClick={handleOpen}

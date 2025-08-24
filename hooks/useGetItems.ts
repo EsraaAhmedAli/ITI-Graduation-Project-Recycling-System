@@ -72,9 +72,9 @@ export function useGetItems({
     },
     // Enable the query for all users, not just buyers
     enabled: true, // Remove the userRole === "buyer" restriction if not needed
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
+    staleTime: 2000,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
     refetchOnReconnect: true,
   });
 }

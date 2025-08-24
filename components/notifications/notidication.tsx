@@ -268,6 +268,7 @@ export const NotificationBell = () => {
                                 (notification.orderId.status === 'completed' ? 'مكتمل' : 
                                  notification.orderId.status === 'pending' ? 'قيد الانتظار' : 
                                  notification.orderId.status === 'cancelled' ? 'ملغى' : 
+                                 notification.orderId.status === 'assigntocourier' ? 'تم تعيينه للمندوب' : 
                                  notification.orderId.status) : 
                                 notification.orderId.status}
                             </span>
