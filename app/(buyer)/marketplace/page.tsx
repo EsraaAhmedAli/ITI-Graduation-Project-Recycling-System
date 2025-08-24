@@ -169,19 +169,7 @@ export default async function MarketplacePage() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
       {/* Server-rendered header */}
-      <header className="mb-6 text-center">
-        <h1 className="text-2xl md:text-3xl font-bold mb-2"style={{color:"var(--color-base-800)"}}>
-          ♻️ Sustainable Marketplace
-        </h1>
-        <p className="text-gray-600 text-sm md:text-base">
-          Discover eco-friendly products and sustainable solutions
-        </p>
-        {serverData.pagination.totalItems > 0 && (
-          <p className="text-xs text-gray-500 mt-1">
-            Over {serverData.pagination.totalItems} sustainable products available
-          </p>
-        )}
-      </header>
+   
 
       {/* Suspense boundary with optimized loading */}
       <Suspense fallback={<MarketplaceLoader />}>

@@ -65,7 +65,7 @@ const ItemSkeleton = memo(() => (
 ItemSkeleton.displayName = "ItemSkeleton";
 
 const ItemSkeletonGrid = memo(() => (
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
+<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-4 gap-3 sm:gap-4 mb-8">
     {Array(12)
       .fill(0)
       .map((_, i) => (
@@ -327,17 +327,10 @@ const PaginationControls = memo(
         role="navigation"
       >
         {/* Pagination Info */}
-        <div
-          className="text-sm text-center"
-          style={{ color: "var(--text-gray-600)" }}
-          aria-live="polite"
-        >
-          {t("common.showing", paginationInfo) ||
-            `Showing ${paginationInfo.start}-${paginationInfo.end} of ${paginationInfo.total} items`}
-        </div>
+       
 
         {/* Pagination Buttons with fixed height container */}
-<div className="flex items-center justify-center gap-1 sm:gap-2 min-h-[44px]">
+<div className="flex items-center justify-center gap-1 sm:gap-2 min-h-[44px] my-2">
 
           <button
             onClick={handlePrevious}
@@ -609,10 +602,7 @@ export default function UserCategoryPage() {
   return (
     <div
       className="min-h-screen"
-      style={{
-        background:
-          "linear-gradient(to bottom right, var(--color-base-100), var(--color-base-200))",
-      }}
+
     >
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-6">
         {/* Header Section with semantic HTML */}
@@ -645,7 +635,7 @@ export default function UserCategoryPage() {
         </header>
 
         {/* Loading overlay for pagination - only when fetching, not initial load */}
-        {isFetching && !isLoading && (
+        {/* {isFetching && !isLoading && (
           <div
             className="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center"
             style={{ backgroundColor: "rgba(0, 0, 0, 0.2)" }}
@@ -666,7 +656,7 @@ export default function UserCategoryPage() {
               </p>
             </div>
           </div>
-        )}
+        )} */}
 
         <main>
           {/* Loading State - Show skeleton immediately */}

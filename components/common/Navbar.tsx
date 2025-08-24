@@ -450,13 +450,17 @@ export default function Navbar() {
               {/* Cart Dropdown */}
               {isCartOpen && (
                 <div
-                  className="
-    absolute top-full mt-2 rounded-lg bg-white dark:bg-gray-900 shadow-lg
-    border border-gray-200 dark:border-gray-700 py-2 z-50
-    w-80 sm:w-56
-    max-w-[90vw]
-    -end-1/2 translate-x-1/2
-  "
+                  className={`
+  absolute top-full mt-2 rounded-lg bg-white dark:bg-gray-900 shadow-lg
+  border border-gray-200 dark:border-gray-700 py-2 z-50
+  max-w-[90vw]
+  ${user 
+    ? isBuyer 
+      ? 'w-80 sm:w-72 ltr:-right-2 rtl:-left-2' 
+      : 'w-80 sm:w-72 -end-1/2 translate-x-1/2'
+    : 'w-80 sm:w-56 ltr:right-0 rtl:left-0'
+  }
+`}
                 >
                   {/* Header */}
                   <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-gray-700">

@@ -60,8 +60,8 @@ export default function RootLayout({
                   />
                   <NotificationProvider>
                     <ToastContainer
-                      position="top-center" // top-center works well for RTL
-                      autoClose={5000}
+                      position="bottom-left" // top-center works well for RTL
+                      autoClose={4000}
                       hideProgressBar={false}
                       newestOnTop={false}
                       closeOnClick

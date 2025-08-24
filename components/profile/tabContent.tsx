@@ -3,17 +3,24 @@ import React, { memo, Suspense } from "react";
 
 import dynamic from "next/dynamic";
 import OrderCardSkeleton from "./orderCardSkeleton";
+
 import OrderCard from "./orderCard";
 import { Loader } from '@/components/common'
 
 // Dynamic imports
 const PaymentsHistory = dynamic(() => import("./paymentHistory"), {
-  loading: () => <Loader  />,
+  loading: () => <Loader />,
   ssr: false,
 });
 
 const ReviewsTab = dynamic(() => import("@/components/profile/ReviewTabs"), {
-  loading: () => <Loader />,
+  loading: () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {[...Array(4)].map((_, i) => (
+        <OrderCardSkeleton key={i} />
+      ))}
+    </div>
+  ), // Use same skeleton pattern as orders
   ssr: false,
 });
 
@@ -61,12 +68,22 @@ const TabContent = memo(function TabContent({
     );
   }
 
-  // Handle reviews tab
+  // Handle reviews tab - use skeleton loading when loading
   if (activeTab === "reviews") {
     return isReviewsLoading ? (
-      <Loader  />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {[...Array(4)].map((_, i) => (
+          <OrderCardSkeleton key={i} />
+        ))}
+      </div>
     ) : (
-      <Suspense fallback={<Loader  />}>
+      <Suspense fallback={
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <OrderCardSkeleton key={i} />
+          ))}
+        </div>
+      }>
         <ReviewsTab
           userReviews={userReviews}
           onEditReview={openReviewModal}

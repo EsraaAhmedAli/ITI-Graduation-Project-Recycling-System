@@ -10,35 +10,38 @@ import { useCategories } from "@/hooks/useGetCategories";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalization } from "@/utils/localiztionUtil";
 import { Category } from "@/components/Types/categories.type";
-import { Loader } from '@/components/common'
+import TableSkeleton from "@/components/shared/tableSkeleton";
 
-// Type definitions for better type safety
-// Updated to match the actual Category type from the API
 interface CategoryItem extends Category {
-  id: string; // Added for DynamicTable compatibility
-  displayName?: string; // Localized name from backend
-  displayDescription?: string; // Localized description from backend
+  id: string;
+  displayName?: string;
+  displayDescription?: string;
 }
 
 export default function Page() {
-  const { data, isLoading, error, refetch } = useCategories();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
+  
+  // Pass pagination to useCategories hook
+  const { data, isLoading, error, refetch } = useCategories({
+    page: currentPage,
+    limit: itemsPerPage
+  });
+  
   const queryClient = useQueryClient();
-  const { getDisplayName, getDisplayDescription, getEnglishName, t } =
-    useLocalization();
+  const { getDisplayName, getDisplayDescription, getEnglishName, t } = useLocalization();
   const router = useRouter();
   const [isAddingCategory, setIsAddingCategory] = useState(false);
 
   console.log("Categories data:", data?.data);
+  console.log("Pagination info:", data?.pagination);
 
-  // Listen for navigation back from add category page
   useEffect(() => {
     const handleRouteChange = () => {
       setIsAddingCategory(false);
-      // Refetch categories when returning to this page
       refetch();
     };
 
-    // Listen for browser back/forward navigation
     window.addEventListener('popstate', handleRouteChange);
     
     return () => {
@@ -46,7 +49,6 @@ export default function Page() {
     };
   }, [refetch]);
 
-  // Also listen for focus events (when user returns to tab/page)
   useEffect(() => {
     const handleFocus = () => {
       if (!isAddingCategory) {
@@ -61,19 +63,14 @@ export default function Page() {
     };
   }, [isAddingCategory, refetch]);
 
-  // Now the backend handles localization, so we can use displayName/displayDescription directly
   const getCategoryDisplayName = (categoryItem: Category): string => {
     return getDisplayName(categoryItem);
   };
 
-  // Backend should now provide correct localized displayDescription
-  const getCategoryDisplayDescription = (
-    categoryItem: Category
-  ): string => {
+  const getCategoryDisplayDescription = (categoryItem: Category): string => {
     return getDisplayDescription(categoryItem);
   };
 
-  // Get English name for API calls (backend operations)
   const getCategoryEnglishName = (categoryItem: Category): string => {
     return getEnglishName(categoryItem);
   };
@@ -93,9 +90,7 @@ export default function Page() {
           onClick={() => {
             const categoryName = getCategoryEnglishName(item);
             router.push(
-              `/admin/categories/${encodeURIComponent(
-                categoryName
-              )}/get-sub-category`
+              `/admin/categories/${encodeURIComponent(categoryName)}/get-sub-category`
             );
           }}
         />
@@ -154,20 +149,42 @@ export default function Page() {
       }
     }
   };
+
   const handleAddNewCategory = () => {
     setIsAddingCategory(true);
     router.push("/admin/categories/add-category");
   };
-  // Transform data to include id property for DynamicTable compatibility
+
+  // Handle page changes
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Handle items per page change
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1); // Reset to first page when changing items per page
+  };
+
   const transformedData = data?.data?.map((item: Category) => ({
     ...item,
-    id: item._id, // Map _id to id for DynamicTable
+    id: item._id,
   })) || [];
+
+  // Create pagination info object from API response
+  const paginationInfo = data?.pagination ? {
+    currentPage: data.pagination.currentPage,
+    totalPages: data.pagination.totalPages,
+    totalItems: data.pagination.totalItems,
+    itemsPerPage: data.pagination.itemsPerPage,
+    hasNextPage: data.pagination.hasNextPage,
+    hasPrevPage: data.pagination.currentPage > 1,
+  } : undefined;
 
   return (
     <>
       {isLoading ? (
-        <Loader  />
+        <TableSkeleton rows={5} columns={3} showActions={true} />
       ) : error ? (
         <p className="text-center text-red-500 py-10">
           {t("categories.errorLoadingCategories") || "Error loading categories"}
@@ -208,7 +225,9 @@ export default function Page() {
           data={transformedData}
           columns={columns}
           title={t("categories.categories") || "Categories"}
-          itemsPerPage={5}
+          itemsPerPage={itemsPerPage}
+          showPagination={true}
+          isLoading={isLoading}
           addButtonText={
             isAddingCategory 
               ? (t("categories.addNewCategory") || "Adding...")
@@ -226,20 +245,21 @@ export default function Page() {
           onAddSubCategory={(item: CategoryItem) => {
             const categoryName = getCategoryEnglishName(item);
             router.push(
-              `/admin/categories/${encodeURIComponent(
-                categoryName
-              )}/add-sub-category`
+              `/admin/categories/${encodeURIComponent(categoryName)}/add-sub-category`
             );
           }}
           showFilter={false}
           onImageClick={(item: CategoryItem) => {
             const categoryName = getCategoryEnglishName(item);
             router.push(
-              `/admin/categories/${encodeURIComponent(
-                categoryName
-              )}/get-sub-category`
+              `/admin/categories/${encodeURIComponent(categoryName)}/get-sub-category`
             );
           }}
+          // Pass backend pagination info and handlers
+          paginationInfo={paginationInfo}
+          onPageChange={handlePageChange}
+          onItemsPerPageChange={handleItemsPerPageChange}
+          disableClientSideSearch={true} // Disable client-side pagination
         />
       )}
     </>

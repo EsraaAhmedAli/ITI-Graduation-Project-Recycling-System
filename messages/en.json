@@ -184,8 +184,8 @@
   "ecoAssist": {
     "history": "History",
     "chatHistory": "Chat History",
-      "newChat": "New Chat",
-      "tokensUsed": "Tokens used today",
+    "newChat": "New Chat",
+    "tokensUsed": "Tokens used today",
     "tokenLimitNote": "Daily token limit: {limit} tokens",
     "tokenLimitReached": "Daily token limit reached. Try again tomorrow.",
     "clearHistory": "Clear history",
@@ -220,8 +220,7 @@
     "quickTips": "Quick Tips",
     "statusMessage": "EcoAssist is ready to help with your recycling questions",
     "errors": {
-            "tokenLimitExceeded": "You've reached your daily token limit. Please try again tomorrow."
-, 
+      "tokenLimitExceeded": "You've reached your daily token limit. Please try again tomorrow.",
       "noAnswer": "Sorry, I couldn't find an answer.",
       "requestError": "Sorry, there was an error processing your request."
     }
@@ -263,6 +262,7 @@
       "resend_question": "Didn’t receive the code?",
       "resend_button": "Resend OTP",
       "confirm": "Confirm",
+      "confirming": "Confirming...",
       "resend_success": "Resend OTP Successfully",
       "resend_failed": "OTP Resend failed",
       "submission_failed": "OTP submission failed",
@@ -1035,7 +1035,7 @@
   },
   "pickup": {
     "steps": {
-            "payment": "Payment",
+      "payment": "Payment",
       "address": "Address",
       "review": "Review",
       "waiting": "Waiting",
@@ -1552,7 +1552,7 @@
       "updateError": "Failed to update profile"
     }
   },
-  
+
   "contact": {
     "formAria": "Contact form",
     "name": "Name",
@@ -1576,11 +1576,10 @@
       "messageRequired": "Message is required",
       "messageMin": "Message must be at least 10 characters"
     },
-     "title": "Contact Us",
+    "title": "Contact Us",
     "description": "Whether you have questions, ideas, or feedback, we would love to hear from you. Let us make the planet greener together."
-  }
-,
- "slider": {
+  },
+  "slider": {
     "phoneRecycling": {
       "title": "20% Discount on Phone Recycling",
       "description": "Trade in your old device and save on your next purchase while helping the planet",
@@ -1612,7 +1611,7 @@
       "goToSlide": "Go to slide {{number}}"
     }
   },
-  
+
   "payment": {
     "title": "Payment Method",
     "subtitle": "Choose your preferred payment method",
@@ -1642,6 +1641,4 @@
       "continue": "Continue"
     }
   }
-
-
 }

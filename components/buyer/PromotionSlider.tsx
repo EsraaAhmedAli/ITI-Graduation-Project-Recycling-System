@@ -100,7 +100,7 @@ const PromotionSlider: React.FC<PromotionSliderProps> = ({ t, isRTL = false, loc
 
   return (
     <div 
-      className={`relative w-full h-[400px] md:h-[500px] overflow-hidden ${isRTL ? 'dir-rtl' : 'dir-ltr'}`}
+      className={`relative  md:block w-full h-[400px] hidden md:h-[500px] overflow-hidden ${isRTL ? 'dir-rtl' : 'dir-ltr'}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       dir={isRTL ? 'rtl' : 'ltr'}
