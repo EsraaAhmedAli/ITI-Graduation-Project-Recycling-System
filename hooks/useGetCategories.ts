@@ -99,8 +99,8 @@ export function useCategories(options: UseCategoriesOptions = {}) {
     enabled,
     staleTime: debouncedSearchTerm ? 1000 : 5000, // Shorter stale time for search results
     cacheTime: debouncedSearchTerm ? 5000 : 30000, // Shorter cache time for search results
-    refetchOnMount: false, // Don't refetch on mount for search results
-    refetchOnWindowFocus: false, // Don't refetch on focus for search results
+    refetchOnMount: true, // Don't refetch on mount for search results
+    refetchOnWindowFocus: true, // Don't refetch on focus for search results
     refetchOnReconnect: "stale",
     retry: (failureCount, error) => {
       if (failureCount < 2) {

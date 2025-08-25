@@ -886,6 +886,8 @@
     "addToCollection": "Add to Collection"
   },
   "common": {
+     "noItemsAvailable": "No items available",
+    "workingOnAddingItems": "Working on adding items...",
     "backToAllCategories": "Back to All Categories",
     "only": "Only",
     "left": "left",
@@ -1232,6 +1234,8 @@
     "categoryCreatedSuccess": "Category created successfully"
   },
   "categories": {
+   
+    "addingCategory": "Adding Category...",
     "image": "Image",
     "categoryName": "Category Name",
     "subCategoryName": "Subcategory Name",

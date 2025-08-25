@@ -150,14 +150,14 @@ useEffect(() => {
     const displayName = getDisplayName(item);
     
     const result = await Swal.fire({
-      title: t('deleteConfirmation.title') || 'Are you sure to delete this item?',
-      text: t('deleteConfirmation.text', { name: displayName }) || `You are about to delete "${displayName}". This action cannot be undone!`,
+      title: t('categories.deleteConfirmTitle') || 'Are you sure to delete this item?',
+      text: t('categories.deleteConfirmText', { name: displayName }) || `You are about to delete "${displayName}". This action cannot be undone!`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
       cancelButtonColor: "#aaa",
-      confirmButtonText: t('deleteConfirmation.confirmButton') || "Yes, delete it!",
-      cancelButtonText: t('deleteConfirmation.cancelButton') || "Cancel",
+      confirmButtonText: t('categories.confirmDelete') || "Yes, delete it!",
+      cancelButtonText: t('common.cancel') || "Cancel",
     });
 
     if (result.isConfirmed) {

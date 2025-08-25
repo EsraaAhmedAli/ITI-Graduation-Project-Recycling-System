@@ -8,35 +8,51 @@ import Image from "next/image";
 import { useLanguage } from "@/context/LanguageContext";
 import toast from "react-hot-toast";
 
-// Utility function to normalize category names
+// More robust category name normalization
 const normalizeCategoryName = (name: string): string => {
   if (!name) return '';
   
-  // Decode URL encoding if present
   let decoded = name;
   try {
-    if (name.includes('%')) {
-      decoded = decodeURIComponent(name);
+    // Handle multiple levels of URL encoding
+    while (decoded.includes('%') && decoded !== decodeURIComponent(decoded)) {
+      decoded = decodeURIComponent(decoded);
     }
   } catch (error) {
     console.warn('Failed to decode name:', error);
   }
   
-  // Normalize the name: trim whitespace and ensure proper case
   return decoded.trim();
 };
 
-// Utility function to create URL-safe category name
+// Create URL-safe category name
 const createUrlSafeName = (name: string): string => {
   return encodeURIComponent(name.trim());
 };
 
+// Use your existing categories/get-items endpoint which maps to the robust getItems function
+const fetchCategoryItems = async (categoryName: string) => {
+  try {
+    console.log('Fetching items using existing categories/get-items endpoint for:', categoryName);
+    const encodedName = createUrlSafeName(categoryName);
+    const res = await api.get(`/categories/get-items/${encodedName}`);
+    
+    console.log('Success with categories/get-items endpoint. Response structure:', {
+      success: res.data.success,
+      dataLength: res.data.data?.length,
+      pagination: res.data.pagination
+    });
+    
+    return { data: res.data, workingName: categoryName };
+  } catch (err) {
+    console.error('Failed with categories/get-items endpoint:', err?.response?.status, err?.response?.data);
+    throw err;
+  }
+};
+
 export default function EditItemPage() {
   const { name: rawName, itemId } = useParams();
-  
-  // Normalize the category name from URL
   const normalizedName = normalizeCategoryName(rawName as string);
-  
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -53,96 +69,103 @@ export default function EditItemPage() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [actualCategoryName, setActualCategoryName] = useState('');
+  const [debugInfo, setDebugInfo] = useState({
+    rawName: rawName as string,
+    normalizedName,
+    attempts: [] as string[]
+  });
   const { tAr, isLoaded } = useLanguage();
 
-  console.log('Raw name:', rawName);
-  console.log('Normalized name:', normalizedName);
-  console.log('Actual category name:', actualCategoryName);
-
   useEffect(() => {
-    // Wait for language context to be loaded before fetching data
-    if (!isLoaded || !normalizedName) return;
+    if (!isLoaded || !normalizedName || !itemId) return;
 
-    const fetchItem = async () => {
-      try {
-        console.log('Fetching items for normalized name:', normalizedName);
-        
-        // Try different variations of the name to handle case sensitivity
-        const namesToTry = [
-          normalizedName,
-          normalizedName.toLowerCase(),
-          normalizedName.charAt(0).toUpperCase() + normalizedName.slice(1).toLowerCase(),
-          normalizedName.toUpperCase()
-        ];
-
-        let categoryData = null;
-        let workingName = normalizedName;
-
-        // Try each variation until we find a match
-        for (const nameVariation of namesToTry) {
-          try {
-            console.log('Trying API call with name:', nameVariation);
-            const res = await api.get(`categories/get-items/${createUrlSafeName(nameVariation)}`);
-            categoryData = res.data;
-            workingName = nameVariation;
-            console.log('Success with name:', nameVariation, 'Data:', categoryData);
-            break;
-          } catch (err) {
-            console.log('Failed with name variation:', nameVariation);
-            continue;
-          }
-        }
-
-        if (!categoryData) {
-          throw new Error('Category not found with any name variation');
-        }
-
-        // Store the actual category name that worked
-        setActualCategoryName(workingName);
-        
-        // Find the specific item by ID
-        const item = categoryData.data?.find((i: any) => i._id === itemId);
-        
-        if (item) {
-          setFormData({
-            name: item.name?.en || item.name || "",
-            itemNameAr: item.name?.ar || "",
-            points: item.points?.toString() || "",
-            price: item.price?.toString() || "",
-            quantity: item.quantity?.toString() || "",
-            measurement_unit: item.measurement_unit?.toString() || "1",
-            image: null,
-            currentImage: item.image || "",
-          });
-        } else {
-          throw new Error('Item not found in category');
-        }
-      } catch (err) {
-        console.error('Fetch item error:', err);
-        
-        // More specific error handling
-        let errorMessage = "Failed to fetch item data";
-        if (err.response?.status === 404) {
-          errorMessage = "Item or category not found. Please check the URL.";
-        } else if (err.message?.includes('not found')) {
-          errorMessage = err.message;
-        }
-        
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: errorMessage,
-          confirmButtonColor: "#10b981",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (normalizedName && itemId) {
-      fetchItem();
+ const fetchItem = async () => {
+  try {
+    console.log('=== FETCH ITEM DEBUG START ===');
+    console.log('Raw name from URL:', rawName);
+    console.log('Normalized name:', normalizedName);
+    console.log('Item ID:', itemId);
+    
+    // Use the new single item endpoint instead of the paginated one
+    console.log('Using single item endpoint for category:', normalizedName);
+    const res = await api.get(`/categories/${createUrlSafeName(normalizedName)}/item/${itemId}`);
+    const itemData = res.data;
+    
+    console.log('Successfully fetched single item');
+    console.log('Item data structure:', {
+      success: itemData.success,
+      hasData: !!itemData.data
+    });
+    
+    setActualCategoryName(normalizedName);
+    
+    const item = itemData.data;
+    
+    if (item) {
+      console.log('Found item:', {
+        id: item._id,
+        name: item.name,
+        points: item.points
+      });
+      
+      setFormData({
+        name: item.name?.en || item.name || "",
+        itemNameAr: item.name?.ar || "",
+        points: item.points?.toString() || "",
+        price: item.price?.toString() || "",
+        quantity: item.quantity?.toString() || "",
+        measurement_unit: item.measurement_unit?.toString() || "1",
+        image: null,
+        currentImage: item.image || "",
+      });
+    } else {
+      throw new Error(`Item with ID ${itemId} not found`);
     }
-  }, [normalizedName, itemId, tAr, isLoaded]);
+    
+    console.log('=== FETCH ITEM DEBUG END ===');
+  } catch (err: any) {
+    console.error('=== FETCH ITEM ERROR ===');
+    console.error('Error details:', {
+      message: err.message,
+      status: err?.response?.status,
+      responseData: err?.response?.data,
+      stack: err.stack
+    });
+    
+    let errorMessage = "Failed to fetch item data";
+    if (err?.response?.status === 404) {
+      errorMessage = `Item not found in category "${normalizedName}". The item may have been deleted or moved.`;
+    } else if (err.message?.includes('not found')) {
+      errorMessage = err.message;
+    }
+    
+    // Show more detailed error for debugging
+    const detailedError = process.env.NODE_ENV === 'development' 
+      ? `${errorMessage}\n\nDebug info:\nRaw name: ${rawName}\nNormalized: ${normalizedName}\nItem ID: ${itemId}`
+      : errorMessage;
+    
+    Swal.fire({
+      icon: "error",
+      title: "Error Loading Item",
+      text: detailedError,
+      confirmButtonColor: "#10b981",
+      showCancelButton: true,
+      cancelButtonText: "Go Back",
+      confirmButtonText: "Retry"
+    }).then((result) => {
+      if (result.isDismissed) {
+        router.back();
+      } else if (result.isConfirmed) {
+        window.location.reload();
+      }
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+
+    fetchItem();
+  }, [normalizedName, itemId, rawName, router, isLoaded]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -168,7 +191,6 @@ export default function EditItemPage() {
     setUploading(true);
 
     try {
-      // Use the actual category name that was successfully fetched
       const categoryNameForUpdate = actualCategoryName || normalizedName;
       
       const data = new FormData();
@@ -183,55 +205,41 @@ export default function EditItemPage() {
 
       console.log('Updating item with category name:', categoryNameForUpdate);
 
+      // Use the existing update item route
       await api.put(`/categories/item/${createUrlSafeName(categoryNameForUpdate)}/${itemId}`, data, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
 
-      // Success toast
       toast.success("Item updated successfully!");
       
-      // Use the navigation pattern with the working category name
-      try {
-        const redirectPath = `/admin/categories/${createUrlSafeName(categoryNameForUpdate)}/get-sub-category`;
-        console.log('Redirecting to:', redirectPath);
-        
-        router.replace(redirectPath);
-        
-        // Fallback to hard redirect if router doesn't work
-        setTimeout(() => {
-          if (window.location.pathname !== redirectPath) {
-            window.location.href = redirectPath;
-          }
-        }, 200);
-        
-      } catch (navError) {
-        console.error('Navigation error:', navError);
-        window.location.href = `/admin/categories/${createUrlSafeName(categoryNameForUpdate)}/get-sub-category`;
-      }
+      // Navigate back with the working category name
+      const redirectPath = `/admin/categories/${createUrlSafeName(categoryNameForUpdate)}/get-sub-category`;
+      console.log('Redirecting to:', redirectPath);
+      
+      // Use replace to avoid issues with back navigation
+      router.replace(redirectPath);
 
     } catch (err: any) {
       console.error('Update error:', err);
       
-      // Error toast with detailed message
       let errorMessage = "Failed to update item";
-      if (err.response?.status === 404) {
-        errorMessage = "Item or category not found";
-      } else if (err.response?.status === 400) {
-        errorMessage = "Invalid data provided";
-      } else if (err.response?.data?.message) {
+      if (err?.response?.status === 404) {
+        errorMessage = "Item or category not found. The category might have been renamed or deleted.";
+      } else if (err?.response?.status === 400) {
+        errorMessage = "Invalid data provided. Please check your inputs.";
+      } else if (err?.response?.data?.message) {
         errorMessage = err.response.data.message;
       }
       
       toast.error(errorMessage);
-      
     } finally {
       setUploading(false);
     }
   };
 
-  // Show loading while language context or data is loading
+  // Show loading state
   if (loading || !isLoaded) {
     return (
       <div className="max-w-2xl mx-auto p-6">
@@ -243,6 +251,7 @@ export default function EditItemPage() {
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
           </div>
+   
         </div>
       </div>
     );
@@ -259,7 +268,9 @@ export default function EditItemPage() {
           </p>
         </div>
 
+        {/* Rest of your form JSX remains the same... */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6" style={{background: "var(--background)"}}>
+          {/* Your existing form fields... */}
           {/* English Item Name */}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
@@ -290,9 +301,6 @@ export default function EditItemPage() {
               placeholder="أدخل اسم العنصر بالعربية"
               dir="rtl"
             />
-            <p className="text-xs text-gray-500">
-              Arabic name is optional but recommended for better user experience
-            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -320,9 +328,7 @@ export default function EditItemPage() {
                 type="number"
                 name="price"
                 value={Math.floor(+formData.points / 19)}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border bg-gray-200 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
-                placeholder="Enter price"
+                className="w-full px-4 py-2 border bg-gray-200 border-gray-300 rounded-lg"
                 required
               />
             </div>
@@ -380,48 +386,19 @@ export default function EditItemPage() {
 
             <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-emerald-400 transition-colors">
               <div className="space-y-1 text-center">
-                <svg
-                  className="mx-auto h-12 w-12 text-gray-400"
-                  stroke="currentColor"
-                  fill="none"
-                  viewBox="0 0 48 48"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
+                <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                  <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 <div className="flex text-sm text-gray-600 justify-center">
-                  <label
-                    htmlFor="file-upload"
-                    className="relative cursor-pointer bg-white rounded-md font-medium text-emerald-600 hover:text-emerald-500 focus-within:outline-none"
-                  >
+                  <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-emerald-600 hover:text-emerald-500">
                     <span>Upload a file</span>
-                    <input
-                      id="file-upload"
-                      name="image"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleChange}
-                      className="sr-only"
-                    />
+                    <input id="file-upload" name="image" type="file" accept="image/*" onChange={handleChange} className="sr-only" />
                   </label>
                   <p className="pl-1">or drag and drop</p>
                 </div>
-                <p className="text-xs text-gray-500">
-                  PNG, JPG, GIF up to 5MB
-                </p>
+                <p className="text-xs text-gray-500">PNG, JPG, GIF up to 5MB</p>
               </div>
             </div>
-            {formData.image && (
-              <p className="text-sm text-gray-500 mt-1">
-                <span className="font-medium">Selected:</span>{" "}
-                {formData.image.name}
-              </p>
-            )}
           </div>
 
           <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
@@ -443,25 +420,9 @@ export default function EditItemPage() {
             >
               {uploading ? (
                 <span className="flex items-center justify-center">
-                  <svg
-                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                   Updating...
                 </span>
@@ -471,6 +432,19 @@ export default function EditItemPage() {
             </button>
           </div>
         </form>
+
+        {/* Debug panel in development */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="border-t bg-gray-50 p-4">
+            <h4 className="font-semibold text-sm mb-2">Debug Information:</h4>
+            <div className="text-xs space-y-1">
+              <p><strong>Raw Name:</strong> {rawName}</p>
+              <p><strong>Normalized Name:</strong> {normalizedName}</p>
+              <p><strong>Working Name:</strong> {actualCategoryName}</p>
+              <p><strong>Item ID:</strong> {itemId}</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

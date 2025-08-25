@@ -741,6 +741,9 @@
     "addToCollection": "اضف لمجموعتك"
   },
   "common": {
+    
+    "noItemsAvailable": "لا توجد عناصر متاحة",
+    "workingOnAddingItems": "جاري إضافة العناصر...",
     "backToAllCategories": "العودة إلى جميع الفئات",
     "previous": "السابق",
     "removeFromRecyclingCart": "إزالة من سلة إعادة التدوير",
@@ -985,6 +988,7 @@
     "categoryCreatedSuccess": "تم إنشاء الفئة بنجاح"
   },
   "categories": {
+    "addingCategory": "إضافة فئة...",
     "image": "الصورة",
     "categoryName": "اسم الفئة",
     "subCategoryName": "اسم الفئة الفرعية",
