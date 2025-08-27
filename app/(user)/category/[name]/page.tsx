@@ -107,7 +107,7 @@ const ItemCard = memo(
     
     // Local quantity state - not synced with cart until user clicks "Add to Cart"
 const [quantity, setQuantity] = useState(currentCartQuantity);
-const [inputValue, setInputValue] = useState(currentCartQuantity.toString());
+const [inputValue, setInputValue] = useState(currentCartQuantity.toString() > 0 ? currentCartQuantity.toString() : 1);
 
     const [inputError, setInputError] = useState("");
 
