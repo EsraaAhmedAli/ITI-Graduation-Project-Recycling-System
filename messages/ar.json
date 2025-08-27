@@ -122,10 +122,10 @@
     "darkMode": "الوضع الليلي",
     "lightMode": "الوضع النهاري",
     "systemMode": "الوضع التقليدي",
-
+    "theme" : "المظهر",
     "home": "الرئيسية",
-    "marketplace": "السوق",
-    "categories": "الأقسام",
+    "marketplace": "تسوق المنتجات",
+    "categories": "بيع أغراضك",
     "ecoAssist": "المساعد البيئي",
     "collection": "مجموعتي",
     "myCollection": "مجموعتي",
@@ -720,6 +720,8 @@
     "noActivity": "لا توجد نشاطات بعد"
   },
   "itemsModal": {
+    "updateCart": "تحديث السلة",
+
     "headerTitle": "عناصر الطلب",
     "headerSubtitle": "قائمة مفصلة بالعناصر في هذا الطلب",
     "quantity": "الكمية",

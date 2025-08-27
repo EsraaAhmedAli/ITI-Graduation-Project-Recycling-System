@@ -217,10 +217,7 @@ export const NotificationBell = () => {
       {/* Notification Dropdown */}
       {isNotificationOpen && (
         <div
-          className={`absolute ${
-            locale === "ar" ? "-left-35" : "-right-35"
-          } mt-2 w-sm-100 w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 max-h-[500px] flex flex-col`}
-          dir={locale === "ar" ? "rtl" : "ltr"}
+          className={`absolute end-[-35px] mt-2 w-sm-100 w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 max-h-[500px] flex flex-col`}
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100">
