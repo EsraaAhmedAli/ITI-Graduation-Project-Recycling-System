@@ -887,6 +887,7 @@
     "addToCollection": "Add to Collection"
   },
   "common": {
+    "noItemsFound" : "no items found",
      "noItemsAvailable": "No items available",
     "workingOnAddingItems": "Working on adding items...",
     "backToAllCategories": "Back to All Categories",
@@ -1647,4 +1648,41 @@
       "continue": "Continue"
     }
   }
+  ,
+  "deliveryAttachments": {
+    "title": "Delivery Attachments",
+    "subtitle": "Verification documents and personal information of the delivery partner.",
+    "noImage": "No image uploaded",
+    "notProvided": "Not provided",
+    "sections": {
+      "verificationImages": {
+        "title": "Verification Images",
+        "description": "Uploaded documents and photos for verification"
+      },
+      "personalInfo": {
+        "title": "Personal Information",
+        "description": "Details provided by the delivery partner"
+      }
+    },
+    "images": {
+      "deliveryPhoto": {
+        "title": "Delivery Person Photo",
+        "description": "Photo of the delivery partner for identification"
+      },
+      "criminalRecord": {
+        "title": "Criminal Record",
+        "description": "Official criminal record document"
+      },
+      "vehicleImage": {
+        "title": "Vehicle Image",
+        "description": "Photo of the vehicle used for deliveries"
+      }
+    },
+    "info": {
+      "licenseNumber": "License Number",
+      "nationalId": "National ID",
+      "vehicleType": "Vehicle Type"
+    }
+  }
+
 }
