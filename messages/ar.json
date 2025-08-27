@@ -743,6 +743,9 @@
     "addToCollection": "اضف لمجموعتك"
   },
   "common": {
+        "crossLanguageHint" : "يعمل البحث عبر اللغتين العربية والإنجليزية",
+
+        "tryDifferentSearch" : "جرب مصطلحات بحث مختلفة أو تحقق من التهجئة",
         "noItemsFound" : "لم يتم العثور على عناصر",
 
     "noItemsAvailable": "لا توجد عناصر متاحة",

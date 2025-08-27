@@ -887,6 +887,8 @@
     "addToCollection": "Add to Collection"
   },
   "common": {
+    "crossLanguageHint" : "Search works across Arabic and English languages",
+    "tryDifferentSearch" : "Try different search terms or check spelling",
     "noItemsFound" : "no items found",
      "noItemsAvailable": "No items available",
     "workingOnAddingItems": "Working on adding items...",

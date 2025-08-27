@@ -491,8 +491,7 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
       if (page >= 1 && page <= pagination.totalPages) {
         startTransition(() => {
           setCurrentPage(page);
-          setSearchTerm("");
-          setSelectedCategory("all");
+       
         });
         
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -597,7 +596,7 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
             </p>
             {debouncedSearchTerm && (
               <p className="mt-1 text-xs text-gray-400">
-                {t("search.crossLanguageHint") || "Search works across Arabic and English languages"}
+                {t("common.crossLanguageHint") || "Search works across Arabic and English languages"}
               </p>
             )}
           </div>
