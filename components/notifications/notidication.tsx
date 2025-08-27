@@ -13,7 +13,7 @@ import {
   useNotification,
   getLocalizedText,
 } from "@/context/notificationContext";
-import { useLanguage } from "@/context/LanguageContext"; // Add your language context import
+import { useLanguage } from "@/context/LanguageContext";
 
 // Helper function to get appropriate icon based on notification type
 const getNotificationIcon = (type: string) => {
@@ -39,19 +39,19 @@ const getNotificationColors = (type: string) => {
   switch (type) {
     case "order":
     case "order_assigned":
-      return "bg-blue-100 text-blue-600";
+      return "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400";
     case "order_completed":
-      return "bg-green-100 text-green-600";
+      return "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400";
     case "order_cancelled":
-      return "bg-red-100 text-red-600";
+      return "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400";
     case "message":
-      return "bg-blue-100 text-blue-600";
+      return "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400";
     case "warning":
-      return "bg-orange-100 text-orange-600";
+      return "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400";
     case "success":
-      return "bg-emerald-100 text-emerald-600";
+      return "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400";
     default:
-      return "bg-gray-100 text-gray-600";
+      return "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400";
   }
 };
 
@@ -127,11 +127,14 @@ export const NotificationBell = () => {
     refreshNotifications,
   } = useNotification();
 
-  const { locale } = useLanguage(); // Get current locale from language context
+  const { locale } = useLanguage();
 
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isMarkingAllRead, setIsMarkingAllRead] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
+
+  // Add a ref to track if we're currently processing mark all as read
+  const markAllAsReadInProgress = useRef(false);
 
   // Handle click outside to close dropdown
   useEffect(() => {
@@ -151,17 +154,32 @@ export const NotificationBell = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isNotificationOpen]);
 
-  // Handle mark all as read
-  const handleMarkAllAsRead = async () => {
-    if (unreadCount === 0 || isMarkingAllRead) return;
+  // Fixed handle mark all as read with proper state management
+  const handleMarkAllAsRead = async (e: React.MouseEvent) => {
+    // Prevent event bubbling
+    e.preventDefault();
+    e.stopPropagation();
 
+    // Check if already processing or no unread notifications
+    if (unreadCount === 0 || isMarkingAllRead || markAllAsReadInProgress.current) {
+      return;
+    }
+
+    // Set both state and ref to prevent double execution
     setIsMarkingAllRead(true);
+    markAllAsReadInProgress.current = true;
+
     try {
       await markAllAsRead();
+      
+      // Optional: Add a small delay to show the loading state
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
     } catch (error) {
       console.error("Failed to mark all as read:", error);
     } finally {
       setIsMarkingAllRead(false);
+      markAllAsReadInProgress.current = false;
     }
   };
 
@@ -173,9 +191,7 @@ export const NotificationBell = () => {
     try {
       await markAsRead(notificationId);
 
-      // Optional: Navigate to relevant page based on notification type
       if (orderId) {
-        // You can add navigation logic here if needed
         console.log("Navigate to order:", orderId);
       }
     } catch (error) {
@@ -187,7 +203,6 @@ export const NotificationBell = () => {
   const handleBellClick = () => {
     setIsNotificationOpen(!isNotificationOpen);
 
-    // Refresh notifications when opening
     if (!isNotificationOpen) {
       refreshNotifications?.();
     }
@@ -198,7 +213,7 @@ export const NotificationBell = () => {
       {/* Bell Button */}
       <button
         onClick={handleBellClick}
-        className="relative flex items-center justify-center w-10 h-10 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        className="relative flex items-center justify-center w-10 h-10 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
         aria-label={`${getTranslation("notifications", locale)} ${
           unreadCount > 0
             ? `(${unreadCount} ${locale === "ar" ? "غير مقروء" : "unread"})`
@@ -217,18 +232,19 @@ export const NotificationBell = () => {
       {/* Notification Dropdown */}
       {isNotificationOpen && (
         <div
-          className={`absolute end-[-35px] mt-2 w-sm-100 w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 max-h-[500px] flex flex-col`}
+          className={`absolute ${locale === 'ar' ? 'left-[-280px]' : 'right-[-35px]'} mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50 max-h-[500px] flex flex-col`}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100">
-            <h3 className="font-semibold text-gray-900">
+          <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-gray-700">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100">
               {getTranslation("notifications", locale)}
             </h3>
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllAsRead}
-                disabled={isMarkingAllRead}
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                disabled={isMarkingAllRead || markAllAsReadInProgress.current}
+                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                type="button"
               >
                 {isMarkingAllRead
                   ? getTranslation("marking", locale)
@@ -245,7 +261,6 @@ export const NotificationBell = () => {
                   const IconComponent = getNotificationIcon(notification.type);
                   const colorClasses = getNotificationColors(notification.type);
 
-                  // Extract localized text
                   const titleText = getLocalizedText(
                     notification.title,
                     locale
@@ -261,9 +276,9 @@ export const NotificationBell = () => {
                           notification.orderId?._id || notification.orderId
                         )
                       }
-                      className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors border-l-4 ${
+                      className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors border-l-4 ${
                         !notification.isRead
-                          ? "bg-blue-50 border-l-blue-500"
+                          ? "bg-blue-50 dark:bg-blue-900/20 border-l-blue-500"
                           : "border-l-transparent"
                       }`}
                     >
@@ -277,7 +292,7 @@ export const NotificationBell = () => {
                       {/* Content */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <p className="font-medium text-gray-900 text-sm leading-tight">
+                          <p className="font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight">
                             {titleText}
                           </p>
                           {!notification.isRead && (
@@ -285,18 +300,17 @@ export const NotificationBell = () => {
                           )}
                         </div>
 
-                        <p className="text-gray-600 text-sm mt-1 line-clamp-2">
+                        <p className="text-gray-600 dark:text-gray-300 text-sm mt-1 line-clamp-2">
                           {bodyText}
                         </p>
 
                         <div className="flex items-center justify-between mt-2">
-                          <p className="text-gray-400 text-xs">
+                          <p className="text-gray-400 dark:text-gray-500 text-xs">
                             {formatRelativeTime(notification.createdAt, locale)}
                           </p>
 
-                          {/* Show order status if available */}
                           {notification.orderId?.status && (
-                            <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                            <span className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
                               {locale === "ar"
                                 ? notification.orderId.status === "completed"
                                   ? "مكتمل"
@@ -319,15 +333,15 @@ export const NotificationBell = () => {
 
                 {/* Load More Button */}
                 {hasMore && (
-                  <div className="border-t border-gray-100 mt-2">
+                  <div className="border-t border-gray-100 dark:border-gray-700 mt-2">
                     <button
                       onClick={loadMoreNotifications}
                       disabled={loadingMore}
-                      className="block w-full px-4 py-3 text-center text-sm text-blue-600 hover:text-blue-700 hover:bg-gray-50 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="block w-full px-4 py-3 text-center text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {loadingMore ? (
                         <span className="flex items-center justify-center gap-2">
-                          <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                          <div className="w-4 h-4 border-2 border-blue-600 dark:border-blue-400 border-t-transparent rounded-full animate-spin"></div>
                           {getTranslation("loading", locale)}
                         </span>
                       ) : (
@@ -339,24 +353,24 @@ export const NotificationBell = () => {
               </>
             ) : (
               /* Empty State */
-              <div className="px-4 py-12 text-center text-gray-500">
-                <Bell className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <div className="px-4 py-12 text-center text-gray-500 dark:text-gray-400">
+                <Bell className="w-12 h-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
                 <p className="text-sm font-medium mb-1">
                   {getTranslation("noNotifications", locale)}
                 </p>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-gray-400 dark:text-gray-500">
                   {getTranslation("noNotificationsDesc", locale)}
                 </p>
               </div>
             )}
           </div>
 
-          {/* Footer - Optional: View All Link */}
+          {/* Footer - View All Link */}
           {notifications.length > 0 && (
-            <div className="border-t border-gray-100 mt-2">
+            <div className="border-t border-gray-100 dark:border-gray-700 mt-2">
               <Link
                 href="/notifications"
-                className="block w-full px-4 py-2 text-center text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-colors"
+                className="block w-full px-4 py-2 text-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 onClick={() => setIsNotificationOpen(false)}
               >
                 {getTranslation("viewAll", locale)}

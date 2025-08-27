@@ -8,7 +8,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { CartItem } from "@/models/cart";
 import api from "@/lib/axios";
 import Image from "next/image";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 
 type ValidatedItem = {
   material: string;

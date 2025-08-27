@@ -78,7 +78,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       headers: { "Content-Type": "multipart/form-data" },
     });
 
-    toast.success(t("subCategoryAddedSuccessfully"));
+    toast.success(t("subCategorypSuccessfully"));
     
     // Navigate to the sub-category page after a short delay to ensure the toast is shown
     setTimeout(() => {

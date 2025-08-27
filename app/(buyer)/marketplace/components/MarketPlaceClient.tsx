@@ -19,17 +19,15 @@ const FloatingRecorderButton = dynamic(
   () => import('@/components/Voice Processing/FloatingRecorderButton'),
   { 
     ssr: false,
-    loading: () => null // Don't show loading state for non-critical component
+    loading: () => null
   }
 );
 
-// Preconnect to critical origins
 const preconnectOrigins = () => {
   if (typeof document === 'undefined') return;
   
   const origins = [
-    'https://res.cloudinary.com', // Cloudinary for images
-    // Add other critical domains your app uses
+    'https://res.cloudinary.com',
   ];
   
   origins.forEach(origin => {
@@ -87,12 +85,26 @@ interface MarketplaceClientProps {
   initialData: ServerData;
 }
 
-// Preload critical images using requestIdleCallback with better priority handling
+// Fixed grid configuration for consistent layouts
+const GRID_CONFIG = {
+  itemHeight: 280, // Increased and fixed height
+  gap: 12, // Fixed gap
+  containerPadding: 16,
+  overscan: 2, // Reduced overscan to prevent excessive DOM nodes
+};
+
+const getColumnsForViewport = (width: number): number => {
+  if (width >= 1280) return 6; // xl
+  if (width >= 1024) return 5;  // lg
+  if (width >= 768) return 4;   // md
+  if (width >= 640) return 3;   // sm
+  return 2; // mobile
+};
+
 const preloadCriticalImages = (items: Item[]) => {
   if (typeof window === 'undefined') return;
   
   const preloadImage = (src: string) => {
-    // Check if already preloaded
     if (document.querySelector(`link[href="${src}"]`)) return;
     
     const link = document.createElement('link');
@@ -102,18 +114,15 @@ const preloadCriticalImages = (items: Item[]) => {
     document.head.appendChild(link);
   };
 
-  // Use requestIdleCallback with timeout to ensure execution
   if ('requestIdleCallback' in window) {
     requestIdleCallback(() => {
-      // Preload only first 3 images for LCP optimization
-      items.slice(0, 3).forEach((item) => {
+      items.slice(0, 4).forEach((item) => {
         preloadImage(getOptimizedImageUrl(item.image, 280));
       });
     }, { timeout: 500 });
   } else {
-    // Fallback with setTimeout
     setTimeout(() => {
-      items.slice(0, 3).forEach((item) => {
+      items.slice(0, 4).forEach((item) => {
         preloadImage(getOptimizedImageUrl(item.image, 280));
       });
     }, 100);
@@ -126,14 +135,10 @@ const createEnhancedSearch = (searchTerm: string, text: { en: string; ar: string
   const normalizedSearchTerm = searchTerm.toLowerCase().trim();
   const normalizedArabicSearchTerm = normalizeArabicText(normalizedSearchTerm);
   
-  // Check English text
   const englishMatch = text.en.toLowerCase().includes(normalizedSearchTerm);
-  
-  // Check Arabic text (both original and normalized)
   const arabicMatch = text.ar.toLowerCase().includes(normalizedSearchTerm);
   const normalizedArabicMatch = normalizeArabicText(text.ar.toLowerCase()).includes(normalizedArabicSearchTerm);
   
-  // Cross-language search
   const englishInArabic = !/[\u0600-\u06FF]/.test(searchTerm) ? 
     normalizeArabicText(text.ar.toLowerCase()).includes(normalizedSearchTerm) : false;
   
@@ -143,7 +148,6 @@ const createEnhancedSearch = (searchTerm: string, text: { en: string; ar: string
   return englishMatch || arabicMatch || normalizedArabicMatch || englishInArabic || arabicInEnglish;
 };
 
-// Move outside component to prevent recreation
 const getOptimizedImageUrl = (url: string, width: number = 300) => {
   if (url.includes("cloudinary.com")) {
     return url.replace("/upload/", `/upload/c_fit,w_${width},q_auto,f_auto,dpr_auto/`);
@@ -151,7 +155,6 @@ const getOptimizedImageUrl = (url: string, width: number = 300) => {
   return url;
 };
 
-// Generate a neutral blur placeholder
 const generateBlurDataURL = (width: number = 280, height: number = 280) => {
   const svg = `
     <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
@@ -161,7 +164,7 @@ const generateBlurDataURL = (width: number = 280, height: number = 280) => {
   return `data:image/svg+xml;base64,${btoa(svg)}`;
 };
 
-// Fixed image component with intersection observer for lazy loading
+// Improved image component with better loading states
 const OptimizedItemImage = memo(({
   item,
   priority = false,
@@ -176,7 +179,7 @@ const OptimizedItemImage = memo(({
   const imgRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (priority) return; // No need to observe if priority (already in view)
+    if (priority) return;
     
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -185,7 +188,10 @@ const OptimizedItemImage = memo(({
           observer.disconnect();
         }
       },
-      { rootMargin: '100px' } // Load images 100px before they enter viewport
+      { 
+        rootMargin: '50px', // Reduced from 100px to prevent excessive preloading
+        threshold: 0.1 
+      }
     );
     
     if (imgRef.current) {
@@ -196,8 +202,7 @@ const OptimizedItemImage = memo(({
   }, [priority]);
 
   return (
-    <div ref={imgRef} className="relative aspect-square bg-slate-50 overflow-hidden">
-      {/* Background pattern to prevent flash */}
+    <div ref={imgRef} className="relative aspect-square bg-slate-50 overflow-hidden rounded-t-lg">
       <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-slate-100" />
       
       {isInView && (
@@ -215,16 +220,13 @@ const OptimizedItemImage = memo(({
           blurDataURL={generateBlurDataURL()}
           loading={priority ? "eager" : "lazy"}
           onLoad={() => setImageLoaded(true)}
-          style={{
-            backgroundColor: '#f8fafc',
-          }}
+          style={{ backgroundColor: '#f8fafc' }}
         />
       )}
       
-      {/* Loading indicator */}
-      {!imageLoaded && (
+      {!imageLoaded && isInView && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-400 rounded-full animate-spin" />
+          <div className="w-6 h-6 border-2 border-slate-200 border-t-slate-400 rounded-full animate-spin" />
         </div>
       )}
     </div>
@@ -233,7 +235,7 @@ const OptimizedItemImage = memo(({
 
 OptimizedItemImage.displayName = 'OptimizedItemImage';
 
-// Simplified Item Card
+// Fixed height item card to prevent layout shifts
 const ItemCard = memo(({ 
   item, 
   index, 
@@ -250,24 +252,29 @@ const ItemCard = memo(({
   getMeasurementText: (unit: 1 | 2) => string;
 }) => {
   return (
-    <article className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-sm transition-shadow duration-150 h-full flex flex-col">
+    <article 
+      className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-sm transition-shadow duration-150 flex flex-col"
+      style={{ height: `${GRID_CONFIG.itemHeight}px` }} // Fixed height
+    >
       <Link
         href={`/marketplace/${encodeURIComponent(item.name.en)}`}
         className="h-full flex flex-col focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 rounded-lg"
-        prefetch={index < 2} // Only prefetch first 2 items
+        prefetch={index < 2}
       >
-        <OptimizedItemImage
-          item={item}
-          priority={index < 3}
-          index={index}
-        />
+        <div className="flex-1">
+          <OptimizedItemImage
+            item={item}
+            priority={index < 4}
+            index={index}
+          />
+        </div>
 
-        <div className="p-2 flex-1 flex flex-col">
-          <h3 className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide leading-tight line-clamp-2">
+        <div className="p-3 flex flex-col gap-2 h-24"> {/* Fixed height for content */}
+          <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wide leading-tight line-clamp-2 min-h-[2.5rem]">
             {item.name[locale]}
           </h3>
           
-          <div className="flex justify-between items-center mt-auto">
+          <div className="flex justify-between items-center">
             <span className="text-xs font-bold text-green-600">
               {convertNumber(item.price)} {t("itemsModal.currency")}
             </span>
@@ -281,7 +288,7 @@ const ItemCard = memo(({
             </span>
           </div>
           
-          <div className="text-[0.6rem] text-gray-500 mt-0.5 text-right">
+          <div className="text-[0.6rem] text-gray-500 text-right">
             {getMeasurementText(item.measurement_unit)}
           </div>
         </div>
@@ -292,7 +299,6 @@ const ItemCard = memo(({
 
 ItemCard.displayName = 'ItemCard';
 
-// Simple debounce hook
 const useDebounce = (value: string, delay: number) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
@@ -304,83 +310,26 @@ const useDebounce = (value: string, delay: number) => {
   return debouncedValue;
 };
 
-// Virtualized grid component with improved intersection handling
-const VirtualizedGrid = memo(({ 
+// Simplified grid without complex virtualization
+const SimpleGrid = memo(({ 
   items, 
   renderItem 
 }: { 
   items: Item[];
   renderItem: (item: Item, index: number) => React.ReactNode;
 }) => {
-  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 20 });
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const calculateVisibleRange = () => {
-      if (!containerRef.current) return;
-      
-      const scrollTop = window.scrollY;
-      const containerTop = containerRef.current.offsetTop;
-      const relativeScrollTop = Math.max(0, scrollTop - containerTop);
-      
-      const itemHeight = 250;
-      const containerHeight = window.innerHeight;
-      const itemsPerRow = window.innerWidth >= 1024 ? 5 : 
-                         window.innerWidth >= 768 ? 4 : 
-                         window.innerWidth >= 640 ? 3 : 2;
-      
-      const start = Math.floor(relativeScrollTop / itemHeight) * itemsPerRow;
-      const end = Math.min(start + (Math.ceil(containerHeight / itemHeight) + 2) * itemsPerRow, items.length);
-      
-      setVisibleRange({ start: Math.max(0, start - itemsPerRow), end });
-    };
-
-    calculateVisibleRange();
-    
-    // Use passive listener and throttle scroll events
-    const throttledScroll = () => {
-      requestAnimationFrame(calculateVisibleRange);
-    };
-    
-    window.addEventListener('scroll', throttledScroll, { passive: true });
-    window.addEventListener('resize', throttledScroll, { passive: true });
-    
-    return () => {
-      window.removeEventListener('scroll', throttledScroll);
-      window.removeEventListener('resize', throttledScroll);
-    };
-  }, [items.length]);
-
-  const visibleItems = items.slice(visibleRange.start, visibleRange.end);
-
   return (
-    <div ref={containerRef} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-      {/* Render spacer for items before visible range */}
-      {visibleRange.start > 0 && (
-        <div 
-          className="col-span-full" 
-          style={{ height: Math.floor(visibleRange.start / 5) * 250 }}
-        />
-      )}
-      
-      {visibleItems.map((item, index) => (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+      {items.map((item, index) => (
         <div key={item._id}>
-          {renderItem(item, visibleRange.start + index)}
+          {renderItem(item, index)}
         </div>
       ))}
-      
-      {/* Render spacer for items after visible range */}
-      {visibleRange.end < items.length && (
-        <div 
-          className="col-span-full" 
-          style={{ height: Math.floor((items.length - visibleRange.end) / 5) * 250 }}
-        />
-      )}
     </div>
   );
 });
 
-VirtualizedGrid.displayName = 'VirtualizedGrid';
+SimpleGrid.displayName = 'SimpleGrid';
 
 export default function MarketplaceClient({ initialData }: MarketplaceClientProps) {
   const { t, locale, convertNumber } = useLanguage();
@@ -397,7 +346,6 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
   
   const debouncedSearchTerm = useDebounce(searchTerm, 400);
 
-  // Memoize measurement text function
   const getMeasurementText = useCallback(
     (unit: 1 | 2): string => {
       return unit === 1 ? t("itemsModal.perKg") : t("itemsModal.perItem");
@@ -406,20 +354,16 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
   );
 
   useEffect(() => {
-    // Preconnect to external origins
     preconnectOrigins();
     
-    // Use startTransition to prevent blocking
     startTransition(() => {
       setIsClient(true);
     });
     
-    // Delay preloading to after initial render
     setTimeout(() => {
       preloadCriticalImages(initialData.items);
     }, 0);
     
-    // Pre-populate React Query cache
     queryClient.setQueryData(["items", 1, null], {
       data: initialData.items,
       pagination: initialData.pagination,
@@ -428,16 +372,15 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
 
   const { data, isLoading } = useGetItems({
     currentPage,
-    itemsPerPage: 10,
+    itemsPerPage: 20, // Increased items per page for better performance
     userRole: user?.role,
     category: selectedCategory,
     search: debouncedSearchTerm,
   });
 
-  // Conditionally load socket hook only when needed
   useItemSocket({
     currentPage,
-    itemsPerPage: 10,
+    itemsPerPage: 20,
     userRole: user?.role,
     selectedCategory,
     searchTerm: debouncedSearchTerm,
@@ -459,7 +402,6 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
     });
   }, [selectedCategory, debouncedSearchTerm]);
 
-  // Simplified categories fetch with better caching
   const { data: categoriesData } = useQuery({
     queryKey: ["categories", user?.role],
     queryFn: async () => {
@@ -553,7 +495,6 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
           setSelectedCategory("all");
         });
         
-        // Scroll to top on page change
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     },
@@ -583,19 +524,22 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
     />
   ), [locale, convertNumber, t, getMeasurementText]);
 
-  // Updated Loading skeleton
   const LoadingSkeleton = memo(() => (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-      {[...Array(8)].map((_, i) => (
-        <div key={i} className="bg-slate-50 rounded-lg h-40 animate-pulse border border-gray-200" />
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+      {[...Array(12)].map((_, i) => (
+        <div 
+          key={i} 
+          className="bg-slate-50 rounded-lg animate-pulse border border-gray-200"
+          style={{ height: `${GRID_CONFIG.itemHeight}px` }}
+        />
       ))}
     </div>
   ));
 
   return (
-    <>
-      {/* Search Controls */}
-      <section className="mb-4 rounded-lg shadow-sm p-3 sticky top-0 z-10 bg-white">
+    <div className="min-h-screen bg-gray-50">
+      {/* Fixed header to prevent layout shifts */}
+      <section className="mb-4 rounded-lg shadow-sm p-3 sticky top-0 z-10 bg-white border-b">
         <div className="flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
             <Search className="absolute top-3 left-3 h-4 w-4 text-gray-400" />
@@ -627,7 +571,7 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
       </section>
 
       {/* Results Info */}
-      <div className="flex justify-between items-center mb-3 px-1">
+      <div className="flex justify-between items-center mb-4 px-1">
         <span className="text-xs text-gray-500">
           {t("common.showing")} {convertNumber(sortedFilteredItems.length)} {t("common.of")} {convertNumber(pagination.totalItems)} {t("common.items")}
         </span>
@@ -637,7 +581,7 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
       </div>
 
       {/* Main Content */}
-      <main>
+      <main className="pb-20"> {/* Added bottom padding for floating button */}
         {isLoading && !items.length ? (
           <LoadingSkeleton />
         ) : sortedFilteredItems.length === 0 ? (
@@ -659,22 +603,24 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
           </div>
         ) : (
           <>
-            <VirtualizedGrid 
+            <SimpleGrid 
               items={sortedFilteredItems}
               renderItem={renderItem}
             />
 
             {pagination.totalPages > 1 && (
-              <LazyPagination 
-                pagination={pagination}
-                onPageChange={handlePageChange}
-              />
+              <div className="mt-8">
+                <LazyPagination 
+                  pagination={pagination}
+                  onPageChange={handlePageChange}
+                />
+              </div>
             )}
           </>
         )}
       </main>
       
       <FloatingRecorderButton />
-    </>
+    </div>
   );
 }

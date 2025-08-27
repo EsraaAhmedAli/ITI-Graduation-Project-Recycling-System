@@ -504,3 +504,78 @@ input::-webkit-inner-spin-button {
     transition: none;
   }
 }
+/* Add these styles to your existing CSS file to fix dark mode form inputs */
+
+/* Search Input and Select Styling */
+input[type="text"],
+input[type="search"],
+select {
+  background-color: var(--color-card) !important;
+  color: var(--foreground) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Placeholder text styling */
+input::placeholder {
+  color: var(--text-gray-600) !important;
+  opacity: 1;
+}
+
+/* Dark mode specific fixes */
+.dark input[type="text"],
+.dark input[type="search"],
+.dark select {
+  background-color: var(--color-base-200) !important;
+  color: var(--foreground) !important;
+  border-color: var(--text-gray-600) !important;
+}
+
+.dark input::placeholder {
+  color: var(--text-gray-400) !important;
+  opacity: 1;
+}
+
+/* Select dropdown styling */
+select option {
+  background-color: var(--color-card) !important;
+  color: var(--foreground) !important;
+}
+
+.dark select option {
+  background-color: var(--color-base-200) !important;
+  color: var(--foreground) !important;
+}
+
+/* Focus states */
+input:focus,
+select:focus {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 1px var(--color-primary) !important;
+  outline: none !important;
+}
+
+/* Search and Filter icon colors */
+.search-icon,
+.filter-icon {
+  color: var(--text-gray-600) !important;
+}
+
+.dark .search-icon,
+.dark .filter-icon {
+  color: var(--text-gray-400) !important;
+}
+
+/* Specific fixes for your search container */
+.search-container input,
+.filter-container select {
+  background-color: var(--color-card) !important;
+  color: var(--foreground) !important;
+  border-color: var(--border-color) !important;
+}
+
+.dark .search-container input,
+.dark .filter-container select {
+  background-color: var(--color-base-200) !important;
+  color: var(--text-gray-800) !important;
+  border-color: var(--text-gray-600) !important;
+}
