@@ -11,7 +11,7 @@ import api from "@/lib/axios";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { useCreateOrder } from "@/hooks/useCreateOrder";
 import { useRouter } from "next/navigation";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 import { useCart } from "@/context/CartContext";
 import Button from "../common/Button";
 

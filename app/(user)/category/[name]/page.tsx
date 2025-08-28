@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { CartItem } from "@/models/cart";
 import { Loader } from "@/components/common";
-import { Recycle, Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { Recycle, Plus, ChevronLeft, ChevronRight, Minus } from "lucide-react";
 import Image from "next/image";
 import { useLanguage } from "@/context/LanguageContext";
 import {
@@ -12,7 +12,7 @@ import {
   LocalizedItem,
 } from "@/hooks/useGetItemsPaginated";
 import dynamic from "next/dynamic";
-import { memo, useCallback, useMemo, Suspense, startTransition } from "react";
+import { memo, useCallback, useMemo, Suspense, startTransition, useState } from "react";
 
 // Ultra-lazy loading with no SSR and loading fallback
 const FloatingRecorderButton = dynamic(
@@ -76,6 +76,7 @@ const ItemSkeletonGrid = memo(() => (
 ItemSkeletonGrid.displayName = "ItemSkeletonGrid";
 
 // Optimized Item Card with layout shift prevention and theme variables
+// Updated ItemCard component with manual "Add to Cart" button
 const ItemCard = memo(
   ({
     item,
@@ -86,14 +87,30 @@ const ItemCard = memo(
     isLoading,
     index = 0,
   }: {
-    item: LocalizedItem;
+    item: LocalizedItem & { currentQuantity?: number };
     locale: string;
     convertNumber: (num: number) => string;
     t: (key: string, params?: any) => string;
-    onAddToCart: (item: LocalizedItem, categoryId: string) => void;
+    onAddToCart: (item: LocalizedItem, quantity: number) => void;
     isLoading: boolean;
     index?: number;
   }) => {
+    const { cart } = useCart();
+    
+    // Find current cart quantity for this item (for display purposes)
+    const cartItem = useMemo(() => 
+      cart.find(cartItem => cartItem._id === item._id), 
+      [cart, item._id]
+    );
+    
+    const currentCartQuantity = cartItem?.quantity || 0;
+    
+    // Local quantity state - not synced with cart until user clicks "Add to Cart"
+const [quantity, setQuantity] = useState(currentCartQuantity);
+const [inputValue, setInputValue] = useState(currentCartQuantity.toString() > 0 ? currentCartQuantity.toString() : 1);
+
+    const [inputError, setInputError] = useState("");
+
     // Memoize all computed values to prevent recalculations
     const computedValues = useMemo(() => {
       const measurementText =
@@ -102,7 +119,7 @@ const ItemCard = memo(
           : t("itemsModal.perItem");
 
       const priceDisplay = {
-        value: convertNumber(item.price),
+        value: convertNumber((item.price * quantity).toFixed(2)),
         currency: t("itemsModal.currency"),
       };
 
@@ -110,18 +127,122 @@ const ItemCard = memo(
         typeof item.name === "string" ? item.name : item.name[locale];
 
       return { measurementText, priceDisplay, itemName };
-    }, [item, locale, convertNumber, t]);
+    }, [item, locale, convertNumber, t, quantity]);
 
-    const handleClick = useCallback(() => {
-      // Use startTransition for non-urgent updates
-      startTransition(() => {
-        onAddToCart(item, item.categoryId);
-      });
-    }, [item, onAddToCart]);
+    // Validation function for quantity input
+    const validateQuantity = useCallback((value: string) => {
+      const numValue = parseFloat(value);
+
+      // Check if it's a valid number
+      if (isNaN(numValue) || numValue < 0) {
+        return {
+          isValid: false,
+          errorMessage: t("common.invalidQuantity"),
+          validValue: 0,
+        };
+      }
+
+      // For measurement unit 2 (pieces) - only whole numbers
+      if (item.measurement_unit === 2) {
+        if (!Number.isInteger(numValue)) {
+          return {
+            isValid: false,
+            errorMessage: t("common.wholeNumbersOnly"),
+            validValue: Math.floor(numValue),
+          };
+        }
+      }
+
+      // For measurement unit 1 (kg) - minimum 0, multiples of 0.25
+      if (item.measurement_unit === 1 && numValue > 0) {
+        const minValue = 0.25;
+        if (numValue < minValue) {
+          return {
+            isValid: false,
+            errorMessage: t("common.minimumQuantity", {
+              min: minValue,
+              defaultValue: `Minimum quantity is ${minValue} kg`,
+            }),
+            validValue: minValue,
+          };
+        }
+
+        // Check if it's a multiple of 0.25
+        const remainder = (numValue * 100) % 25;
+        if (remainder !== 0) {
+          const roundedValue = Math.round(numValue * 4) / 4;
+          return {
+            isValid: false,
+            errorMessage: t("common.invalidIncrement", {
+              increment: "0.25",
+              defaultValue: "Quantity must be in increments of 0.25 kg",
+            }),
+            validValue: roundedValue,
+          };
+        }
+      }
+
+      return {
+        isValid: true,
+        errorMessage: "",
+        validValue: numValue,
+      };
+    }, [item.measurement_unit, t]);
+
+    // Handle input change - only updates local state
+    const handleInputChange = useCallback((value: string) => {
+      setInputValue(value);
+      
+      const validation = validateQuantity(value);
+      
+      if (validation.isValid) {
+        setQuantity(validation.validValue);
+        setInputError("");
+      } else {
+        setInputError(validation.errorMessage);
+      }
+    }, [validateQuantity]);
+
+    // Handle input blur - auto-correct invalid values
+    const handleInputBlur = useCallback(() => {
+      const validation = validateQuantity(inputValue);
+      
+      if (!validation.isValid) {
+        setQuantity(validation.validValue);
+        setInputValue(validation.validValue.toString());
+        setInputError("");
+      }
+    }, [inputValue, validateQuantity]);
+
+    // Handle plus/minus operations - only updates local state
+    const handleOperation = useCallback((operation: "+" | "-") => {
+      const step = item.measurement_unit === 1 ? 0.25 : 1;
+      const newQuantity = operation === "+" ? quantity + step : Math.max(0, quantity - step);
+      
+      const validation = validateQuantity(newQuantity.toString());
+      
+      if (validation.isValid) {
+        setQuantity(validation.validValue);
+        setInputValue(validation.validValue.toString());
+        setInputError("");
+      }
+    }, [quantity, item.measurement_unit, validateQuantity]);
+
+    // Handle add to cart button click
+    const handleAddToCart = useCallback(() => {
+      if (quantity > 0 && !inputError) {
+        onAddToCart(item, quantity);
+      }
+    }, [quantity, inputError, onAddToCart, item]);
 
     // Generate low-quality placeholder
     const blurDataURL =
       "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyruP8AHzTRtRVoezs";
+
+    const canDecrease = quantity > 0;
+    const canIncrease = true;
+    const hasQuantityChanged = quantity > 0;
+    const isQuantityDifferentFromCart = quantity !== currentCartQuantity;
 
     return (
       <article
@@ -164,7 +285,6 @@ const ItemCard = memo(
             blurDataURL={blurDataURL}
             loading={index < 8 ? "eager" : "lazy"}
             onLoad={(e) => {
-              // Force repaint to prevent black flash
               const target = e.target as HTMLImageElement;
               target.style.opacity = "1";
             }}
@@ -183,10 +303,23 @@ const ItemCard = memo(
           >
             +{item.points}
           </div>
+
+          {/* Cart indicator when item is in cart */}
+          {currentCartQuantity > 0 && (
+            <div
+              className="absolute top-2 left-2 text-white px-2 py-1 rounded-full text-xs font-bold shadow-md flex items-center gap-1"
+              style={{
+                backgroundColor: "var(--color-primary)",
+              }}
+            >
+              <div className="w-2 h-2 bg-white rounded-full" />
+              {currentCartQuantity} {item.measurement_unit === 1 ? 'kg' : 'pcs'}
+            </div>
+          )}
         </div>
 
         {/* Content with fixed height to prevent CLS */}
-        <div className="p-2 sm:p-3 h-28 sm:h-32 flex flex-col justify-between">
+        <div className="p-2 sm:p-3 flex flex-col justify-between" style={{ minHeight: "160px" }}>
           <div>
             <h3
               id={`item-${item._id}`}
@@ -196,7 +329,7 @@ const ItemCard = memo(
               {computedValues.itemName}
             </h3>
 
-            <div className="flex items-center justify-between mb-2 sm:mb-3">
+            <div className="flex items-center justify-between mb-2">
               <span
                 className="text-xs font-medium px-1.5 py-0.5 rounded-md"
                 style={{
@@ -223,50 +356,165 @@ const ItemCard = memo(
             </div>
           </div>
 
-          <button
-            onClick={handleClick}
-            disabled={isLoading}
-            className="w-full text-white py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 sm:gap-2 shadow-sm hover:shadow-md group/button h-8 sm:h-10"
-            style={{
-              background: isLoading
-                ? "var(--text-gray-400)"
-                : "linear-gradient(to right, var(--color-primary), var(--color-secondary))",
-            }}
-            onMouseEnter={(e) => {
-              if (!isLoading) {
-                e.currentTarget.style.background =
-                  "linear-gradient(to right, var(--color-green-600), var(--color-secondary))";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!isLoading) {
-                e.currentTarget.style.background =
-                  "linear-gradient(to right, var(--color-primary), var(--color-secondary))";
-              }
-            }}
-            aria-label={`Add ${computedValues.itemName} to collection`}
-            type="button"
-          >
-            {isLoading ? (
-              <div
-                className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
-                role="status"
-                aria-label="Loading"
-              />
-            ) : (
-              <>
-                <Plus className="w-3 h-3 sm:w-4 sm:h-4 group-hover/button:rotate-90 transition-transform duration-200" />
-                <span className="text-xs sm:text-sm">
-                  {t("itemsModal.addToCollection")}
-                </span>
-              </>
+          {/* Quantity Controls */}
+          <div className="space-y-2">
+            {/* Error message */}
+            {inputError && (
+              <div className="text-xs text-red-500 bg-red-50 border border-red-200 rounded p-1">
+                {inputError}
+              </div>
             )}
-          </button>
+
+            <div className="flex items-center gap-2">
+              {/* Minus button */}
+              <button
+                onClick={() => handleOperation("-")}
+                disabled={!canDecrease || isLoading}
+                className="flex-shrink-0 w-8 h-8 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                style={{
+                  borderColor: canDecrease ? "var(--color-primary)" : "var(--border-color)",
+                  backgroundColor: canDecrease ? "var(--color-primary)" : "var(--color-base-100)",
+                  color: canDecrease ? "white" : "var(--text-gray-400)",
+                }}
+                onMouseEnter={(e) => {
+                  if (canDecrease && !isLoading) {
+                    e.currentTarget.style.backgroundColor = "var(--color-green-600)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (canDecrease && !isLoading) {
+                    e.currentTarget.style.backgroundColor = "var(--color-primary)";
+                  }
+                }}
+                type="button"
+                aria-label="Decrease quantity"
+              >
+                <Minus className="w-4 h-4" />
+              </button>
+
+              {/* Quantity input */}
+              <div className="flex-1 min-w-0">
+                <input
+                  type="text"
+                  value={inputValue}
+                  onChange={(e) => handleInputChange(e.target.value)}
+                  onBlur={handleInputBlur}
+                  disabled={isLoading}
+                  className="w-full px-2 py-1 text-center text-sm font-medium border rounded focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{
+                    borderColor: inputError ? "var(--color-error)" : "var(--border-color)",
+                    backgroundColor: "var(--color-card)",
+                    color: "var(--text-gray-900)",
+                  }}
+                  placeholder="0"
+                />
+              </div>
+
+              {/* Plus button */}
+              <button
+                onClick={() => handleOperation("+")}
+                disabled={isLoading}
+                className="flex-shrink-0 w-8 h-8 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                style={{
+                  borderColor: "var(--color-primary)",
+                  backgroundColor: "var(--color-primary)",
+                  color: "white",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isLoading) {
+                    e.currentTarget.style.backgroundColor = "var(--color-green-600)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isLoading) {
+                    e.currentTarget.style.backgroundColor = "var(--color-primary)";
+                  }
+                }}
+                type="button"
+                aria-label="Increase quantity"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Add to Cart Button - Shows when quantity > 0 and no errors */}
+            {hasQuantityChanged && !inputError && (
+              <button
+                onClick={handleAddToCart}
+                disabled={isLoading}
+                className="w-full text-black py-2 px-3 rounded-lg font-semibold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
+                style={{
+                  background: isLoading
+                    ? "var(--text-gray-400)"
+                    : isQuantityDifferentFromCart
+                    ? "linear-gradient(to right, var(--color-primary), var(--color-secondary))"
+                    : "linear-gradient(to right, var(--color-green-600), var(--color-green-500))",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isLoading) {
+                    e.currentTarget.style.background = isQuantityDifferentFromCart
+                      ? "linear-gradient(to right, var(--color-green-600), var(--color-secondary))"
+                      : "linear-gradient(to right, var(--color-green-700), var(--color-green-600))";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isLoading) {
+                    e.currentTarget.style.background = isQuantityDifferentFromCart
+                      ? "linear-gradient(to right, var(--color-primary), var(--color-secondary))"
+                      : "linear-gradient(to right, var(--color-green-600), var(--color-green-500))";
+                  }
+                }}
+                type="button"
+                aria-label={`Add ${computedValues.itemName} to cart`}
+              >
+                {isLoading ? (
+                  <div
+                    className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
+                    role="status"
+                    aria-label="Loading"
+                  />
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4" />
+                    <span>
+                      {currentCartQuantity > 0 && isQuantityDifferentFromCart
+                        ? t("itemsModal.updateCart") || "Update Cart"
+                      
+                        : t("itemsModal.addToCollection") || "Add to Cart"}
+                    </span>
+                  </>
+                )}
+              </button>
+            )}
+
+            {/* Status information */}
+            <div className="text-center space-y-1">
+              {currentCartQuantity > 0 && (
+                <div className="text-xs font-medium flex items-center justify-center gap-1" 
+                     style={{ color: "var(--color-primary)" }}>
+                  <div className="w-2 h-2 bg-current rounded-full" />
+                  Currently in cart: {currentCartQuantity} {item.measurement_unit === 1 ? 'kg' : 'items'}
+                </div>
+              )}
+              
+              {/* Helper text */}
+              <div className="text-xs" style={{ color: "var(--text-gray-500)" }}>
+                {item.measurement_unit === 1
+                  ? t("common.kgIncrement", {
+                      defaultValue: "Min 0.25kg, increments of 0.25kg",
+                    })
+                  : t("common.wholeNumbers", {
+                      defaultValue: "Whole numbers only",
+                    })}
+              </div>
+            </div>
+          </div>
         </div>
       </article>
     );
   }
 );
+
 ItemCard.displayName = "ItemCard";
 // Memoized Pagination with better performance and theme variables
 const PaginationControls = memo(
@@ -473,49 +721,49 @@ export default function UserCategoryPage() {
   });
 
   // Optimized add to cart handler with proper error handling
-  const handleAddToCollection = useCallback(
-    async (item: LocalizedItem, catId: string) => {
-      try {
-        const englishItemName =
-          typeof item.name === "string" ? item.name : item.name?.en || "";
-        const arabicItemName =
-          typeof item.name === "string" ? "" : item.name?.ar || "";
+ // Fixed handleAddToCollection function - use the quantity parameter
+const handleAddToCollection = useCallback(
+  async (item: LocalizedItem, quantity: number) => {
+    try {
+      const englishItemName =
+        typeof item.name === "string" ? item.name : item.name?.en || "";
+      const arabicItemName =
+        typeof item.name === "string" ? "" : item.name?.ar || "";
 
-        const categoryNameEn =
-          typeof item.categoryName === "string"
-            ? item.categoryName
-            : item.categoryName?.en || "";
-        const categoryNameAr =
-          typeof item.categoryName === "string"
-            ? ""
-            : item.categoryName?.ar || "";
+      const categoryNameEn =
+        typeof item.categoryName === "string"
+          ? item.categoryName
+          : item.categoryName?.en || "";
+      const categoryNameAr =
+        typeof item.categoryName === "string"
+          ? ""
+          : item.categoryName?.ar || "";
 
-        const cartItem: CartItem = {
-          _id: item._id,
-          categoryId: catId,
-          categoryName: {
-            en: categoryNameEn,
-            ar: categoryNameAr,
-          },
-          name: {
-            en: englishItemName,
-            ar: arabicItemName,
-          },
-          image: item.image,
-          points: item.points,
-          price: item.price,
-          measurement_unit: item.measurement_unit,
-          quantity: item.measurement_unit === 1 ? 0.25 : 1,
-        };
+      const cartItem: CartItem = {
+        _id: item._id,
+        categoryId: item.categoryId || categoryName,
+        categoryName: {
+          en: categoryNameEn,
+          ar: categoryNameAr,
+        },
+        name: {
+          en: englishItemName,
+          ar: arabicItemName,
+        },
+        image: item.image,
+        points: item.points,
+        price: item.price,
+        measurement_unit: item.measurement_unit,
+        quantity: quantity,
+      };
 
-        await addToCart(cartItem);
-      } catch (error) {
-        console.error("Add to cart failed:", error);
-        // Could add user notification here
-      }
-    },
-    [addToCart]
-  );
+      await addToCart(cartItem, true); // ← Add true here to replace quantity
+    } catch (error) {
+      console.error("Add to cart failed:", error);
+    }
+  },
+  [addToCart, categoryName]
+);
 
   // Memoized header content
   const headerContent = useMemo(

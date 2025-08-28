@@ -36,7 +36,7 @@ import Image from "next/image";
 import { NotificationBell } from "../notifications/notidication";
 import { useLanguage } from "@/context/LanguageContext";
 
-// Memoized Cart Item Component for better performance
+// Memoized Cart Item Component
 const CartItem = memo(
   ({ item, onRemove, locale, darkMode, t, convertNumber, setIsCartOpen }) => {
     const handleRemove = useCallback(
@@ -48,18 +48,16 @@ const CartItem = memo(
     );
 
     return (
-      <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-        <div className="flex-shrink-0 w-10 h-10 bg-gray-100 dark:bg-gray-600 rounded-lg overflow-hidden">
+      <div className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+        <div className="flex-shrink-0 w-8 h-8 bg-gray-100 dark:bg-gray-600 rounded-md overflow-hidden">
           {item.image ? (
             <Link
-              href={`/category/${encodeURIComponent(
-                item.categoryName[locale]
-              )}`}
+              href={`/category/${encodeURIComponent(item.categoryName[locale])}`}
               onClick={() => setIsCartOpen(false)}
             >
               <Image
-                height={40}
-                width={40}
+                height={32}
+                width={32}
                 src={item.image}
                 alt={item.name[locale] || "Item"}
                 className="w-full h-full object-contain"
@@ -68,7 +66,7 @@ const CartItem = memo(
             </Link>
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-green-100 to-blue-100 dark:from-green-800 dark:to-blue-800 flex items-center justify-center">
-              <Recycle className="w-5 h-5 text-green-600 dark:text-green-400" />
+              <Recycle className="w-4 h-4 text-green-600 dark:text-green-400" />
             </div>
           )}
         </div>
@@ -76,25 +74,14 @@ const CartItem = memo(
           <p className="font-medium text-gray-900 dark:text-white text-xs truncate">
             {item.name[locale]}
           </p>
-          <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">
-            {item.categoryName[locale]}
+          <p className="text-gray-500 dark:text-gray-400 text-xs">
+            {t("cart.qty")}: {convertNumber(item.quantity)}{" "}
+            {item.measurement_unit === 1 ? t("cart.item.kg") : t("cart.item.pcs")}
           </p>
-          <div className="flex items-center gap-2 mt-0.5">
-            <p className="text-gray-400 dark:text-gray-500 text-xs">
-              {t("cart.qty")}: {convertNumber(item.quantity)}{" "}
-              {item.measurement_unit === 1
-                ? t("cart.item.kg")
-                : t("cart.item.pcs")}
-            </p>
-
-            {/* <p className="text-green-600 dark:text-green-400 text-xs font-medium">
-              {convertNumber(item.points)} {t("cart.item.pts")}
-            </p> */}
-          </div>
         </div>
         <button
           onClick={handleRemove}
-          className="flex-shrink-0 w-5 h-5 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+          className="flex-shrink-0 w-4 h-4 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors"
           aria-label="Remove item"
         >
           <X className="w-3 h-3" />
@@ -106,111 +93,44 @@ const CartItem = memo(
 
 CartItem.displayName = "CartItem";
 
-// Memoized Navigation Link Component
-const NavLink = memo(
-  ({ href, onClick, className, children, prefetch = true }) => (
-    <Link
-      prefetch={prefetch}
-      href={href}
-      onClick={onClick}
-      className={className}
-    >
-      {children}
-    </Link>
-  )
-);
+// Navigation Link Component
+const NavLink = memo(({ href, onClick, className, children, prefetch = true }) => (
+  <Link prefetch={prefetch} href={href} onClick={onClick} className={className}>
+    {children}
+  </Link>
+));
 
 NavLink.displayName = "NavLink";
 
-// Memoized Dark Mode Toggle Component
-const DarkModeToggle = memo(({ darkMode, onToggle, className = "" }) => {
-  // Get what's actually being displayed
-  const getEffectiveState = () => {
-    if (darkMode === null) {
-      return window.matchMedia("(prefers-color-scheme: dark)").matches;
-    }
-    return darkMode;
-  };
+// Compact Toggle Components
+const CompactToggle = memo(({ icon: Icon, onClick, isActive, ariaLabel }) => (
+  <button
+    onClick={onClick}
+    className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+    aria-label={ariaLabel}
+  >
+    <Icon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+  </button>
+));
 
-  const AuthButtonsSkeleton = memo(() => (
-    <div className="hidden lg:flex items-center space-x-2">
-      <div className="w-16 h-8 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-lg"></div>
-      <div className="w-20 h-8 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-lg"></div>
-    </div>
-  ));
-  AuthButtonsSkeleton.displayName = "AuthButtonsSkeleton";
-  const effectiveState = getEffectiveState();
+CompactToggle.displayName = "CompactToggle";
 
-  return (
-    <button
-      onClick={onToggle}
-      className={`nav-link ${
-        effectiveState ? "dark" : "light"
-      } hover:bg-green-100 dark:hover:bg-black rounded-full transition-colors ${className}`}
-      aria-label={
-        effectiveState ? "Switch to light mode" : "Switch to dark mode"
-      }
-    >
-      {effectiveState ? (
-        <Moon className="nav-icon w-5 h-5" />
-      ) : (
-        <Sun className="nav-icon w-5 h-5" />
-      )}
-    </button>
-  );
-});
-DarkModeToggle.displayName = "DarkModeToggle";
+const LanguageToggle = memo(({ locale, onToggle, className = "" }) => (
+  <button
+    onClick={onToggle}
+    className={`px-2 py-1 text-xs font-medium rounded border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 transition-colors ${className}`}
+    title="Toggle Language"
+  >
+    <span className={locale === "en" ? "text-blue-600 dark:text-blue-400" : "text-gray-500"}>
+      EN
+    </span>
+    <span className="mx-1 text-gray-300">|</span>
+    <span className={locale === "ar" ? "text-blue-600 dark:text-blue-400" : "text-gray-500"}>
+      AR
+    </span>
+  </button>
+));
 
-// Memoized Language Toggle Component
-const LanguageToggle = memo(
-  ({ locale, onToggle, darkMode, showLabels = true, className }) => (
-    <div
-      className={
-        className ||
-        `language-toggle flex items-center gap-1.5 px-2 py-1 rounded-lg border border-gray-200 hover:border-gray-300 dark:hover:border-gray-600 transition-colors`
-      }
-    >
-      {showLabels && (
-        <span
-          className={`text-xs font-medium ${
-            locale === "en"
-              ? "text-blue-600 dark:text-blue-400"
-              : "text-gray-400 dark:text-gray-500"
-          }`}
-        >
-          EN
-        </span>
-      )}
-      <button
-        onClick={onToggle}
-        className="relative w-8 h-4 bg-gray-200 dark:bg-gray-600 rounded-full transition-colors duration-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        style={{
-          backgroundColor:
-            locale === "ar" ? "#3B82F6" : darkMode ? "#4B5563" : "#D1D5DB",
-        }}
-        title="Toggle Language"
-      >
-        <div
-          className="absolute top-0.5 left-0.5 w-3 h-3 bg-white dark:bg-gray-200 rounded-full shadow-sm transform transition-transform duration-200"
-          style={{
-            transform: locale === "ar" ? "translateX(16px)" : "translateX(0)",
-          }}
-        />
-      </button>
-      {showLabels && (
-        <span
-          className={`text-xs font-medium ${
-            locale === "ar"
-              ? "text-blue-600 dark:text-blue-400"
-              : "text-gray-400 dark:text-gray-500"
-          }`}
-        >
-          AR
-        </span>
-      )}
-    </div>
-  )
-);
 LanguageToggle.displayName = "LanguageToggle";
 
 export default function Navbar() {
@@ -218,39 +138,89 @@ export default function Navbar() {
   const { user, logout, isLoading } = authContext ?? {};
   const { cart, removeFromCart } = useCart();
   const totalItems = useMemo(() => cart.length, [cart.length]);
+  
+  // State management
   const [isOpen, setIsOpen] = useState(false);
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const notificationRef = useRef(null);
-  const cartRef = useRef(null);
-  const profileRef = useRef(null);
-  const isBuyer = user?.role === "buyer";
-  const { locale, setLocale } = useLanguage();
-
-  // Fixed Dark Mode State - simple boolean
   const [darkMode, setDarkMode] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  const { t, convertNumber } = useLanguage();
+  // Refs
+  const cartRef = useRef(null);
+  const profileRef = useRef(null);
 
-  // Initialize dark mode from localStorage or system preference
+  const { locale, setLocale, t, convertNumber } = useLanguage();
+
+  // User role logic
+  const isBuyer = user?.role === "buyer";
+  const isCustomer = user?.role === "customer";
+  const isLoggedIn = !!user;
+
+  // Get navigation items based on user role
+  const getNavigationItems = () => {
+    const items = [
+      {
+        href: isLoggedIn ? (isBuyer ? "/home" : "/") : "/",
+        icon: HousePlus,
+        label: t("navbar.home"),
+        show: true
+      },
+      {
+        href: "/ideas",
+        icon: FaRobot,
+        label: t("navbar.ecoAssist"),
+        show: true
+      }
+    ];
+
+    // Handle marketplace/categories logic
+    if (!isLoggedIn) {
+      // Show both when not logged in
+      items.splice(1, 0, 
+        {
+          href: "/marketplace",
+          icon: Store,
+          label: t("navbar.marketplace"),
+          show: true
+        },
+        {
+          href: "/category",
+          icon: GalleryVerticalEnd,
+          label: t("navbar.categories"),
+          show: true
+        }
+      );
+    } else if (isBuyer) {
+      // Show only marketplace for buyers
+      items.splice(1, 0, {
+        href: "/marketplace",
+        icon: Store,
+        label: t("navbar.marketplace"),
+        show: true
+      });
+    } else if (isCustomer) {
+      // Show only categories for customers
+      items.splice(1, 0, {
+        href: "/category",
+        icon: GalleryVerticalEnd,
+        label: t("navbar.categories"),
+        show: true
+      });
+    }
+
+    return items.filter(item => item.show);
+  };
+
+  // Dark mode initialization
   useEffect(() => {
     if (typeof window !== "undefined" && !isInitialized) {
       const savedMode = localStorage.getItem("darkMode");
-
       if (savedMode !== null) {
-        // User has a saved preference
-        const isDark = JSON.parse(savedMode);
-        setDarkMode(isDark);
+        setDarkMode(JSON.parse(savedMode));
       } else {
-        // No saved preference, use system preference
-        const systemPrefersDark = window.matchMedia(
-          "(prefers-color-scheme: dark)"
-        ).matches;
-        setDarkMode(systemPrefersDark);
+        setDarkMode(window.matchMedia("(prefers-color-scheme: dark)").matches);
       }
-
       setIsInitialized(true);
     }
   }, [isInitialized]);
@@ -258,46 +228,27 @@ export default function Navbar() {
   // Apply dark mode to DOM
   useEffect(() => {
     if (isInitialized) {
-      const root = document.documentElement;
-      if (darkMode) {
-        root.classList.add("dark");
-      } else {
-        root.classList.remove("dark");
-      }
+      document.documentElement.classList.toggle("dark", darkMode);
     }
   }, [darkMode, isInitialized]);
 
-  // Save preference to localStorage when it changes
+  // Save dark mode preference
   useEffect(() => {
     if (isInitialized && typeof window !== "undefined") {
       localStorage.setItem("darkMode", JSON.stringify(darkMode));
     }
   }, [darkMode, isInitialized]);
 
-  // Memoized handlers for better performance
-  const toggleMenu = useCallback(() => setIsOpen((prev) => !prev), []);
-  const toggleDarkMode = useCallback(() => {
-    setDarkMode((prev) => !prev);
-  }, []);
-  const toggleLanguage = useCallback(
-    () => setLocale(locale === "en" ? "ar" : "en"),
-    [locale, setLocale]
-  );
-  const toggleCart = useCallback(() => setIsCartOpen((prev) => !prev), []);
-  const toggleProfile = useCallback(
-    () => setIsProfileOpen((prev) => !prev),
-    []
-  );
+  // Event handlers
+  const toggleMenu = useCallback(() => setIsOpen(prev => !prev), []);
+  const toggleDarkMode = useCallback(() => setDarkMode(prev => !prev), []);
+  const toggleLanguage = useCallback(() => setLocale(locale === "en" ? "ar" : "en"), [locale, setLocale]);
+  const toggleCart = useCallback(() => setIsCartOpen(prev => !prev), []);
+  const toggleProfile = useCallback(() => setIsProfileOpen(prev => !prev), []);
 
-  // Close dropdowns when clicking outside
+  // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        notificationRef.current &&
-        !notificationRef.current.contains(event.target)
-      ) {
-        setIsNotificationOpen(false);
-      }
       if (cartRef.current && !cartRef.current.contains(event.target)) {
         setIsCartOpen(false);
       }
@@ -333,539 +284,393 @@ export default function Navbar() {
 
   const getUserInitials = useCallback((user) => {
     if (!user) return "U";
-    const name =
-      user.name || user.fullName || user.firstName || user.email || "User";
+    const name = user.name || user.fullName || user.firstName || user.email || "User";
     const words = name.split(" ");
-    if (words.length >= 2) {
-      return (words[0][0] + words[1][0]).toUpperCase();
-    }
-    return name.slice(0, 2).toUpperCase();
+    return words.length >= 2 
+      ? (words[0][0] + words[1][0]).toUpperCase()
+      : name.slice(0, 2).toUpperCase();
   }, []);
 
-  // Memoized cart items for performance
+  const navigationItems = getNavigationItems();
+
   const cartItems = useMemo(
     () =>
-      cart
-        ?.slice(0, 4)
-        .map((item, index) => (
-          <CartItem
-            key={item._id || index}
-            item={item}
-            onRemove={handleRemoveFromCart}
-            locale={locale}
-            darkMode={darkMode}
-            t={t}
-            convertNumber={convertNumber}
-            setIsCartOpen={setIsCartOpen}
-          />
-        )),
+      cart?.slice(0, 3).map((item, index) => (
+        <CartItem
+          key={item._id || index}
+          item={item}
+          onRemove={handleRemoveFromCart}
+          locale={locale}
+          darkMode={darkMode}
+          t={t}
+          convertNumber={convertNumber}
+          setIsCartOpen={setIsCartOpen}
+        />
+      )),
     [cart, handleRemoveFromCart, locale, darkMode, t, convertNumber]
   );
 
-  return (
-    <nav className="navbar sticky top-0 z-50 backdrop-blur-lg shadow-sm">
-      <div className="max-w-7xl mx-auto px-1 min-[375px]:px-2 sm:px-4 lg:px-8">
-        {/* Reduced px from px-4 to px-2 for mobile */}
-        <div className="flex justify-between items-center h-16">
-          {/* Left side: Logo + Search */}
-          <div className="flex items-center gap-1 min-[375px]:gap-2 sm:gap-6 min-w-0 flex-1">
-            <NavLink href="/" className="flex items-center flex-shrink-0">
-              <div className="text-sm min-[375px]:text-base sm:text-xl lg:text-2xl font-black bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent truncate max-w-[200px] min-[375px]:max-w-none">
-                {t("navbar.title")}
-              </div>
-            </NavLink>
-            <div className="hidden 2xl:flex items-center max-w-md mx-8">
-              <NavbarSearch variant="desktop" className="w-full" />
+  if (isLoading) {
+    return (
+      <nav className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex justify-between items-center h-14">
+            <div className="w-32 h-6 bg-gray-200 dark:bg-gray-700 animate-pulse rounded"></div>
+            <div className="flex gap-2">
+              <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 animate-pulse rounded"></div>
+              <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 animate-pulse rounded"></div>
             </div>
           </div>
+        </div>
+      </nav>
+    );
+  }
 
-          {/* Center: Navigation Links - Desktop */}
-          <div className="hidden min-[1500px]:flex items-center space-x-2">
-            <NavLink
-              prefetch={true}
-              href={user?.role == "buyer" ? "/home" : "/"}
-              className={`nav-link ${
-                darkMode ? "dark" : "light"
-              } hover:bg-green-100 dark:hover:bg-black`}
-            >
-              <HousePlus className="nav-icon" />
-              <span>{t("navbar.home")}</span>
-            </NavLink>
+  return (
+    <nav className="sticky top-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-700">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="flex justify-between items-center h-14">
+          {/* Logo */}
+          <NavLink href="/" className="flex-shrink-0">
+            <div className="text-lg font-black bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+              {t("navbar.title")}
+            </div>
+          </NavLink>
 
-            <NavLink
-              href={isBuyer ? "/marketplace" : "/category"}
-              className={`nav-link ${darkMode ? "dark" : "light"}`}
-            >
-              {isBuyer ? (
-                <Store className="nav-icon" />
-              ) : (
-                <GalleryVerticalEnd className="nav-icon" />
-              )}
-              <span>
-                {isBuyer ? t("navbar.marketplace") : t("navbar.categories")}
-              </span>
-            </NavLink>
-
-            <NavLink
-              href="/ideas"
-              className={`nav-link ${darkMode ? "dark" : "light"}`}
-            >
-              <FaRobot className="nav-icon" />
-              <span>{t("navbar.ecoAssist")}</span>
-            </NavLink>
+          {/* Desktop Navigation - Hidden on smaller screens */}
+          <div className="hidden lg:flex items-center space-x-1">
+            {navigationItems.map((item) => {
+              const IconComponent = item.icon;
+              return (
+                <NavLink
+                  key={item.href}
+                  href={item.href}
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                >
+                  <IconComponent className="w-4 h-4" />
+                  <span className="hidden xl:inline">{item.label}</span>
+                </NavLink>
+              );
+            })}
           </div>
 
-          {/* Right side: Actions */}
-          <div className="flex items-center gap-0 min-[375px]:gap-1 sm:gap-2 flex-shrink-0">
-            {/* Dark Mode Toggle - Only show when not logged in */}
-            {!user && (
-              <div className="hidden lg:block">
-                <DarkModeToggle darkMode={darkMode} onToggle={toggleDarkMode} />
-              </div>
-            )}
+          {/* Search - Desktop only */}
+          <div className="hidden md:block flex-1 max-w-md mx-4">
+            <NavbarSearch variant="desktop" className="w-full" />
+          </div>
 
-            {/* Collection Cart */}
+          {/* Right Actions */}
+          <div className="flex items-center gap-1">
+            {/* Cart */}
             <div className="relative" ref={cartRef}>
               <button
                 onClick={toggleCart}
-                className={`nav-link ${
-                  darkMode ? "dark" : "light"
-                } hover:bg-green-100 dark:hover:bg-black`}
+                className="relative p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
                 title={isBuyer ? t("navbar.myCart") : t("navbar.myCollection")}
               >
-                <div className="relative">
-                  <Recycle className="nav-icon w-6 h-6 sm:w-5 sm:h-5" />
-                  {totalItems > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-1 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center shadow-sm ring-1 ring-white">
-                      {totalItems > 99
-                        ? convertNumber(99) + "+"
-                        : convertNumber(totalItems)}
-                    </span>
-                  )}
-                </div>
-                <span className="hidden min-[1024px]:inline text-sm">
-                  {isBuyer ? t("navbar.myCart") : t("navbar.myCollection")}
-                </span>
+                <Recycle className="w-5 h-5" />
+                {totalItems > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center">
+                    {totalItems > 99 ? "99+" : convertNumber(totalItems)}
+                  </span>
+                )}
               </button>
+
               {/* Cart Dropdown */}
               {isCartOpen && (
-                <div
-                  className={`
-  absolute top-full mt-2 rounded-lg bg-white dark:bg-gray-900 shadow-lg
-  border border-gray-200 dark:border-gray-700 py-2 z-50
-  max-w-[90vw]
-  ${user 
-    ? isBuyer 
-      ? 'w-80 sm:w-72 ltr:-right-2 rtl:-left-2' 
-      : 'w-80 sm:w-72 -end-1/2 translate-x-1/2'
-    : 'w-80 sm:w-56 ltr:right-0 rtl:left-0'
-  }
-`}
-                >
-                  {/* Header */}
-                  <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-gray-700">
+                <div className="absolute end-[-50px] mt-2 w-72 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                  <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100 dark:border-gray-700">
                     <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
                       {isBuyer ? t("navbar.myCart") : t("navbar.myCollection")}
                     </h3>
                     <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {t("navbar.totalItems")} {convertNumber(totalItems)}{" "}
-                      {t("navbar.items")}
+                      {convertNumber(totalItems)} {t("navbar.items")}
                     </span>
                   </div>
-                  <div className="flex-1 overflow-y-auto">
+                  
+                  <div className="max-h-64 overflow-y-auto">
                     {cart && cart.length > 0 ? (
                       <>
                         {cartItems}
-                        {cart.length > 4 && (
-                          <div className="px-4 py-2 text-center text-xs text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-700">
-                            +{convertNumber(cart.length - 4)}{" "}
-                            {t("cart.item.more")}
+                        {cart.length > 3 && (
+                          <div className="px-3 py-2 text-center text-xs text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-700">
+                            +{convertNumber(cart.length - 3)} {t("cart.item.more")}
                           </div>
                         )}
                       </>
                     ) : (
                       <div className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
-                        <Recycle className="w-10 h-10 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
+                        <Recycle className="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
                         <p className="text-xs font-medium mb-1">
                           {t("navbar.yourCollectionEmpty")}
                         </p>
-                        <p className="text-xs">{t("navbar.addItemsToStart")}</p>
                         <NavLink
                           onClick={() => setIsCartOpen(false)}
                           href={isBuyer ? "/marketplace" : "/category"}
-                          className="text-xs text-primary dark:text-primary-400"
+                          className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
                         >
                           {t("common.startAdding")}
                         </NavLink>
                       </div>
                     )}
                   </div>
+                  
                   {cart && cart.length > 0 && (
-                    <div className="border-t border-gray-100 dark:border-gray-700 pt-2">
-                      <div className="px-4 py-2 space-y-2">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-gray-600 dark:text-gray-400">
-                            {t("navbar.totalItems")}
-                          </span>
-                          <span className="font-semibold text-gray-900 dark:text-white">
-                            {convertNumber(totalItems)}
-                          </span>
-                        </div>
-                        <NavLink
-                          href="/cart"
-                          onClick={() => setIsCartOpen(false)}
-                          className="block w-full px-3 py-2 text-center text-xs bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors"
-                        >
-                          {t("navbar.viewFullCollection")}
-                        </NavLink>
-                      </div>
+                    <div className="border-t border-gray-100 dark:border-gray-700 pt-2 px-3">
+                      <NavLink
+                        href="/cart"
+                        onClick={() => setIsCartOpen(false)}
+                        className="block w-full px-3 py-2 text-center text-xs bg-green-500 hover:bg-green-600 text-white font-medium rounded-md transition-colors"
+                      >
+                        {t("navbar.viewFullCollection")}
+                      </NavLink>
                     </div>
                   )}
                 </div>
               )}
             </div>
 
-            {/* Language Switcher - Only show on desktop when not logged in */}
-            {!user && (
-              <LanguageToggle
-                locale={locale}
-                onToggle={toggleLanguage}
-                darkMode={darkMode}
-                className={`language-toggle hidden min-[1290px]:flex items-center gap-1.5 px-2 py-1 rounded-lg border border-gray-200 hover:border-gray-300 dark:hover:border-gray-600 transition-colors`}
-              />
-            )}
+            {/* Notifications - Only when logged in */}
+            {user && <NotificationBell />}
 
-            {/* Notification - Only show when logged in */}
-            {user && (
-              <div className="px-1">
-                <NotificationBell />
-              </div>
-            )}
-
-            {/* Auth buttons */}
-            {isLoading ? (
-              <AuthButtonsSkeleton />
-            ) : user ? (
+            {/* Settings/Profile */}
+            {user ? (
               <div className="relative" ref={profileRef}>
                 <button
                   onClick={toggleProfile}
-                  className={`nav-link ${darkMode ? "dark" : "light"} p-1`}
+                  className="flex items-center gap-1 p-1.5 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
                 >
-                  <div className="relative">
-                    {user.imgUrl ? (
-                      <Image
-                        width={28}
-                        height={28}
-                        src={user.imgUrl}
-                        alt={user.name || "User"}
-                        className="w-8 h-8 rounded-full object-cover ring-2 ring-gray-200 dark:ring-gray-600"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white font-semibold ring-2 ring-gray-200 dark:ring-gray-600 text-xs sm:text-sm">
-                        {getUserInitials(user)}
-                      </div>
-                    )}
-                  </div>
-                  <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 dark:text-gray-500 hidden min-[640px]:block" />
+                  {user.imgUrl ? (
+                    <Image
+                      width={24}
+                      height={24}
+                      src={user.imgUrl}
+                      alt={user.name || "User"}
+                      className="w-6 h-6 rounded-full object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white font-semibold text-xs">
+                      {getUserInitials(user)}
+                    </div>
+                  )}
+                  <ChevronDown className="w-3 h-3 hidden sm:block" />
                 </button>
 
                 {/* Profile Dropdown */}
                 {isProfileOpen && (
-                  <div className="nav-dropdown bg-white dark:bg-gray-800 absolute ltr:right-2 rtl:left-2 sm:ltr:right-0 sm:rtl:left-0 mt-2 w-56 min-w-0 rounded-lg shadow-lg border dark:border-gray-700 py-2 z-50">
-                    <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
-                      <div className="flex items-center gap-3">
-                        <div className="relative">
-                          {user.imgUrl ? (
-                            <Image
-                              width={40}
-                              height={40}
-                              src={user.imgUrl}
-                              alt={user.name || "User"}
-                              className="w-10 h-10 rounded-full object-cover"
-                              loading="lazy"
-                            />
-                          ) : (
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white font-semibold">
-                              {getUserInitials(user)}
-                            </div>
-                          )}
-                        </div>
+                  <div className="absolute end-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                    <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-700">
+                      <div className="flex items-center gap-2">
+                        {user.imgUrl ? (
+                          <Image
+                            width={32}
+                            height={32}
+                            src={user.imgUrl}
+                            alt={user.name || "User"}
+                            className="w-8 h-8 rounded-full object-cover"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white font-semibold text-sm">
+                            {getUserInitials(user)}
+                          </div>
+                        )}
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-gray-900 dark:text-white text-sm truncate">
                             {user.name || "User"}
                           </p>
                           <p className="text-gray-500 dark:text-gray-400 text-xs truncate">
-                            {user.email || "user@example.com"}
+                            {user.email}
                           </p>
-                          {user.role && (
-                            <span className="inline-block px-2 py-1 text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200 rounded-full mt-1 capitalize">
-                              {user.role}
-                            </span>
-                          )}
                         </div>
                       </div>
                     </div>
 
-                    {/* Settings Section */}
                     <div className="py-1">
                       <NavLink
                         href="/profile"
                         onClick={() => setIsProfileOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors"
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                       >
                         <User className="w-4 h-4" />
-                        <span className="text-sm font-medium">
-                          {t("navbar.profile")}
-                        </span>
+                        {t("navbar.profile")}
                       </NavLink>
+                      
                       <NavLink
                         href="/editprofile"
                         onClick={() => setIsProfileOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors"
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                       >
                         <Settings className="w-4 h-4" />
-                        <span className="text-sm font-medium">
-                          {t("navbar.settings")}
-                        </span>
+                        {t("navbar.settings")}
                       </NavLink>
-
-                      <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
-
-                      {/* Dark Mode Toggle in Profile Dropdown */}
-                      <div className="flex items-center justify-between px-4 py-2 text-gray-700 dark:text-gray-300">
-                        <div className="flex items-center gap-3">
-                          {darkMode ? (
-                            <Sun className="w-4 h-4" />
-                          ) : (
-                            <Moon className="w-4 h-4" />
-                          )}
-                          <span className="text-sm font-medium">
-                            {darkMode
-                              ? t("navbar.lightMode")
-                              : t("navbar.darkMode")}
-                          </span>
-                        </div>
-                        <DarkModeToggle
-                          darkMode={darkMode}
-                          onToggle={toggleDarkMode}
-                          className="p-1"
-                        />
-                      </div>
-
-                      {/* Language Toggle in Profile Dropdown */}
-                      <div className="flex items-center justify-between px-4 py-2 text-gray-700 dark:text-gray-300">
-                        <div className="flex items-center gap-3">
-                          <Globe className="w-4 h-4" />
-                          <span className="text-sm font-medium">
-                            {t("navbar.language")}
-                          </span>
-                        </div>
-
-                        <LanguageToggle
-                          locale={locale}
-                          onToggle={toggleLanguage}
-                          darkMode={darkMode}
-                          showLabels={false}
-                        />
-                      </div>
-
-                      <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
 
                       {!isBuyer && (
                         <NavLink
                           href="/profile/ewallet"
                           onClick={() => setIsProfileOpen(false)}
-                          className="flex items-center gap-3 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors"
+                          className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                         >
                           <Wallet className="w-4 h-4" />
-                          <span className="text-sm font-medium">
-                            {t("navbar.ewallet")}
-                          </span>
+                          {t("navbar.ewallet")}
                         </NavLink>
                       )}
-                      <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
 
+                      <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+                      
+                      {/* Theme & Language in Profile */}
+                      <div className="flex items-center justify-between px-3 py-2">
+                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                          {t("navbar.theme")}
+                        </span>
+                        <CompactToggle
+                          icon={darkMode ? Sun : Moon}
+                          onClick={toggleDarkMode}
+                          ariaLabel={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between px-3 py-2">
+                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                          {t("navbar.language")}
+                        </span>
+                        <LanguageToggle locale={locale} onToggle={toggleLanguage} />
+                      </div>
+
+                      <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+                      
                       <button
                         onClick={handleLogout}
-                        className="flex items-center gap-3 px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-300 transition-colors w-full text-left"
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors w-full text-left"
                       >
                         <LogOut className="w-4 h-4" />
-                        <span className="text-sm font-medium">
-                          {t("navbar.signOut")}
-                        </span>
+                        {t("navbar.signOut")}
                       </button>
                     </div>
                   </div>
                 )}
               </div>
             ) : (
-              <div className="hidden lg:flex items-center gap-2">
+              // Not logged in - show theme, language, and auth buttons
+              <div className="flex items-center gap-1">
+                <CompactToggle
+                  icon={darkMode ? Sun : Moon}
+                  onClick={toggleDarkMode}
+                  ariaLabel={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+                />
+                <LanguageToggle locale={locale} onToggle={toggleLanguage} />
                 <NavLink
                   href="/auth"
-                  className={`nav-link ${
-                    darkMode ? "dark" : "light"
-                  } hidden min-[640px]:flex`}
+                  className="hidden sm:flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
                 >
-                  <KeyRound className="nav-icon" />
-                  <span className="hidden min-[768px]:inline">
-                    {t("navbar.login")}
-                  </span>
+                  <KeyRound className="w-4 h-4" />
+                  <span className="hidden md:inline">{t("navbar.login")}</span>
                 </NavLink>
               </div>
             )}
 
-            {/* Mobile menu button */}
-            <div className="min-[1400px]:hidden">
-              <button
-                onClick={toggleMenu}
-                style={{ color: darkMode ? "#9CA3AF" : "#4B5563" }}
-                className={`nav-link ${
-                  darkMode ? "dark" : "light"
-                } px-3 py-2 flex items-center justify-center ml-1`}
-                aria-label="Toggle menu"
-              >
-                {isOpen ? (
-                  <X className="w-6 h-6" />
-                ) : (
-                  <Menu className="w-6 h-6" />
-                )}
-              </button>
-            </div>
+            {/* Mobile Menu Button */}
+            <button
+              onClick={toggleMenu}
+              className="lg:hidden p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+              aria-label="Toggle menu"
+            >
+              {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
         </div>
+
         {/* Mobile Menu */}
         {isOpen && (
-          <div className="mobile-menu block min-[1290px]:hidden backdrop-blur-lg border-t">
+          <div className="lg:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
             <div className="px-4 py-3 space-y-2">
-              {/* Mobile: Search in menu */}
-              <div>
-                <NavbarSearch
-                  variant="mobile"
-                  className="w-full"
-                  onClose={() => setIsOpen(false)}
-                />
-              </div>
+              {/* Mobile Search */}
+              <NavbarSearch
+                variant="mobile"
+                className="w-full mb-3"
+                onClose={() => setIsOpen(false)}
+              />
 
-              {/* Divider */}
-              <div className="border-t border-gray-200 my-2"></div>
+              {/* Mobile Navigation Items */}
+              {navigationItems.map((item) => {
+                const IconComponent = item.icon;
+                return (
+                  <NavLink
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md transition-colors"
+                  >
+                    <IconComponent className="w-5 h-5" />
+                    <span className="font-medium">{item.label}</span>
+                  </NavLink>
+                );
+              })}
 
-              {/* Dark Mode Toggle for Mobile - Only show when not logged in */}
-              {!user && (
-                <div className="flex items-center justify-between w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg mb-2">
-                  <div className="flex items-center gap-2">
-                    {darkMode ? (
-                      <Sun className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                    ) : (
-                      <Moon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                    )}
-                    <span className="font-medium text-sm text-gray-800 dark:text-gray-200">
-                      {darkMode ? t("navbar.lightMode") : t("navbar.darkMode")}
-                    </span>
-                  </div>
-                  <DarkModeToggle
-                    isDark={darkMode}
-                    onToggle={() => {
-                      toggleDarkMode();
-                    }}
-                    className="p-1"
-                  />
-                </div>
-              )}
-
-              {/* Language Toggle for Mobile - Only show when not logged in */}
-              {!user && (
-                <div className="flex items-center justify-between w-full px-3 py-2.5 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg mb-2">
-                  <div className="flex items-center gap-2">
-                    <Globe className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                    <span className="font-medium text-sm text-blue-800 dark:text-blue-200">
-                      {t("navbar.language")}
-                    </span>
-                  </div>
-
-                  <LanguageToggle
-                    locale={locale}
-                    onToggle={() => {
-                      toggleLanguage();
-                      setIsOpen(false);
-                    }}
-                    darkMode={darkMode}
-                  />
-                </div>
-              )}
-
-              {/* Navigation Links */}
-              <NavLink
-                href="/"
-                onClick={() => setIsOpen(false)}
-                className={`nav-link ${darkMode ? "dark" : "light"}`}
-              >
-                <HousePlus className="nav-icon" />
-                <span>{t("navbar.home")}</span>
-              </NavLink>
-              <NavLink
-                href={isBuyer ? "/marketplace" : "/category"}
-                onClick={() => setIsOpen(false)}
-                className={`nav-link ${darkMode ? "dark" : "light"}`}
-              >
-                {isBuyer ? (
-                  <Store className="nav-icon" />
-                ) : (
-                  <GalleryVerticalEnd className="nav-icon" />
-                )}
-                <span>
-                  {isBuyer ? t("navbar.marketplace") : t("navbar.categories")}
-                </span>
-              </NavLink>
-              <NavLink
-                href="/ideas"
-                onClick={() => setIsOpen(false)}
-                className={`nav-link ${darkMode ? "dark" : "light"}`}
-              >
-                <FaRobot className="nav-icon w-6 h-6" />
-                <span>{t("navbar.ecoAssist")}</span>
-              </NavLink>
               {user && (
                 <NavLink
                   href="/profile"
                   onClick={() => setIsOpen(false)}
-                  className={`nav-link ${darkMode ? "dark" : "light"}`}
+                  className="flex items-center gap-3 px-3 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md transition-colors"
                 >
-                  <UserRoundPen className="nav-icon" />
-                  <span>{t("navbar.profile")}</span>
+                  <UserRoundPen className="w-5 h-5" />
+                  <span className="font-medium">{t("navbar.profile")}</span>
                 </NavLink>
               )}
 
-              {/* Auth buttons */}
-              {!user ? (
-                <div className="pt-2 space-y-2">
-                  <NavLink
-                    href="/auth"
-                    onClick={() => setIsOpen(false)}
-                    className={`nav-link ${
-                      darkMode ? "dark" : "light"
-                    } w-full justify-center border border-gray-200 dark:border-gray-700`}
-                  >
-                    {t("navbar.login")}
-                  </NavLink>
-                  <NavLink
-                    href="/auth/signup"
-                    onClick={() => setIsOpen(false)}
-                    className="flex items-center justify-center w-full px-4 py-2.5 rounded-lg bg-green-500 hover:bg-green-600 text-white font-medium transition-all duration-200 text-sm"
-                  >
-                    {t("navbar.startRecycling")}
-                  </NavLink>
-                </div>
-              ) : (
-                <div className="pt-2">
+              {/* Mobile Settings for non-logged in users */}
+              {!user && (
+                <>
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
+                    <div className="flex items-center justify-between px-3 py-2">
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        {t("navbar.theme")}
+                      </span>
+                      <CompactToggle
+                        icon={darkMode ? Sun : Moon}
+                        onClick={toggleDarkMode}
+                        ariaLabel={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between px-3 py-2">
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        {t("navbar.language")}
+                      </span>
+                      <LanguageToggle locale={locale} onToggle={toggleLanguage} />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Mobile Auth Buttons */}
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
+                {!user ? (
+                  <div className="space-y-2">
+                    <NavLink
+                      href="/auth"
+                      onClick={() => setIsOpen(false)}
+                      className="block w-full px-3 py-2.5 text-center text-gray-700 dark:text-gray-300 font-medium border border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      {t("navbar.login")}
+                    </NavLink>
+                    <NavLink
+                      href="/auth/signup"
+                      onClick={() => setIsOpen(false)}
+                      className="block w-full px-3 py-2.5 text-center bg-green-500 hover:bg-green-600 text-white font-medium rounded-md transition-colors"
+                    >
+                      {t("navbar.startRecycling")}
+                    </NavLink>
+                  </div>
+                ) : (
                   <Button
                     onClick={handleLogout}
-                    className="w-full px-4 py-2.5 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium transition-all duration-200 text-sm"
+                    className="w-full px-3 py-2.5 text-center bg-red-500 hover:bg-red-600 text-white font-medium rounded-md transition-colors"
                   >
                     {t("navbar.logout")}
                   </Button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         )}

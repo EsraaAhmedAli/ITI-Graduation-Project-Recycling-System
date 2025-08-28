@@ -122,10 +122,10 @@
     "darkMode": "الوضع الليلي",
     "lightMode": "الوضع النهاري",
     "systemMode": "الوضع التقليدي",
-
+    "theme" : "المظهر",
     "home": "الرئيسية",
-    "marketplace": "السوق",
-    "categories": "الأقسام",
+    "marketplace": "تسوق المنتجات",
+    "categories": "بيع أغراضك",
     "ecoAssist": "المساعد البيئي",
     "collection": "مجموعتي",
     "myCollection": "مجموعتي",
@@ -720,6 +720,8 @@
     "noActivity": "لا توجد نشاطات بعد"
   },
   "itemsModal": {
+    "updateCart": "تحديث السلة",
+
     "headerTitle": "عناصر الطلب",
     "headerSubtitle": "قائمة مفصلة بالعناصر في هذا الطلب",
     "quantity": "الكمية",
@@ -741,6 +743,14 @@
     "addToCollection": "اضف لمجموعتك"
   },
   "common": {
+        "crossLanguageHint" : "يعمل البحث عبر اللغتين العربية والإنجليزية",
+
+        "tryDifferentSearch" : "جرب مصطلحات بحث مختلفة أو تحقق من التهجئة",
+        "noItemsFound" : "لم يتم العثور على عناصر",
+
+    "noItemsAvailable": "لا توجد عناصر متاحة",
+    "workingOnAddingItems": "جاري إضافة العناصر...",
+    "backToAllCategories": "العودة إلى جميع الفئات",
     "previous": "السابق",
     "removeFromRecyclingCart": "إزالة من سلة إعادة التدوير",
     "only": "فقط",
@@ -984,6 +994,7 @@
     "categoryCreatedSuccess": "تم إنشاء الفئة بنجاح"
   },
   "categories": {
+    "addingCategory": "إضافة فئة...",
     "image": "الصورة",
     "categoryName": "اسم الفئة",
     "subCategoryName": "اسم الفئة الفرعية",
@@ -1341,41 +1352,7 @@
     "selectAction": "اختر إجراء"
   },
 
-  "deliveryAttachments": {
-    "title": "مرفقات التوصيل",
-    "subtitle": "وثائق وصور التحقق",
-    "sections": {
-      "verificationImages": {
-        "title": "صور التحقق",
-        "description": "الملف الشخصي والسجل الجنائي وصور المركبة"
-      },
-      "personalInfo": {
-        "title": "المعلومات الشخصية",
-        "description": "الرخصة والهوية وتفاصيل المركبة"
-      }
-    },
-    "images": {
-      "deliveryPhoto": {
-        "title": "صورة التوصيل",
-        "description": "صورة التحقق من الملف الشخصي"
-      },
-      "criminalRecord": {
-        "title": "السجل الجنائي",
-        "description": "وثيقة فحص الخلفية"
-      },
-      "vehicleImage": {
-        "title": "صورة المركبة",
-        "description": "صورة تسجيل المركبة"
-      }
-    },
-    "info": {
-      "licenseNumber": "رقم الرخصة",
-      "nationalId": "الهوية الوطنية",
-      "vehicleType": "نوع المركبة"
-    },
-    "noImage": "لا توجد صورة",
-    "notProvided": "غير مقدم"
-  },
+ 
   "deleteConfirmation": {
     "title": "هل أنت متأكد من حذف هذا العنصر؟",
     "text": "أنت على وشك حذف \"{{name}}\". لا يمكن التراجع عن هذا الإجراء!",
@@ -1534,5 +1511,42 @@
       "back": "رجوع",
       "continue": "متابعة"
     }
+  },
+  
+  "deliveryAttachments": {
+    "title": "مرفقات المندوب",
+    "subtitle": "مستندات التحقق والمعلومات الشخصية الخاصة بالمندوب.",
+    "noImage": "لم يتم رفع صورة",
+    "notProvided": "غير متوفر",
+    "sections": {
+      "verificationImages": {
+        "title": "صور التحقق",
+        "description": "المستندات والصور المرفوعة للتحقق"
+      },
+      "personalInfo": {
+        "title": "المعلومات الشخصية",
+        "description": "البيانات المقدمة من المندوب"
+      }
+    },
+    "images": {
+      "deliveryPhoto": {
+        "title": "صورة المندوب",
+        "description": "صورة شخصية للمندوب للتعريف"
+      },
+      "criminalRecord": {
+        "title": "السجل الجنائي",
+        "description": "مستند السجل الجنائي الرسمي"
+      },
+      "vehicleImage": {
+        "title": "صورة المركبة",
+        "description": "صورة المركبة المستخدمة في التوصيل"
+      }
+    },
+    "info": {
+      "licenseNumber": "رقم الرخصة",
+      "nationalId": "الرقم القومي",
+      "vehicleType": "نوع المركبة"
+    }
   }
+
 }

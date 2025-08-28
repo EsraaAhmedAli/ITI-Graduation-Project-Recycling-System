@@ -119,10 +119,10 @@
     "darkMode": "Dark Mode",
     "lightMode": "Light Mode",
     "systemMode": "System Mode",
-
+    "theme": "Theme",
     "home": "Home",
-    "marketplace": "Marketplace",
-    "categories": "Categories",
+    "marketplace": "Buy some stuff",
+    "categories": "Sell your items",
     "ecoAssist": "Eco-Assist",
     "collection": "Collection",
     "myCollection": "My Collection",
@@ -865,6 +865,7 @@
     "noActivity": "No activity yet"
   },
   "itemsModal": {
+    "updateCart": "Update Cart",
     "headerTitle": "Order Items",
     "headerSubtitle": "A detailed list of the items in this order",
     "quantity": "Quantity",
@@ -886,6 +887,12 @@
     "addToCollection": "Add to Collection"
   },
   "common": {
+    "crossLanguageHint" : "Search works across Arabic and English languages",
+    "tryDifferentSearch" : "Try different search terms or check spelling",
+    "noItemsFound" : "no items found",
+     "noItemsAvailable": "No items available",
+    "workingOnAddingItems": "Working on adding items...",
+    "backToAllCategories": "Back to All Categories",
     "only": "Only",
     "left": "left",
     "previous": "previous",
@@ -1231,6 +1238,8 @@
     "categoryCreatedSuccess": "Category created successfully"
   },
   "categories": {
+   
+    "addingCategory": "Adding Category...",
     "image": "Image",
     "categoryName": "Category Name",
     "subCategoryName": "Subcategory Name",
@@ -1641,4 +1650,41 @@
       "continue": "Continue"
     }
   }
+  ,
+  "deliveryAttachments": {
+    "title": "Delivery Attachments",
+    "subtitle": "Verification documents and personal information of the delivery partner.",
+    "noImage": "No image uploaded",
+    "notProvided": "Not provided",
+    "sections": {
+      "verificationImages": {
+        "title": "Verification Images",
+        "description": "Uploaded documents and photos for verification"
+      },
+      "personalInfo": {
+        "title": "Personal Information",
+        "description": "Details provided by the delivery partner"
+      }
+    },
+    "images": {
+      "deliveryPhoto": {
+        "title": "Delivery Person Photo",
+        "description": "Photo of the delivery partner for identification"
+      },
+      "criminalRecord": {
+        "title": "Criminal Record",
+        "description": "Official criminal record document"
+      },
+      "vehicleImage": {
+        "title": "Vehicle Image",
+        "description": "Photo of the vehicle used for deliveries"
+      }
+    },
+    "info": {
+      "licenseNumber": "License Number",
+      "nationalId": "National ID",
+      "vehicleType": "Vehicle Type"
+    }
+  }
+
 }

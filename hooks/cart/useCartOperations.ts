@@ -31,110 +31,111 @@ export const useCartOperations = ({
     []
   );
 
-  const addToCart = useCallback(
-    async (item: CartItem) => {
-      console.log(item, "itemfromAddtocar");
+const addToCart = useCallback(
+  async (item: CartItem, replace = false) => { // Add replace parameter
+    console.log(item, "itemfromAddtocar");
 
-      setLoadingItemId(item._id);
-      try {
-        const validatedItem = { ...item };
+    setLoadingItemId(item._id);
+    try {
+      const validatedItem = { ...item };
 
-        // Set minimum quantities based on measurement unit
-        if (
-          validatedItem.measurement_unit === 1 &&
-          validatedItem.quantity < 0.25
-        ) {
-          validatedItem.quantity = 0.25;
-        } else if (
-          validatedItem.measurement_unit === 2 &&
-          validatedItem.quantity < 1
-        ) {
-          validatedItem.quantity = 1;
-        }
-
-        if (
-          !validateQuantity(
-            validatedItem.quantity,
-            validatedItem.measurement_unit
-          )
-        ) {
-          const message =
-            validatedItem.measurement_unit === 1
-              ? "For KG items, minimum quantity is 0.25 KG and must be in 0.25 increments"
-              : "For Piece items, quantity must be whole numbers ≥ 1";
-          toast.error(message);
-          return;
-        }
-
-        // Check if item already exists in cart
-        const existingItemIndex = cart.findIndex(
-          (ci) => ci._id === validatedItem._id
-        );
-
-        if (existingItemIndex >= 0) {
-          // Update existing item quantity
-          const newQuantity =
-            cart[existingItemIndex].quantity + validatedItem.quantity;
-
-          if (userRole === "buyer") {
-            const isAvailable = await checkInventoryEnhanced(
-              validatedItem,
-              newQuantity
-            );
-            if (!isAvailable) {
-              toast.error(
-                "Sorry, the requested quantity is not available in stock."
-              );
-              return;
-            }
-          }
-
-          const updatedCart = [...cart];
-          updatedCart[existingItemIndex] = {
-            ...updatedCart[existingItemIndex],
-            quantity: newQuantity,
-          };
-          await updateCartState(updatedCart, false);
-        } else {
-          // Add new item
-          if (userRole === "buyer") {
-            const isAvailable = await checkInventoryEnhanced(
-              validatedItem,
-              validatedItem.quantity
-            );
-            if (!isAvailable) {
-              toast.error(
-                "Sorry, the requested quantity is not available in stock."
-              );
-              return;
-            }
-          }
-
-          const updatedCart = [...cart, validatedItem];
-          await updateCartState(updatedCart);
-        }
-
-        toast.success(
-          t("toast.cart", { itemName: validatedItem.name[locale] })
-        );
-      } catch (err) {
-        console.error("Failed to add to cart", err);
-        toast.error("Failed to add item to cart");
-      } finally {
-        setLoadingItemId(null);
+      // Set minimum quantities based on measurement unit
+      if (
+        validatedItem.measurement_unit === 1 &&
+        validatedItem.quantity < 0.25
+      ) {
+        validatedItem.quantity = 0.25;
+      } else if (
+        validatedItem.measurement_unit === 2 &&
+        validatedItem.quantity < 1
+      ) {
+        validatedItem.quantity = 1;
       }
-    },
-    [
-      cart,
-      checkInventoryEnhanced,
-      userRole,
-      validateQuantity,
-      updateCartState,
-      locale,
-      setLoadingItemId,
-      t,
-    ]
-  );
+
+      if (
+        !validateQuantity(
+          validatedItem.quantity,
+          validatedItem.measurement_unit
+        )
+      ) {
+        const message =
+          validatedItem.measurement_unit === 1
+            ? "For KG items, minimum quantity is 0.25 KG and must be in 0.25 increments"
+            : "For Piece items, quantity must be whole numbers ≥ 1";
+        toast.error(message);
+        return;
+      }
+
+      // Check if item already exists in cart
+      const existingItemIndex = cart.findIndex(
+        (ci) => ci._id === validatedItem._id
+      );
+
+      if (existingItemIndex >= 0) {
+        // Update existing item quantity - use replace logic
+        const newQuantity = replace 
+          ? validatedItem.quantity // Replace with new quantity
+          : cart[existingItemIndex].quantity + validatedItem.quantity; // Add to existing
+
+        if (userRole === "buyer") {
+          const isAvailable = await checkInventoryEnhanced(
+            validatedItem,
+            newQuantity
+          );
+          if (!isAvailable) {
+            toast.error(
+              "Sorry, the requested quantity is not available in stock."
+            );
+            return;
+          }
+        }
+
+        const updatedCart = [...cart];
+        updatedCart[existingItemIndex] = {
+          ...updatedCart[existingItemIndex],
+          quantity: newQuantity,
+        };
+        await updateCartState(updatedCart, false);
+      } else {
+        // Add new item
+        if (userRole === "buyer") {
+          const isAvailable = await checkInventoryEnhanced(
+            validatedItem,
+            validatedItem.quantity
+          );
+          if (!isAvailable) {
+            toast.error(
+              "Sorry, the requested quantity is not available in stock."
+            );
+            return;
+          }
+        }
+
+        const updatedCart = [...cart, validatedItem];
+        await updateCartState(updatedCart);
+      }
+
+      toast.success(
+        t("toast.cart", { itemName: validatedItem.name[locale] })
+      );
+    } catch (err) {
+      console.error("Failed to add to cart", err);
+      toast.error("Failed to add item to cart");
+    } finally {
+      setLoadingItemId(null);
+    }
+  },
+  [
+    cart,
+    checkInventoryEnhanced,
+    userRole,
+    validateQuantity,
+    updateCartState,
+    locale,
+    setLoadingItemId,
+    t,
+  ]
+);
 
   const updateQuantity = useCallback(
     (item: CartItem) => {

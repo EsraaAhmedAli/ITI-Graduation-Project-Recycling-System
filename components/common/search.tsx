@@ -10,6 +10,7 @@ import { X, Search } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import Button from "./Button";
 import { Loader } from "@/components/common";
+import { useUserAuth } from "@/context/AuthFormContext";
 
 interface SearchResult {
   _id: string;
@@ -64,7 +65,7 @@ export default function NavbarSearch({
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-
+const{user}=useUserAuth()
   const inputRef = useRef<HTMLInputElement>(null);
   const { t, locale, convertNumber } = useLanguage();
   const router = useRouter();
@@ -86,23 +87,28 @@ const ItemSkeleton = memo(() => (
 ));
 ItemSkeleton.displayName = "ItemSkeleton";
   // Handle item click with proper navigation
-  const handleItemClick = useCallback(
-    (item: SearchResult) => {
-      setIsOpen(false);
-      setSearchQuery("");
-      setHasSearched(false);
-      setSearchResults([]);
-      setIsSearching(false);
-      if (onClose) onClose();
+ const handleItemClick = useCallback(
+  (item: SearchResult) => {
+    setIsOpen(false);
+    setSearchQuery("");
+    setHasSearched(false);
+    setSearchResults([]);
+    setIsSearching(false);
+    if (onClose) onClose();
 
-      const categorySlug =
-        item.categoryName?.en;
-
+    // Check user role and navigate accordingly
+    if (user?.role === "buyer") {
+      const itemSlug = item.displayName || item.name?.[locale];
+      console.log("🚀 Navigating buyer to:", `/marketplace/${itemSlug}`);
+      router.push(`/marketplace/${itemSlug}`);
+    } else {
+      const categorySlug = item.categoryName?.en;
       console.log("🚀 Navigating to:", `/category/${categorySlug}`);
       router.push(`/category/${categorySlug}`);
-    },
-    [router, onClose]
-  );
+    }
+  },
+  [router, onClose, user?.role, locale] // Add user?.role and locale to dependencies
+);
 
   // Memoized alphabet generation
   const alphabet = useMemo(() => {

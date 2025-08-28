@@ -322,10 +322,10 @@ const CategoryList = memo(function CategoryList({
     return (
       <div className="space-y-8">
         <section className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-6">
-          <div className="pl-18 mb-8 mt-16">
+<div className="pl-4 sm:pl-6 lg:pl-8 mb-8 mt-16">
             <div className="animate-pulse">
-              <div className="w-80 h-8 bg-slate-200 rounded mb-2" />
-              <div className="w-96 h-5 bg-slate-200 rounded" />
+              <div className="w-75 h-8 bg-slate-200 rounded mb-2" />
+              <div className="w-80 h-5 bg-slate-200 rounded" />
             </div>
           </div>
 

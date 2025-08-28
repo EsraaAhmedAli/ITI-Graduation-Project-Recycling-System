@@ -8,7 +8,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { CartItem } from "@/models/cart";
 import api from "@/lib/axios";
 import Image from "next/image";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 
 type ValidatedItem = {
   material: string;
@@ -967,38 +967,13 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                                 <span className="text-sm text-success font-semibold">
                                   {calculatedPoints} pts
                                 </span>
-                                <svg
-                                  className="w-4 h-4 text-success"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                                  />
-                                </svg>
+                               
                               </div>
                               <div className="flex items-center space-x-1">
                                 <span className="text-sm text-blue-600 font-semibold">
                                   {calculatedPrice} EGP
                                 </span>
-                                <svg
-                                  className="w-4 h-4 text-blue-600"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                                  />
-                                  <circle cx="12" cy="12" r="2" />
-                                </svg>
+                         
                               </div>
                             </>
                           )}
@@ -1269,19 +1244,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                           0
                         )}
                     </span>
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                      />
-                    </svg>
+             
                   </div>
                 </div>
                 <div>
@@ -1298,20 +1261,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                         .toFixed(2)}{" "}
                       EGP
                     </span>
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                      />
-                      <circle cx="12" cy="12" r="2" />
-                    </svg>
+             
                   </div>
                 </div>
               </div>
