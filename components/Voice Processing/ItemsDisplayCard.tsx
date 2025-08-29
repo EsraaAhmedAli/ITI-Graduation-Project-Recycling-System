@@ -1185,8 +1185,8 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
           {/* Ensure scrollable area has extra bottom padding so last item isn't hidden behind the footer */}
           <style jsx>{`
             /* Larger bottom padding so last item is not hidden by the absolute footer */
-            .items-display-scroll { padding-bottom: calc(18rem + env(safe-area-inset-bottom)); touch-action: pan-y; }
-            @media (min-width: 640px) { .items-display-scroll { padding-bottom: calc(14rem + env(safe-area-inset-bottom)); } }
+            .items-display-scroll { padding-bottom: calc(20rem + env(safe-area-inset-bottom)); touch-action: pan-y; }
+            @media (min-width: 640px) { .items-display-scroll { padding-bottom: calc(16rem + env(safe-area-inset-bottom)); } }
             /* Ensure footer has space for iOS home indicator */
             .absolute.bottom-0 { padding-bottom: env(safe-area-inset-bottom); }
             /* Make totals layout responsive to available width: try two columns when space allows */
