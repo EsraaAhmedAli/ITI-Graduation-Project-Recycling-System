@@ -1,9 +1,8 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { CartItem } from "@/models/cart";
-import { Loader } from "@/components/common";
 import { Recycle, Plus, ChevronLeft, ChevronRight, Minus } from "lucide-react";
 import Image from "next/image";
 import { useLanguage } from "@/context/LanguageContext";
@@ -13,6 +12,7 @@ import {
 } from "@/hooks/useGetItemsPaginated";
 import dynamic from "next/dynamic";
 import { memo, useCallback, useMemo, Suspense, startTransition, useState } from "react";
+import { useUserAuth } from "@/context/AuthFormContext";
 
 // Ultra-lazy loading with no SSR and loading fallback
 const FloatingRecorderButton = dynamic(
@@ -106,11 +106,11 @@ const ItemCard = memo(
     const currentCartQuantity = cartItem?.quantity || 0;
     
     // Local quantity state - not synced with cart until user clicks "Add to Cart"
-const [quantity, setQuantity] = useState(currentCartQuantity);
-const [inputValue, setInputValue] = useState(currentCartQuantity.toString() > 0 ? currentCartQuantity.toString() : 1);
-
+const [quantity, setQuantity] = useState(currentCartQuantity > 0 ? currentCartQuantity : 1);
+const [inputValue, setInputValue] = useState(currentCartQuantity > 0 ? currentCartQuantity.toString() : "1");
     const [inputError, setInputError] = useState("");
-
+    const {user} = useUserAuth()
+const router = useRouter()
     // Memoize all computed values to prevent recalculations
     const computedValues = useMemo(() => {
       const measurementText =
@@ -130,64 +130,100 @@ const [inputValue, setInputValue] = useState(currentCartQuantity.toString() > 0 
     }, [item, locale, convertNumber, t, quantity]);
 
     // Validation function for quantity input
-    const validateQuantity = useCallback((value: string) => {
-      const numValue = parseFloat(value);
+  // Update the validateQuantity function
+const validateQuantity = useCallback((value: string) => {
+  // Check for special characters - only allow numbers, decimal point, and empty string
+  const specialCharRegex = /[^0-9.]/;
+  if (specialCharRegex.test(value) && value !== "") {
+    return {
+      isValid: false,
+      errorMessage: t("common.noSpecialCharacters", {
+        defaultValue: "Only numbers are allowed"
+      }),
+      validValue: 0,
+    };
+  }
 
-      // Check if it's a valid number
-      if (isNaN(numValue) || numValue < 0) {
-        return {
-          isValid: false,
-          errorMessage: t("common.invalidQuantity"),
-          validValue: 0,
-        };
-      }
+  const numValue = parseFloat(value);
 
-      // For measurement unit 2 (pieces) - only whole numbers
-      if (item.measurement_unit === 2) {
-        if (!Number.isInteger(numValue)) {
-          return {
-            isValid: false,
-            errorMessage: t("common.wholeNumbersOnly"),
-            validValue: Math.floor(numValue),
-          };
-        }
-      }
+  // Check if it's a valid number
+  if (isNaN(numValue) || numValue < 0) {
+    return {
+      isValid: false,
+      errorMessage: t("common.invalidQuantity"),
+      validValue: 0,
+    };
+  }
 
-      // For measurement unit 1 (kg) - minimum 0, multiples of 0.25
-      if (item.measurement_unit === 1 && numValue > 0) {
-        const minValue = 0.25;
-        if (numValue < minValue) {
-          return {
-            isValid: false,
-            errorMessage: t("common.minimumQuantity", {
-              min: minValue,
-              defaultValue: `Minimum quantity is ${minValue} kg`,
-            }),
-            validValue: minValue,
-          };
-        }
+  // Check maximum quantity limit (500 pieces)
+  if (numValue > 5000) {
+    return {
+      isValid: false,
+      errorMessage: t("common.maxQuantityExceeded", {
+        max: 5000,
+        defaultValue: "Maximum quantity is 5000"
+      }),
+      validValue: 5000,
+    };
+  }
 
-        // Check if it's a multiple of 0.25
-        const remainder = (numValue * 100) % 25;
-        if (remainder !== 0) {
-          const roundedValue = Math.round(numValue * 4) / 4;
-          return {
-            isValid: false,
-            errorMessage: t("common.invalidIncrement", {
-              increment: "0.25",
-              defaultValue: "Quantity must be in increments of 0.25 kg",
-            }),
-            validValue: roundedValue,
-          };
-        }
-      }
-
+  // For measurement unit 2 (pieces) - only whole numbers
+  if (item.measurement_unit === 2) {
+    if (!Number.isInteger(numValue)) {
       return {
-        isValid: true,
-        errorMessage: "",
-        validValue: numValue,
+        isValid: false,
+        errorMessage: t("common.wholeNumbersOnly"),
+        validValue: Math.floor(numValue),
       };
-    }, [item.measurement_unit, t]);
+    }
+  }
+
+  // For measurement unit 1 (kg) - minimum 0, multiples of 0.25, max 500kg
+  if (item.measurement_unit === 1 && numValue > 0) {
+    const minValue = 0.25;
+    if (numValue < minValue) {
+      return {
+        isValid: false,
+        errorMessage: t("common.minimumQuantity", {
+          min: minValue,
+          defaultValue: `Minimum quantity is ${minValue} kg`,
+        }),
+        validValue: minValue,
+      };
+    }
+
+    // Check if it's a multiple of 0.25
+    const remainder = (numValue * 100) % 25;
+    if (remainder !== 0) {
+      const roundedValue = Math.round(numValue * 4) / 4;
+      return {
+        isValid: false,
+        errorMessage: t("common.invalidIncrement", {
+          increment: "0.25",
+          defaultValue: "Quantity must be in increments of 0.25 kg",
+        }),
+        validValue: roundedValue,
+      };
+    }
+  }
+
+  return {
+    isValid: true,
+    errorMessage: "",
+    validValue: numValue,
+  };
+}, [item.measurement_unit, t]);
+
+
+
+const handleNavigateToDetails = (itemName)=>{
+  if(user) {
+    localStorage.removeItem('fromMarketPlace')
+  router.push(`/marketplace/${itemName}`);
+
+  }
+  
+}
 
     // Handle input change - only updates local state
     const handleInputChange = useCallback((value: string) => {
@@ -229,11 +265,22 @@ const [inputValue, setInputValue] = useState(currentCartQuantity.toString() > 0 
     }, [quantity, item.measurement_unit, validateQuantity]);
 
     // Handle add to cart button click
-    const handleAddToCart = useCallback(() => {
-      if (quantity > 0 && !inputError) {
-        onAddToCart(item, quantity);
-      }
-    }, [quantity, inputError, onAddToCart, item]);
+  // Handle add to cart button click
+const handleAddToCart = useCallback(() => {
+  if (quantity > 0 && !inputError) {
+    // If quantity is different from cart, replace it (Update Cart scenario)
+    // If quantity matches cart, add to it (Add to Collection again scenario)
+    const finalQuantity = quantity !== currentCartQuantity 
+      ? quantity  // Replace with new quantity
+      : currentCartQuantity + quantity;  // Add to existing quantity
+    
+    onAddToCart(item, finalQuantity);
+    
+    // Update local state to match what will be in cart
+    setQuantity(finalQuantity);
+    setInputValue(finalQuantity.toString());
+  }
+}, [quantity, inputError, onAddToCart, item, currentCartQuantity]);
 
     // Generate low-quality placeholder
     const blurDataURL =
@@ -273,10 +320,11 @@ const [inputValue, setInputValue] = useState(currentCartQuantity.toString() > 0 
           }}
         >
           <Image
+           onClick={()=>handleNavigateToDetails(item.displayName)}
             src={item.image}
             alt={computedValues.itemName}
             fill
-            className="object-contain group-hover:scale-105 transition-transform duration-300 p-2 sm:p-4"
+            className="object-contain group-hover:scale-105 transition-transform duration-300 p-2 sm:p-4 cursor-pointer"
             style={{ backgroundColor: "var(--color-image)" }}
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
             priority={index < 8}
@@ -301,7 +349,7 @@ const [inputValue, setInputValue] = useState(currentCartQuantity.toString() > 0 
                 "linear-gradient(to right, var(--color-primary), var(--color-secondary))",
             }}
           >
-            +{item.points}
+            +{item.points} {t('common.points')}
           </div>
 
           {/* Cart indicator when item is in cart */}
@@ -394,20 +442,28 @@ const [inputValue, setInputValue] = useState(currentCartQuantity.toString() > 0 
 
               {/* Quantity input */}
               <div className="flex-1 min-w-0">
-                <input
-                  type="text"
-                  value={inputValue}
-                  onChange={(e) => handleInputChange(e.target.value)}
-                  onBlur={handleInputBlur}
-                  disabled={isLoading}
-                  className="w-full px-2 py-1 text-center text-sm font-medium border rounded focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{
-                    borderColor: inputError ? "var(--color-error)" : "var(--border-color)",
-                    backgroundColor: "var(--color-card)",
-                    color: "var(--text-gray-900)",
-                  }}
-                  placeholder="0"
-                />
+         {/* Update the quantity input */}
+<input
+  type="text"
+  value={inputValue}
+  onChange={(e) => handleInputChange(e.target.value)}
+  onBlur={handleInputBlur}
+  onKeyPress={(e) => {
+    // Only allow numbers and decimal point
+    if (!/[0-9.]/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') {
+      e.preventDefault();
+    }
+  }}
+  disabled={isLoading}
+  className="w-full px-2 py-1 text-center text-sm font-medium border rounded focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed"
+  style={{
+    borderColor: inputError ? "var(--color-error)" : "var(--border-color)",
+    backgroundColor: "var(--color-card)",
+    color: "var(--text-gray-900)",
+  }}
+  placeholder="0"
+  maxLength="6" // Prevent typing more than 6 characters
+/>
               </div>
 
               {/* Plus button */}
@@ -578,13 +634,11 @@ const PaginationControls = memo(
        
 
         {/* Pagination Buttons with fixed height container */}
-<div className="flex items-center justify-center gap-1 sm:gap-2 min-h-[44px] my-2">
-
+<div className="flex items-center justify-center gap-1 sm:gap-2 min-h-[44px] my-2 overflow-x-auto">
           <button
             onClick={handlePrevious}
             disabled={currentPage === 1}
-            className="flex items-center gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium border rounded-lg hover:bg-opacity-75 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            style={{
+  className="flex items-center gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium border rounded-lg hover:bg-opacity-75 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"            style={{
               color: "var(--text-gray-600)",
               backgroundColor: "var(--color-card)",
               borderColor: "var(--border-color)",
@@ -617,8 +671,7 @@ const PaginationControls = memo(
                     : undefined
                 }
                 disabled={pageNum === "..."}
-                className="px-3 py-2 text-sm font-medium rounded-lg transition-colors min-w-[44px]"
-                style={{
+    className="px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors min-w-[36px] sm:min-w-[44px] flex-shrink-0"                style={{
                   color:
                     pageNum === currentPage
                       ? "white"
@@ -665,8 +718,7 @@ const PaginationControls = memo(
           <button
             onClick={handleNext}
             disabled={!pagination?.hasNextPage}
-            className="flex items-center gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium border rounded-lg hover:bg-opacity-75 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            style={{
+  className="flex items-center gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium border rounded-lg hover:bg-opacity-75 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"            style={{
               color: "var(--text-gray-600)",
               backgroundColor: "var(--color-card)",
               borderColor: "var(--border-color)",

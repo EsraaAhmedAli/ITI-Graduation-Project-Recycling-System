@@ -13,7 +13,7 @@ import dynamic from "next/dynamic";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { useItemSocket } from "@/hooks/useItemSocket";
 // To:
-import { Loader } from '@/components/common'
+import ItemDetailsPageSkeleton from "@/components/shared/itemDetailsSkeleton";
 // Lazy load FloatingRecorderButton for voice processing
 const FloatingRecorderButton = dynamic(
   () => import('@/components/Voice Processing/FloatingRecorderButton'),
@@ -44,8 +44,8 @@ interface Item {
 export default function ItemDetailsPage() {
   const { itemName } = useParams();
   
- const decodedName =
-  typeof itemName === "string" ? decodeURIComponent(itemName) : "";
+  const decodedName =
+    typeof itemName === "string" ? decodeURIComponent(itemName) : "";
   const [selectedQuantity, setSelectedQuantity] = useState(1);
   const [inputValue, setInputValue] = useState("1"); // For the input field
   const [inputError, setInputError] = useState("");
@@ -53,65 +53,75 @@ export default function ItemDetailsPage() {
     loadingItemId,
     cart,
     addToCart,
- 
     updateCartState,
   } = useCart();
-  const { t,locale,convertNumber } = useLanguage();
+  const { t, locale, convertNumber } = useLanguage();
+  const { user } = useUserAuth();
+  const fromMarketPlace = localStorage.getItem('fromMarketPlace') === 'true';
+
+  // Helper function to determine if user should see stock info
+  const shouldShowStockInfo = () => {
+    return user?.role !== 'customer' || fromMarketPlace;
+  };
+
+  // Helper function to determine if user can add to cart
+  const canAddToCart = () => {
+    return !fromMarketPlace && (user?.role === 'buyer' || user?.role === 'customer');
+  };
 
   useEffect(() => {
-  const decodedName = decodeURIComponent(itemName.toString().toLowerCase());
-  
-  const existing = cart.find(
-    (item) => item?.name?.en.toLowerCase() === decodedName
-  );
-  if (existing) {
-    setSelectedQuantity(existing.quantity);
-    setInputValue(existing.quantity.toString());
-  }
-}, [cart, itemName]);
-
+    const decodedName = decodeURIComponent(itemName.toString().toLowerCase());
+    
+    const existing = cart.find(
+      (item) => item?.name?.en.toLowerCase() === decodedName
+    );
+    if (existing) {
+      setSelectedQuantity(existing.quantity);
+      setInputValue(existing.quantity.toString());
+    }
+  }, [cart, itemName]);
 
   useEffect(() => {
     console.log("🛒 Updated cart:", cart);
   }, [cart]);
 
+  const fetchItemByName = async () => {
+    if (!decodedName) throw new Error("No item name provided");
 
-const fetchItemByName = async () => {
-  if (!decodedName) throw new Error("No item name provided");
+    try {
+      const res = await api.get(`/items/by-name/${decodedName}?role=${fromMarketPlace && user?.role == 'customer' || fromMarketPlace && !user ? 'buyer' : user?.role}&language=${locale}`);
 
-  try {
-    const res = await api.get(`/items/by-name/${decodedName}?role=buyer&language=${locale}`);
-    
-    if (!res.data.success) {
-      throw new Error("Item not found");
+      if (!res.data.success) {
+        throw new Error("Item not found");
+      }
+      
+      return res.data.data;
+    } catch (error) {
+      console.error("Error fetching item:", error);
+      throw error;
     }
-    
-    return res.data.data;
-  } catch (error) {
-    console.error("Error fetching item:", error);
-    throw error;
-  }
-};
-const{user}=useUserAuth()
+  };
+
   const {
     data: item,
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["item-details", decodedName],
+    queryKey: ["item-details", decodedName,fromMarketPlace],
     queryFn: fetchItemByName,
     enabled: !!decodedName,
+    staleTime: 2000
   });
-    useItemSocket({
+
+  useItemSocket({
     itemId: item?._id,
     itemName: decodedName,
     userRole: user?.role,
   });
 
-
   const queryClient = useQueryClient();
-const cachedItem = queryClient.getQueryData(["item-details", decodedName]) as Item;
-const currentStock = cachedItem?.quantity ?? item?.quantity ?? 0;
+  const cachedItem = queryClient.getQueryData(["item-details", decodedName]) as Item;
+  const currentStock = cachedItem?.quantity ?? item?.quantity ?? 0;
 
   const syncCartWithChanges = (quantity: number) => {
     if (cart.find((ci) => ci._id === item._id)) {
@@ -120,7 +130,8 @@ const currentStock = cachedItem?.quantity ?? item?.quantity ?? 0;
       );
     }
   };
-    const convertToCartItem = useCallback(
+
+  const convertToCartItem = useCallback(
     (item: Item, quantity?: number): CartItem => {
       const englishItemName =
         typeof item.name === "string" ? item.name : item.name?.en || "";
@@ -157,14 +168,11 @@ const currentStock = cachedItem?.quantity ?? item?.quantity ?? 0;
     []
   );
 
-  // const categoryName_display =
-  //  item.categoryName[locale];
-
   const getMeasurementText = (unit: 1 | 2): string => {
     return unit === 1 ? t("common.unitKg") : t("common.unitPiece");
   };
 
-  // Validation function for quantity input
+  // Updated validation function - no stock limits for customers (unless from marketplace)
   const validateQuantity = (
     value: string,
     measurementUnit: 1 | 2,
@@ -181,6 +189,56 @@ const currentStock = cachedItem?.quantity ?? item?.quantity ?? 0;
       };
     }
 
+    // For customers not from marketplace, skip stock validation
+    if (user?.role === 'customer' && !fromMarketPlace) {
+      // For measurement unit 2 (pieces) - only whole numbers
+      if (measurementUnit === 2) {
+        if (!Number.isInteger(numValue)) {
+          return {
+            isValid: false,
+            errorMessage: t("common.wholeNumbersOnly"),
+            validValue: Math.floor(numValue) || 1,
+          };
+        }
+      }
+
+      // For measurement unit 1 (kg) - minimum 0.25, multiples of 0.25
+      if (measurementUnit === 1) {
+        const minValue = 0.25;
+        if (numValue < minValue) {
+          return {
+            isValid: false,
+            errorMessage: t("common.minimumQuantity", {
+              min: minValue,
+              defaultValue: `Minimum quantity is ${minValue} kg`,
+            }),
+            validValue: minValue,
+          };
+        }
+
+        // Check if it's a multiple of 0.25
+        const remainder = (numValue * 100) % 25;
+        if (remainder !== 0) {
+          const roundedValue = Math.round(numValue * 4) / 4;
+          return {
+            isValid: false,
+            errorMessage: t("common.invalidIncrement", {
+              increment: "0.25",
+              defaultValue: "Quantity must be in increments of 0.25 kg",
+            }),
+            validValue: roundedValue,
+          };
+        }
+      }
+
+      return {
+        isValid: true,
+        errorMessage: "",
+        validValue: numValue,
+      };
+    }
+
+    // Original validation for buyers, marketplace customers, etc.
     // Check maximum limit
     if (numValue > maxQuantity) {
       return {
@@ -219,9 +277,9 @@ const currentStock = cachedItem?.quantity ?? item?.quantity ?? 0;
       }
 
       // Check if it's a multiple of 0.25
-      const remainder = (numValue * 100) % 25; // Convert to avoid floating point issues
+      const remainder = (numValue * 100) % 25;
       if (remainder !== 0) {
-        const roundedValue = Math.round(numValue * 4) / 4; // Round to nearest 0.25
+        const roundedValue = Math.round(numValue * 4) / 4;
         return {
           isValid: false,
           errorMessage: t("common.invalidIncrement", {
@@ -245,8 +303,10 @@ const currentStock = cachedItem?.quantity ?? item?.quantity ?? 0;
     setInputValue(value);
 
     if (!item) return;
-const validation = validateQuantity(value, item.measurement_unit, currentStock);
-
+    
+    // For customers not from marketplace, don't pass stock limit
+    const maxQuantity = (user?.role === 'customer' && !fromMarketPlace) ? Infinity : currentStock;
+    const validation = validateQuantity(value, item.measurement_unit, maxQuantity);
 
     if (validation.isValid) {
       setSelectedQuantity(validation.validValue);
@@ -260,10 +320,11 @@ const validation = validateQuantity(value, item.measurement_unit, currentStock);
   const handleInputBlur = () => {
     if (!item) return;
 
+    const maxQuantity = (user?.role === 'customer' && !fromMarketPlace) ? Infinity : item.quantity;
     const validation = validateQuantity(
       inputValue,
       item.measurement_unit,
-      item.quantity
+      maxQuantity
     );
 
     if (!validation.isValid) {
@@ -280,7 +341,7 @@ const validation = validateQuantity(value, item.measurement_unit, currentStock);
   };
 
   if (isLoading) {
-    return <Loader  />;
+    return <ItemDetailsPageSkeleton />;
   }
 
   if (isError || !item) {
@@ -307,15 +368,14 @@ const validation = validateQuantity(value, item.measurement_unit, currentStock);
     );
   }
 
-
-const remainingQuantity = currentStock - selectedQuantity;
-const isLowStock = currentStock <= 5;
-const isOutOfStock = currentStock <= 0;
+  const remainingQuantity = shouldShowStockInfo() ? currentStock - selectedQuantity : null;
+  const isLowStock = shouldShowStockInfo() ? currentStock <= 5 : false;
+  const isOutOfStock = shouldShowStockInfo() ? currentStock <= 0 : false;
   const isInCart = cart.some((cartItem) => cartItem._id === item._id);
-const stockPercentage = Math.max(0, Math.min(100, (remainingQuantity / currentStock) * 100));
+  const stockPercentage = shouldShowStockInfo() ? Math.max(0, Math.min(100, (remainingQuantity / currentStock) * 100)) : 100;
 
   const handleAddToCart = () => {
-    if (!isOutOfStock && remainingQuantity >= 0) {
+    if ((user?.role === 'customer' && !fromMarketPlace) || (!isOutOfStock && remainingQuantity >= 0)) {
       console.log("🛒 Adding to cart:", {
         item: item.name,
         quantity: selectedQuantity,
@@ -330,11 +390,14 @@ const stockPercentage = Math.max(0, Math.min(100, (remainingQuantity / currentSt
     const appliedStep = op === "+" ? step : -step;
     const newQuantity = selectedQuantity + appliedStep;
 
+    // For customers not from marketplace, don't limit by stock
+    const maxQuantity = (user?.role === 'customer' && !fromMarketPlace) ? Infinity : item.quantity;
+    
     // Validate the new quantity
     const validation = validateQuantity(
       newQuantity.toString(),
       item.measurement_unit,
-      item.quantity
+      maxQuantity
     );
 
     if (validation.isValid) {
@@ -346,13 +409,21 @@ const stockPercentage = Math.max(0, Math.min(100, (remainingQuantity / currentSt
   };
 
   const handleToggleCart = () => {
-    if (isInCart) {
-      const toRemove = convertToCartItem(item);
-      updateCartState(cart.filter((ci) => ci._id !== toRemove._id));
-      setSelectedQuantity(1);
-      setInputValue("1");
-    } else if (!isOutOfStock) {
-      handleAddToCart();
+    if (fromMarketPlace) {
+      return toast.error("Items cannot be added to cart from marketplace view.");
+    } else if (!canAddToCart() && user) {
+      return toast.error("Only buyers and customers can add items to the cart.");
+    } else if (!user) {
+      return toast.error("You must be logged in to add items to the cart.");
+    } else {
+      if (isInCart) {
+        const toRemove = convertToCartItem(item);
+        updateCartState(cart.filter((ci) => ci._id !== toRemove._id));
+        setSelectedQuantity(1);
+        setInputValue("1");
+      } else if ((user?.role === 'customer' && !fromMarketPlace) || !isOutOfStock) {
+        handleAddToCart();
+      }
     }
   };
 
@@ -396,87 +467,89 @@ const stockPercentage = Math.max(0, Math.min(100, (remainingQuantity / currentSt
               </span>
             </div>
 
-            {/* Stock Status */}
-            <div className="pt-4 border-t border-gray-200">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium" style={{color:"var(--text-gray-700)"}}>
-                  {t("common.availableStock")}
-                </span>
-                <span
-                  className={`text-sm font-medium ${
-                    isOutOfStock
-                      ? "text-red-600"
-                      : isLowStock
-                      ? "text-amber-600"
-                      : "text-green-600"
-                  }`}>
-                  {isOutOfStock
-                    ? t("common.outOfStock")
-                    : `${item?.quantity} ${getMeasurementText(
-                        item.measurement_unit
-                      )}`}
-                </span>
-              </div>
-
-              {/* Dynamic Stock Indicator */}
-              <div className="mb-2">
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className={`h-2 rounded-full ${
-                      stockPercentage < 20
-                        ? "bg-red-500"
-                        : stockPercentage < 50
-                        ? "bg-amber-400"
-                        : "bg-green-500"
-                    }`}
-                    style={{ width: `${stockPercentage}%` }}></div>
+            {/* Stock Status - Show for buyers and marketplace customers */}
+            {shouldShowStockInfo() && (
+              <div className="pt-4 border-t border-gray-200">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium" style={{color:"var(--text-gray-700)"}}>
+                    {t("common.availableStock")}
+                  </span>
+                  <span
+                    className={`text-sm font-medium ${
+                      isOutOfStock
+                        ? "text-red-600"
+                        : isLowStock
+                        ? "text-amber-600"
+                        : "text-green-600"
+                    }`}>
+                    {isOutOfStock
+                      ? t("common.outOfStock")
+                      : `${item?.quantity} ${getMeasurementText(
+                          item.measurement_unit
+                        )}`}
+                  </span>
                 </div>
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>
-                    {t("common.afterPurchase", {
-                      quantity: Math.max(0, remainingQuantity),
+
+                {/* Dynamic Stock Indicator */}
+                <div className="mb-2">
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full ${
+                        stockPercentage < 20
+                          ? "bg-red-500"
+                          : stockPercentage < 50
+                          ? "bg-amber-400"
+                          : "bg-green-500"
+                      }`}
+                      style={{ width: `${stockPercentage}%` }}></div>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>
+                      {t("common.afterPurchase", {
+                        quantity: Math.max(0, remainingQuantity),
+                        unit: getMeasurementText(item.measurement_unit),
+                        defaultValue: `After purchase: ${Math.max(
+                          0,
+                          remainingQuantity
+                        )} ${getMeasurementText(
+                          item.measurement_unit
+                        )} remaining`,
+                      })}
+                    </span>
+                    <span>
+                      {t("common.percentageRemaining", {
+                        percentage: stockPercentage.toFixed(0),
+                        defaultValue: `${stockPercentage.toFixed(0)}% remaining`,
+                      })}
+                    </span>
+                  </div>
+                </div>
+                {isLowStock && !isOutOfStock && (
+                  <p className="text-xs text-amber-600 flex items-center">
+                    <svg
+                      className="w-3 h-3 mr-1"
+                      fill="currentColor"
+                      viewBox="0 0 20 20">
+                      <path
+                        fillRule="evenodd"
+                        d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    {t("common.lowStockWarning", {
+                      quantity: item.quantity,
                       unit: getMeasurementText(item.measurement_unit),
-                      defaultValue: `After purchase: ${Math.max(
-                        0,
-                        remainingQuantity
-                      )} ${getMeasurementText(
-                        item.measurement_unit
-                      )} remaining`,
+                      defaultValue: `Low stock - only ${
+                        item.quantity
+                      } ${getMeasurementText(item.measurement_unit)} left!`,
                     })}
-                  </span>
-                  <span>
-                    {t("common.percentageRemaining", {
-                      percentage: stockPercentage.toFixed(0),
-                      defaultValue: `${stockPercentage.toFixed(0)}% remaining`,
-                    })}
-                  </span>
-                </div>
+                  </p>
+                )}
               </div>
-              {isLowStock && !isOutOfStock && (
-                <p className="text-xs text-amber-600 flex items-center">
-                  <svg
-                    className="w-3 h-3 mr-1"
-                    fill="currentColor"
-                    viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  {t("common.lowStockWarning", {
-                    quantity: item.quantity,
-                    unit: getMeasurementText(item.measurement_unit),
-                    defaultValue: `Low stock - only ${
-                      item.quantity
-                    } ${getMeasurementText(item.measurement_unit)} left!`,
-                  })}
-                </p>
-              )}
-            </div>
+            )}
 
-            {/* Enhanced Quantity Selector */}
-            {item.quantity !== 0 && (
+            {/* Enhanced Quantity Selector - Show for customers (non-marketplace) or when stock available */}
+            {((user?.role === 'customer' && !fromMarketPlace) || item.quantity !== 0) && (
               <>
                 <div className="space-y-3">
                   <label className="block text-sm font-medium" style={{color:"var(--text-gray-700)"}}>
@@ -511,7 +584,7 @@ const stockPercentage = Math.max(0, Math.min(100, (remainingQuantity / currentSt
 
                     <button
                       onClick={() => handleOperation("+")}
-                      disabled={selectedQuantity >= item.quantity}
+                      disabled={shouldShowStockInfo() && selectedQuantity >= item.quantity}
                       className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
                       <Plus className="w-4 h-4" />
                     </button>
@@ -540,38 +613,56 @@ const stockPercentage = Math.max(0, Math.min(100, (remainingQuantity / currentSt
                   </p>
                 </div>
 
-                {/* Add to Cart Button */}
-                <button
-                  onClick={handleToggleCart}
-                  disabled={
-                    isOutOfStock || loadingItemId === item._id || !!inputError
-                  }
-                  className={`w-full py-3 px-6 rounded-lg font-medium flex items-center justify-center space-x-2 transition-colors ${
-                    isOutOfStock || loadingItemId === item._id || !!inputError
-                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                      : isInCart
-                      ? "bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg"
-                      : "bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg"
-                  }`}>
-                  {loadingItemId === item._id ? (
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  ) : (
-                    <Package className="w-5 h-5" />
-                  )}
-                  <span>
-                    {isOutOfStock && !isInCart
-                      ? t("common.outOfStock")
-                      : loadingItemId === item._id
-                      ? t("common.processing")
-                      : isInCart
-                      ? t("common.removeFromRecyclingCart")
-                      : t("common.addToRecyclingCart")}
-                  </span>
-                </button>
+                {/* Add to Cart Button - Only show if not from marketplace */}
+                {!fromMarketPlace && (
+                  <button
+                    onClick={handleToggleCart}
+                    disabled={
+                      (shouldShowStockInfo() && isOutOfStock) || 
+                      loadingItemId === item._id || 
+                      !!inputError
+                    }
+                    className={`w-full py-3 px-6 rounded-lg font-medium flex items-center justify-center space-x-2 transition-colors ${
+                      (shouldShowStockInfo() && isOutOfStock) || 
+                      loadingItemId === item._id || 
+                      !!inputError
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : isInCart
+                        ? "bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg"
+                        : "bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg"
+                    }`}>
+                    {loadingItemId === item._id ? (
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    ) : (
+                      <Package className="w-5 h-5" />
+                    )}
+                    <span>
+                      {(shouldShowStockInfo() && isOutOfStock) && !isInCart
+                        ? t("common.outOfStock")
+                        : loadingItemId === item._id
+                        ? t("common.processing")
+                        : isInCart
+                        ? t("common.removeFromRecyclingCart")
+                        : t("common.addToRecyclingCart")}
+                    </span>
+                  </button>
+                )}
+
+                {/* Marketplace message - Only show if from marketplace */}
+                {fromMarketPlace && (
+                  <div className="w-full py-3 px-6 rounded-lg border-2 border-blue-200 bg-blue-50 text-center">
+                    <div className="flex items-center justify-center space-x-2 text-blue-700">
+                      <Package className="w-5 h-5" />
+                      <span className="font-medium">
+                        {t("common.marketplaceViewOnly", {
+                          defaultValue: "Viewing from marketplace - Add to cart not available"
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </>
             )}
-
-     
           </div>
         </div>
 

@@ -129,6 +129,18 @@ const preloadCriticalImages = (items: Item[]) => {
   }
 };
 
+const markThatFromMarketPlace = (userRole: string) => {
+  if (userRole === 'buyer') {
+    // If user is buyer, remove the marketplace flag if it exists
+    if (localStorage.getItem('fromMarketPlace') === 'true') {
+      localStorage.removeItem('fromMarketPlace');
+    }
+  } else {
+    // For non-buyers, set the marketplace flag
+    localStorage.setItem('fromMarketPlace', 'true');
+  }
+}
+
 const createEnhancedSearch = (searchTerm: string, text: { en: string; ar: string }): boolean => {
   if (!searchTerm || !searchTerm.trim()) return true;
   
@@ -177,7 +189,6 @@ const OptimizedItemImage = memo(({
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isInView, setIsInView] = useState(priority);
   const imgRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     if (priority) return;
     
@@ -242,7 +253,9 @@ const ItemCard = memo(({
   locale, 
   convertNumber, 
   t, 
-  getMeasurementText 
+  getMeasurementText ,
+    isFetching = false, // Add this parameter
+      user // Add this parameter
 }: {
   item: Item;
   index: number;
@@ -250,6 +263,8 @@ const ItemCard = memo(({
   convertNumber: (num: number) => string;
   t: (key: string) => string;
   getMeasurementText: (unit: 1 | 2) => string;
+    isFetching?: boolean; // Add this type
+      user?: any; // Add this type
 }) => {
   return (
     <article 
@@ -257,7 +272,7 @@ const ItemCard = memo(({
       style={{ height: `${GRID_CONFIG.itemHeight}px` }} // Fixed height
     >
       <Link
-        href={`/marketplace/${encodeURIComponent(item.name.en)}`}
+onClick={() => markThatFromMarketPlace(user?.role || '')}       href={`/marketplace/${encodeURIComponent(item.name.en)}`}
         className="h-full flex flex-col focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 rounded-lg"
         prefetch={index < 2}
       >
@@ -274,19 +289,26 @@ const ItemCard = memo(({
             {item.name[locale]}
           </h3>
           
-          <div className="flex justify-between items-center">
-            <span className="text-xs font-bold text-green-600">
-              {convertNumber(item.price)} {t("itemsModal.currency")}
-            </span>
-            
-            <span className="text-xs font-bold">
-              {item?.quantity === 0 ? (
-                <Badge color="failure" size="sm">{t('common.outOfStock')}</Badge>
-              ) : (
-                `${convertNumber(item.quantity)} ${t('common.inStock')}`
-              )}
-            </span>
-          </div>
+        <div className="flex justify-between items-center">
+  {isFetching ? (
+    <div className="flex items-center space-x-1">
+      <div className="animate-spin rounded-full h-3 w-3 border border-green-600 border-t-transparent"></div>
+      <span className="text-xs text-gray-400">...</span>
+    </div>
+  ) : (
+    <span className="text-xs font-bold text-green-600">
+      {convertNumber(item.price)} {t("itemsModal.currency")}
+    </span>
+  )}
+  
+  <span className="text-xs font-bold">
+    {item?.quantity === 0 ? (
+      <Badge color="failure" size="sm">{t('common.outOfStock')}</Badge>
+    ) : (
+      `${convertNumber(item.quantity)} ${t('common.inStock')}`
+    )}
+  </span>
+</div>
           
           <div className="text-[0.6rem] text-gray-500 text-right">
             {getMeasurementText(item.measurement_unit)}
@@ -338,6 +360,7 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
   const [isPending, startTransition] = useTransition();
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [priceLoading, setPriceLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [isClient, setIsClient] = useState(false);
@@ -370,10 +393,10 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
     });
   }, [initialData, queryClient]);
 
-  const { data, isLoading } = useGetItems({
+  const { data, isLoading,isFetching } = useGetItems({
     currentPage,
-    itemsPerPage: 20, // Increased items per page for better performance
-    userRole: user?.role,
+    itemsPerPage: 18, // Increased items per page for better performance
+    userRole: 'buyer',
     category: selectedCategory,
     search: debouncedSearchTerm,
   });
@@ -520,8 +543,10 @@ export default function MarketplaceClient({ initialData }: MarketplaceClientProp
       convertNumber={convertNumber}
       t={t}
       getMeasurementText={getMeasurementText}
+          isFetching={isFetching} // Add this line
+              user={user} // Add this line
     />
-  ), [locale, convertNumber, t, getMeasurementText]);
+  ), [locale, convertNumber, t, getMeasurementText,isFetching]);
 
   const LoadingSkeleton = memo(() => (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">

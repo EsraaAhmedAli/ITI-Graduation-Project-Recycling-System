@@ -7,6 +7,7 @@ import { ChevronRight, Frown, Leaf, Zap, Recycle, AlertTriangle } from "lucide-r
 import api from "@/lib/axios";
 import { useLanguage } from "@/context/LanguageContext";
 import dynamic from "next/dynamic";
+import { useUserAuth } from "@/context/AuthFormContext";
 
 // Lazy load FloatingRecorderButton for voice processing
 const FloatingRecorderButton = dynamic(
@@ -35,9 +36,25 @@ interface Material {
 // Optimized blur placeholder - simpler version
 const BLUR_DATA = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PC9zdmc+";
 
-// Memoized ItemCard component
-const ItemCard = memo(({ item, locale, getMeasurementText, getStockColor, formatQuantity, convertNumber, t }: {
+const markThatFromMarketPlace = (userRole: string) => {
+  console.log('markThatFromMarketPlace called with role:', userRole); // Debug log
+  if (userRole === 'buyer') {
+    // If user is buyer, remove the marketplace flag if it exists
+    if (localStorage.getItem('fromMarketPlace') === 'true') {
+      localStorage.removeItem('fromMarketPlace');
+      console.log('Removed fromMarketPlace from localStorage'); // Debug log
+    }
+  } else {
+    // For non-buyers, set the marketplace flag
+    localStorage.setItem('fromMarketPlace', 'true');
+    console.log('Set fromMarketPlace in localStorage'); // Debug log
+  }
+}
+
+// Memoized ItemCard component - FIXED parameter order
+const ItemCard = memo(({ item, user, locale, getMeasurementText, getStockColor, formatQuantity, convertNumber, t }: {
   item: Item;
+  user: { role: string } | null;
   locale: string;
   getMeasurementText: (unit: number) => string;
   getStockColor: (quantity: number) => string;
@@ -51,7 +68,7 @@ const ItemCard = memo(({ item, locale, getMeasurementText, getStockColor, format
 
   return (
     <div className="relative">
-      <Link href={`/marketplace/${encodeURIComponent(item.name.en)}`} passHref>
+      <Link onClick={() => markThatFromMarketPlace(user?.role || '')} href={`/marketplace/${encodeURIComponent(item.name.en)}`} passHref>
         <div style={{ background: "var(--color-card-home)" }} className={`bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-emerald-200 transition-colors duration-200 h-full relative ${item.quantity === 0 ? 'opacity-75' : ''}`}>
 
           {/* Stock badges */}
@@ -119,11 +136,12 @@ const ItemCard = memo(({ item, locale, getMeasurementText, getStockColor, format
 
 ItemCard.displayName = 'ItemCard';
 
-// Memoized MaterialCard component
-const MaterialCard = memo(({ material, index, locale, convertNumber, t }: {
+// Memoized MaterialCard component - FIXED parameter order
+const MaterialCard = memo(({ material, index, locale, user, convertNumber, t }: {
   material: Material;
   index: number;
   locale: string;
+  user: { role: string } | null;
   convertNumber: (num: number) => string;
   t: (key: string) => string;
 }) => {
@@ -132,7 +150,7 @@ const MaterialCard = memo(({ material, index, locale, convertNumber, t }: {
   const handleImageError = useCallback(() => setImageError(true), []);
 
   return (
-    <Link style={{ background: "var(--color-card-home)" }} key={index} href={`/marketplace/${encodeURIComponent(material.name.en)}`} passHref>
+    <Link onClick={() => markThatFromMarketPlace(user?.role || '')} style={{ background: "var(--color-card-home)" }} key={index} href={`/marketplace/${encodeURIComponent(material.name.en)}`} passHref>
       <div style={{ backgroundColor: 'var(--color-card)' }} className="rounded-xl p-4 border border-gray-100 hover:border-emerald-200 transition-colors duration-200">
         <div style={{ backgroundColor: 'var(--color-image)' }} className="relative aspect-square w-full mb-3 bg-white rounded-lg overflow-hidden flex items-center justify-center">
           {material.image && !imageError ? (
@@ -255,6 +273,12 @@ export default function BuyerHomePage() {
   const [userRole, setUserRole] = useState<string>("buyer");
 
   const { locale, t, convertNumber } = useLanguage();
+  const { user } = useUserAuth();
+
+  // Debug user state
+  useEffect(() => {
+    console.log('User from context:', user);
+  }, [user]);
 
   // Memoize utility functions
   const getMeasurementText = useCallback((unit: number) => {
@@ -438,7 +462,8 @@ export default function BuyerHomePage() {
               {filteredItems.map((item) => (
                 <ItemCard 
                   key={item._id} 
-                  item={item} 
+                  item={item}
+                  user={user}
                   locale={locale}
                   getMeasurementText={getMeasurementText}
                   getStockColor={getStockColor}
@@ -470,6 +495,7 @@ export default function BuyerHomePage() {
                   material={material} 
                   index={index} 
                   locale={locale}
+                  user={user}
                   convertNumber={convertNumber}
                   t={t}
                 />

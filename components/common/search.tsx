@@ -9,8 +9,8 @@ import Image from "next/image";
 import { X, Search } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import Button from "./Button";
-import { Loader } from "@/components/common";
 import { useUserAuth } from "@/context/AuthFormContext";
+
 
 interface SearchResult {
   _id: string;
@@ -97,11 +97,19 @@ ItemSkeleton.displayName = "ItemSkeleton";
     if (onClose) onClose();
 
     // Check user role and navigate accordingly
-    if (user?.role === "buyer") {
+    if (user?.role == 'buyer') {
       const itemSlug = item.displayName || item.name?.[locale];
       console.log("🚀 Navigating buyer to:", `/marketplace/${itemSlug}`);
       router.push(`/marketplace/${itemSlug}`);
-    } else {
+    } 
+    else if(user?.role == 'customer') {
+      localStorage.removeItem('fromMarketPlace')
+
+ const itemSlug = item.displayName || item.name?.[locale];
+      console.log("🚀 Navigating buyer to:", `/marketplace/${itemSlug}`);
+      router.push(`/marketplace/${itemSlug}`);
+    }
+    else {
       const categorySlug = item.categoryName?.en;
       console.log("🚀 Navigating to:", `/category/${categorySlug}`);
       router.push(`/category/${categorySlug}`);
@@ -193,7 +201,7 @@ ItemSkeleton.displayName = "ItemSkeleton";
 
       return { data, alphabetStats };
     },
-  enabled: true, // Change this from `enabled: isOpen`
+  enabled: isOpen, // Change this from `enabled: isOpen`
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -647,6 +655,7 @@ ItemSkeleton.displayName = "ItemSkeleton";
               )}
             </div>
           </div>
+          
         </div>
       </div>
     </div>

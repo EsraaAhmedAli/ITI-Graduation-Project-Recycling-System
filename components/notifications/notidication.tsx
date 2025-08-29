@@ -223,7 +223,7 @@ export const NotificationBell = () => {
       >
         <Bell className="w-5 h-5" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center animate-pulse">
+          <span className="absolute -top-1 -end-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center animate-pulse">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
@@ -232,7 +232,7 @@ export const NotificationBell = () => {
       {/* Notification Dropdown */}
       {isNotificationOpen && (
         <div
-          className={`absolute ${locale === 'ar' ? 'left-[-280px]' : 'right-[-35px]'} mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50 max-h-[500px] flex flex-col`}
+          className={`absolute end-[-50px] mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50 max-h-[500px] flex flex-col`}
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-gray-700">
