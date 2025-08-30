@@ -9,7 +9,7 @@ import Button from "@/components/common/Button";
 import { resetPassword } from "@/lib/auth";
 import { useSearchParams } from "next/navigation";
 import { useUserAuth } from "@/context/AuthFormContext";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 
 export default function ResetPasswordForm() {
   const searchParams = useSearchParams();

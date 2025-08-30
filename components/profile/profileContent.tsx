@@ -38,12 +38,7 @@ const PointsActivitySkeleton = () => (
 
 const ProfileContent = memo(function ProfileContent() {
   const { user } = useUserAuth();
-  const {
-    userPoints,
-    pointsLoading,
-    totalCompletedOrders,
-    totalPointsHistoryLength,
-  } = useUserPoints();
+  // const { totalCompletedOrders } = useUserPoints();
   const { t } = useLanguage();
   const router = useRouter();
 
@@ -58,10 +53,7 @@ const ProfileContent = memo(function ProfileContent() {
   );
 
   // Minimal profile config - only essential data
-  const profileConfig = useMemo(
-    () => ({ activeTab, user, totalCompletedOrders }),
-    [activeTab, user, totalCompletedOrders]
-  );
+  const profileConfig = useMemo(() => ({ activeTab, user }), [activeTab, user]);
 
   const {
     allOrders,
@@ -109,12 +101,12 @@ const ProfileContent = memo(function ProfileContent() {
     setIsItemsModalOpen(false);
   }, []);
 
-  const handleRecyclingUpdate = useCallback(
-    (points: number) => {
-      handleRecyclingPointsUpdate(points);
-    },
-    [handleRecyclingPointsUpdate]
-  );
+  // const handleRecyclingUpdate = useCallback(
+  //   (points: number) => {
+  //     handleRecyclingPointsUpdate(points);
+  //   },
+  //   [handleRecyclingPointsUpdate]
+  // );
 
   useEffect(() => {
     console.log("🔄 PARENT - RecyclingModal open state:", isRecyclingModalOpen);
@@ -138,8 +130,14 @@ const ProfileContent = memo(function ProfileContent() {
   const isCustomer = user.role === "customer";
 
   return (
-    <div className="min-h-screen px-4 py-6" style={{ background: "var(--color-green-60)" }}>
-      <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-xl p-6 space-y-6" style={{ background: "var(--background)" }}>
+    <div
+      className="min-h-screen px-4 py-6"
+      style={{ background: "var(--color-green-60)" }}
+    >
+      <div
+        className="max-w-5xl mx-auto bg-white rounded-3xl shadow-xl p-6 space-y-6"
+        style={{ background: "var(--background)" }}
+      >
         {/* Header Section */}
         <ProfileHeader
           user={user}
@@ -148,22 +146,13 @@ const ProfileContent = memo(function ProfileContent() {
           t={t}
         />
 
-        {/* Stats Section */}
-        <StatsSection
-          totalCompletedOrders={totalCompletedOrders}
-          userPoints={userPoints}
-          pointsLoading={pointsLoading}
-          user={user}
-          t={t}
-        />
+        {/* Stats Section - now consumes contexts directly */}
+        <StatsSection />
 
-        {/* Points Activity - Only for customers, load only when needed */}
+        {/* Points Activity - Only for customers, now consumes contexts directly */}
         {isCustomer && (
           <Suspense fallback={<PointsActivitySkeleton />}>
-            <PointsActivity
-              userPoints={userPoints}
-              userPointsLength={totalPointsHistoryLength}
-            />
+            <PointsActivity />
           </Suspense>
         )}
 
@@ -176,8 +165,13 @@ const ProfileContent = memo(function ProfileContent() {
         />
 
         {/* Tab Content with ReviewManager */}
-        <ReviewManager isReviewsTabActive={activeTab === 'reviews'}>
-          {({ openReviewModal, deleteReview, userReviews, isReviewsLoading }) => (
+        <ReviewManager isReviewsTabActive={activeTab === "reviews"}>
+          {({
+            openReviewModal,
+            deleteReview,
+            userReviews,
+            isReviewsLoading,
+          }) => (
             <TabContent
               activeTab={activeTab}
               isLoading={isLoading}
@@ -202,10 +196,8 @@ const ProfileContent = memo(function ProfileContent() {
         {isRecyclingModalOpen && (
           <Suspense fallback={<ModalSkeleton />}>
             <RecyclingModal
-              onPointsUpdated={handleRecyclingUpdate}
               modalOpen={isRecyclingModalOpen}
               closeModal={closeRecyclingModal}
-              totalPoints={userPoints?.totalPoints}
             />
           </Suspense>
         )}

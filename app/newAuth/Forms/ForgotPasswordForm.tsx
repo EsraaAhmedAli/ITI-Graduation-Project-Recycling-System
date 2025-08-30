@@ -6,7 +6,7 @@ import Wrapper from "@/components/auth/Wrapper";
 import { FloatingInput } from "@/components/common/FlotingInput";
 import Button from "@/components/common/Button";
 import { forgotPassword } from "@/lib/auth";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { useAuthenticationContext } from "@/context/AuhenticationContext";
 import { useLanguage } from "@/context/LanguageContext";

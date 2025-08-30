@@ -104,45 +104,8 @@ export const useCartStorage = ({
     async (newCart: CartItem[]) => {
       setCart(newCart);
       setCartDirty(true);
-
-      // Clear any existing timeout
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-
-      // Don't start saving indicator immediately to avoid flickering
-      const savingTimeoutRef = setTimeout(() => setIsSaving(true), 100);
-
-      // Debounce the save operation
-      saveTimeoutRef.current = setTimeout(async () => {
-        try {
-          if (isLoggedIn) {
-            await saveCartToDatabase(newCart);
-          } else {
-            saveCartToSession(newCart);
-          }
-          setCartDirty(false);
-          localStorage.removeItem(UNSYNCED_CART_KEY); // Clear backup on successful save
-        } catch (error) {
-          console.error("Failed to save cart:", error);
-          toast.error(
-            "Changes saved locally. Will sync when connection is restored."
-          );
-        } finally {
-          clearTimeout(savingTimeoutRef);
-          setIsSaving(false);
-        }
-      }, SAVE_DEBOUNCE_MS);
     },
-    [
-      isLoggedIn,
-      saveCartToDatabase,
-      saveCartToSession,
-      setCartDirty,
-      setCart,
-      saveTimeoutRef,
-      setIsSaving,
-    ]
+    [setCartDirty, setCart]
   );
 
   // Load cart based on authentication state

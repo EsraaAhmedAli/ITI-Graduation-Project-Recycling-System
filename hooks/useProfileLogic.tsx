@@ -4,20 +4,21 @@ import { useQueryClient } from "@tanstack/react-query";
 import useOrders from "@/hooks/useGetOrders";
 import { rewardLevels } from "@/constants/rewardsTiers";
 import { getSocket } from "@/lib/socket";
+import { useUserPoints } from "@/context/UserPointsContext";
 
 interface UseProfileLogicProps {
   activeTab: string;
   user: any;
-  totalCompletedOrders: number;
+  // totalCompletedOrders: number;
 }
 
 export function useProfileLogic({
   activeTab,
   user,
-  totalCompletedOrders,
 }: UseProfileLogicProps) {
   const queryClient = useQueryClient();
   const isMountedRef = useRef(true);
+  const{totalPointsHistoryLength:totalCompletedOrders}=useUserPoints()
 
   // Memoized status parameter
   const statusParam = useMemo(() => {

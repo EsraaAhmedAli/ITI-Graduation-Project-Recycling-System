@@ -7,7 +7,7 @@ import Review from "./ReviewForm";
 import Step from "./Step";
 import Button from "@/components/common/Button";
 import AddressStep from "./AddressStep";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 import { UserAuthContext } from "@/context/AuthFormContext";
 import { Loader } from "@/components/common";
 import { useCart } from "@/context/CartContext";

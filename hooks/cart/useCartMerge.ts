@@ -138,8 +138,6 @@ export const useCartMerge = ({
                 `Insufficient inventory for ${item.name}, quantity: ${item.quantity}`
               );
               hasInventoryIssues = true;
-
-        
             }
           }
 
@@ -180,7 +178,6 @@ export const useCartMerge = ({
       saveCartToDatabase,
       clearCartFromSession,
       checkInventoryEnhanced,
-      getAllItemsFromCategories,
       setCart,
       setCartDirty,
     ]

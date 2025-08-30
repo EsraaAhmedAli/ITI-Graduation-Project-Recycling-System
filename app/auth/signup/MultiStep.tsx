@@ -19,7 +19,7 @@ import PhoneInput from "@/components/auth/PhoneInput";
 import { initiateSignup, verifyOtpAndRegister } from "@/lib/auth";
 import { useUserAuth } from "@/context/AuthFormContext";
 import { useRouter } from "next/navigation";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 import api, { setAccessToken } from "@/lib/axios";
 
 // Define form steps
@@ -150,7 +150,7 @@ export function RegistrationForm() {
         password: watch("password") || "",
         phoneNumber: formattedPhone,
         otpCode: watch("otp") || "",
-        role:watch('role') || 'customer'
+        role: watch("role") || "customer",
       });
       console.log(res);
 

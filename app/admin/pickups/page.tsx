@@ -7,7 +7,7 @@ import UserModal from "@/components/shared/userModal";
 import ItemsModal from "@/components/shared/itemsModal";
 import CourierSelectionModal from "../../../components/courierSelectionModal";
 import Swal from "sweetalert2";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 import { useUsers } from "@/hooks/useGetUsers";
 
 import { useUserAuth } from "@/context/AuthFormContext";
@@ -170,7 +170,7 @@ export default function Page() {
       completedAt: order.completedAt,
       courier: order.courier,
       statusHistory: order.statusHistory,
-          quantityAdjustmentNotes: order.deliveryAdjNotes, // Add this line
+      quantityAdjustmentNotes: order.deliveryAdjNotes, // Add this line
     });
     setIsProofModalOpen(true);
   };
@@ -334,7 +334,7 @@ export default function Page() {
   const [isCourierModalOpen, setIsCourierModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState<string | null>(null);
   const [showCancelReasonModal, setShowCancelReasonModal] = useState(false);
-const [isSearchingLocal, setIsSearchingLocal] = useState(false);
+  const [isSearchingLocal, setIsSearchingLocal] = useState(false);
 
   const [selectedOrderForCourier, setSelectedOrderForCourier] = useState<
     string | null
@@ -470,22 +470,22 @@ const [isSearchingLocal, setIsSearchingLocal] = useState(false);
       search: null,
     });
   };
-const handleSearchChange = (value: string) => {
-  if (value.trim()) {
-    setIsSearchingLocal(true);
-  }
-  setSearchTerm(value);
-  handlePageChange(1);
-  updateSearchParams({
-    search: value || null,
-    page: "1",
-  });
-};
-useEffect(() => {
-  if (data || !debouncedSearchTerm) {
-    setIsSearchingLocal(false);
-  }
-}, [data, debouncedSearchTerm])
+  const handleSearchChange = (value: string) => {
+    if (value.trim()) {
+      setIsSearchingLocal(true);
+    }
+    setSearchTerm(value);
+    handlePageChange(1);
+    updateSearchParams({
+      search: value || null,
+      page: "1",
+    });
+  };
+  useEffect(() => {
+    if (data || !debouncedSearchTerm) {
+      setIsSearchingLocal(false);
+    }
+  }, [data, debouncedSearchTerm]);
 
   const handleDeleteOrder = async (orderId: string) => {
     const result = await Swal.fire({
@@ -700,8 +700,8 @@ useEffect(() => {
   }
 
   if (isLoading && !debouncedSearchTerm) {
-  return <TableSkeleton rows={5} columns={5} showActions={true} />;
-}
+    return <TableSkeleton rows={5} columns={5} showActions={true} />;
+  }
   const transformedData = orders.map((order: any) => ({
     orderId: order._id,
     onClickItemsId: () => {
@@ -988,7 +988,6 @@ useEffect(() => {
         <>
           <DynamicTable
             isSearching={isSearchingLocal || isFetching}
-
             data={transformedData}
             columns={columns}
             title={`${

@@ -1,6 +1,13 @@
 "use client";
 
-import React, { useContext, useEffect, useRef, useState, useMemo, useCallback } from "react";
+import React, {
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  useMemo,
+  useCallback,
+} from "react";
 import { Modal, ModalBody, ModalHeader } from "flowbite-react";
 import QRCode from "react-qr-code";
 import html2canvas from "html2canvas";
@@ -23,23 +30,26 @@ const POINTS_TO_CURRENCY_RATIO = 19;
 interface RecyclingModalProps {
   modalOpen: boolean;
   closeModal: () => void;
-  onPointsUpdated: () => void;
+  // onPointsUpdated: () => void;
 }
 
 export default function RecyclingModal({
-  onPointsUpdated,
   modalOpen,
   closeModal,
 }: RecyclingModalProps) {
   const { t } = useLanguage();
-  const [activeOption, setActiveOption] = useState<"money" | "voucher" | null>(null);
+  const [activeOption, setActiveOption] = useState<"money" | "voucher" | null>(
+    null
+  );
   const [selectedVoucher, setSelectedVoucher] = useState<string | null>(null);
   const [qrVisible, setQrVisible] = useState(false);
   const [qrValue, setQrValue] = useState("");
   const [amount, setAmount] = useState<string>("");
-  const [redeemedVouchers, setRedeemedVouchers] = useState<Set<string>>(new Set());
+  const [redeemedVouchers, setRedeemedVouchers] = useState<Set<string>>(
+    new Set()
+  );
   const [isProcessing, setIsProcessing] = useState(false);
-  
+
   const qrRef = useRef<HTMLDivElement>(null);
   const { user } = useContext(UserAuthContext);
   const { userPoints, pointsLoading, refreshUserPoints } = useUserPoints();
@@ -53,7 +63,7 @@ export default function RecyclingModal({
     const requiredPoints = numAmount * POINTS_TO_CURRENCY_RATIO;
     const remainingPoints = totalPoints - requiredPoints;
     const maxAvailable = Math.floor(totalPoints / POINTS_TO_CURRENCY_RATIO);
-    
+
     return {
       requiredPoints,
       remainingPoints,
@@ -64,11 +74,11 @@ export default function RecyclingModal({
 
   // Memoize voucher calculations
   const voucherStates = useMemo(() => {
-    return VOUCHERS.map(voucher => {
+    return VOUCHERS.map((voucher) => {
       const isRedeemed = redeemedVouchers.has(voucher.id);
       const canRedeem = totalPoints >= voucher.points && !isRedeemed;
       const isSelected = selectedVoucher === voucher.id;
-      
+
       return {
         ...voucher,
         isRedeemed,
@@ -97,26 +107,36 @@ export default function RecyclingModal({
     setSelectedVoucher(null);
   }, []);
 
-  const handleVoucherSelect = useCallback((voucherId: string, canRedeem: boolean) => {
-    if (canRedeem && !isProcessing) {
-      setSelectedVoucher(prev => prev === voucherId ? null : voucherId);
-    }
-  }, [isProcessing]);
+  const handleVoucherSelect = useCallback(
+    (voucherId: string, canRedeem: boolean) => {
+      if (canRedeem && !isProcessing) {
+        setSelectedVoucher((prev) => (prev === voucherId ? null : voucherId));
+      }
+    },
+    [isProcessing]
+  );
 
-  const handleAmountChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    // Validate input
-    if (value === "" || (/^\d+$/.test(value) && parseInt(value, 10) <= calculations.maxAvailable)) {
-      setAmount(value);
-    }
-  }, [calculations.maxAvailable]);
+  const handleAmountChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      // Validate input
+      if (
+        value === "" ||
+        (/^\d+$/.test(value) &&
+          parseInt(value, 10) <= calculations.maxAvailable)
+      ) {
+        setAmount(value);
+      }
+    },
+    [calculations.maxAvailable]
+  );
 
   const handleDownloadQR = useCallback(async () => {
     if (!qrRef.current) return;
-    
+
     try {
       const canvas = await html2canvas(qrRef.current, {
-        backgroundColor: '#ffffff',
+        backgroundColor: "#ffffff",
         scale: 2, // Higher quality
       });
       const link = document.createElement("a");
@@ -149,7 +169,7 @@ export default function RecyclingModal({
         });
 
         await refreshUserPoints();
-        onPointsUpdated?.();
+        // onPointsUpdated?.();
         Swal.fire(t("success"), t("cashbackRedeemed"), "success");
         setQrVisible(false);
         setAmount("");
@@ -170,12 +190,14 @@ export default function RecyclingModal({
         });
 
         await refreshUserPoints();
-        onPointsUpdated?.();
+        // onPointsUpdated?.();
 
-        const qrText = `${t("voucher")}: ${voucher.name} - ${t("value")}: ${voucher.value}`;
+        const qrText = `${t("voucher")}: ${voucher.name} - ${t("value")}: ${
+          voucher.value
+        }`;
         setQrValue(qrText);
         setQrVisible(true);
-        setRedeemedVouchers(prev => new Set([...prev, voucher.id]));
+        setRedeemedVouchers((prev) => new Set([...prev, voucher.id]));
         setSelectedVoucher(null);
         Swal.fire(t("success"), t("voucherReady"), "success");
       }
@@ -201,25 +223,32 @@ export default function RecyclingModal({
     userId,
     t,
     refreshUserPoints,
-    onPointsUpdated,
+    // onPointsUpdated,
   ]);
 
   // Memoize button disabled state
   const isRedeemDisabled = useMemo(() => {
     if (pointsLoading || isProcessing) return true;
-    
+
     if (activeOption === "voucher") {
       if (!selectedVoucher) return true;
-      const voucher = voucherStates.find(v => v.id === selectedVoucher);
+      const voucher = voucherStates.find((v) => v.id === selectedVoucher);
       return !voucher?.canRedeem;
     }
-    
+
     if (activeOption === "money") {
       return !calculations.isValidAmount;
     }
-    
+
     return true;
-  }, [pointsLoading, isProcessing, activeOption, selectedVoucher, voucherStates, calculations.isValidAmount]);
+  }, [
+    pointsLoading,
+    isProcessing,
+    activeOption,
+    selectedVoucher,
+    voucherStates,
+    calculations.isValidAmount,
+  ]);
 
   // Early return if not open to avoid unnecessary rendering
   if (!modalOpen) {
@@ -237,14 +266,20 @@ export default function RecyclingModal({
           </div>
           <div className="flex items-center mt-2">
             <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium flex items-center">
-              <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <svg
+                className="w-4 h-4 mr-1"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
                 <path
                   fillRule="evenodd"
                   d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z"
                   clipRule="evenodd"
                 />
               </svg>
-              {pointsLoading ? t("loading") : `${totalPoints.toLocaleString()} ${t("points")}`}
+              {pointsLoading
+                ? t("loading")
+                : `${totalPoints.toLocaleString()} ${t("points")}`}
             </div>
           </div>
         </div>
@@ -263,7 +298,12 @@ export default function RecyclingModal({
             } ${isProcessing ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             <div className="flex items-center justify-center">
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-5 h-5 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -284,7 +324,12 @@ export default function RecyclingModal({
             } ${isProcessing ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             <div className="flex items-center justify-center">
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-5 h-5 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -303,7 +348,9 @@ export default function RecyclingModal({
             {voucherStates.map((voucher) => (
               <button
                 key={voucher.id}
-                onClick={() => handleVoucherSelect(voucher.id, voucher.canRedeem)}
+                onClick={() =>
+                  handleVoucherSelect(voucher.id, voucher.canRedeem)
+                }
                 disabled={!voucher.canRedeem || isProcessing}
                 className={`w-full text-left rounded-xl p-4 transition-all ${
                   voucher.isSelected
@@ -337,7 +384,11 @@ export default function RecyclingModal({
                         {t("redeemed")}
                       </span>
                     ) : voucher.isSelected ? (
-                      <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                      <svg
+                        className="w-5 h-5 text-green-500"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
                         <path
                           fillRule="evenodd"
                           d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -346,7 +397,12 @@ export default function RecyclingModal({
                       </svg>
                     ) : (
                       !voucher.canRedeem && (
-                        <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg
+                          className="w-5 h-5 text-red-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -360,7 +416,11 @@ export default function RecyclingModal({
                 </div>
                 {!voucher.canRedeem && !voucher.isRedeemed && (
                   <p className="text-xs text-red-500 mt-2 flex items-center">
-                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <svg
+                      className="w-3 h-3 mr-1"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
                       <path
                         fillRule="evenodd"
                         d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
@@ -372,7 +432,11 @@ export default function RecyclingModal({
                 )}
                 {voucher.isRedeemed && (
                   <p className="text-xs text-green-600 mt-2 flex items-center">
-                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <svg
+                      className="w-3 h-3 mr-1"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
                       <path
                         fillRule="evenodd"
                         d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -413,20 +477,28 @@ export default function RecyclingModal({
               {amount && (
                 <div className="mt-3 space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">{t("requiredPoints")}:</span>
+                    <span className="text-gray-500">
+                      {t("requiredPoints")}:
+                    </span>
                     <span
                       className={`font-medium ${
-                        calculations.requiredPoints > totalPoints ? "text-red-500" : "text-green-600"
+                        calculations.requiredPoints > totalPoints
+                          ? "text-red-500"
+                          : "text-green-600"
                       }`}
                     >
                       {calculations.requiredPoints.toLocaleString()} {t("pts")}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">{t("remainingPoints")}:</span>
+                    <span className="text-gray-500">
+                      {t("remainingPoints")}:
+                    </span>
                     <span
                       className={`font-medium ${
-                        calculations.remainingPoints < 0 ? "text-red-500" : "text-green-600"
+                        calculations.remainingPoints < 0
+                          ? "text-red-500"
+                          : "text-green-600"
                       }`}
                     >
                       {calculations.remainingPoints.toLocaleString()} {t("pts")}
@@ -434,7 +506,11 @@ export default function RecyclingModal({
                   </div>
                   {!calculations.isValidAmount && (
                     <div className="text-xs text-red-500 bg-red-50 p-2 rounded flex items-center">
-                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <svg
+                        className="w-4 h-4 mr-1"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
                         <path
                           fillRule="evenodd"
                           d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
@@ -450,7 +526,11 @@ export default function RecyclingModal({
 
             <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-sm text-blue-800">
               <div className="flex items-start">
-                <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <svg
+                  className="w-5 h-5 mr-2 flex-shrink-0"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
                   <path
                     fillRule="evenodd"
                     d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z"
@@ -477,14 +557,21 @@ export default function RecyclingModal({
               className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm flex flex-col items-center"
             >
               <QRCode value={qrValue} size={160} level="M" />
-              <p className="mt-2 text-sm text-gray-600 text-center">{qrValue}</p>
+              <p className="mt-2 text-sm text-gray-600 text-center">
+                {qrValue}
+              </p>
             </div>
             <button
               onClick={handleDownloadQR}
               disabled={isProcessing}
               className="inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-5 h-5 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -505,16 +592,36 @@ export default function RecyclingModal({
         >
           {isProcessing ? (
             <>
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <svg
+                className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
               </svg>
               {t("processing")}
             </>
           ) : activeOption === "voucher" ? (
             redeemedVouchers.has(selectedVoucher || "") ? (
               <>
-                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <svg
+                  className="w-5 h-5 mr-2"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
                   <path
                     fillRule="evenodd"
                     d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -525,7 +632,12 @@ export default function RecyclingModal({
               </>
             ) : (
               <>
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-5 h-5 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -538,7 +650,12 @@ export default function RecyclingModal({
             )
           ) : (
             <>
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-5 h-5 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"

@@ -5,7 +5,7 @@ import { Button } from "flowbite-react";
 import Wrapper from "@/components/auth/Wrapper";
 import { useRouter } from "next/navigation";
 import { initiateSignup, verifyOtp } from "@/lib/auth";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 import { Controller, useFormContext } from "react-hook-form";
 import { useAuthenticationContext } from "@/context/AuhenticationContext";
 

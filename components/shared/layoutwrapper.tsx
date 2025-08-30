@@ -4,7 +4,7 @@ import { ReactNode, useEffect, useMemo } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Navbar from "@/components/common/Navbar";
 import Footer from "../common/Footer";
-import { ToastContainer } from "react-toastify";
+import { ToastContainer } from "react-hot-toast";
 import { useUserAuth } from "@/context/AuthFormContext";
 import UserPointsWrapper from "@/components/shared/pointsWrapper";
 
@@ -146,7 +146,7 @@ export default function LayoutWrapper({ children }: { children: ReactNode }) {
       <main className="flex-1">{wrappedChildren}</main>
 
       {!shouldHideLayout && <Footer />}
-      <ToastContainer />
+      {/* <ToastContainer /> */}
     </div>
   );
 }

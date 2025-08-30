@@ -6,13 +6,13 @@ import { UserAuthContext } from "@/context/AuthFormContext";
 import api from "@/lib/axios";
 import { Pencil } from "lucide-react";
 import { Avatar } from "flowbite-react";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 import Image from "next/image";
 import { useLanguage } from "@/context/LanguageContext";
 
 export default function EditProfilePage() {
   const { user, setUser } = useContext(UserAuthContext) ?? {};
-  const { t } = useLanguage(); 
+  const { t } = useLanguage();
   const router = useRouter();
 
   const [name, setName] = useState(user?.name || "");
@@ -122,14 +122,19 @@ export default function EditProfilePage() {
       toast.success(t("editProfile.messages.updateSuccess"));
     } catch (err) {
       console.error("Error updating profile:", err?.response);
-      toast.error(err.response?.data?.message || t("editProfile.messages.updateError"));
+      toast.error(
+        err.response?.data?.message || t("editProfile.messages.updateError")
+      );
     } finally {
       setIsSaving(false);
     }
   };
 
   return (
-    <div className="min-h-screen py-10 px-4 flex items-center justify-center" style={{ background: "var(--color-green-60)" }}>
+    <div
+      className="min-h-screen py-10 px-4 flex items-center justify-center"
+      style={{ background: "var(--color-green-60)" }}
+    >
       <div className="max-w-md w-full bg-white p-6 rounded-2xl shadow-md space-y-6">
         <h2 className="text-xl font-semibold text-center text-green-800">
           {t("editProfile.title")}

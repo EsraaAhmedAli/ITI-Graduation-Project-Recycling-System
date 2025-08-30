@@ -1,8 +1,18 @@
 "use client";
 import { useEffect, useState, useContext } from "react";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 import api from "@/lib/axios";
-import { Clock, MapPin, User, Package, Calendar, Phone, Mail, Zap, X } from "lucide-react";
+import {
+  Clock,
+  MapPin,
+  User,
+  Package,
+  Calendar,
+  Phone,
+  Mail,
+  Zap,
+  X,
+} from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { UserAuthContext } from "@/context/AuthFormContext";
 import { useMutation } from "@tanstack/react-query";
@@ -165,7 +175,9 @@ export default function WaitingApprovalStep({
             </div>
             <div className="flex items-center gap-3">
               <Phone className="w-4 h-4 text-gray-500" />
-              <span className="text-gray-700">{user?.phoneNumber || "N/A"}</span>
+              <span className="text-gray-700">
+                {user?.phoneNumber || "N/A"}
+              </span>
             </div>
           </div>
         </div>

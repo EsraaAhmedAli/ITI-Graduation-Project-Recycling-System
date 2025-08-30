@@ -52,7 +52,9 @@ const CartItem = memo(
         <div className="flex-shrink-0 w-8 h-8 bg-gray-100 dark:bg-gray-600 rounded-md overflow-hidden">
           {item.image ? (
             <Link
-              href={`/category/${encodeURIComponent(item.categoryName[locale])}`}
+              href={`/category/${encodeURIComponent(
+                item.categoryName[locale]
+              )}`}
               onClick={() => setIsCartOpen(false)}
             >
               <Image
@@ -76,7 +78,9 @@ const CartItem = memo(
           </p>
           <p className="text-gray-500 dark:text-gray-400 text-xs">
             {t("cart.qty")}: {convertNumber(item.quantity)}{" "}
-            {item.measurement_unit === 1 ? t("cart.item.kg") : t("cart.item.pcs")}
+            {item.measurement_unit === 1
+              ? t("cart.item.kg")
+              : t("cart.item.pcs")}
           </p>
         </div>
         <button
@@ -94,11 +98,18 @@ const CartItem = memo(
 CartItem.displayName = "CartItem";
 
 // Navigation Link Component
-const NavLink = memo(({ href, onClick, className, children, prefetch = true }) => (
-  <Link prefetch={prefetch} href={href} onClick={onClick} className={className}>
-    {children}
-  </Link>
-));
+const NavLink = memo(
+  ({ href, onClick, className, children, prefetch = true }) => (
+    <Link
+      prefetch={prefetch}
+      href={href}
+      onClick={onClick}
+      className={className}
+    >
+      {children}
+    </Link>
+  )
+);
 
 NavLink.displayName = "NavLink";
 
@@ -121,11 +132,19 @@ const LanguageToggle = memo(({ locale, onToggle, className = "" }) => (
     className={`px-2 py-1 text-xs font-medium rounded border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 transition-colors ${className}`}
     title="Toggle Language"
   >
-    <span className={locale === "en" ? "text-blue-600 dark:text-blue-400" : "text-gray-500"}>
+    <span
+      className={
+        locale === "en" ? "text-blue-600 dark:text-blue-400" : "text-gray-500"
+      }
+    >
       EN
     </span>
     <span className="mx-1 text-gray-300">|</span>
-    <span className={locale === "ar" ? "text-blue-600 dark:text-blue-400" : "text-gray-500"}>
+    <span
+      className={
+        locale === "ar" ? "text-blue-600 dark:text-blue-400" : "text-gray-500"
+      }
+    >
       AR
     </span>
   </button>
@@ -136,18 +155,17 @@ LanguageToggle.displayName = "LanguageToggle";
 export default function Navbar() {
   const authContext = useContext(UserAuthContext);
   const { user, logout, isLoading } = authContext ?? {};
-  const { cart, removeFromCart } = useCart();
-  const totalItems = useMemo(() => cart.length, [cart.length]);
-  
+  // const { cart, removeFromCart } = useCart();
+  // const totalItems = useMemo(() => cart.length, [cart.length]);
+
   // State management
   const [isOpen, setIsOpen] = useState(false);
-  const [isCartOpen, setIsCartOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Refs
-  const cartRef = useRef(null);
+  // const cartRef = useRef(null);
   const profileRef = useRef(null);
 
   const { locale, setLocale, t, convertNumber } = useLanguage();
@@ -164,31 +182,33 @@ export default function Navbar() {
         href: isLoggedIn ? (isBuyer ? "/home" : "/") : "/",
         icon: HousePlus,
         label: t("navbar.home"),
-        show: true
+        show: true,
       },
       {
         href: "/ideas",
         icon: FaRobot,
         label: t("navbar.ecoAssist"),
-        show: true
-      }
+        show: true,
+      },
     ];
 
     // Handle marketplace/categories logic
     if (!isLoggedIn) {
       // Show both when not logged in
-      items.splice(1, 0, 
+      items.splice(
+        1,
+        0,
         {
           href: "/marketplace",
           icon: Store,
           label: t("navbar.marketplace"),
-          show: true
+          show: true,
         },
         {
           href: "/category",
           icon: GalleryVerticalEnd,
           label: t("navbar.categories"),
-          show: true
+          show: true,
         }
       );
     } else if (isBuyer) {
@@ -197,7 +217,7 @@ export default function Navbar() {
         href: "/marketplace",
         icon: Store,
         label: t("navbar.marketplace"),
-        show: true
+        show: true,
       });
     } else if (isCustomer) {
       // Show only categories for customers
@@ -205,11 +225,11 @@ export default function Navbar() {
         href: "/category",
         icon: GalleryVerticalEnd,
         label: t("navbar.categories"),
-        show: true
+        show: true,
       });
     }
 
-    return items.filter(item => item.show);
+    return items.filter((item) => item.show);
   };
 
   // Dark mode initialization
@@ -240,18 +260,24 @@ export default function Navbar() {
   }, [darkMode, isInitialized]);
 
   // Event handlers
-  const toggleMenu = useCallback(() => setIsOpen(prev => !prev), []);
-  const toggleDarkMode = useCallback(() => setDarkMode(prev => !prev), []);
-  const toggleLanguage = useCallback(() => setLocale(locale === "en" ? "ar" : "en"), [locale, setLocale]);
-  const toggleCart = useCallback(() => setIsCartOpen(prev => !prev), []);
-  const toggleProfile = useCallback(() => setIsProfileOpen(prev => !prev), []);
+  const toggleMenu = useCallback(() => setIsOpen((prev) => !prev), []);
+  const toggleDarkMode = useCallback(() => setDarkMode((prev) => !prev), []);
+  const toggleLanguage = useCallback(
+    () => setLocale(locale === "en" ? "ar" : "en"),
+    [locale, setLocale]
+  );
+  // const toggleCart = useCallback(() => setIsCartOpen((prev) => !prev), []);
+  const toggleProfile = useCallback(
+    () => setIsProfileOpen((prev) => !prev),
+    []
+  );
 
   // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (cartRef.current && !cartRef.current.contains(event.target)) {
-        setIsCartOpen(false);
-      }
+      // if (cartRef.current && !cartRef.current.contains(event.target)) {
+      //   setIsCartOpen(false);
+      // }
       if (profileRef.current && !profileRef.current.contains(event.target)) {
         setIsProfileOpen(false);
       }
@@ -261,16 +287,16 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleRemoveFromCart = useCallback(
-    async (item) => {
-      try {
-        await removeFromCart(item);
-      } catch (error) {
-        console.error("Error removing item from cart:", error);
-      }
-    },
-    [removeFromCart]
-  );
+  // const handleRemoveFromCart = useCallback(
+  //   async (item) => {
+  //     try {
+  //       await removeFromCart(item);
+  //     } catch (error) {
+  //       console.error("Error removing item from cart:", error);
+  //     }
+  //   },
+  //   [removeFromCart]
+  // );
 
   const handleLogout = useCallback(async () => {
     try {
@@ -284,31 +310,34 @@ export default function Navbar() {
 
   const getUserInitials = useCallback((user) => {
     if (!user) return "U";
-    const name = user.name || user.fullName || user.firstName || user.email || "User";
+    const name =
+      user.name || user.fullName || user.firstName || user.email || "User";
     const words = name.split(" ");
-    return words.length >= 2 
+    return words.length >= 2
       ? (words[0][0] + words[1][0]).toUpperCase()
       : name.slice(0, 2).toUpperCase();
   }, []);
 
   const navigationItems = getNavigationItems();
 
-  const cartItems = useMemo(
-    () =>
-      cart?.slice(0, 3).map((item, index) => (
-        <CartItem
-          key={item._id || index}
-          item={item}
-          onRemove={handleRemoveFromCart}
-          locale={locale}
-          darkMode={darkMode}
-          t={t}
-          convertNumber={convertNumber}
-          setIsCartOpen={setIsCartOpen}
-        />
-      )),
-    [cart, handleRemoveFromCart, locale, darkMode, t, convertNumber]
-  );
+  // const cartItems = useMemo(
+  //   () =>
+  //     cart
+  //       ?.slice(0, 3)
+  //       .map((item, index) => (
+  //         <CartItem
+  //           key={item._id || index}
+  //           item={item}
+  //           onRemove={handleRemoveFromCart}
+  //           locale={locale}
+  //           darkMode={darkMode}
+  //           t={t}
+  //           convertNumber={convertNumber}
+  //           setIsCartOpen={setIsCartOpen}
+  //         />
+  //       )),
+  //   [cart, handleRemoveFromCart, locale, darkMode, t, convertNumber]
+  // );
 
   if (isLoading) {
     return (
@@ -361,76 +390,8 @@ export default function Navbar() {
 
           {/* Right Actions */}
           <div className="flex items-center gap-1">
-            {/* Cart */}
-            <div className="relative" ref={cartRef}>
-              <button
-                onClick={toggleCart}
-                className="relative p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
-                title={isBuyer ? t("navbar.myCart") : t("navbar.myCollection")}
-              >
-                <Recycle className="w-5 h-5" />
-                {totalItems > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center">
-                    {totalItems > 99 ? "99+" : convertNumber(totalItems)}
-                  </span>
-                )}
-              </button>
-
-              {/* Cart Dropdown */}
-              {isCartOpen && (
-                <div className="absolute end-[-50px] mt-2 w-72 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
-                  <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100 dark:border-gray-700">
-                    <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
-                      {isBuyer ? t("navbar.myCart") : t("navbar.myCollection")}
-                    </h3>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {convertNumber(totalItems)} {t("navbar.items")}
-                    </span>
-                  </div>
-                  
-                  <div className="max-h-64 overflow-y-auto">
-                    {cart && cart.length > 0 ? (
-                      <>
-                        {cartItems}
-                        {cart.length > 3 && (
-                          <div className="px-3 py-2 text-center text-xs text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-700">
-                            +{convertNumber(cart.length - 3)} {t("cart.item.more")}
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <div className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
-                        <Recycle className="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
-                        <p className="text-xs font-medium mb-1">
-                          {t("navbar.yourCollectionEmpty")}
-                        </p>
-                        <NavLink
-                          onClick={() => setIsCartOpen(false)}
-                          href={isBuyer ? "/marketplace" : "/category"}
-                          className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
-                        >
-                          {t("common.startAdding")}
-                        </NavLink>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {cart && cart.length > 0 && (
-                    <div className="border-t border-gray-100 dark:border-gray-700 pt-2 px-3">
-                      <NavLink
-                        href="/cart"
-                        onClick={() => setIsCartOpen(false)}
-                        className="block w-full px-3 py-2 text-center text-xs bg-green-500 hover:bg-green-600 text-white font-medium rounded-md transition-colors"
-                      >
-                        {t("navbar.viewFullCollection")}
-                      </NavLink>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
             {/* Notifications - Only when logged in */}
+            <CartPopUp darkMode={darkMode} isBuyer={isBuyer} />
             {user && <NotificationBell />}
 
             {/* Settings/Profile */}
@@ -496,7 +457,7 @@ export default function Navbar() {
                         <User className="w-4 h-4" />
                         {t("navbar.profile")}
                       </NavLink>
-                      
+
                       <NavLink
                         href="/editprofile"
                         onClick={() => setIsProfileOpen(false)}
@@ -518,7 +479,7 @@ export default function Navbar() {
                       )}
 
                       <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
-                      
+
                       {/* Theme & Language in Profile */}
                       <div className="flex items-center justify-between px-3 py-2">
                         <span className="text-sm text-gray-700 dark:text-gray-300">
@@ -527,19 +488,26 @@ export default function Navbar() {
                         <CompactToggle
                           icon={darkMode ? Sun : Moon}
                           onClick={toggleDarkMode}
-                          ariaLabel={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+                          ariaLabel={
+                            darkMode
+                              ? "Switch to light mode"
+                              : "Switch to dark mode"
+                          }
                         />
                       </div>
-                      
+
                       <div className="flex items-center justify-between px-3 py-2">
                         <span className="text-sm text-gray-700 dark:text-gray-300">
                           {t("navbar.language")}
                         </span>
-                        <LanguageToggle locale={locale} onToggle={toggleLanguage} />
+                        <LanguageToggle
+                          locale={locale}
+                          onToggle={toggleLanguage}
+                        />
                       </div>
 
                       <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
-                      
+
                       <button
                         onClick={handleLogout}
                         className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors w-full text-left"
@@ -557,7 +525,9 @@ export default function Navbar() {
                 <CompactToggle
                   icon={darkMode ? Sun : Moon}
                   onClick={toggleDarkMode}
-                  ariaLabel={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+                  ariaLabel={
+                    darkMode ? "Switch to light mode" : "Switch to dark mode"
+                  }
                 />
                 <LanguageToggle locale={locale} onToggle={toggleLanguage} />
                 <NavLink
@@ -576,7 +546,11 @@ export default function Navbar() {
               className="lg:hidden p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
               aria-label="Toggle menu"
             >
-              {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {isOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <Menu className="w-5 h-5" />
+              )}
             </button>
           </div>
         </div>
@@ -630,14 +604,21 @@ export default function Navbar() {
                       <CompactToggle
                         icon={darkMode ? Sun : Moon}
                         onClick={toggleDarkMode}
-                        ariaLabel={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+                        ariaLabel={
+                          darkMode
+                            ? "Switch to light mode"
+                            : "Switch to dark mode"
+                        }
                       />
                     </div>
                     <div className="flex items-center justify-between px-3 py-2">
                       <span className="font-medium text-gray-700 dark:text-gray-300">
                         {t("navbar.language")}
                       </span>
-                      <LanguageToggle locale={locale} onToggle={toggleLanguage} />
+                      <LanguageToggle
+                        locale={locale}
+                        onToggle={toggleLanguage}
+                      />
                     </div>
                   </div>
                 </>
@@ -678,3 +659,131 @@ export default function Navbar() {
     </nav>
   );
 }
+
+const CartPopUp = ({ isBuyer, darkMode }) => {
+  const { t, locale, convertNumber } = useLanguage();
+  const cartRef = useRef(null);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+
+  const { cart, removeFromCart } = useCart();
+  const totalItems = useMemo(() => cart.length, [cart.length]);
+
+  const handleRemoveFromCart = useCallback(
+    async (item) => {
+      try {
+        await removeFromCart(item);
+      } catch (error) {
+        console.error("Error removing item from cart:", error);
+      }
+    },
+    [removeFromCart]
+  );
+  const cartItems = useMemo(
+    () =>
+      cart
+        ?.slice(0, 3)
+        .map((item, index) => (
+          <CartItem
+            key={item._id || index}
+            item={item}
+            onRemove={handleRemoveFromCart}
+            locale={locale}
+            darkMode={darkMode}
+            t={t}
+            convertNumber={convertNumber}
+            setIsCartOpen={setIsCartOpen}
+          />
+        )),
+    [
+      cart,
+      handleRemoveFromCart,
+      locale,
+      darkMode,
+      t,
+      convertNumber,
+      setIsCartOpen,
+    ]
+  );
+  const toggleCart = useCallback(() => setIsCartOpen((prev) => !prev), []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (cartRef.current && !cartRef.current.contains(event.target)) {
+        setIsCartOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [setIsCartOpen]);
+
+  return (
+    <div className="relative" ref={cartRef}>
+      <button
+        onClick={toggleCart}
+        className="relative p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+        title={isBuyer ? t("navbar.myCart") : t("navbar.myCollection")}
+      >
+        <Recycle className="w-5 h-5" />
+        {totalItems > 0 && (
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center">
+            {totalItems > 99 ? "99+" : convertNumber(totalItems)}
+          </span>
+        )}
+      </button>
+
+      {/* Cart Dropdown */}
+      {isCartOpen && (
+        <div className="absolute end-[-9rem]  mt-2 w-72 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100 dark:border-gray-700">
+            <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
+              {isBuyer ? t("navbar.myCart") : t("navbar.myCollection")}
+            </h3>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {convertNumber(totalItems)} {t("navbar.items")}
+            </span>
+          </div>
+
+          <div className="max-h-64 overflow-y-auto">
+            {cart && cart.length > 0 ? (
+              <>
+                {cartItems}
+                {cart.length > 3 && (
+                  <div className="px-3 py-2 text-center text-xs text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-700">
+                    +{convertNumber(cart.length - 3)} {t("cart.item.more")}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
+                <Recycle className="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
+                <p className="text-xs font-medium mb-1">
+                  {t("navbar.yourCollectionEmpty")}
+                </p>
+                <NavLink
+                  onClick={() => setIsCartOpen(false)}
+                  href={isBuyer ? "/marketplace" : "/category"}
+                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  {t("common.startAdding")}
+                </NavLink>
+              </div>
+            )}
+          </div>
+
+          {cart && cart.length > 0 && (
+            <div className="border-t border-gray-100 dark:border-gray-700 pt-2 px-3">
+              <NavLink
+                href="/cart"
+                onClick={() => setIsCartOpen(false)}
+                className="block w-full px-3 py-2 text-center text-xs bg-green-500 hover:bg-green-600 text-white font-medium rounded-md transition-colors"
+              >
+                {t("navbar.viewFullCollection")}
+              </NavLink>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};

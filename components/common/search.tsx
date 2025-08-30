@@ -65,50 +65,51 @@ export default function NavbarSearch({
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-const{user}=useUserAuth()
+  const { user } = useUserAuth();
   const inputRef = useRef<HTMLInputElement>(null);
   const { t, locale, convertNumber } = useLanguage();
   const router = useRouter();
 
   // Add this skeleton component
-const ItemSkeleton = memo(() => (
-  <div className="animate-pulse rounded-2xl  overflow-hidden bg-white dark:bg-gray-800">
-    <div className="h-40 w-full bg-gray-300 dark:bg-gray-600" />
-    <div className="p-4">
-      <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded mb-2" />
-      <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4 mb-3" />
-      <div className="flex justify-between items-center mb-3">
-        <div className="h-6 w-16 bg-gray-300 dark:bg-gray-600 rounded-lg" />
-        <div className="h-4 w-12 bg-gray-300 dark:bg-gray-600 rounded" />
+  const ItemSkeleton = memo(() => (
+    <div className="animate-pulse rounded-2xl  overflow-hidden bg-white dark:bg-gray-800">
+      <div className="h-40 w-full bg-gray-300 dark:bg-gray-600" />
+      <div className="p-4">
+        <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded mb-2" />
+        <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4 mb-3" />
+        <div className="flex justify-between items-center mb-3">
+          <div className="h-6 w-16 bg-gray-300 dark:bg-gray-600 rounded-lg" />
+          <div className="h-4 w-12 bg-gray-300 dark:bg-gray-600 rounded" />
+        </div>
+        <div className="h-10 bg-gray-300 dark:bg-gray-600 rounded-xl w-full" />
       </div>
-      <div className="h-10 bg-gray-300 dark:bg-gray-600 rounded-xl w-full" />
     </div>
-  </div>
-));
-ItemSkeleton.displayName = "ItemSkeleton";
+  ));
+  ItemSkeleton.displayName = "ItemSkeleton";
   // Handle item click with proper navigation
- const handleItemClick = useCallback(
-  (item: SearchResult) => {
-    setIsOpen(false);
-    setSearchQuery("");
-    setHasSearched(false);
-    setSearchResults([]);
-    setIsSearching(false);
-    if (onClose) onClose();
+  const handleItemClick = useCallback(
+    (item: SearchResult) => {
+      setIsOpen(false);
+      setSearchQuery("");
+      setHasSearched(false);
+      setSearchResults([]);
+      setIsSearching(false);
+      if (onClose) onClose();
 
-    // Check user role and navigate accordingly
-    if (user?.role === "buyer") {
-      const itemSlug = item.displayName || item.name?.[locale];
-      console.log("🚀 Navigating buyer to:", `/marketplace/${itemSlug}`);
-      router.push(`/marketplace/${itemSlug}`);
-    } else {
-      const categorySlug = item.categoryName?.en;
-      console.log("🚀 Navigating to:", `/category/${categorySlug}`);
-      router.push(`/category/${categorySlug}`);
-    }
-  },
-  [router, onClose, user?.role, locale] // Add user?.role and locale to dependencies
-);
+      // Check user role and navigate accordingly
+      // if (user?.role === "buyer") {
+      //   console.log("oldWay")
+      //   const itemSlug = item.displayName || item.name?.[locale];
+      //   console.log("🚀 Navigating buyer to:", `/marketplace/${itemSlug}`);
+      //   router.push(`/marketplace/${itemSlug}`);
+      // } else {
+      //   const categorySlug = item.categoryName?.en;
+      //   console.log("🚀 Navigating to:", `/category/${categorySlug}`);
+      //   router.push(`/category/${categorySlug}`);
+      // }
+    },
+    [router, onClose, user?.role, locale] // Add user?.role and locale to dependencies
+  );
 
   // Memoized alphabet generation
   const alphabet = useMemo(() => {
@@ -193,7 +194,7 @@ ItemSkeleton.displayName = "ItemSkeleton";
 
       return { data, alphabetStats };
     },
-  enabled: true, // Change this from `enabled: isOpen`
+    enabled: true, // Change this from `enabled: isOpen`
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -485,7 +486,7 @@ ItemSkeleton.displayName = "ItemSkeleton";
         >
           <div className="p-4">
             {/* Alphabet Index */}
-            {!hasSearched  && !isSearching && (
+            {!hasSearched && !isSearching && (
               <div className="mb-6">
                 <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
                   <h4 className="text-center text-gray-700 font-medium mb-4 text-lg">
@@ -540,12 +541,14 @@ ItemSkeleton.displayName = "ItemSkeleton";
 
             {/* Search Results or Loading States */}
             <div>
-              { isSearching ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-    {Array(8).fill(0).map((_, i) => (
-      <ItemSkeleton key={`search-skeleton-${i}`} />
-    ))}
-  </div>
+              {isSearching ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {Array(8)
+                    .fill(0)
+                    .map((_, i) => (
+                      <ItemSkeleton key={`search-skeleton-${i}`} />
+                    ))}
+                </div>
               ) : hasSearched ? (
                 <>
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">

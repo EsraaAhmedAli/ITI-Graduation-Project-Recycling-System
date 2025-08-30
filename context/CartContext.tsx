@@ -152,19 +152,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (userChanged || roleChanged) {
       const wasLoggedOut = currentUserId && !newUserId;
       const wasLoggedIn = !currentUserId && newUserId;
-      const userSwitched =
-        currentUserId && newUserId && currentUserId !== newUserId;
-      const roleChangedForSameUser = currentUserId === newUserId && roleChanged;
+      const allowedGuests = ["customer", "buyer"];
+      // const userSwitched =
+      //   currentUserId && newUserId && currentUserId !== newUserId;
+      // const roleChangedForSameUser = currentUserId === newUserId && roleChanged;
 
-      console.log("User state change:", {
-        wasLoggedOut,
-        wasLoggedIn,
-        userSwitched,
-        roleChangedForSameUser,
-        previousRole: currentUserRole,
-        newRole: newUserRole,
-        hasGuestCart: loadCartFromSession().length > 0,
-      });
+      // console.log("User state change:", {
+      //   wasLoggedOut,
+      //   wasLoggedIn,
+      //   userSwitched,
+      //   roleChangedForSameUser,
+      //   previousRole: currentUserRole,
+      //   newRole: newUserRole,
+      //   hasGuestCart: loadCartFromSession().length > 0,
+      // });
 
       if (wasLoggedOut) {
         console.log("Buyer logged out - clearing cart completely");
@@ -173,28 +174,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setCartDirty(false);
       } else if (wasLoggedIn) {
         // User logged in from guest - merge carts (with auto-merge enabled by default)
-        if (newUserRole === "buyer") {
-          console.log("Buyer logged in - skipping guest cart merge");
+        if (newUserRole !== "customer") {
+          console.log("Not Guest logged in - skipping guest cart merge");
           clearCartFromSession();
           loadCart(); // load clean buyer cart from DB
         } else {
           // Customer logged in - merge guest cart
           handleCartMerging(true); // set to false if you want confirmation
         }
-      } else if (userSwitched) {
-        // Different user logged in - save current cart to session (if guest) then load new user's cart
-        console.log("Different user logged in - switching carts");
-        if (!currentUserId) {
-          // Was guest, save current cart to session
-          saveCartToSession(cart);
-        }
-        loadCart();
-      } else if (roleChangedForSameUser) {
-        // Same user, role changed - reload cart
-        console.log("User role changed - reloading cart");
-        loadCart();
       }
-
       setCurrentUserId(newUserId);
       setCurrentUserRole(newUserRole);
     }
@@ -223,6 +211,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Improved page unload handling
   useEffect(() => {
     const handleBeforeUnload = () => {
+      console.log("EVENT FIRED");
       if (!cartDirty || cart.length === 0) return;
 
       try {

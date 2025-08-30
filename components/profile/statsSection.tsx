@@ -1,5 +1,8 @@
 import React, { memo, Suspense, useMemo } from "react";
 import dynamic from "next/dynamic";
+import { useUserAuth } from "@/context/AuthFormContext";
+import { useUserPoints } from "@/context/UserPointsContext";
+import { useLanguage } from "@/context/LanguageContext";
 import StatBox from "./statBox";
 
 // Preload the component immediately with optimized loading
@@ -19,14 +22,6 @@ const MembershipTier = dynamic(
 
 interface StatsSectionProps {
   totalCompletedOrders: number;
-  userPoints: {
-    totalPoints?: number;
-  } | null;
-  pointsLoading: boolean;
-  user: {
-    role: string;
-  };
-  t: (key: string) => string;
 }
 
 // Pre-defined grid class combinations to avoid runtime template literals
@@ -56,13 +51,12 @@ if (typeof window !== "undefined") {
 }
 
 const StatsSection = memo(
-  function StatsSection({
-    totalCompletedOrders,
-    userPoints,
-    pointsLoading,
-    user,
-    t,
-  }: StatsSectionProps) {
+  function StatsSection() {
+    // Consume contexts directly
+    const { user } = useUserAuth();
+    const { userPoints, pointsLoading, totalCompletedOrders } = useUserPoints();
+    const { t } = useLanguage();
+
     // Memoize expensive computations
     const { isNotBuyer, isCustomer, totalPoints, labels, gridClass } =
       useMemo(() => {
@@ -137,13 +131,7 @@ const StatsSection = memo(
   },
   // Custom comparison function to prevent unnecessary re-renders
   (prevProps, nextProps) => {
-    return (
-      prevProps.totalCompletedOrders === nextProps.totalCompletedOrders &&
-      prevProps.userPoints?.totalPoints === nextProps.userPoints?.totalPoints &&
-      prevProps.pointsLoading === nextProps.pointsLoading &&
-      prevProps.user?.role === nextProps.user?.role &&
-      prevProps.t === nextProps.t
-    );
+    return prevProps.totalCompletedOrders === nextProps.totalCompletedOrders;
   }
 );
 
