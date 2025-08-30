@@ -296,6 +296,13 @@ export default function CartPage() {
     }
   }, [hasExceedsStockItems]);
 
+const handleNavigateToDetails = (itemName)=>{
+  if(user) {
+  router.push(`/marketplace/${itemName}`);
+
+  }
+  
+}
   const coin = locale === "en" ? "EGP" : "ج.م";
 
   // Enhanced validation function
@@ -665,11 +672,12 @@ export default function CartPage() {
                     <div className="bg-green-50 rounded-lg w-full sm:w-24 h-24 flex-shrink-0 flex items-center justify-center relative">
                       {item.image ? (
                         <Image
+                          onClick={() => handleNavigateToDetails(item.name.en)}
                           width={100}
                           height={100}
                           src={item.image}
                           alt={item.name[locale]}
-                          className="object-contain"
+                          className="object-contain cursor-pointer"
                         />
                       ) : (
                         <Package className="w-8 h-8 text-green-300" />

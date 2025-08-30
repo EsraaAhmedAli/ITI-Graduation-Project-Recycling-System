@@ -1,5 +1,43 @@
 {
   "indexPage": {
+
+
+   "marketplace": {
+      "title": "Join Our Marketplace",
+      "subtitle": "Whether you're buying, crafting, or sourcing materials - we've got you covered",
+      
+      "buyers": {
+        "title": "For Buyers",
+        "description": "Discover unique, eco-friendly products made from recycled materials by talented local artisans.",
+        "feature1": "Quality recycled products",
+        "feature2": "Support local artisans", 
+        "feature3": "Competitive prices"
+      },
+      
+      "crafters": {
+        "title": "For Crafters",
+        "description": "Turn your creative ideas into reality with our wide selection of recycled materials and resources.",
+        "feature1": "Inspiration & tutorials",
+        "feature2": "Access to materials",
+        "feature3": "Sell your creations"
+      },
+      
+      "rawMaterials": {
+        "title": "Raw Materials",
+        "description": "Find the perfect recycled materials for your next project, from paper to metals and everything in between.",
+        "feature1": "Wide variety of materials",
+        "feature2": "Sorted & categorized",
+        "feature3": "Bulk purchasing options"
+      },
+      
+      "cta": {
+        "title": "Ready to Start Trading?",
+        "description": "Join thousands of users already making a difference",
+        "button": "Explore Marketplace"
+      }
+    }
+  ,
+
     "title": {
       "line1": "Recycle Today for a",
       "line2": "Better Tomorrow"
@@ -121,8 +159,8 @@
     "systemMode": "System Mode",
     "theme": "Theme",
     "home": "Home",
-    "marketplace": "Buy some stuff",
-    "categories": "Sell your items",
+    "marketplace": "Market place",
+    "categories": "Categories",
     "ecoAssist": "Eco-Assist",
     "collection": "Collection",
     "myCollection": "My Collection",
@@ -887,6 +925,8 @@
     "addToCollection": "Add to Collection"
   },
   "common": {
+    "marketplaceViewOnly": "Marketplace view only",
+    "maxQuantityExceeded" : "maximum quantity is 5000",
     "crossLanguageHint" : "Search works across Arabic and English languages",
     "tryDifferentSearch" : "Try different search terms or check spelling",
     "noItemsFound" : "no items found",

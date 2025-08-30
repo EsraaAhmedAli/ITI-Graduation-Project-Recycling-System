@@ -208,6 +208,159 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Marketplace Section - Add this after the Steps Section and before Community Section */}
+<section className="max-w-7xl mx-auto px-4 py-16 md:py-24">
+  <div className="text-center mb-16">
+    <h2
+      className="text-4xl md:text-5xl font-bold mb-6"
+      style={{ color: "var(--section-gradient)" }}
+    >
+      {t("indexPage.marketplace.title")}
+    </h2>
+    <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+      {t("indexPage.marketplace.subtitle")}
+    </p>
+  </div>
+
+  <div className="grid md:grid-cols-3 gap-8 mb-12">
+    {/* Buyers Card */}
+    <div className="group relative overflow-hidden bg-white dark:bg-gray-800 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 dark:border-gray-700">
+      <div className="absolute inset-0 bg-gradient-to-br from-green-50/50 to-emerald-50/30 dark:from-green-900/20 dark:to-emerald-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      
+      <div className="relative p-8 text-center">
+        <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+          <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M8 11v6a4 4 0 008 0v-6M8 11h8" />
+          </svg>
+        </div>
+        
+        <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">
+          {t("indexPage.marketplace.buyers.title")}
+        </h3>
+        
+        <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
+          {t("indexPage.marketplace.buyers.description")}
+        </p>
+        
+        <div className="space-y-3">
+          <div className="flex items-center text-sm text-gray-700 dark:text-gray-300">
+            <div className="w-2 h-2 bg-green-400 rounded-full mr-3" />
+            {t("indexPage.marketplace.buyers.feature1")}
+          </div>
+          <div className="flex items-center text-sm text-gray-700 dark:text-gray-300">
+            <div className="w-2 h-2 bg-green-400 rounded-full mr-3" />
+            {t("indexPage.marketplace.buyers.feature2")}
+          </div>
+          <div className="flex items-center text-sm text-gray-700 dark:text-gray-300">
+            <div className="w-2 h-2 bg-green-400 rounded-full mr-3" />
+            {t("indexPage.marketplace.buyers.feature3")}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Crafters Card */}
+    <div className="group relative overflow-hidden bg-white dark:bg-gray-800 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 dark:border-gray-700">
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/30 dark:from-blue-900/20 dark:to-indigo-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      
+      <div className="relative p-8 text-center">
+        <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+          <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+          </svg>
+        </div>
+        
+        <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">
+          {t("indexPage.marketplace.crafters.title")}
+        </h3>
+        
+        <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
+          {t("indexPage.marketplace.crafters.description")}
+        </p>
+        
+        <div className="space-y-3">
+          <div className="flex items-center text-sm text-gray-700 dark:text-gray-300">
+            <div className="w-2 h-2 bg-blue-400 rounded-full mr-3" />
+            {t("indexPage.marketplace.crafters.feature1")}
+          </div>
+          <div className="flex items-center text-sm text-gray-700 dark:text-gray-300">
+            <div className="w-2 h-2 bg-blue-400 rounded-full mr-3" />
+            {t("indexPage.marketplace.crafters.feature2")}
+          </div>
+          <div className="flex items-center text-sm text-gray-700 dark:text-gray-300">
+            <div className="w-2 h-2 bg-blue-400 rounded-full mr-3" />
+            {t("indexPage.marketplace.crafters.feature3")}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Raw Materials Card */}
+    <div className="group relative overflow-hidden bg-white dark:bg-gray-800 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 dark:border-gray-700">
+      <div className="absolute inset-0 bg-gradient-to-br from-amber-50/50 to-orange-50/30 dark:from-amber-900/20 dark:to-orange-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      
+      <div className="relative p-8 text-center">
+        <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+          <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
+        </div>
+        
+        <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">
+          {t("indexPage.marketplace.rawMaterials.title")}
+        </h3>
+        
+        <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
+          {t("indexPage.marketplace.rawMaterials.description")}
+        </p>
+        
+        <div className="space-y-3">
+          <div className="flex items-center text-sm text-gray-700 dark:text-gray-300">
+            <div className="w-2 h-2 bg-amber-400 rounded-full mr-3" />
+            {t("indexPage.marketplace.rawMaterials.feature1")}
+          </div>
+          <div className="flex items-center text-sm text-gray-700 dark:text-gray-300">
+            <div className="w-2 h-2 bg-amber-400 rounded-full mr-3" />
+            {t("indexPage.marketplace.rawMaterials.feature2")}
+          </div>
+          <div className="flex items-center text-sm text-gray-700 dark:text-gray-300">
+            <div className="w-2 h-2 bg-amber-400 rounded-full mr-3" />
+            {t("indexPage.marketplace.rawMaterials.feature3")}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {/* CTA Section */}
+  <div className="text-center">
+    <div className="inline-flex flex-col sm:flex-row items-center gap-4 p-8 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-3xl border border-gray-200 dark:border-gray-600 shadow-lg">
+      <div className="text-center sm:text-left sm:flex-1">
+        <h3 className="text-2xl font-bold mb-2 text-gray-900 dark:text-gray-100">
+          {t("indexPage.marketplace.cta.title")}
+        </h3>
+        <p className="text-gray-600 dark:text-gray-300">
+          {t("indexPage.marketplace.cta.description")}
+        </p>
+      </div>
+      
+      <Link
+        href="/marketplace"
+        className="group relative overflow-hidden bg-gradient-to-r from-emerald-500 to-blue-600 hover:from-emerald-600 hover:to-blue-700 text-white font-bold py-4 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl whitespace-nowrap"
+        prefetch={false}
+      >
+        <span className="relative z-10 flex items-center gap-2">
+          {t("indexPage.marketplace.cta.button")}
+          <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
+        </span>
+        <div className="absolute inset-0 bg-white/20 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
+      </Link>
+    </div>
+  </div>
+</section>
+
       {/* Community Section - Reduced blur effects */}
       <section  style={{ background: "var(--color-green-100)" }} className="relative overflow-hidden bg-gradient-to-br from-emerald-50/80 via-blue-50/40 to-purple-50/60 dark:from-emerald-950/20 dark:via-blue-950/10 dark:to-purple-950/15 py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 rounded-2xl mx-4 sm:mx-6 lg:mx-12 my-8 sm:my-12 border border-white/20 dark:border-white/5">
         {/* Reduced background decorative elements */}

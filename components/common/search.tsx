@@ -9,7 +9,6 @@ import Image from "next/image";
 import { X, Search } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import Button from "./Button";
-import { Loader } from "@/components/common";
 import { useUserAuth } from "@/context/AuthFormContext";
 
 interface SearchResult {
@@ -97,16 +96,21 @@ export default function NavbarSearch({
       if (onClose) onClose();
 
       // Check user role and navigate accordingly
-      // if (user?.role === "buyer") {
-      //   console.log("oldWay")
-      //   const itemSlug = item.displayName || item.name?.[locale];
-      //   console.log("🚀 Navigating buyer to:", `/marketplace/${itemSlug}`);
-      //   router.push(`/marketplace/${itemSlug}`);
-      // } else {
-      //   const categorySlug = item.categoryName?.en;
-      //   console.log("🚀 Navigating to:", `/category/${categorySlug}`);
-      //   router.push(`/category/${categorySlug}`);
-      // }
+      if (user?.role == "buyer") {
+        const itemSlug = item.displayName || item.name?.[locale];
+        console.log("🚀 Navigating buyer to:", `/marketplace/${itemSlug}`);
+        router.push(`/marketplace/${itemSlug}`);
+      } else if (user?.role == "customer") {
+        localStorage.removeItem("fromMarketPlace");
+
+        const itemSlug = item.displayName || item.name?.[locale];
+        console.log("🚀 Navigating buyer to:", `/marketplace/${itemSlug}`);
+        router.push(`/marketplace/${itemSlug}`);
+      } else {
+        const categorySlug = item.categoryName?.en;
+        console.log("🚀 Navigating to:", `/category/${categorySlug}`);
+        router.push(`/category/${categorySlug}`);
+      }
     },
     [router, onClose, user?.role, locale] // Add user?.role and locale to dependencies
   );
@@ -194,7 +198,7 @@ export default function NavbarSearch({
 
       return { data, alphabetStats };
     },
-    enabled: true, // Change this from `enabled: isOpen`
+    enabled: isOpen, // Change this from `enabled: isOpen`
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,

@@ -749,6 +749,22 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
     }
   };
 
+  // Prevent background/body scrolling while modal is open (mobile fix)
+  // Use overflow:hidden on html/body instead of position:fixed to avoid preventing
+  // inner-element scrolling on some mobile browsers (iOS Safari quirk).
+  useEffect(() => {
+    const prevBodyOverflow = document.body.style.overflow;
+
+    // Lock scrolling on the body only; leave documentElement alone to avoid blocking
+    // inner-element touch handling on some mobile browsers.
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      // Restore previous overflow values
+      document.body.style.overflow = prevBodyOverflow;
+    };
+  }, []);
+
   // Loading state component remains the same
   if (isLoading) {
     return (
@@ -775,7 +791,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
         className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-4"
         onClick={handleBackdropClick}
       >
-        <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-md p-6">
+        <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-md sm:max-w-2xl md:max-w-4xl p-4 sm:p-6">
           <div className="text-center">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg
@@ -808,10 +824,13 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
   // Rest of the component UI remains the same...
   return (
     <div
-      className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-3 sm:p-4 overflow-hidden overscroll-none"
       onClick={handleBackdropClick}
     >
-      <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden">
+  <div
+    className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-[92vw] sm:max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-6xl max-h-[90vh] flex flex-col overflow-hidden relative"
+    style={{ maxHeight: 'calc(100vh - 56px)', height: 'calc(100vh - 56px)' }}
+  >
         {showSuccess && (
           <div className="absolute top-4 left-4 right-4 bg-success text-white px-4 py-2 rounded-lg flex items-center space-x-2 z-10">
             <svg
@@ -831,12 +850,12 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
           </div>
         )}
 
-        <div className="flex flex-col h-full">
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <h3 className="text-2xl font-bold text-gray-800 flex items-center">
-              <div className="w-10 h-10 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center mr-3">
+          <div className="flex flex-col h-full">
+          <div className="flex items-center justify-between p-3 sm:p-6 border-b border-gray-200">
+            <h3 className="text-base sm:text-2xl font-bold text-gray-800 flex items-center">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center mr-3">
                 <svg
-                  className="w-6 h-6 text-white"
+                  className="w-5 h-5 sm:w-6 sm:h-6 text-white"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -871,75 +890,49 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          <div
+            className="flex-1 min-h-0 items-display-scroll overflow-y-auto p-3 sm:p-6 space-y-4 touch-auto overscroll-contain"
+            style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+            onWheel={(e) => e.stopPropagation()}
+          >
             {localItems.map((item, index) => {
-              // Only show calculated values for items found in database
-              const calculatedPoints = item.found
-                ? Math.floor(item.quantity * (item.points || 0))
-                : 0;
-              const calculatedPrice = item.found
-                ? (item.quantity * (item.price || 0)).toFixed(2)
-                : "0.00";
+              const calculatedPoints = item.found ? Math.floor(item.quantity * (item.points || 0)) : 0;
+              const calculatedPrice = item.found ? (item.quantity * (item.price || 0)).toFixed(2) : "0.00";
 
               return (
                 <div
                   key={index}
-                  className={`border rounded-xl p-5 transition-all duration-200 ${
+                  className={`border rounded-xl p-4 sm:p-5 transition-all duration-200 ${
                     item.found
                       ? "bg-gradient-to-r from-primary/5 to-secondary/5 border-primary/20 hover:from-primary/10 hover:to-secondary/10"
                       : "bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200 hover:from-gray-100 hover:to-gray-150"
                   }`}
                 >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-start space-x-4 flex-1">
-                      {/* Item Image - only show for items in catalog */}
-                      <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        {item.found &&
-                        item.image &&
-                        item.image !== "/placeholder-item.jpg" ? (
+                  <div className="flex flex-col sm:flex-row items-start justify-between mb-4 gap-3 sm:gap-0">
+                    <div className="flex items-start space-x-3 sm:space-x-4 flex-1">
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        {item.found && item.image && item.image !== "/placeholder-item.jpg" ? (
                           <Image
                             src={item.image}
                             alt={item.found && item.name ? getDisplayName(item.name) : item.material}
                             width={64}
                             height={64}
                             className="w-full h-full object-cover rounded-lg"
-                            onError={(e) => {
-                              e.currentTarget.style.display = "none";
-                              const nextSibling = e.currentTarget
-                                .nextElementSibling as HTMLElement;
-                              if (nextSibling)
-                                nextSibling.classList.remove("hidden");
-                            }}
                           />
-                        ) : null}
-                        <div
-                          className={`${
-                            item.found &&
-                            item.image &&
-                            item.image !== "/placeholder-item.jpg"
-                              ? "hidden"
-                              : ""
-                          } text-gray-400`}
-                        >
-                          <svg
-                            className="w-8 h-8"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M20 7l-8-4-8 4m16 0l-8 4-8-4m16 0v10l-8 4-8-4V7"
-                            />
-                          </svg>
-                        </div>
+                        ) : (
+                          <div className="text-gray-400">
+                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4-8-4m16 0v10l-8 4-8-4V7" />
+                            </svg>
+                          </div>
+                        )}
                       </div>
 
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between">
-                          <h4 className="font-semibold text-gray-800 text-xl mb-2">
+                          <h4 className="font-semibold text-gray-800 text-lg sm:text-xl mb-2 truncate">
                             {item.found && item.name ? getDisplayName(item.name) : item.material}
                             {!item.found && (
                               <span className="ml-2 text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded-full">
@@ -953,148 +946,70 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                             )}
                           </h4>
                         </div>
-                        <div className="flex items-center space-x-6 mb-2">
+
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-6 space-y-2 sm:space-y-0 mb-2">
                           <p className="text-sm text-gray-600 flex items-center space-x-1">
                             <span>Unit:</span>
-                            <span className="font-medium">
-                              {item.unit === "KG" ? "Kilograms" : "Pieces"}
-                            </span>
+                            <span className="font-medium">{item.unit === "KG" ? "Kilograms" : "Pieces"}</span>
                           </p>
-                          {/* Only show points and price for items found in catalog */}
-                          {item.found && (
+
+                          {item.found ? (
                             <>
                               <div className="flex items-center space-x-1">
-                                <span className="text-sm text-success font-semibold">
-                                  {calculatedPoints} pts
-                                </span>
-                               
+                                <span className="text-sm text-success font-semibold">{calculatedPoints} pts</span>
                               </div>
                               <div className="flex items-center space-x-1">
-                                <span className="text-sm text-blue-600 font-semibold">
-                                  {calculatedPrice} EGP
-                                </span>
-                         
+                                <span className="text-sm text-blue-600 font-semibold">{calculatedPrice} EGP</span>
                               </div>
                             </>
-                          )}
-                          {/* Show message for items not in catalog */}
-                          {!item.found && (
-                            <div className="text-sm text-orange-600 italic">
-                              Price and points will be available when added to
-                              catalog
-                            </div>
+                          ) : (
+                            <div className="text-sm text-orange-600 italic">Price and points will be available when added to catalog</div>
                           )}
                         </div>
                       </div>
                     </div>
-                    <button
-                      onClick={() => removeItem(index)}
-                      className="text-red-500 hover:text-red-700 transition-colors p-2 hover:bg-red-50 rounded-full"
-                      title="Remove item"
-                    >
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        />
-                      </svg>
-                    </button>
+
+                    <div className="flex-shrink-0 self-start sm:self-auto">
+                      <button onClick={() => removeItem(index)} className="text-red-500 hover:text-red-700 transition-colors p-2 hover:bg-red-50 rounded-full" title="Remove item">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    {/* Only show quantity controls for items in catalog */}
+                  <div className="flex flex-col sm:flex-row items-center sm:justify-between">
                     {item.found ? (
-                      <div className="flex items-center space-x-4">
-                        <button
-                          onClick={() => decreaseQuantity(index)}
-                          className="w-10 h-10 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                          disabled={
-                            item.unit === "pieces"
-                              ? item.quantity <= 1
-                              : item.quantity <= 0.25
-                          }
-                        >
-                          <svg
-                            className="w-5 h-5 text-gray-700"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M20 12H4"
-                            />
+                      <div className="flex items-center space-x-2 sm:space-x-4">
+                        <button onClick={() => decreaseQuantity(index)} className="w-10 h-10 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled={item.unit === "pieces" ? item.quantity <= 1 : item.quantity <= 0.25}>
+                          <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                           </svg>
                         </button>
 
-                        <div className="bg-white border border-gray-300 rounded-lg px-4 py-3 min-w-[100px] text-center">
-                          <input
-                            type="number"
-                            value={item.quantity}
-                            onChange={(e) =>
-                              handleQuantityChange(index, e.target.value)
-                            }
-                            onBlur={() => handleQuantityBlur(index)}
-                            className="w-full text-center font-semibold text-gray-800 text-lg bg-transparent border-none outline-none"
-                            min={
-                              item.unit === "pieces" || item.unit === "piece"
-                                ? "1"
-                                : "0.25"
-                            }
-                            step={
-                              item.unit === "pieces" || item.unit === "piece"
-                                ? "1"
-                                : "0.25"
-                            }
-                          />
+                        <div className="bg-white border border-gray-300 rounded-lg px-3 py-2 min-w-[70px] sm:min-w-[100px] text-center">
+                          <input type="number" value={item.quantity} onChange={(e) => handleQuantityChange(index, e.target.value)} onBlur={() => handleQuantityBlur(index)} className="w-full text-center font-semibold text-gray-800 text-base sm:text-lg bg-transparent border-none outline-none" min={item.unit === "pieces" || item.unit === "piece" ? "1" : "0.25"} step={item.unit === "pieces" || item.unit === "piece" ? "1" : "0.25"} />
                         </div>
 
-                        <button
-                          onClick={() => increaseQuantity(index)}
-                          className="w-10 h-10 bg-primary hover:bg-primary/90 text-white rounded-full flex items-center justify-center transition-colors"
-                        >
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                            />
+                        <button onClick={() => increaseQuantity(index)} className="w-10 h-10 bg-primary hover:bg-primary/90 text-white rounded-full flex items-center justify-center transition-colors">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                           </svg>
                         </button>
                       </div>
                     ) : (
-                      <div className="text-gray-500 italic">
-                        Item detected but not available in catalog
-                      </div>
+                      <div className="text-gray-500 italic">Item detected but not available in catalog</div>
                     )}
 
-                    <div className="text-right">
+                    <div className="text-right mt-3 sm:mt-0">
                       {item.found ? (
                         <>
                           <div className="text-sm text-gray-500">Total</div>
-                          <div className="font-semibold text-primary text-lg">
-                            {item.quantity} {item.unit}
-                          </div>
+                          <div className="font-semibold text-primary text-lg">{item.quantity} {item.unit}</div>
                         </>
                       ) : (
-                        <div className="text-sm text-gray-400 italic">
-                          Not available
-                        </div>
+                        <div className="text-sm text-gray-400 italic">Not available</div>
                       )}
                     </div>
                   </div>
@@ -1103,7 +1018,9 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
             })}
           </div>
 
-          <div className="border-t border-gray-200 p-6">
+          {/* Footer: make it stick to bottom on short screens; add padding-bottom to scroll area so content isn't hidden */}
+          <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 p-3 sm:p-6">
+            <div className="max-w-[92vw] sm:max-w-none mx-auto">
             {/* Show notification if there are items not in catalog */}
             {localItems.some((item) => !item.found) && (
               <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
@@ -1130,11 +1047,10 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
               </div>
             )}
 
-            <div className="flex space-x-4 mb-6">
+      <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 mb-6">
               <button
                 onClick={handleBrowseMore}
-            
-                className="flex-1 bg-green-700  hover:from-neutral/90 hover:to-neutral text-white font-medium py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2"
+        className="flex-1 bg-green-700 hover:bg-green-800 text-white font-medium py-2 sm:py-4 px-4 sm:px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 text-sm sm:text-base"
               >
                 <svg
                   className="w-5 h-5"
@@ -1158,7 +1074,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                   localItems.filter((item) => item.found).length === 0 ||
                   isAddingToCart
                 }
-                className="flex-1 bg-green-700 hover:from-primary/90 hover:to-secondary/90 text-white font-medium py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 bg-green-700 hover:bg-green-800 text-white font-medium py-2 sm:py-4 px-4 sm:px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
               >
                 {isAddingToCart ? (
                   <>
@@ -1209,11 +1125,11 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
               </button>
             </div>
 
-            <div className="pt-4 border-t border-gray-200">
-              <div className="grid grid-cols-4 gap-4 text-center">
+            <div className="pt-2 sm:pt-4">
+              <div className="grid grid-cols-1 gap-4 text-center totals-grid">
                 <div>
                   <div className="text-sm text-gray-600">Total Items</div>
-                  <div className="text-xl font-semibold text-gray-800">
+                  <div className="text-lg sm:text-xl font-semibold text-gray-800">
                     {localItems.length}
                   </div>
                   <div className="text-xs text-gray-500">
@@ -1225,7 +1141,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                   <div className="text-sm text-gray-600">
                     Available Quantity
                   </div>
-                  <div className="text-xl font-semibold text-gray-800">
+                  <div className="text-lg sm:text-xl font-semibold text-gray-800">
                     {localItems
                       .filter((item) => item.found)
                       .reduce((sum, item) => sum + item.quantity, 0)}
@@ -1233,7 +1149,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                 </div>
                 <div>
                   <div className="text-sm text-gray-600">Total Points</div>
-                  <div className="text-xl font-semibold text-success flex items-center justify-center space-x-1">
+                  <div className="text-lg sm:text-xl font-semibold text-success flex items-center justify-center space-x-1">
                     <span>
                       {localItems
                         .filter((item) => item.found)
@@ -1244,12 +1160,11 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                           0
                         )}
                     </span>
-             
                   </div>
                 </div>
                 <div>
                   <div className="text-sm text-gray-600">Total Price</div>
-                  <div className="text-xl font-semibold text-blue-600 flex items-center justify-center space-x-1">
+                  <div className="text-lg sm:text-xl font-semibold text-blue-600 flex items-center justify-center space-x-1">
                     <span>
                       {localItems
                         .filter((item) => item.found)
@@ -1258,15 +1173,25 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                             sum + item.quantity * (item.price || 0),
                           0
                         )
-                        .toFixed(2)}{" "}
+                        .toFixed(2)}{' '}
                       EGP
                     </span>
-             
                   </div>
                 </div>
               </div>
+              </div>
             </div>
           </div>
+          {/* Ensure scrollable area has extra bottom padding so last item isn't hidden behind the footer */}
+          <style jsx>{`
+            /* Larger bottom padding so last item is not hidden by the absolute footer */
+            .items-display-scroll { padding-bottom: calc(24rem + env(safe-area-inset-bottom)); touch-action: pan-y; }
+            @media (min-width: 640px) { .items-display-scroll { padding-bottom: calc(20rem + env(safe-area-inset-bottom)); } }
+            /* Ensure footer has space for iOS home indicator */
+            .absolute.bottom-0 { padding-bottom: env(safe-area-inset-bottom); }
+            /* Make totals layout responsive to available width: try two columns when space allows */
+            .totals-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+          `}</style>
         </div>
       </div>
     </div>
