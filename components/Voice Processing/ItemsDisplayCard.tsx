@@ -67,11 +67,14 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
   const isLoggedIn = !!user?._id;
 
   // Helper function to safely get display name from bilingual name field
-  const getDisplayName = useCallback((nameField: string | { en: string; ar: string } | undefined): string => {
-    if (!nameField) return '';
-    if (typeof nameField === 'string') return nameField;
-    return nameField[locale] || nameField.en || '';
-  }, [locale]);
+  const getDisplayName = useCallback(
+    (nameField: string | { en: string; ar: string } | undefined): string => {
+      if (!nameField) return "";
+      if (typeof nameField === "string") return nameField;
+      return nameField[locale] || nameField.en || "";
+    },
+    [locale]
+  );
 
   // Debug: Monitor cart changes
   useEffect(() => {
@@ -96,7 +99,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
     } else {
       // For guest users, get cart from localStorage
       try {
-        const stored = localStorage.getItem("guest_cart"); // Correct key used by CartContext
+        const stored = localStorage.getItem("cart"); // Correct key used by CartContext
         const freshCart = stored ? JSON.parse(stored) : [];
         console.log(
           `🔄 Fresh cart state from storage (guest user): ${freshCart.length} items`,
@@ -114,13 +117,18 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
   }, [isLoggedIn, cart, getDisplayName]);
 
   // Improved function to fetch all items at once with role-based pricing
-  const fetchAllItemsFromDatabase = useCallback(async (): Promise<DatabaseItem[]> => {
+  const fetchAllItemsFromDatabase = useCallback(async (): Promise<
+    DatabaseItem[]
+  > => {
     try {
       console.log("🔍 Fetching all items from database...");
 
       // Determine user role for pricing - use user object from auth context
       const userRole = user?.role === "buyer" ? "buyer" : "customer";
-      console.log(`💰 Using ${userRole} pricing for user:`, user?._id || "guest");
+      console.log(
+        `💰 Using ${userRole} pricing for user:`,
+        user?._id || "guest"
+      );
 
       // Use the get-items endpoint with role-based pricing
       const response = await api.get(
@@ -131,12 +139,17 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
       console.log(
         `✅ Retrieved ${allItems.length} items from database with ${userRole} pricing`
       );
-      console.log("📊 Sample item pricing:", allItems[0] ? {
-        name: allItems[0].name,
-        price: allItems[0].price,
-        points: allItems[0].points
-      } : "No items found");
-      
+      console.log(
+        "📊 Sample item pricing:",
+        allItems[0]
+          ? {
+              name: allItems[0].name,
+              price: allItems[0].price,
+              points: allItems[0].points,
+            }
+          : "No items found"
+      );
+
       return allItems;
     } catch (error) {
       console.error("❌ Error fetching all items:", error);
@@ -196,14 +209,16 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
         `🔍 Searching for: "${itemName}" (normalized: "${normalizedSearchName}")`
       );
       console.log(
-        `📋 Available items: ${allItems.map((item) => `${item.name.en}|${item.name.ar}`).join(", ")}`
+        `📋 Available items: ${allItems
+          .map((item) => `${item.name.en}|${item.name.ar}`)
+          .join(", ")}`
       );
 
       // Clean function to remove Arabic diacritics and normalize text
       const cleanText = (text: string) => {
         // Add null/undefined check
-        if (!text || typeof text !== 'string') {
-          return '';
+        if (!text || typeof text !== "string") {
+          return "";
         }
         return (
           text
@@ -222,13 +237,15 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
       // Try EXACT match first (most reliable) - case insensitive
       // Check both English and Arabic names
       let found = allItems.find(
-        (item) => 
-          cleanText(item.name.en) === cleanedSearchName || 
+        (item) =>
+          cleanText(item.name.en) === cleanedSearchName ||
           cleanText(item.name.ar) === cleanedSearchName
       );
 
       if (found) {
-        console.log(`✅ Exact match found: ${itemName} -> ${found.name.en}|${found.name.ar}`);
+        console.log(
+          `✅ Exact match found: ${itemName} -> ${found.name.en}|${found.name.ar}`
+        );
         return found;
       }
 
@@ -241,9 +258,10 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
       for (const variation of pluralVariations) {
         if (variation !== cleanedSearchName && variation.length > 2) {
           // Don't repeat the same search and avoid very short strings
-          found = allItems.find((item) => 
-            cleanText(item.name.en) === variation || 
-            cleanText(item.name.ar) === variation
+          found = allItems.find(
+            (item) =>
+              cleanText(item.name.en) === variation ||
+              cleanText(item.name.ar) === variation
           );
           if (found) {
             console.log(
@@ -270,7 +288,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
       if (commonVariations[cleanedSearchName]) {
         for (const variation of commonVariations[cleanedSearchName]) {
           found = allItems.find(
-            (item) => 
+            (item) =>
               cleanText(item.name.en) === cleanText(variation) ||
               cleanText(item.name.ar) === cleanText(variation)
           );
@@ -356,7 +374,9 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
           if (mergedItems.has(dbItem._id)) {
             const existingItem = mergedItems.get(dbItem._id)!;
             console.log(
-              `🔄 Merging duplicate item: ${item.material} + ${existingItem.material} (both map to ${dbItem.name[locale] || dbItem.name.en})`
+              `🔄 Merging duplicate item: ${item.material} + ${
+                existingItem.material
+              } (both map to ${dbItem.name[locale] || dbItem.name.en})`
             );
 
             // Merge quantities
@@ -366,7 +386,9 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
             );
           } else {
             console.log(
-              `➕ Adding new database item: ${dbItem.name[locale] || dbItem.name.en} (${item.quantity} ${item.unit})`
+              `➕ Adding new database item: ${
+                dbItem.name[locale] || dbItem.name.en
+              } (${item.quantity} ${item.unit})`
             );
             mergedItems.set(dbItem._id, enrichedItem);
           }
@@ -588,7 +610,9 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
       console.log(`✅ ${validItems.length} items passed validation`);
 
       // Get current cart state for merging
-      console.log(`🔄 Getting current cart state for merging... (User logged in: ${isLoggedIn})`);
+      console.log(
+        `🔄 Getting current cart state for merging... (User logged in: ${isLoggedIn})`
+      );
       const currentCart = getFreshCartState();
       console.log(`📋 Current cart has ${currentCart.length} items`);
 
@@ -642,16 +666,18 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
             quantity: newQuantity,
           };
           console.log(
-            `🔄 Updated existing item: ${getDisplayName(newItem.name)} (${existingItem.quantity} + ${newItem.quantity} = ${newQuantity})`
+            `🔄 Updated existing item: ${getDisplayName(newItem.name)} (${
+              existingItem.quantity
+            } + ${newItem.quantity} = ${newQuantity})`
           );
           updatedCount++;
         } else {
           // New item, add to cart
           mergedCart.push(newItem);
           console.log(
-            `➕ Added new item: ${getDisplayName(newItem.name)} (${newItem.quantity} ${
-              newItem.measurement_unit === 1 ? "KG" : "pieces"
-            })`
+            `➕ Added new item: ${getDisplayName(newItem.name)} (${
+              newItem.quantity
+            } ${newItem.measurement_unit === 1 ? "KG" : "pieces"})`
           );
           addedCount++;
         }
@@ -672,9 +698,9 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
       console.log(`📊 Final results: Cart has ${finalCart.length} items`);
       console.log(
         "🔍 Final cart contents:",
-        finalCart.map((item) => ({ 
-          name: getDisplayName(item.name), 
-          quantity: item.quantity 
+        finalCart.map((item) => ({
+          name: getDisplayName(item.name),
+          quantity: item.quantity,
         }))
       );
 
@@ -699,7 +725,13 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
     } finally {
       setIsAddingToCart(false);
     }
-  }, [localItems, updateCartState, isLoggedIn, getFreshCartState, getDisplayName]);
+  }, [
+    localItems,
+    updateCartState,
+    isLoggedIn,
+    getFreshCartState,
+    getDisplayName,
+  ]);
 
   const handleCheckout = async () => {
     console.log("🚀 Starting checkout process...");
@@ -827,10 +859,13 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
       className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-3 sm:p-4 overflow-hidden overscroll-none"
       onClick={handleBackdropClick}
     >
-  <div
-    className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-[92vw] sm:max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-6xl max-h-[90vh] flex flex-col overflow-hidden relative"
-    style={{ maxHeight: 'calc(100vh - 56px)', height: 'calc(100vh - 56px)' }}
-  >
+      <div
+        className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-[92vw] sm:max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-6xl max-h-[90vh] flex flex-col overflow-hidden relative"
+        style={{
+          maxHeight: "calc(100vh - 56px)",
+          height: "calc(100vh - 56px)",
+        }}
+      >
         {showSuccess && (
           <div className="absolute top-4 left-4 right-4 bg-success text-white px-4 py-2 rounded-lg flex items-center space-x-2 z-10">
             <svg
@@ -850,7 +885,7 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
           </div>
         )}
 
-          <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full">
           <div className="flex items-center justify-between p-3 sm:p-6 border-b border-gray-200">
             <h3 className="text-base sm:text-2xl font-bold text-gray-800 flex items-center">
               <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center mr-3">
@@ -892,14 +927,21 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
 
           <div
             className="flex-1 min-h-0 items-display-scroll overflow-y-auto p-3 sm:p-6 space-y-4 touch-auto overscroll-contain"
-            style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}
+            style={{
+              WebkitOverflowScrolling: "touch",
+              overscrollBehavior: "contain",
+            }}
             onTouchStart={(e) => e.stopPropagation()}
             onTouchMove={(e) => e.stopPropagation()}
             onWheel={(e) => e.stopPropagation()}
           >
             {localItems.map((item, index) => {
-              const calculatedPoints = item.found ? Math.floor(item.quantity * (item.points || 0)) : 0;
-              const calculatedPrice = item.found ? (item.quantity * (item.price || 0)).toFixed(2) : "0.00";
+              const calculatedPoints = item.found
+                ? Math.floor(item.quantity * (item.points || 0))
+                : 0;
+              const calculatedPrice = item.found
+                ? (item.quantity * (item.price || 0)).toFixed(2)
+                : "0.00";
 
               return (
                 <div
@@ -913,18 +955,34 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                   <div className="flex flex-col sm:flex-row items-start justify-between mb-4 gap-3 sm:gap-0">
                     <div className="flex items-start space-x-3 sm:space-x-4 flex-1">
                       <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        {item.found && item.image && item.image !== "/placeholder-item.jpg" ? (
+                        {item.found &&
+                        item.image &&
+                        item.image !== "/placeholder-item.jpg" ? (
                           <Image
                             src={item.image}
-                            alt={item.found && item.name ? getDisplayName(item.name) : item.material}
+                            alt={
+                              item.found && item.name
+                                ? getDisplayName(item.name)
+                                : item.material
+                            }
                             width={64}
                             height={64}
                             className="w-full h-full object-cover rounded-lg"
                           />
                         ) : (
                           <div className="text-gray-400">
-                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4-8-4m16 0v10l-8 4-8-4V7" />
+                            <svg
+                              className="w-8 h-8"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M20 7l-8-4-8 4m16 0l-8 4-8-4m16 0v10l-8 4-8-4V7"
+                              />
                             </svg>
                           </div>
                         )}
@@ -933,7 +991,9 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between">
                           <h4 className="font-semibold text-gray-800 text-lg sm:text-xl mb-2 truncate">
-                            {item.found && item.name ? getDisplayName(item.name) : item.material}
+                            {item.found && item.name
+                              ? getDisplayName(item.name)
+                              : item.material}
                             {!item.found && (
                               <span className="ml-2 text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded-full">
                                 Not in catalog
@@ -950,66 +1010,143 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                         <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-6 space-y-2 sm:space-y-0 mb-2">
                           <p className="text-sm text-gray-600 flex items-center space-x-1">
                             <span>Unit:</span>
-                            <span className="font-medium">{item.unit === "KG" ? "Kilograms" : "Pieces"}</span>
+                            <span className="font-medium">
+                              {item.unit === "KG" ? "Kilograms" : "Pieces"}
+                            </span>
                           </p>
 
                           {item.found ? (
                             <>
                               <div className="flex items-center space-x-1">
-                                <span className="text-sm text-success font-semibold">{calculatedPoints} pts</span>
+                                <span className="text-sm text-success font-semibold">
+                                  {calculatedPoints} pts
+                                </span>
                               </div>
                               <div className="flex items-center space-x-1">
-                                <span className="text-sm text-blue-600 font-semibold">{calculatedPrice} EGP</span>
+                                <span className="text-sm text-blue-600 font-semibold">
+                                  {calculatedPrice} EGP
+                                </span>
                               </div>
                             </>
                           ) : (
-                            <div className="text-sm text-orange-600 italic">Price and points will be available when added to catalog</div>
+                            <div className="text-sm text-orange-600 italic">
+                              Price and points will be available when added to
+                              catalog
+                            </div>
                           )}
                         </div>
                       </div>
                     </div>
 
                     <div className="flex-shrink-0 self-start sm:self-auto">
-                      <button onClick={() => removeItem(index)} className="text-red-500 hover:text-red-700 transition-colors p-2 hover:bg-red-50 rounded-full" title="Remove item">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      <button
+                        onClick={() => removeItem(index)}
+                        className="text-red-500 hover:text-red-700 transition-colors p-2 hover:bg-red-50 rounded-full"
+                        title="Remove item"
+                      >
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
                         </svg>
                       </button>
                     </div>
-
                   </div>
 
                   <div className="flex flex-col sm:flex-row items-center sm:justify-between">
                     {item.found ? (
                       <div className="flex items-center space-x-2 sm:space-x-4">
-                        <button onClick={() => decreaseQuantity(index)} className="w-10 h-10 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled={item.unit === "pieces" ? item.quantity <= 1 : item.quantity <= 0.25}>
-                          <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                        <button
+                          onClick={() => decreaseQuantity(index)}
+                          className="w-10 h-10 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={
+                            item.unit === "pieces"
+                              ? item.quantity <= 1
+                              : item.quantity <= 0.25
+                          }
+                        >
+                          <svg
+                            className="w-5 h-5 text-gray-700"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M20 12H4"
+                            />
                           </svg>
                         </button>
 
                         <div className="bg-white border border-gray-300 rounded-lg px-3 py-2 min-w-[70px] sm:min-w-[100px] text-center">
-                          <input type="number" value={item.quantity} onChange={(e) => handleQuantityChange(index, e.target.value)} onBlur={() => handleQuantityBlur(index)} className="w-full text-center font-semibold text-gray-800 text-base sm:text-lg bg-transparent border-none outline-none" min={item.unit === "pieces" || item.unit === "piece" ? "1" : "0.25"} step={item.unit === "pieces" || item.unit === "piece" ? "1" : "0.25"} />
+                          <input
+                            type="number"
+                            value={item.quantity}
+                            onChange={(e) =>
+                              handleQuantityChange(index, e.target.value)
+                            }
+                            onBlur={() => handleQuantityBlur(index)}
+                            className="w-full text-center font-semibold text-gray-800 text-base sm:text-lg bg-transparent border-none outline-none"
+                            min={
+                              item.unit === "pieces" || item.unit === "piece"
+                                ? "1"
+                                : "0.25"
+                            }
+                            step={
+                              item.unit === "pieces" || item.unit === "piece"
+                                ? "1"
+                                : "0.25"
+                            }
+                          />
                         </div>
 
-                        <button onClick={() => increaseQuantity(index)} className="w-10 h-10 bg-primary hover:bg-primary/90 text-white rounded-full flex items-center justify-center transition-colors">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        <button
+                          onClick={() => increaseQuantity(index)}
+                          className="w-10 h-10 bg-primary hover:bg-primary/90 text-white rounded-full flex items-center justify-center transition-colors"
+                        >
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                            />
                           </svg>
                         </button>
                       </div>
                     ) : (
-                      <div className="text-gray-500 italic">Item detected but not available in catalog</div>
+                      <div className="text-gray-500 italic">
+                        Item detected but not available in catalog
+                      </div>
                     )}
 
                     <div className="text-right mt-3 sm:mt-0">
                       {item.found ? (
                         <>
                           <div className="text-sm text-gray-500">Total</div>
-                          <div className="font-semibold text-primary text-lg">{item.quantity} {item.unit}</div>
+                          <div className="font-semibold text-primary text-lg">
+                            {item.quantity} {item.unit}
+                          </div>
                         </>
                       ) : (
-                        <div className="text-sm text-gray-400 italic">Not available</div>
+                        <div className="text-sm text-gray-400 italic">
+                          Not available
+                        </div>
                       )}
                     </div>
                   </div>
@@ -1021,89 +1158,12 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
           {/* Footer: make it stick to bottom on short screens; add padding-bottom to scroll area so content isn't hidden */}
           <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 p-3 sm:p-6">
             <div className="max-w-[92vw] sm:max-w-none mx-auto">
-            {/* Show notification if there are items not in catalog */}
-            {localItems.some((item) => !item.found) && (
-              <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                <div className="flex items-center space-x-2">
-                  <svg
-                    className="w-5 h-5 text-orange-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.5 0L4.232 15.5c-.77.833.192 2.5 1.732 2.5z"
-                    />
-                  </svg>
-                  <span className="text-sm text-orange-700">
-                    {localItems.filter((item) => !item.found).length} item(s)
-                    detected but not available in our catalog. Only items in
-                    catalog can be added to cart.
-                  </span>
-                </div>
-              </div>
-            )}
-
-      <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 mb-6">
-              <button
-                onClick={handleBrowseMore}
-        className="flex-1 bg-green-700 hover:bg-green-800 text-white font-medium py-2 sm:py-4 px-4 sm:px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 text-sm sm:text-base"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-                <span>Browse More</span>
-              </button>
-
-              <button
-                onClick={handleCheckout}
-                disabled={
-                  localItems.filter((item) => item.found).length === 0 ||
-                  isAddingToCart
-                }
-                className="flex-1 bg-green-700 hover:bg-green-800 text-white font-medium py-2 sm:py-4 px-4 sm:px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
-              >
-                {isAddingToCart ? (
-                  <>
+              {/* Show notification if there are items not in catalog */}
+              {localItems.some((item) => !item.found) && (
+                <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                  <div className="flex items-center space-x-2">
                     <svg
-                      className="animate-spin w-5 h-5"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    <span>Adding to Cart...</span>
-                  </>
-                ) : (
-                  <>
-                    <svg
-                      className="w-5 h-5"
+                      className="w-5 h-5 text-orange-600"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -1112,85 +1172,173 @@ const ItemsDisplayCard = ({ items, onClose }: ItemsDisplayCardProps) => {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5H17M9 19.5a1.5 1.5 0 103 0 1.5 1.5 0 00-3 0zM20.5 19.5a1.5 1.5 0 103 0 1.5 1.5 0 00-3 0z"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.5 0L4.232 15.5c-.77.833.192 2.5 1.732 2.5z"
                       />
                     </svg>
-                    <span>
-                      {localItems.filter((item) => item.found).length === 0
-                        ? "No Items to Checkout"
-                        : "Proceed to Checkout"}
+                    <span className="text-sm text-orange-700">
+                      {localItems.filter((item) => !item.found).length} item(s)
+                      detected but not available in our catalog. Only items in
+                      catalog can be added to cart.
                     </span>
-                  </>
-                )}
-              </button>
-            </div>
+                  </div>
+                </div>
+              )}
 
-            <div className="pt-2 sm:pt-4">
-              <div className="grid grid-cols-1 gap-4 text-center totals-grid">
-                <div>
-                  <div className="text-sm text-gray-600">Total Items</div>
-                  <div className="text-lg sm:text-xl font-semibold text-gray-800">
-                    {localItems.length}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    ({localItems.filter((item) => item.found).length} in
-                    catalog)
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm text-gray-600">
-                    Available Quantity
-                  </div>
-                  <div className="text-lg sm:text-xl font-semibold text-gray-800">
-                    {localItems
-                      .filter((item) => item.found)
-                      .reduce((sum, item) => sum + item.quantity, 0)}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm text-gray-600">Total Points</div>
-                  <div className="text-lg sm:text-xl font-semibold text-success flex items-center justify-center space-x-1">
-                    <span>
-                      {localItems
-                        .filter((item) => item.found)
-                        .reduce(
-                          (sum, item) =>
-                            sum +
-                            Math.floor(item.quantity * (item.points || 0)),
-                          0
-                        )}
-                    </span>
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm text-gray-600">Total Price</div>
-                  <div className="text-lg sm:text-xl font-semibold text-blue-600 flex items-center justify-center space-x-1">
-                    <span>
-                      {localItems
-                        .filter((item) => item.found)
-                        .reduce(
-                          (sum, item) =>
-                            sum + item.quantity * (item.price || 0),
-                          0
-                        )
-                        .toFixed(2)}{' '}
-                      EGP
-                    </span>
-                  </div>
-                </div>
+              <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 mb-6">
+                <button
+                  onClick={handleBrowseMore}
+                  className="flex-1 bg-green-700 hover:bg-green-800 text-white font-medium py-2 sm:py-4 px-4 sm:px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 text-sm sm:text-base"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                  </svg>
+                  <span>Browse More</span>
+                </button>
+
+                <button
+                  onClick={handleCheckout}
+                  disabled={
+                    localItems.filter((item) => item.found).length === 0 ||
+                    isAddingToCart
+                  }
+                  className="flex-1 bg-green-700 hover:bg-green-800 text-white font-medium py-2 sm:py-4 px-4 sm:px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+                >
+                  {isAddingToCart ? (
+                    <>
+                      <svg
+                        className="animate-spin w-5 h-5"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      <span>Adding to Cart...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5H17M9 19.5a1.5 1.5 0 103 0 1.5 1.5 0 00-3 0zM20.5 19.5a1.5 1.5 0 103 0 1.5 1.5 0 00-3 0z"
+                        />
+                      </svg>
+                      <span>
+                        {localItems.filter((item) => item.found).length === 0
+                          ? "No Items to Checkout"
+                          : "Proceed to Checkout"}
+                      </span>
+                    </>
+                  )}
+                </button>
               </div>
+
+              <div className="pt-2 sm:pt-4">
+                <div className="grid grid-cols-1 gap-4 text-center totals-grid">
+                  <div>
+                    <div className="text-sm text-gray-600">Total Items</div>
+                    <div className="text-lg sm:text-xl font-semibold text-gray-800">
+                      {localItems.length}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      ({localItems.filter((item) => item.found).length} in
+                      catalog)
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-600">
+                      Available Quantity
+                    </div>
+                    <div className="text-lg sm:text-xl font-semibold text-gray-800">
+                      {localItems
+                        .filter((item) => item.found)
+                        .reduce((sum, item) => sum + item.quantity, 0)}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-600">Total Points</div>
+                    <div className="text-lg sm:text-xl font-semibold text-success flex items-center justify-center space-x-1">
+                      <span>
+                        {localItems
+                          .filter((item) => item.found)
+                          .reduce(
+                            (sum, item) =>
+                              sum +
+                              Math.floor(item.quantity * (item.points || 0)),
+                            0
+                          )}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-600">Total Price</div>
+                    <div className="text-lg sm:text-xl font-semibold text-blue-600 flex items-center justify-center space-x-1">
+                      <span>
+                        {localItems
+                          .filter((item) => item.found)
+                          .reduce(
+                            (sum, item) =>
+                              sum + item.quantity * (item.price || 0),
+                            0
+                          )
+                          .toFixed(2)}{" "}
+                        EGP
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
           {/* Ensure scrollable area has extra bottom padding so last item isn't hidden behind the footer */}
           <style jsx>{`
             /* Larger bottom padding so last item is not hidden by the absolute footer */
-            .items-display-scroll { padding-bottom: calc(24rem + env(safe-area-inset-bottom)); touch-action: pan-y; }
-            @media (min-width: 640px) { .items-display-scroll { padding-bottom: calc(20rem + env(safe-area-inset-bottom)); } }
+            .items-display-scroll {
+              padding-bottom: calc(24rem + env(safe-area-inset-bottom));
+              touch-action: pan-y;
+            }
+            @media (min-width: 640px) {
+              .items-display-scroll {
+                padding-bottom: calc(20rem + env(safe-area-inset-bottom));
+              }
+            }
             /* Ensure footer has space for iOS home indicator */
-            .absolute.bottom-0 { padding-bottom: env(safe-area-inset-bottom); }
+            .absolute.bottom-0 {
+              padding-bottom: env(safe-area-inset-bottom);
+            }
             /* Make totals layout responsive to available width: try two columns when space allows */
-            .totals-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+            .totals-grid {
+              grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
           `}</style>
         </div>
       </div>

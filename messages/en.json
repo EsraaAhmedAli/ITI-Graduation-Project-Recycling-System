@@ -1,19 +1,17 @@
 {
   "indexPage": {
-
-
-   "marketplace": {
+    "marketplace": {
       "title": "Join Our Marketplace",
       "subtitle": "Whether you're buying, crafting, or sourcing materials - we've got you covered",
-      
+
       "buyers": {
         "title": "For Buyers",
         "description": "Discover unique, eco-friendly products made from recycled materials by talented local artisans.",
         "feature1": "Quality recycled products",
-        "feature2": "Support local artisans", 
+        "feature2": "Support local artisans",
         "feature3": "Competitive prices"
       },
-      
+
       "crafters": {
         "title": "For Crafters",
         "description": "Turn your creative ideas into reality with our wide selection of recycled materials and resources.",
@@ -21,7 +19,7 @@
         "feature2": "Access to materials",
         "feature3": "Sell your creations"
       },
-      
+
       "rawMaterials": {
         "title": "Raw Materials",
         "description": "Find the perfect recycled materials for your next project, from paper to metals and everything in between.",
@@ -29,15 +27,13 @@
         "feature2": "Sorted & categorized",
         "feature3": "Bulk purchasing options"
       },
-      
+
       "cta": {
         "title": "Ready to Start Trading?",
         "description": "Join thousands of users already making a difference",
         "button": "Explore Marketplace"
       }
-    }
-  ,
-
+    },
     "title": {
       "line1": "Recycle Today for a",
       "line2": "Better Tomorrow"
@@ -926,11 +922,11 @@
   },
   "common": {
     "marketplaceViewOnly": "Marketplace view only",
-    "maxQuantityExceeded" : "maximum quantity is 5000",
-    "crossLanguageHint" : "Search works across Arabic and English languages",
-    "tryDifferentSearch" : "Try different search terms or check spelling",
-    "noItemsFound" : "no items found",
-     "noItemsAvailable": "No items available",
+    "maxQuantityExceeded": "maximum quantity is 5000",
+    "crossLanguageHint": "Search works across Arabic and English languages",
+    "tryDifferentSearch": "Try different search terms or check spelling",
+    "noItemsFound": "no items found",
+    "noItemsAvailable": "No items available",
     "workingOnAddingItems": "Working on adding items...",
     "backToAllCategories": "Back to All Categories",
     "only": "Only",
@@ -1038,8 +1034,34 @@
     "environmentalImpact": "Environmental Impact"
   },
   "toast": {
-    "cart": "{{itemName}} added to cart successfully!"
+    "cart": {
+      "add": {
+        "success": "{{itemName}} added to cart successfully!",
+        "fail": "Failed to add {{itemName}} to cart!"
+      },
+      "remove": {
+        "success": "{{itemName}} removed from cart successfully!",
+        "fail": "Failed to remove {{itemName}} from cart!"
+      },
+      "merge": {
+        "success": "Cart merged successfully!",
+        "fail": "Failed to merge cart!"
+      },
+      "update": {
+        "success": "Cart updated successfully!",
+        "fail": "Failed to update cart!"
+      },
+      "clear": {
+        "success": "Cart Cleared successfully!",
+        "fail": "Failed to Clear cart!"
+      },
+      "save": {
+        "success": "Cart saved! ({{length}} items)!",
+        "fail": "Failed to save cart!"
+      }
+    }
   },
+
   "categoryStats": {
     "totalItems": "Total Items",
     "pointsRange": "Points Range",
@@ -1278,7 +1300,6 @@
     "categoryCreatedSuccess": "Category created successfully"
   },
   "categories": {
-   
     "addingCategory": "Adding Category...",
     "image": "Image",
     "categoryName": "Category Name",
@@ -1689,8 +1710,7 @@
       "back": "Back",
       "continue": "Continue"
     }
-  }
-  ,
+  },
   "deliveryAttachments": {
     "title": "Delivery Attachments",
     "subtitle": "Verification documents and personal information of the delivery partner.",
@@ -1726,5 +1746,4 @@
       "vehicleType": "Vehicle Type"
     }
   }
-
 }

@@ -12,8 +12,7 @@ const RecyclingRewardsSystem = () => {
 
   // Sample customer data - replace with real data from your API
   const { user } = useUserAuth();
-  const { userPoints, totalCompletedOrders, refreshUserPoints } =
-    useUserPoints();
+  const { totalCompletedOrders, refreshUserPoints } = useUserPoints();
 
   // Function to calculate current level based on points
   const calculateCurrentLevel = (recycles) => {
@@ -49,7 +48,7 @@ const RecyclingRewardsSystem = () => {
 
   // Recompute customer data whenever points or orders update
   useEffect(() => {
-    const currentUserPoints = userPoints?.totalPoints || 0;
+    // const currentUserPoints = userPoints?.totalPoints || 0;
     const currentTotalCompletedOrders = totalCompletedOrders || 0;
     const currentLevelData = calculateCurrentLevel(currentTotalCompletedOrders);
     const nextLevelData = calculateNextLevel(currentTotalCompletedOrders);
@@ -59,24 +58,24 @@ const RecyclingRewardsSystem = () => {
 
     setCustomerData({
       name: user?.name || t("program.guestUser"),
-      currentPoints: currentUserPoints,
+      // currentPoints: currentUserPoints,
       totalOrders: currentTotalCompletedOrders,
       currentLevel: currentLevelData?.name || t("program.ecoStarter"),
       nextLevel: nextLevelData?.name || t("program.maxLevelReached"),
       pointsToNext: pointsToNextLevel,
     });
-  }, [userPoints, totalCompletedOrders, user, t, calculatePointsToNext]);
+  }, [totalCompletedOrders, user, t, calculatePointsToNext]);
 
   // Initialize customer data with calculations
-  const currentUserPoints = userPoints?.totalPoints || 0;
+  // const currentUserPoints = userPoints?.totalPoints || 0;
   const currentTotalCompletedOrders = totalCompletedOrders || 0;
-  const currentLevelData = calculateCurrentLevel(currentUserPoints);
-  const nextLevelData = calculateNextLevel(userPoints);
-  const pointsToNextLevel = calculatePointsToNext(userPoints);
+  const currentLevelData = calculateCurrentLevel(currentTotalCompletedOrders);
+  const nextLevelData = calculateNextLevel(currentTotalCompletedOrders);
+  const pointsToNextLevel = calculatePointsToNext(currentTotalCompletedOrders);
 
   const [customerData, setCustomerData] = useState({
     name: user?.name || t("program.guestUser"),
-    currentPoints: userPoints?.totalPoints || 0,
+    // currentPoints: userPoints?.totalPoints || 0,
     totalOrders: currentTotalCompletedOrders,
     currentLevel: currentLevelData?.name || t("program.ecoStarter"),
     nextLevel: nextLevelData?.name || t("program.maxLevelReached"),
@@ -118,53 +117,43 @@ const RecyclingRewardsSystem = () => {
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 p-6 mb-6 overflow-hidden">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-2">
-                {t("program.welcomeBack", { name: customerData.name })}
-              </h2>
-              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-50 to-emerald-100/50 px-3 py-1 rounded-lg border border-emerald-200/50">
-                <currentLevel.badge className="w-4 h-4 text-emerald-600" />
-                <span className="font-semibold text-emerald-700">
-                  {t(
-                    `profile.tires.${currentLevel?.name
-                      .replace(/\s+/g, "")
-                      .toLowerCase()}`
-                  )}
-                </span>
+
+        {user && (
+          <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 p-6 mb-6 overflow-hidden">
+            {/* Header Section */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex-1">
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-3">
+                  {t("program.welcomeBack", { name: customerData.name })}
+                </h2>
+                <div className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-50 to-emerald-100/50 px-3 py-1.5 rounded-lg border border-emerald-200/50">
+                  <currentLevel.badge className="w-4 h-4 text-emerald-600" />
+                  <span className="font-semibold text-emerald-700 text-sm">
+                    {t(
+                      `profile.tires.${currentLevel?.name
+                        .replace(/\s+/g, "")
+                        .toLowerCase()}`
+                    )}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Statistics Section */}
+            <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-6 text-white shadow-xl">
+              <div className="flex flex-col items-center text-center">
+                <p className="text-4xl font-bold mb-2 leading-none">
+                  {formatNumber(customerData.totalOrders)}
+                </p>
+                <p className="text-emerald-100 font-medium text-sm uppercase tracking-wide">
+                  {t("program.recyclingOrders")}
+                </p>
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Stats Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          {/* Points Card */}
-          <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-6 text-white shadow-xl">
-            <p className="text-3xl font-bold mb-1">
-              {formatNumber(customerData.currentPoints)}
-            </p>
-            <p className="text-emerald-100 font-medium text-sm uppercase tracking-wide">
-              {t("program.points")}
-            </p>
-          </div>
-
-          {/* Orders Card */}
-          <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-6 text-white shadow-xl">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-8 h-8 bg-white/20 backdrop-blur-sm text-white font-bold rounded-full shadow-inner">
-                {formatNumber(customerData.totalOrders)}
-              </div>
-              <span className="text-sm font-semibold uppercase tracking-wide">
-                {t("program.recyclingOrders")}
-              </span>
-            </div>
-          </div>
-        </div>
-
+        )}
         {/* Progress Card */}
-        {nextLevel && (
+        {user && nextLevel && (
           <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 p-6 mb-6">
             {/* Progress Path */}
             <div className="flex items-center justify-between relative mb-4">
@@ -238,6 +227,7 @@ const RecyclingRewardsSystem = () => {
             </div>
           </div>
         )}
+
         {/* Levels Overview */}
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
@@ -246,7 +236,7 @@ const RecyclingRewardsSystem = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
             {rewardLevels.map((level, idx) => {
-              const isCurrentLevel = level.name === currentLevel?.name;
+              const isCurrentLevel = user && level.name === currentLevel?.name;
               const isUnlocked = customerData.totalOrders >= level.minRecycles;
               const isLast = idx === rewardLevels.length - 1;
 
@@ -262,14 +252,14 @@ const RecyclingRewardsSystem = () => {
               return (
                 <div
                   key={level.id}
-                  className={`relative rounded-xl overflow-hidden w-full max-w-sm p-5 border-4 transition-all duration-300
+                  className={`relative rounded-xl overflow-hidden w-full p-5 border-4 transition-all duration-300
           ${
             isUnlocked
               ? "bg-gradient-to-br from-green-50 to-green-100 border-green-400"
               : "bg-gray-100 border-gray-300 opacity-80"
           }
           ${isCurrentLevel ? "ring-4 ring-primary scale-105 animate-pulse" : ""}
-          ${isLast ? "lg:col-start-2" : ""}
+          ${isLast ? "lg:col-span-3 lg:max-w-none" : "max-w-sm"}
         `}
                 >
                   {/* Current level banner */}

@@ -113,19 +113,17 @@ const StatsSection = memo(
         {statBoxes}
 
         {/* Membership tier - shown for customers only with optimized suspense */}
-        {isCustomer && (
-          <Suspense
-            fallback={
-              <div
-                className="animate-pulse h-20 bg-gray-200 rounded"
-                role="status"
-                aria-label="Loading membership tier"
-              />
-            }
-          >
-            <MembershipTier totalRecycles={totalCompletedOrders} />
-          </Suspense>
-        )}
+        <Suspense
+          fallback={
+            <div
+              className="animate-pulse h-20 bg-gray-200 rounded"
+              role="status"
+              aria-label="Loading membership tier"
+            />
+          }
+        >
+          <MembershipTier totalRecycles={totalCompletedOrders} />
+        </Suspense>
       </div>
     );
   },

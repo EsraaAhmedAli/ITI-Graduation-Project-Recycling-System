@@ -30,12 +30,14 @@ export default function Step({
   direction,
   isCurrent,
   stepNumber,
+  isCompleted,
 }: {
   label: string;
   active: boolean;
   direction: "forward" | "backward";
   isCurrent?: boolean;
   stepNumber?: number;
+  isCompleted?: boolean;
 }) {
   const [rotation, setRotation] = useState(0);
 
@@ -170,15 +172,14 @@ export default function Step({
   const IconComponent = getIconByLabel(label);
 
   useEffect(() => {
-    if (isCurrent) {
-      setRotation((prev) => prev + (direction === "forward" ? 180 : -180));
-    }
-  }, [isCurrent, direction]);
+    // Keep rotation at 0 to prevent icon flipping
+    setRotation(0);
+  }, [isCurrent, direction, isCompleted]);
 
   return (
     <div className="flex flex-row items-center text-center md:flex-col">
       <div
-        className={`relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 transition-all ${
+        className={`relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 transition-all duration-300 ${
           active
             ? "border-green-700 bg-green-50"
             : "border-gray-300 bg-gray-100"
@@ -188,14 +189,16 @@ export default function Step({
           className={`w-5 h-5 sm:w-6 sm:h-6 transition-transform duration-500 ${
             active ? "text-green-700" : "text-gray-400"
           }`}
-          style={{ transform: `rotate(${rotation}deg)` }}
+          style={{
+            transform: `rotate(${rotation}deg)`,
+          }}
         />
         {stepNumber && (
           <span className="absolute text-[10px] sm:text-[11px] font-bold text-green-800"></span>
         )}
       </div>
       <span
-        className={`ml-3 md:ml-0 md:mt-2 text-xs sm:text-sm ${
+        className={`ml-3 md:ml-0 md:mt-2 text-xs sm:text-sm transition-colors duration-300 ${
           active ? "text-green-700 font-semibold" : "text-gray-400"
         }`}
       >

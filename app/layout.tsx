@@ -51,8 +51,9 @@ export default function RootLayout({
                   <Toaster
                     position="top-center"
                     toastOptions={{
-                      duration: 5000,
+                      duration: 3000,
                       style: {
+                        marginTop: "4rem",
                         direction: "ltr",
                         textAlign: "left",
                       },

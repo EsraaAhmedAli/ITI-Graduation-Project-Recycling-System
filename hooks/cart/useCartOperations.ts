@@ -1,7 +1,7 @@
 import api from "@/lib/axios";
 import { CartItem } from "@/models/cart";
 import { useCallback } from "react";
-import { toast } from "react-hot-toast";
+import toast from "react-hot-toast";
 
 export const useCartOperations = ({
   isLoggedIn,
@@ -15,7 +15,6 @@ export const useCartOperations = ({
   updateCartState,
   checkInventoryEnhanced,
 }) => {
-  // Cart operations with improved error handling
   // Validation helpers
   const validateQuantity = useCallback(
     (quantity: number, measurementUnit: number): boolean => {
@@ -31,111 +30,104 @@ export const useCartOperations = ({
     []
   );
 
-const addToCart = useCallback(
-  async (item: CartItem, replace = false) => { // Add replace parameter
-    console.log(item, "itemfromAddtocar");
+  const addToCart = useCallback(
+    async (item: CartItem, replace = false) => {
+      console.log(item, "itemfromAddtocar");
 
-    setLoadingItemId(item._id);
-    try {
-      const validatedItem = { ...item };
+      setLoadingItemId(item._id);
+      try {
+        const validatedItem = { ...item };
 
-      // Set minimum quantities based on measurement unit
-      if (
-        validatedItem.measurement_unit === 1 &&
-        validatedItem.quantity < 0.25
-      ) {
-        validatedItem.quantity = 0.25;
-      } else if (
-        validatedItem.measurement_unit === 2 &&
-        validatedItem.quantity < 1
-      ) {
-        validatedItem.quantity = 1;
-      }
-
-      if (
-        !validateQuantity(
-          validatedItem.quantity,
-          validatedItem.measurement_unit
-        )
-      ) {
-        const message =
-          validatedItem.measurement_unit === 1
-            ? "For KG items, minimum quantity is 0.25 KG and must be in 0.25 increments"
-            : "For Piece items, quantity must be whole numbers ≥ 1";
-        toast.error(message);
-        return;
-      }
-
-      // Check if item already exists in cart
-      const existingItemIndex = cart.findIndex(
-        (ci) => ci._id === validatedItem._id
-      );
-
-      if (existingItemIndex >= 0) {
-        // Update existing item quantity - use replace logic
-        const newQuantity = replace 
-          ? validatedItem.quantity // Replace with new quantity
-          : cart[existingItemIndex].quantity + validatedItem.quantity; // Add to existing
-
-        if (userRole === "buyer") {
-          const isAvailable = await checkInventoryEnhanced(
-            validatedItem,
-            newQuantity
-          );
-          if (!isAvailable) {
-            toast.error(
-              "Sorry, the requested quantity is not available in stock."
-            );
-            return;
-          }
+        // Set minimum quantities based on measurement unit
+        if (
+          validatedItem.measurement_unit === 1 &&
+          validatedItem.quantity < 0.25
+        ) {
+          validatedItem.quantity = 0.25;
+        } else if (
+          validatedItem.measurement_unit === 2 &&
+          validatedItem.quantity < 1
+        ) {
+          validatedItem.quantity = 1;
         }
 
-        const updatedCart = [...cart];
-        updatedCart[existingItemIndex] = {
-          ...updatedCart[existingItemIndex],
-          quantity: newQuantity,
-        };
-        await updateCartState(updatedCart, false);
-      } else {
-        // Add new item
-        if (userRole === "buyer") {
-          const isAvailable = await checkInventoryEnhanced(
-            validatedItem,
-            validatedItem.quantity
-          );
-          if (!isAvailable) {
-            toast.error(
-              "Sorry, the requested quantity is not available in stock."
-            );
-            return;
-          }
+        if (
+          !validateQuantity(
+            validatedItem.quantity,
+            validatedItem.measurement_unit
+          )
+        ) {
+          console.error("Invalid quantity for item:", validatedItem);
+          return;
         }
 
-        const updatedCart = [...cart, validatedItem];
-        await updateCartState(updatedCart);
-      }
+        // Check if item already exists in cart
+        const existingItemIndex = cart.findIndex(
+          (ci) => ci._id === validatedItem._id
+        );
 
-      toast.success(
-        t("toast.cart", { itemName: validatedItem.name[locale] })
-      );
-    } catch (err) {
-      console.error("Failed to add to cart", err);
-      toast.error("Failed to add item to cart");
-    } finally {
-      setLoadingItemId(null);
-    }
-  },
-  [
-    cart,
-    checkInventoryEnhanced,
-    userRole,
-    validateQuantity,
-    updateCartState,
-    locale,
-    setLoadingItemId,
-    t,
-  ]
-);
+        if (existingItemIndex >= 0) {
+          // Update existing item quantity - use replace logic
+          const newQuantity = replace
+            ? validatedItem.quantity // Replace with new quantity
+            : cart[existingItemIndex].quantity + validatedItem.quantity; // Add to existing
+
+          if (userRole === "buyer") {
+            const isAvailable = await checkInventoryEnhanced(
+              validatedItem,
+              newQuantity
+            );
+            if (!isAvailable) {
+              console.error("Requested quantity not available in stock");
+              return;
+            }
+          }
+
+          const updatedCart = [...cart];
+          updatedCart[existingItemIndex] = {
+            ...updatedCart[existingItemIndex],
+            quantity: newQuantity,
+          };
+          await updateCartState(updatedCart);
+        } else {
+          // Add new item
+          if (userRole === "buyer") {
+            const isAvailable = await checkInventoryEnhanced(
+              validatedItem,
+              validatedItem.quantity
+            );
+            if (!isAvailable) {
+              console.error("Requested quantity not available in stock");
+              return;
+            }
+          }
+
+          const updatedCart = [...cart, validatedItem];
+          await updateCartState(updatedCart);
+        }
+
+        toast.success(
+          t("toast.cart.add.success", { itemName: item.name[locale] })
+        );
+      } catch (err) {
+        console.error(
+          t("toast.cart.add.fail", { itemName: item.name[locale] })
+        );
+      } finally {
+        setLoadingItemId(null);
+      }
+    },
+    [
+      cart,
+      checkInventoryEnhanced,
+      userRole,
+      validateQuantity,
+      updateCartState,
+      t,
+      locale,
+      setLoadingItemId,
+    ]
+  );
 
   const updateQuantity = useCallback(
     (item: CartItem) => {
@@ -158,7 +150,7 @@ const addToCart = useCallback(
         if (userRole === "buyer") {
           const isAvailable = await checkInventoryEnhanced(item, newQuantity);
           if (!isAvailable) {
-            toast.error("Sorry, not enough stock available.");
+            console.error("Not enough stock available");
             return;
           }
         }
@@ -170,7 +162,6 @@ const addToCart = useCallback(
         await updateCartState(updatedCart);
       } catch (err) {
         console.error("Failed to increase quantity", err);
-        toast.error("Failed to update quantity");
       } finally {
         setLoadingItemId(null);
       }
@@ -195,7 +186,6 @@ const addToCart = useCallback(
         await updateCartState(updatedCart);
       } catch (err) {
         console.error("Failed to decrease quantity", err);
-        toast.error("Failed to decrease item quantity");
       } finally {
         setLoadingItemId(null);
       }
@@ -209,15 +199,18 @@ const addToCart = useCallback(
       try {
         const updatedCart = cart.filter((ci) => ci._id !== item._id);
         await updateCartState(updatedCart);
-        toast.success("Item removed from cart");
+        toast.success(
+          t("toast.cart.remove.success", { itemName: item.name[locale] })
+        );
       } catch (err) {
-        console.error("Failed to remove item", err);
-        toast.error("Failed to remove item");
+        toast.error(
+          t("toast.cart.remove.fail", { itemName: item.name[locale] })
+        );
       } finally {
         setLoadingItemId(null);
       }
     },
-    [cart, updateCartState, setLoadingItemId]
+    [cart, updateCartState, setLoadingItemId, t, locale]
   );
 
   const clearCart = useCallback(async () => {
@@ -236,13 +229,13 @@ const addToCart = useCallback(
         clearCartFromSession();
       }
 
+      toast.success(t("toast.cart.clear.success"));
     } catch (err) {
-      console.error("Failed to clear cart", err);
-      toast.error("Failed to clear cart");
+      toast.error(t("toast.cart.clear.fail"));
     } finally {
       setIsLoading(false);
     }
-  }, [isLoggedIn, updateCartState, clearCartFromSession, setIsLoading]);
+  }, [isLoggedIn, updateCartState, clearCartFromSession, setIsLoading, t]);
 
   return {
     validateQuantity,

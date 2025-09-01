@@ -751,7 +751,7 @@ export default function Navbar() {
                     {t("navbar.login")}
                   </NavLink>
                   <NavLink
-                    href="/auth/signup"
+                    href="/auth"
                     onClick={() => setIsOpen(false)}
                     className="flex items-center justify-center w-full px-4 py-2.5 rounded-lg bg-green-500 hover:bg-green-600 text-white font-medium transition-all duration-200 text-sm"
                   >
@@ -775,6 +775,7 @@ export default function Navbar() {
     </nav>
   );
 }
+
 const CartPopUp = ({ isBuyer, darkMode }) => {
   const { t, locale, convertNumber } = useLanguage();
   const cartRef = useRef(null);
@@ -847,9 +848,9 @@ const CartPopUp = ({ isBuyer, darkMode }) => {
         )}
       </button>
 
-      {/* Cart Dropdown */}
+      {/* Cart Dropdown with Tailwind responsive positioning */}
       {isCartOpen && (
-        <div className="absolute end-[-9rem]  mt-2 w-72 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+        <div className="absolute ltr:-translate-x-[68%] rtl:translate-x-[68%] mt-3 w-72 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50 max-w-[calc(100vw-2rem)] ">
           <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100 dark:border-gray-700">
             <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
               {isBuyer ? t("navbar.myCart") : t("navbar.myCollection")}
