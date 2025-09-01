@@ -315,6 +315,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
     };
     myFun();
   }, [handleUserLogin, handleUserLogout]);
+  // Add this useEffect to handle initial guest cart loading
+  useEffect(() => {
+    // Initialize guest cart on component mount if no user
+    const initializeGuestCart = () => {
+      const storedUser = localStorage.getItem("user");
+
+      if (!storedUser && !isInitializedRef.current) {
+        console.log("👤 Initializing guest cart on page load");
+        const guestCart = storage.loadGuestCart();
+        setCart(guestCart);
+        isInitializedRef.current = true;
+      }
+    };
+
+    initializeGuestCart();
+  }, [storage]); // Run once on mount
 
   const contextValue: CartContextType = {
     cart,
