@@ -45,9 +45,9 @@ export const useGetCartItems = (itemIds: string[], userRole?: string, language: 
    return res.data;
     },
     enabled: itemIds.length > 0,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    staleTime: 2000, // 2 seconds
+    
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 };
