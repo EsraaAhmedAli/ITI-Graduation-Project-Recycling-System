@@ -686,7 +686,8 @@
     "editProfile": "Edit Profile",
     "stats": {
       "recycles": "Total Recycles",
-      "points": "Points Collected"
+      "points": "Points Collected",
+      "orders": "Total Orders"
     },
     "delivery": {
       "customer_reviews": "Customer Reviews",

@@ -6,6 +6,7 @@ import {
 import { useTranscription } from "@/hooks/UseTranscription";
 import React, { useRef, useState, useEffect } from "react";
 import ItemsDisplayCard from "./ItemsDisplayCard";
+import { useUserAuth } from "@/context/AuthFormContext";
 
 const FloatingRecorderButton = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -25,12 +26,20 @@ const FloatingRecorderButton = () => {
     isError,
     lastTranscription,
     resetTranscription,
+    usage,
+    checkUsage,
   } = useTranscription();
   const [structuredData, setStructuredData] = useState<
     ExtractedMaterial[] | null
   >(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [checkingUsage, setCheckingUsage] = useState(false);
+
+  const { user } = useUserAuth();
+  const isAuthenticated = !!user;
+
+
 
   useEffect(() => {
     return () => {
@@ -99,28 +108,76 @@ const FloatingRecorderButton = () => {
       .padStart(2, "0")}`;
   };
 
-  const handleButtonClick = async () => {
-    if (showItemsCard) {
-      setShowItemsCard(false);
-      return;
+const canRecord = () => {
+  if (!isAuthenticated) return false;
+  if (checkingUsage) return false; // Disable while checking usage
+  if (!usage) return false; // Don't allow if usage data isn't loaded yet
+  return usage.remaining > 0;
+};
+  const getUsageMessage = () => {
+    if (!isAuthenticated) {
+      return "Please log in to use voice recording";
+    }
+    
+    if (!usage) {
+      return "Loading usage data...";
     }
 
-    if (!showCard) {
-      setShowCard(true);
-      return;
+    if (usage.remaining <= 0) {
+      return `Daily limit reached (${usage.count}/${usage.limit}). Resets in ${usage.hoursUntilReset}h`;
     }
 
-    if (showCard && !isRecording) {
-      setShowCard(false);
-      return;
-    }
-
-    if (isRecording) {
-      stopRecording();
-    }
+    return `${usage.count}/${usage.limit} uses today`;
   };
 
+const getButtonText = () => {
+  if (!isAuthenticated) {
+    return "Please log in to start recording";
+  }
+  
+  if (checkingUsage) {
+    return "Checking usage...";
+  }
+  
+  if (usage && usage.remaining <= 0) {
+    return "Daily limit reached";
+  }
+
+  return "Start Recording";
+};
+
+const handleButtonClick = async () => {
+  if (showItemsCard) {
+    setShowItemsCard(false);
+    return;
+  }
+
+  if (!showCard) {
+    setShowCard(true);
+    // Check usage data when opening the card (only if authenticated)
+    if (isAuthenticated) {
+      setCheckingUsage(true);
+      await checkUsage();
+      setCheckingUsage(false);
+    }
+    return;
+  }
+
+  if (showCard && !isRecording) {
+    setShowCard(false);
+    return;
+  }
+
+  if (isRecording) {
+    stopRecording();
+  }
+};
+
   const startRecording = async () => {
+    if (!canRecord()) {
+      return;
+    }
+
     try {
       setAudioBlob(null);
       setAudioUrl(null);
@@ -172,6 +229,11 @@ const FloatingRecorderButton = () => {
 
   const handleDoneClick = async () => {
     if (audioBlob && !lastTranscription) {
+      if (!canRecord()) {
+        setError("Cannot process: daily limit reached or not authenticated");
+        return;
+      }
+
       setProcessingStarted(true);
       try {
         const transcriptionResult = await transcribe(audioBlob);
@@ -241,7 +303,7 @@ const FloatingRecorderButton = () => {
 
       {showCard && (
         <div
-          className="absolute bottom-20 right-0  rounded-2xl shadow-2xl border border-gray-200 p-6 w-80 mb-4 transform transition-all duration-300 ease-in-out"
+          className="absolute bottom-20 right-0 rounded-2xl shadow-2xl border border-gray-200 p-6 w-80 mb-4 transform transition-all duration-300 ease-in-out"
           style={{ background: "var(--color-green-60)" }}
         >
           <div className="flex flex-col space-y-4">
@@ -276,7 +338,100 @@ const FloatingRecorderButton = () => {
               </button>
             </div>
 
-            {!isRecording && !audioBlob && (
+            {/* Usage Display */}
+            {isAuthenticated && usage && (
+              <div className="flex items-center justify-between bg-white/50 rounded-lg p-3 border border-gray-200">
+                <div className="flex items-center space-x-2">
+                  <svg
+                    className="w-4 h-4 text-blue-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                    />
+                  </svg>
+                  <span className="text-sm font-medium text-gray-700">
+                    Usage Today
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="flex space-x-1">
+                    {[...Array(usage.limit)].map((_, i) => (
+                      <div
+                        key={i}
+                        className={`w-2 h-2 rounded-full ${
+                          i < usage.count
+                            ? "bg-blue-500"
+                            : "bg-gray-300"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-sm font-bold text-gray-800">
+                    {usage.count}/{usage.limit}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Reset Time Display */}
+            {isAuthenticated && usage && usage.remaining <= 0 && (
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                <div className="flex items-center space-x-2">
+                  <svg
+                    className="w-4 h-4 text-orange-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span className="text-sm text-orange-700">
+                    Resets in {usage.hoursUntilReset} hours
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {!isAuthenticated && (
+              <div className="text-center">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center justify-center space-x-2 mb-2">
+                    <svg
+                      className="w-5 h-5 text-blue-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
+                    </svg>
+                    <span className="text-sm font-medium text-blue-700">
+                      Login Required
+                    </span>
+                  </div>
+                  <p className="text-sm text-blue-600">
+                    Please log in to use our voice AI assistant and enjoy 3 free transcriptions daily! 🎤✨
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {isAuthenticated && !isRecording && !audioBlob && (
               <div className="text-center">
                 <p className="text-sm text-gray-600 bg-gradient-to-r from-primary/10 to-secondary/10 px-3 py-2 rounded-lg">
                   <span className="font-medium">Feeling lazy?</span> Let AI
@@ -285,17 +440,19 @@ const FloatingRecorderButton = () => {
               </div>
             )}
 
-            <div className="flex items-center space-x-3">
-              {isRecording && (
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                  <span className="text-red-500 font-medium">REC</span>
-                </div>
-              )}
-              <span className="text-2xl font-mono text-gray-700">
-                {formatTime(recordingTime)}
-              </span>
-            </div>
+     {canRecord() && (
+  <div className="flex items-center space-x-3">
+    {isRecording && (
+      <div className="flex items-center space-x-2">
+        <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+        <span className="text-red-500 font-medium">REC</span>
+      </div>
+    )}
+    <span className="text-2xl font-mono text-gray-700">
+      {formatTime(recordingTime)}
+    </span>
+  </div>
+)}
 
             {isLoading && (
               <div className="flex items-center space-x-3 bg-blue-50 p-3 rounded-lg border border-blue-200">
@@ -353,24 +510,26 @@ const FloatingRecorderButton = () => {
               </div>
             )}
 
-            <div className="flex items-center justify-center space-x-1 h-12">
-              {[...Array(20)].map((_, i) => (
-                <div
-                  key={i}
-                  className={`w-1 bg-gradient-to-t from-primary to-secondary rounded-full transition-all duration-150 ${
-                    isRecording
-                      ? `animate-pulse h-${Math.floor(Math.random() * 8) + 2}`
-                      : "h-2"
-                  }`}
-                  style={{
-                    animationDelay: `${i * 0.1}s`,
-                    height: isRecording
-                      ? `${Math.random() * 30 + 10}px`
-                      : "8px",
-                  }}
-                />
-              ))}
-            </div>
+          {canRecord() && (
+  <div className="flex items-center justify-center space-x-1 h-12">
+    {[...Array(20)].map((_, i) => (
+      <div
+        key={i}
+        className={`w-1 bg-gradient-to-t from-primary to-secondary rounded-full transition-all duration-150 ${
+          isRecording
+            ? `animate-pulse h-${Math.floor(Math.random() * 8) + 2}`
+            : "h-2"
+        }`}
+        style={{
+          animationDelay: `${i * 0.1}s`,
+          height: isRecording
+            ? `${Math.random() * 30 + 10}px`
+            : "8px",
+        }}
+      />
+    ))}
+  </div>
+)}
 
             {audioUrl && !isRecording && (
               <div className="bg-gray-50 rounded-xl p-4">
@@ -387,15 +546,17 @@ const FloatingRecorderButton = () => {
               {!isRecording && !audioBlob && (
                 <button
                   onClick={startRecording}
-                  className="
-    flex-1 
-    bg-green-600 hover:bg-green-700 
-    dark:bg-green-400 dark:hover:bg-green-500 
-    text-white dark:text-gray-900
-    font-medium py-3 px-4 rounded-xl 
-    transition-colors duration-200 
-    flex items-center justify-center space-x-2
-  "
+                  disabled={!canRecord()}
+                  className={`
+                    flex-1 font-medium py-3 px-4 rounded-xl 
+                    transition-colors duration-200 
+                    flex items-center justify-center space-x-2
+                    ${
+                      !canRecord()
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-green-600 hover:bg-green-700 dark:bg-green-400 dark:hover:bg-green-500 text-white dark:text-gray-900"
+                    }
+                  `}
                 >
                   <svg
                     className="w-5 h-5"
@@ -410,7 +571,7 @@ const FloatingRecorderButton = () => {
                       d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
                     />
                   </svg>
-                  <span>Start Recording</span>
+                  <span className="text-sm">{getButtonText()}</span>
                 </button>
               )}
 
@@ -459,9 +620,10 @@ const FloatingRecorderButton = () => {
                   {!lastTranscription && (
                     <button
                       onClick={handleDoneClick}
+                      disabled={!canRecord() || isLoading || loading}
                       className={`flex-1 font-medium py-3 px-4 rounded-xl transition-colors duration-200 flex items-center justify-center space-x-2 ${
-                        isLoading || loading
-                          ? "bg-green-300 text-gray-500 cursor-not-allowed"
+                        !canRecord() || isLoading || loading
+                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                           : "bg-green-600 hover:bg-green-700 text-white"
                       }`}
                     >
@@ -514,18 +676,18 @@ const FloatingRecorderButton = () => {
       <button
         onClick={handleButtonClick}
         className={`
-  group relative w-14 h-14 rounded-full shadow-lg transition-all duration-300 transform hover:scale-110
-  ${
-    isRecording
-      ? "bg-red-500 hover:bg-red-600 animate-pulse"
-      : showItemsCard
-      ? "bg-green-600 hover:bg-green-700"
-      : showCard
-      ? "bg-gray-500 hover:bg-gray-600"
-      : "bg-green-600 hover:bg-green-700 dark:bg-green-400 dark:hover:bg-green-500"
-  }
-  text-white font-bold flex items-center justify-center
-`}
+          group relative w-14 h-14 rounded-full shadow-lg transition-all duration-300 transform hover:scale-110
+          ${
+            isRecording
+              ? "bg-red-500 hover:bg-red-600 animate-pulse"
+              : showItemsCard
+              ? "bg-green-600 hover:bg-green-700"
+              : showCard
+              ? "bg-gray-500 hover:bg-gray-600"
+              : "bg-green-600 hover:bg-green-700 dark:bg-green-400 dark:hover:bg-green-500"
+          }
+          text-white font-bold flex items-center justify-center
+        `}
         title={
           isRecording
             ? "Stop Recording"
@@ -533,20 +695,25 @@ const FloatingRecorderButton = () => {
             ? "Close Items"
             : showCard
             ? "Close"
-            : "Start Recording"
+            : getUsageMessage()
         }
       >
         {!showCard && (
           <div className="absolute bottom-16 right-0 mb-2 pointer-events-none">
-            <div className="bg-gray-800 text-white text-sm px-3 py-2 rounded-lg shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <div className="bg-gray-800 text-white text-sm px-3 py-2 rounded-lg shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 max-w-xs">
               <div className="flex items-center space-x-2">
                 <span>🎤</span>
-                <span>Voice AI Assistant - Click to order with your voice</span>
+                <span>
+                  {isAuthenticated
+                    ? `Voice AI Assistant `
+                    : "Please log in to use voice AI"}
+                </span>
               </div>
             </div>
             <div className="absolute top-full right-6 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </div>
         )}
+        
         {isRecording ? (
           <svg
             className="w-6 h-6"
@@ -597,7 +764,7 @@ const FloatingRecorderButton = () => {
           </svg>
         ) : (
           <svg
-            className="w-6 h-6"
+            className={`w-6 h-6 ${!isAuthenticated || (usage && usage.remaining <= 0) ? 'opacity-50' : ''}`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"

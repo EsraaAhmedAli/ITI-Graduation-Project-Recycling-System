@@ -268,19 +268,34 @@ const handleNavigateToDetails = (itemName)=>{
   // Handle add to cart button click
 const handleAddToCart = useCallback(() => {
   if (quantity > 0 && !inputError) {
-    // If quantity is different from cart, replace it (Update Cart scenario)
-    // If quantity matches cart, add to it (Add to Collection again scenario)
+    // Add validation here
+    const validation = validateQuantity(quantity.toString());
+    
+    if (!validation.isValid) {
+      setInputError(validation.errorMessage);
+      setQuantity(validation.validValue);
+      setInputValue(validation.validValue.toString());
+      return; // Don't proceed with adding to cart
+    }
+    
     const finalQuantity = quantity !== currentCartQuantity 
-      ? quantity  // Replace with new quantity
-      : currentCartQuantity + quantity;  // Add to existing quantity
+      ? quantity  
+      : currentCartQuantity + quantity;
+    
+    // Also validate the final quantity
+    const finalValidation = validateQuantity(finalQuantity.toString());
+    
+    if (!finalValidation.isValid) {
+      setInputError(finalValidation.errorMessage);
+      return;
+    }
     
     onAddToCart(item, finalQuantity);
     
-    // Update local state to match what will be in cart
     setQuantity(finalQuantity);
     setInputValue(finalQuantity.toString());
   }
-}, [quantity, inputError, onAddToCart, item, currentCartQuantity]);
+}, [quantity, inputError, onAddToCart, item, currentCartQuantity, validateQuantity]);
 
     // Generate low-quality placeholder
     const blurDataURL =

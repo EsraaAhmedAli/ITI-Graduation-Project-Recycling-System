@@ -154,63 +154,63 @@ export function CartProvider({ children }: { children: ReactNode }) {
   });
 
   // FIXED: Handle user logout - Save current cart to DB, then clear ALL local data
-  // const handleUserLogout = useCallback(
-  //   async (loggedOutUserId: string) => {
-  //     console.group(`🔓 HANDLE USER LOGOUT (${userRole})`);
-  //     console.log(`💾 Handling logout for user: ${loggedOutUserId}`);
+  const handleUserLogout = useCallback(
+    async (loggedOutUserId: string) => {
+      console.group(`🔓 HANDLE USER LOGOUT (${userRole})`);
+      console.log(`💾 Handling logout for user: ${loggedOutUserId}`);
 
-  //     hasHandledLoginRef.current = false;
+      hasHandledLoginRef.current = false;
 
-  //     if (userRole !== "buyer" && userRole !== "customer") {
-  //       console.log("⏭️ User role not buyer/customer, skipping");
-  //       console.groupEnd();
-  //       return;
-  //     }
+      if (userRole !== "buyer" && userRole !== "customer") {
+        console.log("⏭️ User role not buyer/customer, skipping");
+        console.groupEnd();
+        return;
+      }
 
-  //     try {
-  //       // STEP 1: Save current cart to database FIRST (for both customers and buyers)
-  //       if (cart.length > 0) {
-  //         console.log(
-  //           `💾 Saving ${cart.length} ${userRole} items to database before logout`
-  //         );
-  //         setIsSaving(true);
-  //         try {
-  //           isInitializedRef.current = false;
-  //           hasHandledLoginRef.current = false;
-  //           previousUserIdRef.current = null;
-  //           localStorage.removeItem("freshLogin"); // reset merge flag
-  //           await storage.saveCartToDatabase(cart, loggedOutUserId);
-  //           console.log(`✅ ${userRole} cart saved to database on logout`);
-  //         } catch (saveError) {
-  //           console.error("❌ Failed to save cart on logout:", saveError);
-  //         } finally {
-  //           setIsSaving(false);
-  //         }
-  //       }
+      try {
+        // STEP 1: Save current cart to database FIRST (for both customers and buyers)
+        if (cart.length > 0) {
+          console.log(
+            `💾 Saving ${cart.length} ${userRole} items to database before logout`
+          );
+          setIsSaving(true);
+          try {
+            isInitializedRef.current = false;
+            hasHandledLoginRef.current = false;
+            previousUserIdRef.current = null;
+            // localStorage.removeItem("freshLogin"); // reset merge flag
+            await storage.saveCartToDatabase(cart, loggedOutUserId);
+            console.log(`✅ ${userRole} cart saved to database on logout`);
+          } catch (saveError) {
+            console.error("❌ Failed to save cart on logout:", saveError);
+          } finally {
+            setIsSaving(false);
+          }
+        }
 
-  //       // STEP 2: COMPLETE SECURITY CLEARING (for both customers and buyers)
-  //       console.log(`🔒 SECURITY: Clearing all local ${userRole} cart data`);
+        // STEP 2: COMPLETE SECURITY CLEARING (for both customers and buyers)
+        console.log(`🔒 SECURITY: Clearing all local ${userRole} cart data`);
 
-  //       // Clear React state
-  //       setCart([]);
-  //       storage.clearGuestCart();
+        // Clear React state
+        setCart([]);
+        storage.clearGuestCart();
 
-  //       // Clear guest cart from localStorage (CRITICAL for both roles)
+        // Clear guest cart from localStorage (CRITICAL for both roles)
 
-  //       // Reset all flags for next user
+        // Reset all flags for next user
 
-  //       console.log(`🔒 ${userRole} logout complete - all local data cleared`);
-  //     } catch (error) {
-  //       console.error("❌ Logout error:", error);
-  //       // Emergency clear
-  //       setCart([]);
-  //       storage.clearGuestCart();
-  //     }
+        console.log(`🔒 ${userRole} logout complete - all local data cleared`);
+      } catch (error) {
+        console.error("❌ Logout error:", error);
+        // Emergency clear
+        setCart([]);
+        storage.clearGuestCart();
+      }
 
-  //     console.groupEnd();
-  //   },
-  //   [cart, storage, userRole]
-  // );
+      console.groupEnd();
+    },
+    [cart, storage, userRole]
+  );
   // ENHANCED: handleUserLogin with role-specific logic
   // ENHANCED: handleUserLogin with role-specific logic
   const handleUserLogin = useCallback(async () => {
@@ -302,7 +302,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (["admin", "delivery"].includes(currentUserRole)) return;
       if (!storedUser && localStorage.getItem("freshLogin")) {
         console.log(`🔓 LOGGED OUT`);
-        // await handleUserLogout(previousUserId);
+        localStorage.removeItem("freshLogin"); // Clear immediately
+        await handleUserLogout(previousUserId);
       } else if (currentUserId && !previousUserId) {
         console.log(`🔑 ${currentUserRole?.toUpperCase()} LOGGED IN`);
 
@@ -314,7 +315,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
     };
     myFun();
-  }, [handleUserLogin]);
+  }, [handleUserLogin, handleUserLogout]);
   // Add this useEffect to handle initial guest cart loading
   useEffect(() => {
     // Initialize guest cart on component mount if no user
