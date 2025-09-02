@@ -67,7 +67,9 @@ const StatsSection = memo(
 
         // Pre-translate labels once
         const labels = {
-          recycles: t("profile.stats.recycles"),
+          recycles: isCustomer
+            ? t("profile.stats.recycles")
+            : t("profile.stats.orders"),
           points: t("profile.stats.points"),
         };
 
@@ -122,7 +124,9 @@ const StatsSection = memo(
             />
           }
         >
-          <MembershipTier totalRecycles={totalCompletedOrders} />
+          {isCustomer && (
+            <MembershipTier totalRecycles={totalCompletedOrders} />
+          )}
         </Suspense>
       </div>
     );

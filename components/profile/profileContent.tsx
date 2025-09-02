@@ -147,6 +147,7 @@ const ProfileContent = memo(function ProfileContent() {
         />
 
         {/* Stats Section - now consumes contexts directly */}
+
         <StatsSection />
 
         {/* Points Activity - Only for customers, now consumes contexts directly */}

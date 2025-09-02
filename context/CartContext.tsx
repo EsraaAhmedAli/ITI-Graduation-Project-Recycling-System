@@ -178,7 +178,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             isInitializedRef.current = false;
             hasHandledLoginRef.current = false;
             previousUserIdRef.current = null;
-            localStorage.removeItem("freshLogin"); // reset merge flag
+            // localStorage.removeItem("freshLogin"); // reset merge flag
             await storage.saveCartToDatabase(cart, loggedOutUserId);
             console.log(`✅ ${userRole} cart saved to database on logout`);
           } catch (saveError) {
@@ -302,6 +302,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (["admin", "delivery"].includes(currentUserRole)) return;
       if (!storedUser && localStorage.getItem("freshLogin")) {
         console.log(`🔓 LOGGED OUT`);
+        localStorage.removeItem("freshLogin"); // Clear immediately
         await handleUserLogout(previousUserId);
       } else if (currentUserId && !previousUserId) {
         console.log(`🔑 ${currentUserRole?.toUpperCase()} LOGGED IN`);
