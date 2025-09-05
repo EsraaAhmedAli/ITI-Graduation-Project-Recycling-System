@@ -46,10 +46,7 @@ const MaterialsChart = memo<MaterialsChartProps>(({ topMaterials, loading }) => 
       } else if (sortBy === 'points') {
         return b.totalPoints - a.totalPoints;
       }
-      // Sort by category name
-      const categoryA = a.categoryName[locale] || a.categoryName.en;
-      const categoryB = b.categoryName[locale] || b.categoryName.en;
-      return categoryA.localeCompare(categoryB);
+
     });
 
     return {
@@ -172,13 +169,12 @@ const MaterialsChart = memo<MaterialsChartProps>(({ topMaterials, loading }) => 
         </span>
         <select 
           value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as 'quantity' | 'category' | 'points')}
+          onChange={(e) => setSortBy(e.target.value as 'quantity' | 'points')}
           className="text-xs border border-green-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white transition-colors"
           disabled={loading}
         >
           <option value="quantity">{t('materials.sortByQuantity')}</option>
           <option value="points">{t('common.points')}</option>
-          <option value="category">{t('materials.category')}</option>
         </select>
       </div>
       
