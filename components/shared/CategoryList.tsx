@@ -71,15 +71,15 @@ interface CategoryListProps {
 const CategoryList = memo(function CategoryList({
   maxToShow,
   horizontal = false,
-  enablePagination = false,
-  itemsPerPage = 10,
+  enablePagination = true,
+  itemsPerPage = 5,
 }: CategoryListProps) {
   const [showAll, setShowAll] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const { t } = useLanguage();
   
   // Use pagination only if enablePagination is true
-  const { data, isLoading, error, isFetching } = useCategories(
+  const { data, isLoading, error } = useCategories(
     enablePagination 
       ? { page: currentPage, limit: itemsPerPage }
       : { page: 1, limit: 1000 }
@@ -330,7 +330,7 @@ const CategoryList = memo(function CategoryList({
           </div>
 
           <CategorySkeletonGrid 
-            count={enablePagination ? itemsPerPage : (maxToShow || 10)} 
+            count={enablePagination ? itemsPerPage : (maxToShow || 5)} 
             horizontal={horizontal} 
           />
 

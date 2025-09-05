@@ -19,7 +19,7 @@ export function useUsers(role?: string) {
               const res = await api.get(url);
       return res.data.data || [];
     },
-    staleTime: 2000,
+    staleTime: 60 * 1000,
     refetchOnMount:true,
     onError: (error: unknown) => {
       console.error("Failed to fetch users:", error);

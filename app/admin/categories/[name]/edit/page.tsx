@@ -119,11 +119,11 @@ export default function EditCategoryPage() {
         toast.success(t('editCategory.updateSuccessText') || 'Category has been updated successfully');
         
         // Invalidate queries
-        queryClient.invalidateQueries({ queryKey: ['categories-list'] });
+        queryClient.invalidateQueries({ queryKey: ['categories list'],
+          exact:false
+         });
         
-        // Redirect after a tiny delay to ensure state update
-
-          window.location.replace('/admin/categories');
+         router.push(`/admin/categories`)
 
 
         return; // Early return to prevent further execution

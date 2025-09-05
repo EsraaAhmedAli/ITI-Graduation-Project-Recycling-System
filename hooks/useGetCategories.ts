@@ -97,7 +97,7 @@ export function useCategories(options: UseCategoriesOptions = {}) {
       }
     },
     enabled,
-    staleTime: debouncedSearchTerm ? 1000 : 5000, // Shorter stale time for search results
+    staleTime: 60 * 1000,
     cacheTime: debouncedSearchTerm ? 5000 : 30000, // Shorter cache time for search results
     refetchOnMount: true, // Don't refetch on mount for search results
     refetchOnWindowFocus: true, // Don't refetch on focus for search results

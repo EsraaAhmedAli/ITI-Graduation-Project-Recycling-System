@@ -7,6 +7,7 @@ import axios from "@/lib/axios";
 import Image from "next/image";
 import toast from "react-hot-toast";
 import { useLanguage } from "@/context/LanguageContext";
+import { useQueryClient } from "@tanstack/react-query";
 
 const unitMap: Record<string, 1 | 2> = {
   kg: 1,
@@ -21,6 +22,7 @@ export default function AddSubCategoryPage() {
   const { t } = useLanguage(); // Add this line
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const queryClient = useQueryClient(); 
 
   const [formData, setFormData] = useState({
     itemName: "",
@@ -79,6 +81,10 @@ const handleSubmit = async (e: React.FormEvent) => {
     });
 
     toast.success(t("subCategorypSuccessfully"));
+    queryClient.invalidateQueries({
+  queryKey: ["items-paginated"],
+  exact:false
+    })
     
     // Navigate to the sub-category page after a short delay to ensure the toast is shown
     setTimeout(() => {

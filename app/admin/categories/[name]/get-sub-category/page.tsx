@@ -8,8 +8,8 @@ import api from "@/lib/axios";
 import { useLocalization } from "@/utils/localiztionUtil";
 import Button from "@/components/common/Button";
 import { useGetItemsPaginated } from "@/hooks/useGetItemsPaginated";
-import { Loader } from '@/components/common'
 import TableSkeleton from "@/components/shared/tableSkeleton";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface SubcategoryItem {
   _id: string;
@@ -35,9 +35,10 @@ export default function Page() {
   const { name } = useParams(); // category name from dynamic route
   const decodedName = decodeURIComponent(name as string);
   const router = useRouter();
-  
+    const queryClient = useQueryClient(); 
+
   // Use shared localization utilities at component level
-  const { getDisplayName, getMeasurementUnit, formatCurrency, t, locale } = useLocalization();
+  const { getDisplayName, getMeasurementUnit, formatCurrency, t } = useLocalization();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
@@ -62,7 +63,6 @@ export default function Page() {
     error,
     currentPage,
     handlePageChange,
-    generatePageNumbers,
       isSearching: hookIsSearching, // Add this line
 
     categoryStats
@@ -164,8 +164,6 @@ useEffect(() => {
       try {
         await api.delete(`/categories/item/${name}/${item._id}`);
         
-        // Force a refetch after deletion by reloading the page
-        window.location.reload();
 
         Swal.fire({
           icon: "success",
@@ -174,6 +172,11 @@ useEffect(() => {
           timer: 1500,
           showConfirmButton: false,
         });
+
+            queryClient.invalidateQueries({
+  queryKey: ["items-paginated"],
+  exact:false
+    })
       } catch (error) {
         console.error(error);
         Swal.fire({
@@ -266,17 +269,7 @@ if (items.length === 0 && !loading && !isSearching && debouncedSearchTerm) {
     );
   }
 
-  console.log('=== DEBUG INFO ===');
-console.log('searchTerm:', searchTerm);
-console.log('debouncedSearchTerm:', debouncedSearchTerm);
-console.log('isSearching (local):', isSearching);
-console.log('hookIsSearching:', hookIsSearching);
-console.log('loading:', loading);
-console.log('isFetching:', isFetching);
-console.log('currentPage:', currentPage);
-console.log('Combined isSearching for DynamicTable:', isSearching || hookIsSearching);
-console.log('isLoading for DynamicTable:', loading && !debouncedSearchTerm && !isSearching && !hookIsSearching);
-console.log('==================');
+
 
   return (
     <div className="space-y-6">

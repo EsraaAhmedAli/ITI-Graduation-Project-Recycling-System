@@ -242,6 +242,9 @@ export default function Page() {
         const categoryName = getCategoryEnglishName(item);
         await api.delete(`/categories/${encodeURIComponent(categoryName)}`);
         queryClient.invalidateQueries({ queryKey: ["categories list"] });
+        if (data?.data?.length === 1 && currentPage > 1) {
+  setCurrentPage(currentPage - 1);
+}
         Swal.fire({
           icon: "success",
           title: t("categories.deleteSuccessTitle") || "Deleted!",

@@ -7,6 +7,7 @@ import api from "@/lib/axios";
 import Image from "next/image";
 import { useLanguage } from "@/context/LanguageContext";
 import toast from "react-hot-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 // More robust category name normalization
 const normalizeCategoryName = (name: string): string => {
@@ -30,30 +31,13 @@ const createUrlSafeName = (name: string): string => {
   return encodeURIComponent(name.trim());
 };
 
-// Use your existing categories/get-items endpoint which maps to the robust getItems function
-const fetchCategoryItems = async (categoryName: string) => {
-  try {
-    console.log('Fetching items using existing categories/get-items endpoint for:', categoryName);
-    const encodedName = createUrlSafeName(categoryName);
-    const res = await api.get(`/categories/get-items/${encodedName}`);
-    
-    console.log('Success with categories/get-items endpoint. Response structure:', {
-      success: res.data.success,
-      dataLength: res.data.data?.length,
-      pagination: res.data.pagination
-    });
-    
-    return { data: res.data, workingName: categoryName };
-  } catch (err) {
-    console.error('Failed with categories/get-items endpoint:', err?.response?.status, err?.response?.data);
-    throw err;
-  }
-};
+
 
 export default function EditItemPage() {
   const { name: rawName, itemId } = useParams();
   const normalizedName = normalizeCategoryName(rawName as string);
   const router = useRouter();
+    const queryClient = useQueryClient(); 
 
   const [formData, setFormData] = useState({
     name: "",
@@ -69,33 +53,19 @@ export default function EditItemPage() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [actualCategoryName, setActualCategoryName] = useState('');
-  const [debugInfo, setDebugInfo] = useState({
-    rawName: rawName as string,
-    normalizedName,
-    attempts: [] as string[]
-  });
-  const { tAr, isLoaded } = useLanguage();
+
+  const {  isLoaded } = useLanguage();
 
   useEffect(() => {
     if (!isLoaded || !normalizedName || !itemId) return;
 
  const fetchItem = async () => {
   try {
-    console.log('=== FETCH ITEM DEBUG START ===');
-    console.log('Raw name from URL:', rawName);
-    console.log('Normalized name:', normalizedName);
-    console.log('Item ID:', itemId);
-    
-    // Use the new single item endpoint instead of the paginated one
-    console.log('Using single item endpoint for category:', normalizedName);
+
     const res = await api.get(`/categories/${createUrlSafeName(normalizedName)}/item/${itemId}`);
     const itemData = res.data;
     
-    console.log('Successfully fetched single item');
-    console.log('Item data structure:', {
-      success: itemData.success,
-      hasData: !!itemData.data
-    });
+
     
     setActualCategoryName(normalizedName);
     
@@ -118,6 +88,11 @@ export default function EditItemPage() {
         image: null,
         currentImage: item.image || "",
       });
+
+                  queryClient.invalidateQueries({
+  queryKey: ["items-paginated"],
+  exact:false
+    })
     } else {
       throw new Error(`Item with ID ${itemId} not found`);
     }
@@ -433,18 +408,7 @@ export default function EditItemPage() {
           </div>
         </form>
 
-        {/* Debug panel in development */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="border-t bg-gray-50 p-4">
-            <h4 className="font-semibold text-sm mb-2">Debug Information:</h4>
-            <div className="text-xs space-y-1">
-              <p><strong>Raw Name:</strong> {rawName}</p>
-              <p><strong>Normalized Name:</strong> {normalizedName}</p>
-              <p><strong>Working Name:</strong> {actualCategoryName}</p>
-              <p><strong>Item ID:</strong> {itemId}</p>
-            </div>
-          </div>
-        )}
+  
       </div>
     </div>
   );

@@ -87,7 +87,7 @@
         itemsPerPage = 12,
         enabled = true,
         keepPreviousData = true,
-        staleTime = 2000,
+        staleTime = 60 * 1000,
         role,
             searchTerm = '' ,// Default to empty string
 

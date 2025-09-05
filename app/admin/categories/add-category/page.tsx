@@ -7,6 +7,7 @@ import api from "@/lib/axios";
 import Image from "next/image";
 import Button from "@/components/common/Button";
 import { useLocalization } from "@/utils/localiztionUtil";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function AddCategoryPage() {
   const router = useRouter();
@@ -18,6 +19,8 @@ export default function AddCategoryPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+      const queryClient = useQueryClient(); 
+
 
   const isFormValid =
     name.trim() !== "" &&
@@ -52,23 +55,19 @@ export default function AddCategoryPage() {
 
       if (response.status === 201 || response.status === 200) {
         toast.success(t("addCategory.categoryCreatedSuccess") || "Category created successfully");
+                            queryClient.invalidateQueries({
+  queryKey: ["categories list"],
+  exact:false
+    })
         
         // Try multiple navigation methods with fallbacks
         try {
           // Method 1: Try router first
           router.push('/admin/categories');
           
-          // Method 2: Force refresh after a short delay
-          setTimeout(() => {
-            router.refresh();
-          }, 50);
+  
           
-          // Method 3: Fallback to hard redirect if router doesn't work
-          setTimeout(() => {
-            if (window.location.pathname !== '/admin/categories') {
-              window.location.href = '/admin/categories';
-            }
-          }, 200);
+  
           
         } catch (navError) {
           console.error('Navigation error:', navError);

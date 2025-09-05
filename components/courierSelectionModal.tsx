@@ -4,6 +4,7 @@ import React from "react";
 import { Modal, ModalBody, ModalFooter, ModalHeader } from "flowbite-react";
 import Image from "next/image";
 import { StaticImport } from "next/dist/shared/lib/get-img-props";
+import Button from "./common/Button";
 
 interface Courier {
   _id: string;
@@ -21,6 +22,7 @@ interface CourierSelectionModalProps {
   couriers: Courier[];
   onSelectCourier: (courierId: string) => void;
   onClose: () => void;
+  isLoading : string | null
 }
 
 const CourierSelectionModal: React.FC<CourierSelectionModalProps> = ({
@@ -28,6 +30,7 @@ const CourierSelectionModal: React.FC<CourierSelectionModalProps> = ({
   couriers,
   onSelectCourier,
   onClose,
+  isLoading
 }) => {
  
     
@@ -56,7 +59,6 @@ const CourierSelectionModal: React.FC<CourierSelectionModalProps> = ({
     <div
       key={courier._id}
       className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition cursor-pointer"
-      onClick={() => onSelectCourier(courier._id)}
     >
       <div className="flex items-center space-x-4">
         {/* Avatar */}
@@ -108,19 +110,15 @@ const CourierSelectionModal: React.FC<CourierSelectionModalProps> = ({
                 {courier.email}
               </div>
             )}
-            {courier.phone && (
-              <div className="flex items-center">
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                  />
-                </svg>
-                {courier.phone}
-              </div>
-            )}
+       
+     
+             <Button
+      onClick={() => onSelectCourier(courier._id)}
+          className="px-4 py-2 text-sm font-medium text-green-500  bg-green-200 border border-gray-300 rounded-md hover:bg-green-700 transition"
+        >
+  {isLoading === courier._id ? "Assigning..." : "Assign"}
+         
+        </Button>
           </div>
         </div>
 
@@ -144,6 +142,7 @@ const CourierSelectionModal: React.FC<CourierSelectionModalProps> = ({
         >
           Cancel
         </button>
+    
       </ModalFooter>
     </Modal>
   );

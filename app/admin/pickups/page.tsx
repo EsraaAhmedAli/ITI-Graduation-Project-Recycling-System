@@ -19,7 +19,6 @@ import { Modal, ModalBody, ModalHeader } from "flowbite-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useValueDebounce } from "@/hooks/useValueDebounce";
-import { Loader } from "@/components/common";
 import TableSkeleton from "@/components/shared/tableSkeleton";
 type UserRole = "customer" | "buyer";
 const STATUS = {
@@ -97,6 +96,9 @@ export default function Page() {
   ]);
 
   const [isProofModalOpen, setIsProofModalOpen] = useState(false);
+  const [loadingCourierId, setLoadingCourierId] = useState<string | null>(null);
+
+  const [loadingCompletingOrder,setLoadingCompletingOrder] = useState <string | null> (null)
 
   const [selectedCompletedOrder, setSelectedCompletedOrder] =
     useState<any>(null);
@@ -291,8 +293,9 @@ export default function Page() {
         debouncedSearchTerm
       ),
     refetchOnMount: true,
-    refetchOnWindowFocus: true,
-    staleTime: 0,
+    
+    refetchOnWindowFocus: "always",
+    staleTime: 60 * 1000,
   });
 
   const { user } = useUserAuth();
@@ -511,18 +514,21 @@ export default function Page() {
   };
 
   const handleAssignToCourier = async (orderId, courierId) => {
+    setLoadingCourierId(courierId);
     try {
       const selectedCourier = couriers?.find(
         (courier) => courier._id === courierId
       );
       if (!selectedCourier) {
         toast.error("Selected courier not found");
+        setLoadingCourierId(null);
         return;
       }
 
       // CHANGED: Check attachments.status instead of status
       if (selectedCourier.attachments?.status !== "approved") {
         toast.error("Cannot assign order to non-approved courier");
+        setLoadingCourierId(null);
         return;
       }
 
@@ -531,6 +537,7 @@ export default function Page() {
         status: "assignToCourier",
       });
       toast.success("Order assigned to courier successfully");
+      setLoadingCourierId(null);
       setIsCourierModalOpen(false);
       setSelectedOrderForCourier(null);
       refetch();
@@ -609,6 +616,9 @@ export default function Page() {
   };
 
   const handleMarkAsCompleted = async (orderId: string) => {
+    setLoadingCompletingOrder(orderId)
+
+
     const result = await Swal.fire({
       title: "Mark as Completed?",
       text: "This will mark the order as completed and finalize it.",
@@ -627,9 +637,11 @@ export default function Page() {
         });
 
         toast.success("Order marked as completed successfully");
+        setLoadingCompletingOrder(null)
 
         refetch();
       } catch (err) {
+        setLoadingCompletingOrder(null)
         console.error("Failed to mark order as completed:", err);
         toast.error("Failed to mark order as completed");
       }
@@ -673,8 +685,7 @@ export default function Page() {
             className="w-8 h-8 text-red-600"
             fill="none"
             stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
+            viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -691,8 +702,7 @@ export default function Page() {
         </p>
         <button
           onClick={() => refetch()}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
-        >
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
           Try Again
         </button>
       </div>
@@ -745,8 +755,7 @@ export default function Page() {
         <div className="flex flex-col">
           <button
             onClick={row.onClickUser}
-            className="text-green-600 hover:underline font-medium text-left"
-          >
+            className="text-green-600 hover:underline font-medium text-left">
             {row.userName}
           </button>
 
@@ -762,8 +771,7 @@ export default function Page() {
       render: (row: any) => (
         <button
           onClick={row.onClickItemsId}
-          className="text-green-600 hover:underline font-medium"
-        >
+          className="text-green-600 hover:underline font-medium">
           {row.orderId}
         </button>
       ),
@@ -791,8 +799,7 @@ export default function Page() {
           return (
             <Button
               onClick={() => handleOpenCompletedDetails(order)}
-              className="px-5 py-2 text-xs font-semibold rounded-md bg-green-600 text-green-800 hover:bg-green-400 transition-colors"
-            >
+              className="px-5 py-2 text-xs font-semibold rounded-md bg-green-600 text-green-800 hover:bg-green-400 transition-colors">
               Completed
             </Button>
           );
@@ -803,8 +810,7 @@ export default function Page() {
           return (
             <button
               onClick={() => handleShowCancelReason(order.statusHistory)}
-              className="px-5 py-2 text-xs font-semibold rounded-md bg-red-100 text-red-800 hover:bg-red-200 transition-colors"
-            >
+              className="px-5 py-2 text-xs font-semibold rounded-md bg-red-100 text-red-800 hover:bg-red-200 transition-colors">
               Cancelled
             </button>
           );
@@ -816,17 +822,16 @@ export default function Page() {
             <div className="flex items-center gap-2">
               <Button
                 onClick={() => handleOpenCompletedDetails(order)}
-                className="px-5 py-2 text-xs font-semibold rounded-md bg-purple-500 text-purple-800 hover:bg-purple-200 transition-colors"
-              >
+                className="px-5 py-2 text-xs font-semibold rounded-md bg-purple-500 text-purple-800 hover:bg-purple-200 transition-colors">
                 see collection
               </Button>
-              <button
+              <Button
+
                 onClick={() => handleMarkAsCompleted(order.orderId)}
                 className="px-5 py-2 text-xs font-semibold rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors"
-                title="Mark as completed"
-              >
-                click to complete
-              </button>
+                title="Mark as completed">
+                {loadingCompletingOrder ? 'completing ...' : 'click to complete'}
+              </Button>
             </div>
           );
         }
@@ -877,20 +882,20 @@ export default function Page() {
           }
         };
 
-        const getStatusColor = (status: string) => {
-          switch (status) {
-            case "pending":
-              return "border-yellow-400 bg-yellow-100 text-yellow-800";
-            case "assigntocourier":
-              return "border-blue-400 bg-blue-100 text-blue-800";
-            case "collected":
-              return "border-purple-400 bg-purple-100 text-purple-800";
-            case "completed":
-              return "border-green-400 bg-green-100 text-green-800";
-            default:
-              return "border-gray-400 bg-gray-100 text-gray-800";
-          }
-        };
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case "pending":
+      return "!bg-yellow-100 !text-yellow-800 !border-yellow-300";
+    case "assigntocourier":
+      return "!bg-blue-100 !text-blue-800 !border-blue-300";
+    case "collected":
+      return "!bg-purple-100 !text-purple-800 !border-purple-300";
+    case "completed":
+      return "!bg-green-100 !text-green-800 !border-green-300";
+    default:
+      return "!bg-gray-100 !text-gray-800 !border-gray-300";
+  }
+};
 
         return (
           <select
@@ -900,8 +905,7 @@ export default function Page() {
             className={`px-2 py-1 rounded border ${getStatusColor(
               currentStatus
             )}`}
-            onClick={(e) => e.stopPropagation()}
-          >
+            onClick={(e) => e.stopPropagation()}>
             <option value={currentStatus}>
               {currentStatus === "assigntocourier"
                 ? "Assigned to Courier"
@@ -930,16 +934,14 @@ export default function Page() {
           <nav
             className="-mb-px flex space-x-8 px-6"
             aria-label="Tabs"
-            style={{ background: "var(--background)" }}
-          >
+            style={{ background: "var(--background)" }}>
             <button
               onClick={() => handleTabChange("customer")}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === "customer"
                   ? "border-green-500 text-green-600"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
+              }`}>
               Customer Orders
               {activeTab === "customer" && (
                 <span className="ml-2 bg-green-100 text-green-600 py-0.5 px-2.5 rounded-full text-xs font-medium">
@@ -953,8 +955,7 @@ export default function Page() {
                 activeTab === "buyer"
                   ? "border-green-500 text-green-600"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
+              }`}>
               Buyer Orders
               {activeTab === "buyer" && (
                 <span className="ml-2 bg-green-100 text-green-600 py-0.5 px-2.5 rounded-full text-xs font-medium">
@@ -979,8 +980,7 @@ export default function Page() {
           </p>
           <button
             onClick={() => refetch()}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
-          >
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
             Refresh
           </button>
         </div>
@@ -1038,6 +1038,7 @@ export default function Page() {
       />
       <CourierSelectionModal
         show={isCourierModalOpen}
+        isLoading={loadingCourierId}
         couriers={couriers}
         userRole={user?.role}
         onSelectCourier={(courierId: string) =>
@@ -1061,8 +1062,7 @@ export default function Page() {
         show={showCancelReasonModal}
         size="md"
         popup={true}
-        onClose={() => setShowCancelReasonModal(false)}
-      >
+        onClose={() => setShowCancelReasonModal(false)}>
         <ModalHeader />
         <ModalBody>
           <div className="text-center">
@@ -1073,8 +1073,7 @@ export default function Page() {
             <div className="mt-6">
               <button
                 onClick={() => setShowCancelReasonModal(false)}
-                className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
-              >
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
                 Close
               </button>
             </div>

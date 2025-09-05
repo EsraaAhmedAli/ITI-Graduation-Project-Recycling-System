@@ -24,7 +24,7 @@ export default function UserCategoriesPage() {
       <Suspense fallback={null}>
         <CategoryList 
           enablePagination={true} 
-  itemsPerPage={10} 
+  itemsPerPage={5} 
           basePath="user" 
           horizontal={false}
           maxToShow={10} // Limit initial render for performance
